@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SignalFlow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#101319; --panel:#171c24; --panel2:#1f2630; --line:#2b3542;
+  --text:#e9eef5; --dim:#8d9aab; --faint:#5c6878;
+  --video:#ff5252; --lyd:#ffb648; --intercom:#3fd99c; --net:#5ea3ff;
+  --ink:#1d1d1d; --paper:#fbfaf6;
+  --fd:'Barlow Condensed',sans-serif; --fb:'IBM Plex Sans',system-ui,sans-serif; --fm:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font:13px/1.45 var(--fb)}
+button{font:inherit}
+
+#app{display:grid;grid-template-rows:54px 42px 1fr;grid-template-columns:1fr 290px;height:100vh}
+header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+.logo{font-family:var(--fd);font-weight:700;font-size:20px;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
+.logo em{font-style:normal;color:var(--lyd)}
+#crumbs{display:flex;align-items:center;gap:5px;font-family:var(--fm);font-size:12px;color:var(--dim);flex:1;min-width:0;overflow:hidden;white-space:nowrap}
+#crumbs button{background:none;border:none;color:var(--dim);cursor:pointer;padding:4px 6px;border-radius:5px;font:inherit}
+#crumbs button:hover{color:var(--text);background:var(--panel2)}
+
+#crumbs .here{color:var(--text)}
+#crumbs .projname{color:var(--text);font-weight:600}
+#crumbs .projname:hover{background:var(--panel2);color:var(--lyd)}
+#crumbs .sep{color:var(--faint)}
+
+.bus{display:flex;gap:5px}
+.busbtn{position:relative;font-family:var(--fd);font-weight:600;font-size:13.5px;letter-spacing:.1em;text-transform:uppercase;background:var(--panel2);color:var(--faint);border:1px solid var(--line);border-radius:6px;padding:7px 12px 7px 21px;cursor:pointer;transition:.12s}
+.busbtn::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:7px;height:7px;border-radius:50%;background:var(--d);opacity:.3;transition:.12s}
+.busbtn.on{color:var(--text);border-color:var(--d)}
+.busbtn.on::before{opacity:1;box-shadow:0 0 8px var(--d)}
+.busbtn[data-l=video]{--d:var(--video)} .busbtn[data-l=lyd]{--d:var(--lyd)}
+.busbtn[data-l=intercom]{--d:var(--intercom)} .busbtn[data-l=net]{--d:var(--net)}
+.busbtn[data-l=backup]{--d:#b18cff}
+.hbtn{background:var(--panel2);border:1px solid var(--line);color:var(--dim);border-radius:6px;padding:7px 11px;cursor:pointer;white-space:nowrap}
+.hbtn:hover{color:var(--text);border-color:var(--faint)}
+.hbtn:disabled{opacity:.4;cursor:default}
+
+#stage{grid-row:3;position:relative;overflow:auto;background:#0b0e13;padding:26px}
+#side{grid-row:3;background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:14px}
+
+#tabbar{grid-row:2;grid-column:1/3;display:flex;align-items:flex-end;gap:2px;background:var(--panel);border-bottom:1px solid var(--line);padding:0 14px;overflow-x:auto}
+.tab{display:flex;align-items:center;gap:7px;background:var(--panel2);border:1px solid var(--line);border-bottom:none;border-radius:7px 7px 0 0;padding:7px 8px 7px 13px;cursor:pointer;color:var(--dim);white-space:nowrap;margin-bottom:-1px}
+.tab.on{background:var(--paper);color:#1d1d1d;border-color:var(--paper)}
+.tab .tname{font-size:12.5px;max-width:190px;overflow:hidden;text-overflow:ellipsis}
+.tab.on .tname{cursor:text}
+.tab .tx{border:none;background:none;color:inherit;opacity:.45;cursor:pointer;font-size:11px;padding:1px 3px;border-radius:3px;line-height:1}
+.tab .tx:hover{opacity:1;background:rgba(0,0,0,.15)}
+.tabadd{background:none;border:none;color:var(--dim);cursor:pointer;padding:7px 10px;font-size:15px;margin-bottom:2px}
+.tabadd:hover{color:var(--text)}
+.tabedit{font:12.5px var(--fb);border:1.5px solid #0a5bd3;border-radius:4px;padding:0 4px;max-width:190px}
+#sheet{background:var(--paper);color:var(--ink);margin:0 auto;box-shadow:0 10px 40px rgba(0,0,0,.5);border-radius:3px;width:100%;max-width:1340px;min-width:900px;min-height:560px;padding:26px 30px 60px;transform-origin:top center}
+
+/* ---- ark ---- */
+.sheettitle{font-family:var(--fd);font-weight:700;font-size:25px;letter-spacing:.04em;text-align:center;padding:6px 0 4px;color:#2a2a2a}
+.sheetsub{font-family:var(--fm);font-size:11px;text-align:center;color:#8a8a8a;margin-bottom:20px}
+.section{display:grid;grid-template-columns:190px 1fr 210px;gap:0;margin-bottom:26px;align-items:stretch}
+.srcbox,.dstbox{border-radius:3px;padding:11px 12px;position:relative}
+.srcbox{background:#e9c440;border:1px solid #bd9a2c}
+.dstbox{background:#6d8764;border:1px solid #4c6245;color:#f3f7f1}
+.boxname{font-family:var(--fd);font-weight:700;font-size:16px;letter-spacing:.05em;line-height:1.2;overflow-wrap:anywhere;word-break:break-word}
+.srcbox .boxname{color:#2b2417}
+.boxsub{font-family:var(--fm);font-size:9.5px;opacity:.65;margin-top:3px}
+.rows{padding:4px 14px;min-width:0;position:relative}
+
+.grp{position:relative;padding:2px 0 2px 0;margin-bottom:9px}
+.grp.sel{background:#eef4ff;box-shadow:0 0 0 1px #b9d0f5;border-radius:4px}
+.grp.hidden{display:none}
+.feed{display:flex;align-items:center;gap:0;min-height:19px;flex-wrap:wrap;row-gap:1px}
+.lbl{font-size:11.5px;white-space:nowrap;cursor:text;padding:1px 3px;border-radius:3px}
+.lbl:hover{background:#e6eefc;outline:1px solid #b9d0f5}
+.feed .lbl{font-weight:600}
+.wire{flex:1 1 24px;height:0;border-top:1.8px solid currentColor;margin:0 6px;min-width:20px;position:relative}
+.grp.backup .wire{border-top-style:dashed}
+.ch.cbackup .wire{border-top-style:dashed}
+.ch:not(.cbackup) .wire{border-top-style:solid}
+.chb{font-family:var(--fm);font-size:8px;font-weight:500;background:#b18cff;color:#fff;border-radius:3px;padding:0 3px;margin-right:5px;line-height:1.5}
+.cloud{font-family:var(--fd);font-weight:600;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:#5c5c5c;background:var(--paper);border:1px solid #b4b4b4;border-radius:14px;padding:1px 13px;cursor:text;white-space:nowrap}
+.cloud:hover{border-color:#0a5bd3;color:#0a5bd3}
+.ch{display:flex;align-items:center;min-height:17px;padding-left:14px;color:#3a3a3a;flex-wrap:wrap;row-gap:1px}
+.ch .wire{border-top-width:1.1px;border-top-color:currentColor}
+.ch .wire{border-top-color:currentColor}
+.dot{width:7px;height:7px;border-radius:50%;flex:none;margin-right:7px;cursor:pointer;border:1px solid rgba(0,0,0,.25)}
+.ch .lbl{font-size:11px;white-space:normal;overflow-wrap:anywhere}
+.chnr{font-family:var(--fm);font-size:10.5px;min-width:44px;cursor:text;padding:1px 3px;border-radius:3px}
+.chnr:hover{background:#e6eefc}
+/* --- frit placerede elementer på arket --- */
+#sheet{position:relative}
+.fitem{position:absolute;z-index:3;min-width:90px}
+.fitem.sel{outline:2px solid #0a5bd3;outline-offset:2px}
+.fdrag{cursor:move}
+.fitem.dragging{position:fixed!important;margin:0;z-index:999;box-shadow:0 12px 30px rgba(0,0,0,.35)}
+.drophere{outline:2px dashed #0a5bd3;outline-offset:-3px;background-image:linear-gradient(rgba(10,91,211,.07),rgba(10,91,211,.07))}
+.anchortag{position:absolute;top:-9px;left:8px;font-family:var(--fm);font-size:8px;letter-spacing:.05em;text-transform:uppercase;background:#0a5bd3;color:#fff;padding:1px 5px;border-radius:7px;opacity:0}
+.fitem:hover .anchortag{opacity:.9}
+.ftext{padding:7px 10px;border-radius:4px;line-height:1.45;overflow-wrap:anywhere}
+.flegend{background:#fff;border:1px solid #cfcfcf;border-radius:5px;padding:10px 12px 11px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.flegend h4{font-family:var(--fd);font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:#2a2a2a;margin-bottom:8px;cursor:move}
+.lrow{display:flex;align-items:center;gap:8px;font-size:11.5px;color:#333;padding:2px 0}
+.lsym{font-size:15px;line-height:1;width:19px;text-align:center;flex:none}
+.lcount{font-family:var(--fm);font-size:11px;font-weight:500;min-width:22px;text-align:right;color:#111}
+.lname{flex:1}
+.ltot{border-top:1px solid #e0e0e0;margin-top:7px;padding-top:6px;font-family:var(--fm);font-size:10.5px;color:#777;display:flex;justify-content:space-between}
+/* håndtag til at trække i størrelsen */
+.rs{position:absolute;right:-4px;bottom:-4px;width:13px;height:13px;border:1px solid #0a5bd3;background:#fff;border-radius:3px;cursor:nwse-resize;opacity:0;z-index:7}
+.rs.edge{right:-5px;top:0;bottom:18px;height:auto;width:9px;border-radius:2px;cursor:ew-resize;z-index:5}
+.rs.edge.left{left:-5px;right:auto}
+.srcbox:hover .rs,.dstbox:hover .rs,.fitem:hover .rs{opacity:.85}
+.fitools{position:absolute;top:-11px;right:0;display:flex;gap:3px;opacity:0;z-index:6}
+.fitem:hover .fitools{opacity:1}
+.fitools .mini{opacity:1;background:#fff;border:1px solid #d6d6d6;border-radius:4px;color:#555}
+/* tekstlinjer inde i afsender-/modtagerboksene */
+.boxlines{margin-top:7px;display:flex;flex-direction:column;gap:2px}
+.boxline{font-size:11px;line-height:1.35;opacity:.92;cursor:text;padding:1px 3px;border-radius:3px;overflow-wrap:anywhere}
+.boxline:hover{background:rgba(255,255,255,.28)}
+.boxadd{font-size:10px;opacity:.55;background:none;border:none;color:inherit;cursor:pointer;padding:2px 3px;margin-top:3px;text-align:left}
+.boxadd:hover{opacity:1}
+
+.faded{opacity:.13}
+.secgone{font-family:var(--fm);font-size:10.5px;color:#b3b3b3;border:1px dashed #ddd;border-radius:4px;padding:6px 10px;margin-bottom:10px;text-align:center}
+
+/* pilens retning */
+.wire::after{content:'';position:absolute;top:-4.5px;width:0;height:0;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent}
+.wire:not(.rtl)::after{right:-1px;border-left:4.5px solid currentColor}
+.wire.rtl::after{left:-1px;border-right:4.5px solid currentColor}
+.wire.both::before{content:'';position:absolute;top:-4.5px;left:-1px;width:0;height:0;border-top:4.5px solid transparent;border-bottom:4.5px solid transparent;border-right:4.5px solid currentColor}
+.endtag{font-family:var(--fm);font-size:9.5px;letter-spacing:.04em;padding:1px 5px;border:1px solid currentColor;border-radius:9px;white-space:nowrap;cursor:text;opacity:.85;margin:0 2px}
+.endtag:hover{opacity:1;background:rgba(10,91,211,.09)}
+.endtag.sm{font-size:8.5px;padding:0 4px;border-radius:8px}
+.endtag.ghost{opacity:0;border-style:dashed}
+.ch:hover .endtag.ghost{opacity:.45}
+.grp:hover .endtag.ghost{opacity:.4}
+
+/* sammenklapning – skjules på skærm, foldes ALTID ud ved print */
+.grp.collapsed .ch,.grp.collapsed .grpfoot{display:none}
+.caret{opacity:1!important;color:#8d8d8d;margin-right:2px;font-size:10px}
+.chcount{font-family:var(--fm);font-size:9.5px;color:#9a9a9a;margin-left:9px;white-space:nowrap}
+.grpfoot{padding-left:14px}
+
+/* fokus-visning */
+.focusbar{background:#eef4ff;border:1px solid #b9d0f5;border-radius:5px;padding:7px 12px;margin-bottom:16px;font-size:12px;color:#24486f;text-align:center}
+.focusbar b{font-weight:600}
+
+/* modalvindue */
+#modal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(6,9,13,.66);display:none;align-items:center;justify-content:center;z-index:99;padding:24px}
+#modal.on{display:flex}
+.mbox{background:var(--panel);border:1px solid var(--line);border-radius:11px;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;padding:18px 20px 20px}
+.mbox h3{font-family:var(--fd);font-weight:700;font-size:19px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px}
+.mbox .msub{font-family:var(--fm);font-size:10px;color:var(--dim);letter-spacing:.09em;text-transform:uppercase;margin-bottom:16px}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.mgrid.one{grid-template-columns:1fr}
+.mf label{display:block;font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.mf input[type=text],.mf input[type=number],.mf select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:7px 8px;font:inherit}
+.mf input[type=color]{width:100%;height:34px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px;cursor:pointer}
+.msec{font-family:var(--fd);font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:18px 0 9px;padding-top:13px;border-top:1px solid var(--line)}
+.mrow{display:flex;gap:8px;margin-top:18px}
+.mrow .btn{margin:0}
+.chk{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:5px;cursor:pointer;font-size:12px}
+.chk:hover{background:var(--panel2)}
+.chk input{accent-color:var(--intercom)}
+.chklist{max-height:210px;overflow-y:auto;border:1px solid var(--line);border-radius:7px;padding:5px;background:var(--bg)}
+.swatches{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.sw{width:22px;height:22px;border-radius:5px;border:1px solid rgba(255,255,255,.16);cursor:pointer}
+.sw:hover{transform:scale(1.12)}
+.tools{display:flex;gap:4px;align-items:center;margin-left:8px}
+.mini{border:none;background:none;color:#a2a2a2;cursor:pointer;font-size:12px;padding:1px 4px;border-radius:3px;line-height:1;opacity:0}
+.grp:hover .mini,.ch:hover .mini,.section:hover .mini{opacity:1}
+.mini:hover{background:#e3e3e3;color:#111}
+.add{font-family:var(--fm);font-size:10.5px;color:#8d8d8d;background:none;border:none;cursor:pointer;padding:2px 5px;border-radius:3px}
+.add:hover{color:#15703f;background:#e8f5ee}
+.drill{font-family:var(--fm);font-size:9.5px;color:#2f7a52;background:none;border:none;cursor:pointer;padding:1px 4px;border-radius:3px}
+.drill:hover{text-decoration:underline}
+.dstbox .drill{color:#e2ecdd}
+.empty{text-align:center;color:#9a9a9a;padding:50px 0;font-size:13px}
+
+/* ---- inspektor ---- */
+#side{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:14px}
+#side h2{font-family:var(--fd);font-weight:600;font-size:16px;letter-spacing:.05em;text-transform:uppercase}
+#side .sub{font-family:var(--fm);font-size:10px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin:2px 0 14px}
+.f{margin-bottom:11px}
+.f label{display:block;font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.f input,.f select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:7px 8px;font:inherit}
+.f input:focus,.f select:focus{outline:none;border-color:var(--dim)}
+.btn{display:block;width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:8px;cursor:pointer;margin-bottom:7px}
+.btn:hover{border-color:var(--faint)}
+.btn.go{border-color:var(--intercom);color:var(--intercom)}
+.btn.del{color:var(--video)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.row2 .btn{margin:0}
+.hint{color:var(--dim);font-size:12px;line-height:1.65}
+.hint kbd{font-family:var(--fm);background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:10.5px}
+hr{border:none;border-top:1px solid var(--line);margin:14px 0}
+
+/* eksport-container: usynlig på skærmen, det eneste der printes */
+#printroot{display:none}
+.psheet{position:relative;background:#fff;padding:26px 30px 6mm;page-break-after:always;break-after:page}
+.psheet:last-child{page-break-after:auto;break-after:auto}
+.pfoot{font-family:var(--fm);font-size:8.5px;color:#999;text-align:center;padding-top:6px;border-top:1px solid #e2e2e2;margin-top:10px}
+
+@media print{
+  html,body{overflow:visible;height:auto;background:#fff}
+  /* tving browseren til at printe baggrundsfarver på boksene */
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+  #app,#modal{display:none!important}
+  #printroot{display:block!important}
+  /* alt interaktivt væk */
+  .mini,.add,.drill,.focusbar,.chcount,.grpfoot,.secgone,.rs,.fitools,.boxadd,.endtag.ghost{display:none!important}
+  /* sammenklappede grupper foldes altid ud på papir */
+  .grp.collapsed .ch{display:flex!important}
+  .grp{page-break-inside:avoid;break-inside:avoid}
+  .section{page-break-inside:avoid;break-inside:avoid}
+  .faded{opacity:.28}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">Signal<em>Flow</em></div>
+    <div id="crumbs"></div>
+    <div class="bus">
+      <button class="busbtn on" data-l="video">Video</button>
+      <button class="busbtn on" data-l="lyd">Lyd</button>
+      <button class="busbtn on" data-l="intercom">Intercom</button>
+      <button class="busbtn on" data-l="net">Net</button>
+      <button class="busbtn on" data-l="backup">Backup</button>
+    </div>
+    <button class="hbtn" id="bUndo" title="Fortryd (Ctrl+Z)">↩</button>
+    <button class="hbtn" id="bExport" title="Eksportér">Eksportér</button>
+    <button class="hbtn" id="bFoldAll" title="Fold alle grupper sammen/ud">⇕</button>
+    <button class="hbtn" id="bNew" title="Tomt projekt">Nyt</button>
+    <button class="hbtn" id="bSave" title="Gem hele projektet – alle sider – som én fil">Gem projekt</button>
+    <button class="hbtn" id="bOpen" title="Åbn en gemt projektfil">Åbn</button>
+    <input type="file" id="file" accept=".json" hidden>
+  </header>
+  <main id="stage">
+    <div id="tabbar"></div>
+    <div id="sheet"></div>
+  </main>
+  <aside id="side"></aside>
+</div>
+<div id="modal"></div>
+<div id="printroot"></div>
+<style id="pagestyle"></style>
+
+<script>
+window.onerror=function(m,src,line,col){
+  var d=document.createElement('div');
+  d.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:#7f1d1d;color:#fff;'
+    +'font:13px/1.5 monospace;padding:14px 18px;white-space:pre-wrap';
+  d.textContent='SignalFlow kunne ikke starte:\n'+m+'\nlinje '+line+':'+col
+    +'\n\nVis denne tekst til udvikleren.';
+  (document.body||document.documentElement).appendChild(d);
+};
+/* ================= model ================= */
+const LAYERS={video:'Video',lyd:'Lyd',intercom:'Intercom',net:'Net'};
+const COL={video:'#c62828',lyd:'#9a6500',intercom:'#1e7a55',net:'#1e56b0'};
+const DOT={video:'#ff5252',lyd:'#ffb648',intercom:'#3fd99c',net:'#5ea3ff'};
+const TRANSPORTS=['EPL','Internet','SAT','GC Fiber','Fiber','Trådløs','Kabel','—'];
+let seq=1; const id=()=>'x'+(seq++)+Date.now().toString(36).slice(-3);
+
+const newSheet=(title='Nyt ark')=>({title,sections:[]});
+const newSection=(dst='Modtager',src='Afsender')=>({id:id(),src,dst,groups:[]});
+const newGroup=(label='Ny kilde')=>({id:id(),label,feed:'TX 1',layer:'video',transport:'EPL',role:'primær',channels:[],sub:null});
+const newCh=(n)=>({id:id(),nr:'Ch. '+n,label:'',layer:'lyd'});
+
+/* helt tomt projekt */
+function blank(){
+ const s=newSheet('Nyt projekt');
+ const sec=newSection('MCR / Afv. A','Remote 2');
+ const g=newGroup('Kilde 1');
+ g.channels=[newCh(1),newCh(2)];
+ sec.groups.push(g); s.sections.push(sec);
+ return s;
+}
+
+
+/* ====== OSLO · Remote 2 – dine arbejdsdata ====== */
+const OSLO_DATA=[{"title":"TX/RX Main","sections":[{"id":"x1tet","src":"Nimbra 2 · Remote 2","dst":"MCR / AFV. A","groups":[{"id":"x2tet","label":"Kamera 1 Studie Morten","feed":"Nimbra 2 TX 1","layer":"video","transport":"EPL","role":"primær","channels":[{"id":"x3tet","nr":"Ch. 1","label":"Vært.","layer":"lyd"},{"id":"x4teu","nr":"Ch. 2","label":"EXP. 1.","layer":"lyd"},{"id":"x5teu","nr":"Ch. 3","label":"EXP. 2","layer":"lyd"},{"id":"x6teu","nr":"Ch. 4","label":"EXP. 3.","layer":"lyd"},{"id":"x7teu","nr":"Ch. 5","label":"Gæst 1.","layer":"lyd"},{"id":"x8teu","nr":"Ch. 6","label":"Gæst 2.","layer":"lyd"},{"id":"x9teu","nr":"Ch. 7","label":"Gæst 3.","layer":"lyd"},{"id":"x10teu","nr":"Ch. 8","label":"ST Mic L","layer":"lyd"},{"id":"x1wsm","nr":"Ch. 9","label":"ST Mic R","layer":"lyd"},{"id":"x2cha","nr":"Ch. 10","label":"Spare HM ","layer":"lyd","role":"backup"},{"id":"x3w1a","nr":"Ch. 11","label":"Spare HM","layer":"lyd","role":"backup"}],"sub":null,"style":{}},{"id":"x11teu","label":"Kamera 2 Studie Morten","feed":"Nimbra 2 TX 2","layer":"video","transport":"EPL","role":"primær","channels":[{"id":"x12teu","nr":"Ch. 1","label":"Vært. MCR 42","layer":"lyd","role":"backup"},{"id":"x13teu","nr":"Ch. 2","label":"Hånd Mic. MCR 42","layer":"lyd","role":"backup"},{"id":"x14teu","nr":"Ch. 3","label":"Spare Hånd Mic. 1.","layer":"lyd","role":"backup"},{"id":"x15teu","nr":"Ch. 4","label":"Spare Hånd Mic. 2.","layer":"lyd","role":"backup"}],"sub":null,"style":{}},{"id":"x16teu","label":"Kamera 3 / Komm Kamera.","feed":"Nimbra 2 TX 3","layer":"video","transport":"EPL","role":"primær","channels":[{"id":"x17teu","nr":"Ch. 1","label":"Komm 1. I Billedet.","layer":"lyd"},{"id":"x18teu","nr":"Ch. 2","label":"Komm 2. I Billedet.","layer":"lyd"}],"sub":null,"style":{}},{"id":"x21teu","label":"Steadicam Pitch Camila","feed":"Nimbra 2 TX 4","layer":"video","transport":"EPL","role":"primær","channels":[{"id":"x22teu","nr":"Ch. 1","label":"Reporter Pitch Rack modtager","layer":"lyd"},{"id":"x23teu","nr":"Ch. 2","label":"Ekspert Pitch Rack modtager","layer":"lyd"},{"id":"x24teu","nr":"Ch. 3","label":"Gæst Pitch Rack modtager","layer":"lyd"},{"id":"x26teu","nr":"Ch. 4","label":"Reporter Pitch MCR 42","layer":"lyd"},{"id":"x27teu","nr":"Ch. 5","label":"Ekspert Pitch MCR 42","layer":"lyd"}],"sub":null,"style":{}},{"id":"x30teu","label":"WF","feed":"Nimbra 2 TX 5","layer":"video","transport":"EPL","role":"primær","channels":[{"id":"x31teu","nr":"Ch. 1","label":"Komm 1","layer":"lyd"},{"id":"x32teu","nr":"Ch. 2","label":"Komm 2","layer":"lyd"},{"id":"x33teu","nr":"Ch. 3","label":"IT. L.","layer":"lyd"},{"id":"x34teu","nr":"Ch. 4","label":"IT. R.","layer":"lyd"},{"id":"x35teu","nr":"Ch. 5","label":"Dolby E.","layer":"lyd"},{"id":"x36teu","nr":"Ch. 6","label":"Dolby E.","layer":"lyd"},{"id":"x37teu","nr":"Ch. 7","label":"TBA","layer":"lyd"},{"id":"x38teu","nr":"Ch. 8","label":"TBA","layer":"lyd"},{"id":"x41teu","nr":"Ch. 11","label":"Komm 1 / Backup Dante","layer":"lyd","role":"backup"},{"id":"x42teu","nr":"Ch. 12","label":"Komm 2 / Backup Dante","layer":"lyd","role":"backup"}],"sub":null,"style":{}}],"style":{"srcW":200,"srcH":22,"dstDX":66,"dstW":275,"dstH":0,"srcDX":10},"srcLines":[{"id":"x160xzg","t":"Ny tekst"}]},{"id":"x43teu","src":"MCR / AFV. A","dst":"Remote 2 <> Odense","groups":[{"id":"x44teu","label":"PGM","feed":"Nimbra 2 RX 1","layer":"video","transport":"EPL","role":"primær","channels":[{"id":"x45teu","nr":"Ch. 1","label":"PGM L","layer":"lyd"},{"id":"x46teu","nr":"Ch. 2","label":"PGM R","layer":"lyd"}],"sub":null,"dir":"rtl","style":{}},{"id":"x47teu","label":"DISP","feed":"Nimbra 2 RX 2","layer":"video","transport":"EPL","role":"primær","channels":[{"id":"x48teu","nr":"Ch. 1","label":"PGM L","layer":"lyd"},{"id":"x49teu","nr":"Ch. 2","label":"PGM R","layer":"lyd"}],"sub":null,"dir":"rtl","style":{}}],"style":{}}]},{"title":"TX/RX Sekunder","sections":[{"id":"x50teu","src":"Remote 2 Arena 2","dst":"MCR / AFV. A","groups":[{"id":"x51teu","label":"Opvarmning sidelinje","feed":"Arena 2 TX 1","layer":"video","transport":"Internet","role":"primær","channels":[{"id":"x52teu","nr":"Ch. 1","label":"IT. L..","layer":"lyd"},{"id":"x53teu","nr":"Ch. 2","label":"IT. R.","layer":"lyd"},{"id":"x54teu","nr":"Ch. 3","label":"ST Mic. L.","layer":"lyd"},{"id":"x55teu","nr":"Ch. 4","label":"ST Mic. R.","layer":"lyd"}],"sub":null,"style":{}},{"id":"x56teu","label":"Opvarmning og Kamp modsat kamera.","feed":"Arena 2 TX 2","layer":"video","transport":"Internet","role":"primær","channels":[{"id":"x57teu","nr":"Ch. 1","label":"IT. L.","layer":"lyd"},{"id":"x58teu","nr":"Ch. 2","label":"IT. R.","layer":"lyd"},{"id":"x59teu","nr":"Ch. 3","label":"ST Mic. L.","layer":"lyd"},{"id":"x60teu","nr":"Ch. 4","label":"ST Mic. R.","layer":"lyd"}],"sub":null,"style":{}},{"id":"x61teu","label":"Reporter før kamp / Bag mål til EVS under kamp","feed":"AVI 40 FJUM","layer":"video","transport":"Internet 4/5 G","role":"primær","channels":[{"id":"x62teu","nr":"Ch. 1","label":"Repoter","layer":"lyd"},{"id":"x63teu","nr":"Ch. 2","label":"Kamera Mic","layer":"lyd"}],"sub":null,"style":{}}],"style":{}}]},{"title":"Backup Studie","sections":[{"id":"x64teu","src":"Remote 2 · Arena 2","dst":"MCR / AFV. A","groups":[{"id":"x65teu","label":"Studie Cam 1 Morten","feed":"Arena 2 TX 3","layer":"video","transport":"Internet","role":"backup","channels":[{"id":"x66teu","nr":"Ch. 1","label":"Vært.","layer":"lyd"},{"id":"x67teu","nr":"Ch. 2","label":"EXP. 1.","layer":"lyd"},{"id":"x68teu","nr":"Ch. 3","label":"EXP. 2","layer":"lyd"},{"id":"x69teu","nr":"Ch. 4","label":"EXP. 3.","layer":"lyd"},{"id":"x70teu","nr":"Ch. 5","label":"Gæst 1","layer":"lyd"},{"id":"x71teu","nr":"Ch. 6","label":"Gæst 2","layer":"lyd"},{"id":"x72teu","nr":"Ch. 7","label":"Spare Hånd Mic 1","layer":"lyd"},{"id":"x73teu","nr":"Ch. 8","label":"Spare Hånd Mic 2","layer":"lyd"}],"sub":null,"style":{}},{"id":"x74teu","label":"Steadicam Pitch Camilla","feed":"Arena 2 TX 4","layer":"video","transport":"Internet","role":"backup","channels":[{"id":"x75teu","nr":"Ch. 1","label":"Reporter Pitch Rack modtager","layer":"lyd"},{"id":"x76teu","nr":"Ch. 2","label":"Ekspert Pitch Rack modtager","layer":"lyd"},{"id":"x77teu","nr":"Ch. 3","label":"Gæst Pitch Rack modtager","layer":"lyd"},{"id":"x79teu","nr":"Ch. 4","label":"Reporter Pitch MCR 42","layer":"lyd"},{"id":"x80teu","nr":"Ch. 5","label":"Ekspert Pitch MCR 42","layer":"lyd"}],"sub":null,"style":{}}],"style":{}},{"id":"x83teu","src":"Anden Backup","dst":"MCR / AFV. A","groups":[{"id":"x84teu","label":"Remote 2 Nød setup","feed":"AVI 95","layer":"video","transport":"5G Internet","role":"backup","channels":[{"id":"x85teu","nr":"Ch. 1","label":"Remote 2 PGM L.","layer":"lyd"},{"id":"x86teu","nr":"Ch. 2","label":"Remote 2 PGM R.","layer":"lyd"}],"sub":null,"style":{}}],"style":{}},{"id":"x87teu","src":"Backup Retur","dst":"Remote 2","groups":[{"id":"x88teu","label":"PGM","feed":"Web mon Retur","layer":"video","transport":"Internet","role":"backup","channels":[{"id":"x89teu","nr":"Ch. 1","label":"PGM L","layer":"lyd"},{"id":"x90teu","nr":"Ch. 2","label":"PGM R","layer":"lyd"}],"sub":null,"dir":"rtl","style":{}}],"style":{}}]},{"title":"Backup Kampe","sections":[{"id":"x91teu","src":"Remote 2 <> Odense","dst":"MCR / AFV. A","groups":[{"id":"x92teu","label":"AETA · Serie# 694 · SIP User 905280","feed":"AETA","layer":"lyd","transport":"Internet 20/20 Mbit","role":"backup","channels":[{"id":"x93teu","nr":"Ch. 1","label":"Komm 1 Spare","layer":"lyd"},{"id":"x94teu","nr":"Ch. 2","label":"Komm 2 Spare","layer":"lyd"}],"sub":null,"style":{}}],"style":{"srcBg":"#c98f8f","dstBg":"#6d8764","srcFg":"#2b2417","dstFg":"#f3f7f1","boxSize":16,"srcBd":"#b37979","dstBd":"#57714e"}},{"id":"x95teu","src":"Host Uplink","dst":"MCR / AFV. A","groups":[{"id":"x96teu","label":"WF Host","feed":"Host Uplink","layer":"video","transport":"AVI ??","role":"backup","channels":[{"id":"x97teu","nr":"Ch. 1","label":"IT. L.","layer":"lyd"},{"id":"x98teu","nr":"Ch. 2","label":"IT. R.","layer":"lyd"},{"id":"x99teu","nr":"Ch. 3","label":"","layer":"lyd"},{"id":"x100teu","nr":"Ch. 4","label":"Mix af vores Kommentatorer","layer":"lyd"},{"id":"x101teu","nr":"Ch. 5","label":"Dolby E.","layer":"lyd"},{"id":"x102teu","nr":"Ch. 6","label":"Dolby E.","layer":"lyd"}],"sub":null,"style":{}}],"style":{"srcBg":"#a8b5a0","dstBg":"#6d8764","srcFg":"#2b2417","dstFg":"#f3f7f1","boxSize":16,"srcBd":"#929f8a","dstBd":"#57714e"}}]},{"title":"Intercom Primær og Backup","sections":[{"id":"x103teu","src":"Unity Connect 4W Sæt 2","dst":"MCR / AFV. A","groups":[{"id":"x104teu","label":"Unity Connect 4W Sæt 2 ","feed":"4W","layer":"intercom","transport":"Internet","role":"primær","channels":[{"id":"x105teu","nr":"4W1","label":"Morten IFB","layer":"intercom","rx":"Morten TB","tx":"Morten Conf"},{"id":"x106teu","nr":"4W2","label":"Exp 1 IFB","layer":"intercom","tx":"Exp 1 Conf","rx":"Exp 1 TB"},{"id":"x107teu","nr":"4W3","label":"Exp 2 IFB","layer":"intercom","tx":"Exp 2 Conf","rx":"Exp 2 TB"},{"id":"x108teu","nr":"4W4","label":"Mix% Studie.","layer":"intercom"},{"id":"x109teu","nr":"4W5","label":"Camilla IFB","layer":"intercom","tx":"Camilla Conf","rx":"Camilla TB"},{"id":"x110teu","nr":"4W6","label":"Exp Pitch IFB","layer":"intercom","tx":"Exp Pitch IFB","rx":"Exp Pitch TB"},{"id":"x111teu","nr":"4W7","label":"Mix % Pitch","layer":"intercom"},{"id":"x112teu","nr":"4W8","label":"PGM A","layer":"intercom"},{"id":"x113teu","nr":"4W9","label":"","layer":"intercom"},{"id":"x114teu","nr":"4W10","label":"MCR Conf.","layer":"intercom"},{"id":"x115teu","nr":"4W11","label":"Prod Conf.","layer":"intercom"},{"id":"x116teu","nr":"4W12","label":"Lyd Conf.","layer":"intercom"},{"id":"x117teu","nr":"4W13","label":"EVS Conf.","layer":"intercom"},{"id":"x118teu","nr":"4W14","label":"Adhoc Conf.","layer":"intercom"},{"id":"x119teu","nr":"4W15","label":"IFB Adhoc","layer":"intercom"}],"sub":null,"style":{"feedColor":"#1e7a55","labelColor":"#1e7a55","lineColor":"#1e7a55","chColor":"#3a3a3a","labelSize":11.5,"chSize":11},"dir":"both","tx":"","rx":"","collapsed":false}],"style":{"srcW":450,"srcH":31,"srcDX":0,"srcBg":"#8fa9c9","dstBg":"#6d8764","srcFg":"#2b2417","dstFg":"#f3f7f1","boxSize":16,"srcBd":"#7993b3","dstBd":"#57714e"},"srcLines":[],"dstLines":[{"id":"x165yys","t":"Alt skift mellem main- og backup-intercom laves i Remote 2, så det skal ligge dobbelt i MCR Odense."}]},{"id":"x121teu","src":"Remote 2 IVC 32","dst":"MCR / AFV. A","groups":[{"id":"x122teu","label":"Clearcom Trunks","feed":"R2H IP4W","layer":"intercom","transport":"Internet","role":"primær","channels":[{"id":"x123teu","nr":"4W1","label":"TB Morten → R2. IFB 1","layer":"intercom"},{"id":"x124teu","nr":"4W2","label":"TB EXP 1 → R2. IFB 2","layer":"intercom"},{"id":"x125teu","nr":"4W3","label":"TB EXP 2 → R2. IFB 3","layer":"intercom"},{"id":"x126teu","nr":"4W4","label":"Mix % Studie","layer":"intercom"},{"id":"x127teu","nr":"4W5","label":"TB Pitch Camilla → R2. IFB 4","layer":"intercom"},{"id":"x128teu","nr":"4W6","label":"TB Pitch EXP. → R2. IFB 5","layer":"intercom"},{"id":"x129teu","nr":"4W7","label":"Mix% Pitch","layer":"intercom"},{"id":"x130teu","nr":"4W8","label":"IFB Komm 1 → Hjemme IFB","layer":"intercom"},{"id":"x131teu","nr":"4W9","label":"IFB Komm 2 → Hjemme IFB · spare for AETA","layer":"intercom"},{"id":"x132teu","nr":"4W10","label":"MCR Conf.","layer":"intercom"},{"id":"x133teu","nr":"4W11","label":"PROD Conf.","layer":"intercom"},{"id":"x134teu","nr":"4W12","label":"Lyd Conf.","layer":"intercom"},{"id":"x135teu","nr":"4W13","label":"EVS Conf.","layer":"intercom"}],"sub":null,"style":{}}],"style":{"srcW":449,"srcH":0,"srcBg":"#9c8fc9","dstBg":"#6d8764","srcFg":"#111111","dstFg":"#f3f7f1","boxSize":16,"srcBd":"#8679b3","dstBd":"#57714e"}},{"id":"x136teu","src":"AVI / Unity","dst":"MCR / AFV. A","groups":[{"id":"x137teu","label":"AVI / Unity · Mixzone","feed":"4W","layer":"intercom","transport":"Internet","role":"primær","channels":[{"id":"x138teu","nr":"4W 15","label":"IFB & TB Komm 1","layer":"intercom"},{"id":"x139teu","nr":"4W 16","label":"IFB & TB Komm 2","layer":"intercom"},{"id":"x140teu","nr":"IFB","label":"IFB Reporter","layer":"intercom"}],"sub":null,"style":{}}],"style":{}},{"id":"x141teu","src":"AETA (TB) Sæt C","dst":"MCR / AFV. A","groups":[{"id":"x142teu","label":"AETA (TB) SÆT C · Serie# 695 · SIP User 905281","feed":"AETA","layer":"intercom","transport":"Internet","role":"primær","channels":[{"id":"x143teu","nr":"Komm 1","label":"IFB & TB → EV_A_KOMM1 ifb","layer":"intercom"},{"id":"x144teu","nr":"Komm 2","label":"IFB → EV_A_KOMM2 ifb","layer":"intercom"}],"sub":null,"style":{}}],"style":{}},{"id":"x145teu","src":"Paneler ude","dst":"Remote 2 IVC 32","groups":[{"id":"x146teu","label":"Studie","feed":"Studie","layer":"intercom","transport":"Clearcom","role":"primær","channels":[{"id":"x147teu","nr":"Panel","label":"Vært","layer":"intercom"},{"id":"x148teu","nr":"Panel","label":"Ekspert 1","layer":"intercom"},{"id":"x149teu","nr":"Panel","label":"Ekspert 2","layer":"intercom"},{"id":"x150teu","nr":"Panel","label":"Ekspert 3","layer":"intercom"}],"sub":null,"style":{}},{"id":"x151teu","label":"Pitch site","feed":"Pitch site","layer":"intercom","transport":"Clearcom","role":"primær","channels":[{"id":"x152teu","nr":"Panel","label":"Pitch Vært","layer":"intercom"},{"id":"x153teu","nr":"Panel","label":"Ekspert","layer":"intercom"}],"sub":null,"style":{}},{"id":"x154teu","label":"Mixzone","feed":"Mixzone","layer":"intercom","transport":"Clearcom","role":"primær","channels":[{"id":"x155teu","nr":"Panel","label":"Reporter","layer":"intercom"},{"id":"x156teu","nr":"Panel","label":"Foto","layer":"intercom"}],"sub":null,"style":{}},{"id":"x157teu","label":"Kommentator plads","feed":"Komm plads","layer":"intercom","transport":"Clearcom","role":"primær","channels":[{"id":"x158teu","nr":"Panel","label":"Komm 1","layer":"intercom"},{"id":"x159teu","nr":"Panel","label":"Komm 2","layer":"intercom"}],"sub":null,"style":{}}],"style":{}}],"items":[{"id":"x163ke2","type":"legend","w":178,"title":"STUDIE Morten","showTotal":false,"rows":[{"sym":"👤","color":"#1e56b0","label":"Vært IFB","count":1},{"sym":"👤","color":"#1e7a55","label":"Ekspert IFB","count":3},{"sym":"👥","color":"#333333","label":"Gæst IFB","count":1}],"anchor":{"sec":"x103teu","side":"src","dx":226,"dy":46}},{"id":"x164bqs","type":"legend","w":178,"title":"PITCH Camilla ","showTotal":false,"rows":[{"sym":"👤","color":"#1e56b0","label":"Vært IFB","count":1},{"sym":"👤","color":"#1e7a55","label":"Ekspert IFB","count":1},{"sym":"👤","color":"#333333","label":"Gæst IFB","count":1}],"anchor":{"sec":"x103teu","side":"src","dx":227,"dy":179}},{"id":"x166lgc","type":"legend","w":178,"title":"STUDIE Morten","showTotal":false,"rows":[{"sym":"👤","color":"#1e56b0","label":"Vært IFB","count":1},{"sym":"👤","color":"#1e7a55","label":"Ekspert IFB","count":3},{"sym":"👥","color":"#333333","label":"Gæst IFB","count":1}],"anchor":{"sec":"x121teu","side":"src","dx":235,"dy":46}},{"id":"x167rbv","type":"legend","w":178,"title":"PITCH Camilla ","showTotal":false,"rows":[{"sym":"👤","color":"#1e56b0","label":"Vært IFB","count":1},{"sym":"👤","color":"#1e7a55","label":"Ekspert IFB","count":1},{"sym":"👤","color":"#333333","label":"Gæst IFB","count":1}],"anchor":{"sec":"x121teu","side":"src","dx":237,"dy":186}},{"id":"x168dbf","type":"legend","w":178,"title":"BOLERO WL Intercom","showTotal":false,"rows":[{"sym":"👤","color":"#1e56b0","label":"LYD Ass","count":1},{"sym":"👤","color":"#1e7a55","label":"Teko","count":1},{"sym":"👤","color":"#00f900","label":"Regisør","count":1},{"sym":"👤","color":"#669c35","label":"Foto","count":4}],"anchor":{"sec":"x121teu","side":"src","dx":17,"dy":146}}]}];
+function oslo(){return JSON.parse(JSON.stringify(OSLO_DATA))}
+
+let projectName='Oslo · Remote 2';
+let pages=oslo();
+let activePage=0;
+let doc=pages[activePage];
+let path=[];                       // [{group}] for drill-down – lokal til den aktive side
+let sel=null;                      // {t:'grp'|'sec', id}
+let on=new Set(['video','lyd','intercom','net']);
+let backupOn=true;
+let undoStack=[];
+let focus=null;                    // {t:'sec'|'grp', id} – vis kun én ting
+
+/* Den "sheet" der vises: enten sidens rod, eller (drillet ind) en gruppes underark.
+   Titlen på en underside er ALTID gruppens eget navn – ét sted at rette den. */
+const sheet=()=> path.length? path[path.length-1].sub : doc;
+const sheetTitle=()=> path.length? path[path.length-1].label : doc.title;
+function setSheetTitle(v){ if(path.length) path[path.length-1].label=v; else doc.title=v; }
+
+function snap(){undoStack.push(JSON.stringify({pages,activePage,path:path.map(p=>p.id)}));if(undoStack.length>60)undoStack.shift();document.getElementById('bUndo').disabled=false}
+function undo(){
+ if(!undoStack.length)return;
+ const st=JSON.parse(undoStack.pop());
+ pages=st.pages; activePage=st.activePage; doc=pages[activePage];
+ path=[]; let sh=doc;
+ st.path.forEach(gid=>{for(const sc of sh.sections){const g=sc.groups.find(x=>x.id===gid);if(g&&g.sub){path.push(g);sh=g.sub;break}}});
+ sel=null; focus=null; document.getElementById('bUndo').disabled=!undoStack.length; draw();
+}
+function findGrp(gid){for(const sc of sheet().sections){const g=sc.groups.find(x=>x.id===gid);if(g)return[g,sc]}return[null,null]}
+
+/* ---- sider (faner) ---- */
+function addPage(){snap();pages.push(newSheet('Ny side '+(pages.length+1)));switchPage(pages.length-1)}
+function switchPage(i){activePage=i;doc=pages[i];path=[];sel=null;focus=null;draw()}
+function delPage(i){
+ if(pages.length<=1)return;
+ if(!confirm('Slet siden "'+pages[i].title+'"? Det kan ikke fortrydes.'))return;
+ snap();pages.splice(i,1);
+ if(activePage>=pages.length)activePage=pages.length-1;
+ doc=pages[activePage];path=[];sel=null;draw();
+}
+function movePage(i,d){const j=i+d;if(j<0||j>=pages.length)return;snap();const[p]=pages.splice(i,1);pages.splice(j,0,p);activePage=j;draw()}
+
+/* ================= tegn ================= */
+const el=document.getElementById('sheet');
+const esc=s=>String(s===null||s===undefined?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const vis=(layer,role)=> on.has(layer)&&(backupOn||role!=='backup');
+
+/* stil-hjælpere: alt er valgfrit, tomt = standardudseende */
+const SS=sc=>sc.style||(sc.style={});
+const GS=g=>g.style||(g.style={});
+const px=(v,d)=>(v==null||v==='')?d:v;
+
+function draw(keepSide){
+ if(editing&&editing.inp&&!editing.inp.isConnected)editing=null;  // feltet blev fjernet ved sidste tegning
+ const sh=sheet(); const title=sheetTitle();
+ let h=`<div class="sheettitle" data-e="title">${esc(title)}</div>
+        <div class="sheetsub">${path.length?'Underark · '+path.map(p=>esc(p.label)).join(' › '):'Signalflow'}</div>`;
+
+ if(focus){
+  const what = focus.t==='sec'
+    ? (sh.sections.find(s=>s.id===focus.id)||{}).dst
+    : (findGrp(focus.id)[0]||{}).label;
+  h+=`<div class="focusbar">Viser kun <b>${esc(what||'')}</b> · resten er skjult
+       <button class="add" data-unfocus="1">vis hele arket</button></div>`;
+ }
+
+ if(!sh.sections.length){
+  h+=`<div class="empty">Tomt ark.<br><button class="add" data-addsec="1">+ tilføj sektion</button></div>`;
+ }
+
+ sh.sections.forEach(sc=>{
+  if(focus&&focus.t==='sec'&&focus.id!==sc.id)return;
+  if(focus&&focus.t==='grp'&&!sc.groups.some(g=>g.id===focus.id))return;
+
+  const st=SS(sc);
+  const anyVis=!sc.groups.length||sc.groups.some(g=>vis(g.layer,g.role));
+  if(!anyVis){h+=`<div class="secgone" data-sec="${sc.id}">${esc(sc.src)} → ${esc(sc.dst)} · ${sc.groups.length} linjer skjult af filter</div>`;return}
+
+  const srcS=`background:${px(st.srcBg,'#e9c440')};border-color:${px(st.srcBd,'#bd9a2c')};color:${px(st.srcFg,'#2b2417')};margin-right:${px(st.srcDX,0)}px;min-height:${px(st.srcH,0)}px`;
+  const dstS=`background:${px(st.dstBg,'#6d8764')};border-color:${px(st.dstBd,'#4c6245')};color:${px(st.dstFg,'#f3f7f1')};margin-left:${px(st.dstDX,0)}px;min-height:${px(st.dstH,0)}px`;
+  const nameS=`font-size:${px(st.boxSize,16)}px`;
+  const gridS=`grid-template-columns:${px(st.srcW,190)}px 1fr ${px(st.dstW,210)}px`;
+
+  const lines=(arr,side)=>(arr||[]).map(l=>
+    `<div class="boxline" data-e="${side}line" data-id="${sc.id}|${l.id}">${esc(l.t||'…')}</div>`).join('');
+  const held=side=>(sh.items||[]).filter(i=>i.anchor&&i.anchor.sec===sc.id&&i.anchor.side===side)
+    .map(i=>itemHTML(i)).join('');
+
+  h+=`<div class="section" data-sec="${sc.id}" style="${gridS}">
+    <div class="srcbox" style="${srcS}">
+      <div class="boxname lbl" data-e="src" data-id="${sc.id}" style="${nameS};color:inherit">${esc(sc.src)}</div>
+      <div class="boxsub">${sc.groups.length} grupper</div>
+      <div class="boxlines">${lines(sc.srcLines,'src')}</div>
+      <button class="boxadd" data-boxadd="${sc.id}|src">+ tekst</button>
+      <span class="tools">
+        <button class="mini" data-secedit="${sc.id}" title="Rediger sektion" style="color:inherit">✎</button>
+        <button class="mini" data-seccopy="${sc.id}" title="Kopiér sektion" style="color:inherit">⧉</button>
+        <button class="mini" data-secfocus="${sc.id}" title="Vis kun denne sektion" style="color:inherit">⤢</button>
+      </span>
+      ${held('src')}
+      <span class="rs" data-rs="src|${sc.id}" title="Træk for at ændre størrelse"></span>
+      <span class="rs edge" data-rs="srcin|${sc.id}" title="Træk boksen ind mod midten"></span>
+    </div>
+    <div class="rows">`;
+
+  sc.groups.forEach(g=>{
+   if(focus&&focus.t==='grp'&&focus.id!==g.id)return;
+   const gv=vis(g.layer,g.role);
+   if(!gv){return}
+   const gs=GS(g);
+   const base=COL[g.layer];
+   const feedC=px(gs.feedColor,base), labC=px(gs.labelColor,base), lineC=px(gs.lineColor,base);
+   const rtl=g.dir==='rtl'; const both=g.dir==='both';
+   const wcls=both?'both':(rtl?'rtl':'');
+   const collapsed=g.collapsed?'collapsed':'';
+
+   h+=`<div class="grp ${g.role==='backup'?'backup':''} ${collapsed} ${sel&&sel.t==='grp'&&sel.id===g.id?'sel':''}" data-grp="${g.id}">
+     <div class="feed" style="color:${lineC}">
+       <button class="mini caret" data-fold="${g.id}" title="${g.collapsed?'Fold ud':'Fold sammen'}">${g.collapsed?'▸':'▾'}</button>
+       <span class="lbl" data-e="feed" data-id="${g.id}" style="color:${feedC};font-size:${px(gs.labelSize,11.5)}px">${esc(g.feed||'TX')}${g.role==='backup'?' · BACKUP':''}</span>
+       <span class="endtag ${g.tx?'':'ghost'}" data-e="tx" data-id="${g.id}">${esc(g.tx||'TX')}</span>
+       <span class="wire ${wcls}"></span>
+       <span class="cloud" data-e="transport" data-id="${g.id}">${esc(g.transport||'—')}</span>
+       <span class="wire ${wcls}"></span>
+       <span class="endtag ${g.rx?'':'ghost'}" data-e="rx" data-id="${g.id}">${esc(g.rx||'RX')}</span>
+       <span class="lbl" data-e="glabel" data-id="${g.id}" style="font-weight:600;color:${labC};font-size:${px(gs.labelSize,11.5)}px">${esc(g.label)}</span>
+       <span class="chcount">${g.collapsed?g.channels.length+' kanaler':''}</span>
+       <span class="tools">
+         <button class="mini" data-gedit="${g.id}" title="Rediger gruppe">✎</button>
+         <button class="mini" data-gcopy="${g.id}" title="Kopiér">⧉</button>
+         <button class="mini" data-gfocus="${g.id}" title="Vis kun denne gruppe">⤢</button>
+         <button class="mini" data-up="${g.id}" title="Flyt op">▲</button>
+         <button class="mini" data-down="${g.id}" title="Flyt ned">▼</button>
+         <button class="mini" data-delg="${g.id}" title="Slet gruppe">✕</button>
+       </span>
+     </div>`;
+
+   g.channels.forEach(ch=>{
+    const crole=ch.role||g.role;          // tom = følger gruppen
+    const cv=vis(ch.layer,crole);
+    const chC=px(gs.chColor,'#3a3a3a'), chS=px(gs.chSize,11);
+    h+=`<div class="ch ${crole==='backup'?'cbackup':''} ${cv?'':'faded'}" style="color:${chC}">
+      <span class="dot" style="background:${DOT[ch.layer]}" data-cyc="${g.id}|${ch.id}" title="${LAYERS[ch.layer]} – klik for at skifte"></span>
+      <span class="chnr" data-e="chnr" data-id="${g.id}|${ch.id}" style="font-size:${chS-0.5}px">${esc(ch.nr)}</span>
+      ${crole==='backup'?'<span class="chb" title="Backup-linje">B</span>':''}
+      <span class="lbl" data-e="chlabel" data-id="${g.id}|${ch.id}" style="font-size:${chS}px">${esc(ch.label||'…')}</span>
+      <span class="endtag sm ${ch.tx?'':'ghost'}" data-e="chtx" data-id="${g.id}|${ch.id}">${esc(ch.tx||'TX')}</span>
+      <span class="wire ${wcls}"></span>
+      <span class="endtag sm ${ch.rx?'':'ghost'}" data-e="chrx" data-id="${g.id}|${ch.id}">${esc(ch.rx||'RX')}</span>
+      <span class="tools">
+        <button class="mini" data-crole="${g.id}|${ch.id}" title="${crole==='backup'?'Backup – klik for primær':'Primær – klik for backup'}">${crole==='backup'?'⇢':'⇒'}</button>
+        <button class="mini" data-delc="${g.id}|${ch.id}" title="Slet kanal">✕</button>
+      </span>
+    </div>`;
+   });
+
+   h+=`<div class="grpfoot">
+      <button class="add" data-addch="${g.id}">+ kanal</button>
+      <button class="drill" data-drill="${g.id}">⊞ åbn ${g.sub?'('+g.sub.sections.reduce((a,s)=>a+s.groups.length,0)+')':''}</button>
+     </div></div>`;
+  });
+
+  h+=`<button class="add" data-addgrp="${sc.id}">+ gruppe</button>
+    ${held('rows')}
+    </div>
+    <div class="dstbox" style="${dstS}">
+      <div class="boxname lbl" data-e="dst" data-id="${sc.id}" style="${nameS};color:inherit">${esc(sc.dst)}</div>
+      <div class="boxsub">${sc.groups.length} linjer</div>
+      <div class="boxlines">${lines(sc.dstLines,'dst')}</div>
+      <button class="boxadd" data-boxadd="${sc.id}|dst">+ tekst</button>
+      <span class="tools"><button class="mini" data-delsec="${sc.id}" title="Slet sektion" style="color:inherit">✕</button></span>
+      ${held('dst')}
+      <span class="rs" data-rs="dst|${sc.id}" title="Træk for at ændre størrelse"></span>
+      <span class="rs edge left" data-rs="dstin|${sc.id}" title="Træk boksen ind mod midten"></span>
+    </div>
+  </div>`;
+ });
+ if(sh.sections.length&&!focus)h+=`<div style="text-align:center">
+   <button class="add" data-addsec="1">+ sektion</button>
+   <button class="add" data-addtext="1">+ tekstfelt</button>
+   <button class="add" data-addlegend="1">+ symbolforklaring</button>
+ </div>`;
+
+ /* frit placerede elementer ovenpå arket (låste er tegnet inde i boksene) */
+ (sh.items||[]).filter(i=>!i.anchor).forEach(it=>{ h+=itemHTML(it,false) });
+
+ el.innerHTML=h;
+ fitBoxes();
+ crumbs(); if(!keepSide) side(); renderTabs();
+}
+
+/* Lad afsender-/modtagerbokse vokse, så de altid omslutter de bokse der er låst i dem.
+   Kaldes efter hver tegning, så også print og eksport får de rigtige højder med. */
+function fitBoxes(){
+ el.querySelectorAll('.srcbox,.dstbox,.rows').forEach(c=>{
+  let need=0;
+  c.querySelectorAll(':scope > .fitem').forEach(n=>{
+   need=Math.max(need, n.offsetTop + n.offsetHeight);
+  });
+  if(!need)return;
+  const cur=parseFloat(c.style.minHeight)||0;
+  c.style.minHeight=Math.max(cur, need+12)+'px';
+ });
+}
+
+function renderTabs(){
+ const tb=document.getElementById('tabbar');
+ let h=pages.map((p,i)=>`<div class="tab ${i===activePage?'on':''}" data-tab="${i}">
+   <span class="tname" data-tabname="${i}">${esc(p.title)}</span>
+   ${pages.length>1?`<button class="tx" data-tabdel="${i}" title="Slet side">✕</button>`:''}
+ </div>`).join('');
+ h+=`<button class="tabadd" data-tabadd="1" title="Ny side">+</button>`;
+ tb.innerHTML=h;
+ tb.querySelector('[data-tabadd]').onclick=addPage;
+}
+
+/* tab bar event delegation */
+document.getElementById('tabbar').addEventListener('click',ev=>{
+ const tab=ev.target.closest('[data-tab]');
+ const del=ev.target.closest('[data-tabdel]');
+ const nm=ev.target.closest('[data-tabname]');
+ 
+ if(del){ev.preventDefault();delPage(+del.dataset.tabdel);return}
+ // klik på tab-navn: rediger hvis active, ellers switch
+ if(nm){
+   const i=+nm.dataset.tabname;
+   if(i===activePage){ev.preventDefault();editTabName(nm,i);return}
+   // else fall through to tab switch
+ }
+ if(tab){ev.preventDefault();switchPage(+tab.dataset.tab)}
+});
+
+function editTabName(node,i){
+ const inp=document.createElement('input');
+ inp.className='tabedit'; inp.value=pages[i].title;
+ node.replaceWith(inp); inp.focus(); inp.select();
+ const done=save=>{if(save){snap();pages[i].title=inp.value||'Side '+(i+1)}draw()};
+ inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();done(true)}if(e.key==='Escape'){e.preventDefault();done(false)}e.stopPropagation()};
+ inp.onblur=()=>done(true);
+}
+
+function anchorField(it){
+ return `<div class="mf"><label>Placering</label>
+   <div style="display:flex;gap:8px;align-items:center">
+     <div style="flex:1;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:8px 9px;font-size:12px">
+       ${esc(anchorName(it))}
+     </div>
+     ${it.anchor?`<button class="btn" data-unanchor="1" style="width:auto;margin:0;white-space:nowrap">Frigør</button>`:''}
+   </div></div>
+ <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;margin:-4px 0 12px">
+   Træk boksen hen over en afsender- eller modtagerboks, så låser den sig fast dér og følger den ved print.
+   Trækker du den ud på det tomme ark, ligger den frit igen.
+ </div>`;
+}
+
+function anchorName(it){
+ if(!it.anchor)return 'Frit på arket';
+ const sc=sheet().sections.find(x=>x.id===it.anchor.sec);
+ if(!sc)return 'Frit på arket';
+ return {src:'Afsenderboks · '+sc.src, dst:'Modtagerboks · '+sc.dst, rows:'Signalsporet · '+sc.src}[it.anchor.side];
+}
+function unanchor(it){
+ const node=el.querySelector('[data-item="'+it.id+'"]');
+ if(node){const r=node.getBoundingClientRect(), sr=el.getBoundingClientRect();
+   it.x=Math.max(0,Math.round(r.left-sr.left-el.clientLeft));
+   it.y=Math.max(0,Math.round(r.top -sr.top -el.clientTop));
+ }else{const s0=dropSpot(); it.x=s0.x; it.y=s0.y}
+ delete it.anchor;
+}
+
+function itemHTML(it){
+ const selc=sel&&sel.t==='item'&&sel.id===it.id?'sel':'';
+ const a=it.anchor;
+ const pos=`left:${a?a.dx:it.x}px;top:${a?a.dy:it.y}px;width:${it.w}px`;
+ const tag=a?`<span class="anchortag">låst</span>`:'';
+ const tools=`<span class="fitools">
+     <button class="mini" data-iedit="${it.id}" title="Rediger">✎</button>
+     <button class="mini" data-idup="${it.id}" title="Dublér">⧉</button>
+     <button class="mini" data-idel="${it.id}" title="Slet">✕</button>
+   </span><span class="rs" data-rs="item|${it.id}"></span>`;
+
+ if(it.type==='text'){
+  const st=`${pos};font-size:${px(it.size,13)}px;color:${px(it.color,'#1d1d1d')};`
+    +`background:${it.bg&&it.bg!=='none'?it.bg:'transparent'};text-align:${px(it.align,'left')};`
+    +`font-weight:${it.bold?700:400};`
+    +(it.border?`border:1px solid ${px(it.borderColor,'#cfcfcf')};`:'');
+  return `<div class="fitem ftext fdrag ${selc}" data-item="${it.id}" style="${st}">
+       ${esc(it.text||'Tekst').split('\n').join('<br>')}${tag}${tools}</div>`;
+ }
+ const total=(it.rows||[]).reduce((a2,r)=>a2+(+r.count||0),0);
+ return `<div class="fitem flegend fdrag ${selc}" data-item="${it.id}" style="${pos}">
+   <h4>${esc(it.title||'Forklaring')}</h4>
+   ${(it.rows||[]).map(r=>`<div class="lrow">
+      <span class="lsym" style="color:${px(r.color,'#333')}">${esc(r.sym||'●')}</span>
+      <span class="lname">${esc(r.label||'')}</span>
+      <span class="lcount">${r.count===''||r.count==null?'':esc(r.count)}</span>
+    </div>`).join('')}
+   ${it.showTotal!==false?`<div class="ltot"><span>I alt</span><span>${total}</span></div>`:''}
+   ${tag}${tools}</div>`;
+}
+
+function crumbs(){
+ const c=document.getElementById('crumbs');
+ let h=`<button class="projname" data-proj="1" title="Projektets navn – klik for at rette. Bruges som filnavn, når du gemmer.">${esc(projectName)}</button>`
+      +`<span class="sep">/</span>`
+      +`<button data-d="-1">${esc(doc.title)}</button>`;
+ path.forEach((g,i)=>{h+=`<span class="sep">›</span>`+(i===path.length-1?`<span class="here">${esc(g.label)}</span>`:`<button data-d="${i}">${esc(g.label)}</button>`)});
+ c.innerHTML=h;
+ c.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{const d=+b.dataset.d;path=d<0?[]:path.slice(0,d+1);sel=null;draw()});
+ c.querySelector('[data-proj]').onclick=function(){
+  const inp=document.createElement('input');
+  inp.className='tabedit'; inp.value=projectName;
+  this.replaceWith(inp); inp.focus(); inp.select();
+  const done=save=>{if(save)projectName=inp.value||'Projekt';draw()};
+  inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();done(true)}
+                    if(e.key==='Escape'){e.preventDefault();done(false)}e.stopPropagation()};
+  inp.onblur=()=>done(true);
+ };
+}
+
+/* ================= inspektor ================= */
+function side(){
+ const s=document.getElementById('side');
+ if(sel&&sel.t==='grp'){
+  const [g]=findGrp(sel.id);
+  if(!g){sel=null;return side()}
+  s.innerHTML=`<h2>${esc(g.label)}</h2><div class="sub">Gruppe · ${g.channels.length} kanaler</div>
+   <div class="f"><label>Navn</label><input id="s-label" value="${esc(g.label)}"></div>
+   <div class="f"><label>Feed / TX</label><input id="s-feed" value="${esc(g.feed)}"></div>
+   <div class="f"><label>Signal</label><select id="s-layer">${Object.entries(LAYERS).map(([k,v])=>`<option value="${k}" ${g.layer===k?'selected':''}>${v}</option>`).join('')}</select></div>
+   <div class="f"><label>Transport</label><select id="s-tp">${TRANSPORTS.map(t=>`<option ${t===g.transport?'selected':''}>${t}</option>`).join('')}</select></div>
+   <div class="f"><label>Rolle</label><select id="s-role"><option ${g.role==='primær'?'selected':''}>primær</option><option ${g.role==='backup'?'selected':''}>backup</option></select></div>
+   <div class="row2"><button class="btn" id="s-up">▲ Op</button><button class="btn" id="s-down">▼ Ned</button></div>
+   <hr>
+   <button class="btn" id="s-addch">+ Tilføj kanal</button>
+   <button class="btn go" id="s-drill">⊞ Åbn gruppens indhold</button>
+   <button class="btn del" id="s-del">Slet gruppe</button>`;
+  const q=x=>s.querySelector(x);
+  bindText(q('#s-label'),v=>{g.label=v});
+  bindText(q('#s-feed'),v=>{g.feed=v});
+  q('#s-layer').onchange=e=>{snap();g.layer=e.target.value;draw()};
+  q('#s-tp').onchange=e=>{snap();g.transport=e.target.value;draw()};
+  q('#s-role').onchange=e=>{snap();g.role=e.target.value;draw()};
+  q('#s-up').onclick=()=>move(g.id,-1); q('#s-down').onclick=()=>move(g.id,1);
+  q('#s-addch').onclick=()=>{snap();g.channels.push(newCh(g.channels.length+1));draw()};
+  q('#s-drill').onclick=()=>drill(g.id);
+  q('#s-del').onclick=()=>{snap();const[,sc]=findGrp(g.id);sc.groups=sc.groups.filter(x=>x.id!==g.id);sel=null;draw()};
+ } else {
+  s.innerHTML=`<h2>Ark</h2><div class="sub">${sheet().sections.length} sektioner</div>
+   <div class="f"><label>${path.length?"Gruppens navn":"Sidens titel"}</label><input id="s-title" value="${esc(sheetTitle())}"></div>
+   <button class="btn" id="s-addsec">+ Tilføj sektion</button>
+   <hr>
+   <div class="hint">
+     <kbd>Klik</kbd> på en tekst for at rette den.<br>
+     <kbd>Enter</kbd> gemmer · <kbd>Esc</kbd> fortryder<br>
+     <kbd>Klik</kbd> på farveprikken skifter signaltype<br>
+     <kbd>Ctrl+Z</kbd> fortryder sidste ændring<br><br>
+     Knapperne øverst tænder og slukker for signaltyper, så du kan vise f.eks. kun lyd.
+   </div>`;
+  bindText(s.querySelector('#s-title'),v=>setSheetTitle(v));
+  s.querySelector('#s-addsec').onclick=addSec;
+ }
+}
+/* tegn arket, men lad højrepanelet stå urørt (bevarer markør og indtastning) */
+function drawKeep(){draw(true)}
+
+/* tekstfelt i højrepanelet: ét undo-snapshot pr. indtastning, ikke pr. bogstav */
+function bindText(inp,apply){
+ let fresh=true;
+ inp.onfocus=()=>{fresh=true};
+ inp.oninput=e=>{if(fresh){snap();fresh=false}apply(e.target.value);drawKeep()};
+}
+
+/* ================= modalvinduer ================= */
+const mEl=document.getElementById('modal');
+function closeModal(){mEl.classList.remove('on');mEl.innerHTML=''}
+function openModal(title,sub,body,onMount){
+ mEl.innerHTML=`<div class="mbox"><h3>${esc(title)}</h3><div class="msub">${esc(sub)}</div>${body}</div>`;
+ mEl.classList.add('on');
+ if(onMount)onMount(mEl);
+ const first=mEl.querySelector('input,select');if(first)first.focus();
+}
+mEl.addEventListener('click',ev=>{if(ev.target===mEl)closeModal()});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&mEl.classList.contains('on')){closeModal()}},true);
+
+const PALETTE=['#c62828','#e65100','#9a6500','#2e7d32','#1e7a55','#1e56b0','#4527a0','#37474f','#111111','#7a7a7a'];
+const BOXPAL=['#e9c440','#6d8764','#c9a227','#8fa9c9','#c98f8f','#9c8fc9','#a8b5a0','#d8d2c4','#3c4a5a','#2f2f2f'];
+function colorField(label,name,val,pal){
+ return `<div class="mf"><label>${label}</label>
+   <input type="color" name="${name}" value="${val}">
+   <div class="swatches">${pal.map(c=>`<span class="sw" data-sw="${name}" data-c="${c}" style="background:${c}"></span>`).join('')}</div></div>`;
+}
+function mountSwatches(root){
+ root.querySelectorAll('[data-sw]').forEach(sw=>sw.onclick=()=>{
+   const inp=root.querySelector(`input[name="${sw.dataset.sw}"]`);
+   if(inp){inp.value=sw.dataset.c;inp.dispatchEvent(new Event('input'))}
+ });
+}
+const val=(root,n)=>{const e=root.querySelector(`[name="${n}"]`);return e?e.value:''};
+
+/* ---- sektion: redigeringsmodul ---- */
+function editSection(secId){
+ const sc=sheet().sections.find(s=>s.id===secId); if(!sc)return;
+ const st=SS(sc);
+ openModal('Rediger sektion',esc(sc.src)+' → '+esc(sc.dst),`
+  <div class="mgrid">
+    <div class="mf"><label>Afsender (gul boks)</label><input type="text" name="src" value="${esc(sc.src)}"></div>
+    <div class="mf"><label>Modtager (grøn boks)</label><input type="text" name="dst" value="${esc(sc.dst)}"></div>
+  </div>
+  <div class="msec">Boksenes udseende</div>
+  <div class="mgrid">
+    ${colorField('Afsender · baggrund','srcBg',px(st.srcBg,'#e9c440'),BOXPAL)}
+    ${colorField('Modtager · baggrund','dstBg',px(st.dstBg,'#6d8764'),BOXPAL)}
+    ${colorField('Afsender · tekst','srcFg',px(st.srcFg,'#2b2417'),PALETTE)}
+    ${colorField('Modtager · tekst','dstFg',px(st.dstFg,'#f3f7f1'),PALETTE)}
+  </div>
+  <div class="msec">Tekst</div>
+  <div class="mgrid">
+    <div class="mf"><label>Boksnavnets størrelse (px)</label><input type="number" name="boxSize" min="9" max="34" value="${px(st.boxSize,16)}"></div>
+    <div class="mf"><label>Kant</label><select name="border">
+      <option value="auto" ${px(st.srcBd,'auto')==='auto'?'selected':''}>Automatisk (mørkere nuance)</option>
+      <option value="none" ${st.srcBd==='transparent'?'selected':''}>Ingen kant</option>
+    </select></div>
+  </div>
+  <div class="mrow">
+    <button class="btn go" data-ok="1">Gem</button>
+    <button class="btn" data-cancel="1">Annullér</button>
+    <button class="btn" data-reset="1">Nulstil udseende</button>
+  </div>`,root=>{
+   mountSwatches(root);
+   const un=root.querySelector('[data-unanchor]');
+   if(un)un.onclick=()=>{snap();unanchor(it);closeModal();draw()};
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-reset]').onclick=()=>{snap();delete sc.style;closeModal();draw()};
+   root.querySelector('[data-ok]').onclick=()=>{
+     snap();
+     sc.src=val(root,'src'); sc.dst=val(root,'dst');
+     const s2=SS(sc);
+     s2.srcBg=val(root,'srcBg'); s2.dstBg=val(root,'dstBg');
+     s2.srcFg=val(root,'srcFg'); s2.dstFg=val(root,'dstFg');
+     s2.boxSize=+val(root,'boxSize')||16;
+     const b=val(root,'border');
+     s2.srcBd = b==='none'?'transparent':shade(s2.srcBg,-22);
+     s2.dstBd = b==='none'?'transparent':shade(s2.dstBg,-22);
+     closeModal(); draw();
+   };
+ });
+}
+/* gør en hex-farve mørkere/lysere */
+function shade(hex,amt){
+ const m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex||'');
+ if(!m)return hex;
+ const f=n=>Math.max(0,Math.min(255,parseInt(n,16)+amt)).toString(16).padStart(2,'0');
+ return '#'+f(m[1])+f(m[2])+f(m[3]);
+}
+
+/* ---- gruppe: redigeringsmodul ---- */
+function editGroup(gid){
+ const [g]=findGrp(gid); if(!g)return;
+ const gs=GS(g);
+ openModal('Rediger gruppe',esc(g.feed||'')+' · '+esc(g.label),`
+  <div class="mgrid">
+    <div class="mf"><label>Navn</label><input type="text" name="label" value="${esc(g.label)}"></div>
+    <div class="mf"><label>Feed / TX</label><input type="text" name="feed" value="${esc(g.feed||'')}"></div>
+    <div class="mf"><label>Transport</label><input type="text" name="transport" value="${esc(g.transport||'')}"></div>
+    <div class="mf"><label>Signaltype</label><select name="layer">
+      ${Object.entries(LAYERS).map(([k,v])=>`<option value="${k}" ${g.layer===k?'selected':''}>${v}</option>`).join('')}
+    </select></div>
+    <div class="mf"><label>Rolle</label><select name="role">
+      <option value="primær" ${g.role==='primær'?'selected':''}>Primær</option>
+      <option value="backup" ${g.role==='backup'?'selected':''}>Backup (stiplet)</option>
+    </select></div>
+    <div class="mf"><label>Signalretning</label><select name="dir">
+      <option value="ltr" ${(!g.dir||g.dir==='ltr')?'selected':''}>→ mod modtager</option>
+      <option value="rtl" ${g.dir==='rtl'?'selected':''}>← retur mod afsender</option>
+      <option value="both" ${g.dir==='both'?'selected':''}>↔ begge veje</option>
+    </select></div>
+    <div class="mf"><label>Mærkat i venstre ende</label><input type="text" name="tx" value="${esc(g.tx||'')}" placeholder="fx TX 1"></div>
+    <div class="mf"><label>Mærkat i højre ende</label><input type="text" name="rx" value="${esc(g.rx||'')}" placeholder="fx RX 3"></div>
+  </div>
+  <div class="msec">Farver</div>
+  <div class="mgrid">
+    ${colorField('Feed / TX-tekst','feedColor',px(gs.feedColor,COL[g.layer]),PALETTE)}
+    ${colorField('Gruppenavn','labelColor',px(gs.labelColor,COL[g.layer]),PALETTE)}
+    ${colorField('Signallinje','lineColor',px(gs.lineColor,COL[g.layer]),PALETTE)}
+    ${colorField('Kanaltekst','chColor',px(gs.chColor,'#3a3a3a'),PALETTE)}
+  </div>
+  <div class="msec">Tekststørrelse</div>
+  <div class="mgrid">
+    <div class="mf"><label>Gruppens tekst (px)</label><input type="number" name="labelSize" min="8" max="26" step="0.5" value="${px(gs.labelSize,11.5)}"></div>
+    <div class="mf"><label>Kanalernes tekst (px)</label><input type="number" name="chSize" min="7" max="22" step="0.5" value="${px(gs.chSize,11)}"></div>
+  </div>
+  <div class="msec">Kanalernes rolle</div>
+  <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;margin:-6px 0 8px">
+    Hver kanal kan sættes for sig ude på arket. Her sætter du dem alle på én gang.
+  </div>
+  <div class="row2">
+    <button class="btn" data-allprim="1">Alle primær</button>
+    <button class="btn" data-allback="1">Alle backup</button>
+  </div>
+  <div class="msec">Visning</div>
+  <div class="mgrid one">
+    <label class="chk"><input type="checkbox" name="collapsed" ${g.collapsed?'checked':''}>
+      Fold sammen på skærmen (foldes altid ud ved print og eksport)</label>
+  </div>
+  <div class="mrow">
+    <button class="btn go" data-ok="1">Gem</button>
+    <button class="btn" data-cancel="1">Annullér</button>
+    <button class="btn" data-reset="1">Nulstil udseende</button>
+  </div>`,root=>{
+   mountSwatches(root);
+   const un=root.querySelector('[data-unanchor]');
+   if(un)un.onclick=()=>{snap();unanchor(it);closeModal();draw()};
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-reset]').onclick=()=>{snap();delete g.style;closeModal();draw()};
+   root.querySelector('[data-allprim]').onclick=()=>{snap();g.channels.forEach(c=>c.role='primær');closeModal();draw()};
+   root.querySelector('[data-allback]').onclick=()=>{snap();g.channels.forEach(c=>c.role='backup');closeModal();draw()};
+   root.querySelector('[data-ok]').onclick=()=>{
+     snap();
+     g.label=val(root,'label'); g.feed=val(root,'feed'); g.transport=val(root,'transport');
+     g.layer=val(root,'layer'); g.role=val(root,'role'); g.dir=val(root,'dir');
+     g.tx=val(root,'tx'); g.rx=val(root,'rx');
+     g.collapsed=root.querySelector('[name="collapsed"]').checked;
+     const s2=GS(g);
+     s2.feedColor=val(root,'feedColor'); s2.labelColor=val(root,'labelColor');
+     s2.lineColor=val(root,'lineColor'); s2.chColor=val(root,'chColor');
+     s2.labelSize=+val(root,'labelSize')||11.5; s2.chSize=+val(root,'chSize')||11;
+     closeModal(); draw();
+   };
+ });
+}
+
+/* ---- kopiering ---- */
+function reId(sh){sh.sections.forEach(s=>{s.id=id();s.groups.forEach(g=>{g.id=id();g.channels.forEach(c=>c.id=id());if(g.sub)reId(g.sub)})})}
+function cloneGroup(g){const c=JSON.parse(JSON.stringify(g));c.id=id();c.channels.forEach(ch=>ch.id=id());if(c.sub)reId(c.sub);return c}
+function cloneSection(sc){const c=JSON.parse(JSON.stringify(sc));c.id=id();c.groups=c.groups.map(g=>cloneGroup(g));return c}
+
+/* alle sektioner på tværs af sider, til målvælgeren */
+function allSectionTargets(){
+ const out=[];
+ pages.forEach((p,pi)=>p.sections.forEach(sc=>out.push({pi,sc,label:p.title+' › '+sc.src+' → '+sc.dst})));
+ return out;
+}
+function allGroupTargets(){
+ const out=[];
+ pages.forEach((p,pi)=>p.sections.forEach(sc=>sc.groups.forEach(g=>out.push({pi,sc,g,label:p.title+' › '+sc.dst+' › '+(g.feed||'')+' '+g.label}))));
+ return out;
+}
+
+/* kopiér gruppe, eller udvalgte kanaler fra den */
+function copyGroup(gid){
+ const [g]=findGrp(gid); if(!g)return;
+ const secs=allSectionTargets(), grps=allGroupTargets().filter(t=>t.g.id!==gid);
+ openModal('Kopiér',esc(g.feed||'')+' · '+esc(g.label),`
+  <div class="mf"><label>Hvad vil du kopiere?</label>
+    <select name="what">
+      <option value="group">Hele gruppen med alle kanaler</option>
+      <option value="chans">Udvalgte kanaler ind i en anden gruppe</option>
+    </select></div>
+
+  <div id="pGroup">
+    <div class="msec">Placér gruppen i</div>
+    <div class="mf"><select name="secTarget">
+      ${secs.map((t,i)=>`<option value="${i}">${esc(t.label)}</option>`).join('')}
+    </select></div>
+    <label class="chk"><input type="checkbox" name="move"> Flyt i stedet for at kopiere</label>
+  </div>
+
+  <div id="pChans" style="display:none">
+    <div class="msec">Vælg kanaler</div>
+    <div class="chklist">
+      ${g.channels.map((c,i)=>`<label class="chk"><input type="checkbox" name="ch" value="${i}" checked>
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${DOT[c.layer]}"></span>
+        ${esc(c.nr)} ${esc(c.label||'')}</label>`).join('')||'<div class="msub">Ingen kanaler</div>'}
+    </div>
+    <div class="msec">Ind i gruppen</div>
+    <div class="mf"><select name="grpTarget">
+      ${grps.map((t,i)=>`<option value="${i}">${esc(t.label)}</option>`).join('')||'<option value="">Ingen andre grupper</option>'}
+    </select></div>
+  </div>
+
+  <div class="mrow">
+    <button class="btn go" data-ok="1">Udfør</button>
+    <button class="btn" data-cancel="1">Annullér</button>
+  </div>`,root=>{
+   const what=root.querySelector('[name="what"]');
+   what.onchange=()=>{
+     root.querySelector('#pGroup').style.display = what.value==='group'?'':'none';
+     root.querySelector('#pChans').style.display = what.value==='chans'?'':'none';
+   };
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-ok]').onclick=()=>{
+     snap();
+     if(what.value==='group'){
+       const t=secs[+val(root,'secTarget')]; if(!t)return closeModal();
+       t.sc.groups.push(cloneGroup(g));
+       if(root.querySelector('[name="move"]').checked){
+         const [,sc]=findGrp(gid); sc.groups=sc.groups.filter(x=>x.id!==gid);
+       }
+     }else{
+       const t=grps[+val(root,'grpTarget')]; if(!t)return closeModal();
+       const picked=[...root.querySelectorAll('[name="ch"]:checked')].map(i=>g.channels[+i.value]);
+       picked.forEach(c=>{const n=JSON.parse(JSON.stringify(c));n.id=id();t.g.channels.push(n)});
+     }
+     closeModal(); sel=null; draw();
+   };
+ });
+}
+
+/* kopiér en hel sektion til en anden side */
+function copySection(secId){
+ const sc=sheet().sections.find(s=>s.id===secId); if(!sc)return;
+ openModal('Kopiér sektion',esc(sc.src)+' → '+esc(sc.dst),`
+  <div class="mf"><label>Til side</label>
+    <select name="page">
+      ${pages.map((p,i)=>`<option value="${i}" ${i===activePage?'':''}>${esc(p.title)}</option>`).join('')}
+    </select></div>
+  <div class="mgrid one">
+    <label class="chk"><input type="checkbox" name="move"> Flyt i stedet for at kopiere</label>
+    <label class="chk"><input type="checkbox" name="empty"> Kopiér kun opsætningen (uden kanaler)</label>
+  </div>
+  <div class="mrow">
+    <button class="btn go" data-ok="1">Udfør</button>
+    <button class="btn" data-cancel="1">Annullér</button>
+  </div>`,root=>{
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-ok]').onclick=()=>{
+     snap();
+     const pi=+val(root,'page');
+     const copy=cloneSection(sc);
+     if(root.querySelector('[name="empty"]').checked)copy.groups.forEach(g=>g.channels=[]);
+     pages[pi].sections.push(copy);
+     if(root.querySelector('[name="move"]').checked&&pi!==activePage){
+       sheet().sections=sheet().sections.filter(s=>s.id!==secId);
+     }
+     closeModal(); sel=null; draw();
+   };
+ });
+}
+
+/* ================= eksport ================= */
+
+/* Tegn en vilkårlig side som HTML uden at forstyrre det brugeren ser.
+   Gemmer al tilstand, tegner, læser markuppen, og sætter alt tilbage. */
+function renderPageHTML(pi,allLayers){
+ const sP=activePage,sD=doc,sPath=path,sSel=sel,sFocus=focus,sOn=new Set(on),sB=backupOn;
+ if(allLayers){on=new Set(['video','lyd','intercom','net']);backupOn=true}
+ activePage=pi;doc=pages[pi];path=[];sel=null;focus=null;
+ draw(true);
+ const html=el.innerHTML;
+ activePage=sP;doc=sD;path=sPath;sel=sSel;focus=sFocus;on=sOn;backupOn=sB;
+ draw(true);
+ return html;
+}
+
+const PAPER={A4:{p:210,l:297},A3:{p:297,l:420},Letter:{p:215.9,l:279.4},Tabloid:{p:279.4,l:431.8}};
+function exportPDF(o){
+ const idx = o.scope==='all' ? pages.map((_,i)=>i) : [activePage];
+ /* Lås arkets bredde til den, elementerne er placeret efter, og skalér hele arket
+    ned til papiret. Ellers ombrydes indholdet, mens de frie bokse bliver liggende. */
+ const W = el.clientWidth || 1340;
+ const mm = (PAPER[o.paper]||PAPER.A4)[o.orient==='landscape'?'l':'p'];
+ const avail = (mm - 2*o.margin) * 96/25.4;
+ const k = Math.min(1, avail / W);
+ const stamp = new Date().toLocaleDateString('da-DK',{day:'2-digit',month:'2-digit',year:'numeric'});
+ document.getElementById('printroot').innerHTML = idx.map(i=>
+   `<div class="psheet">${renderPageHTML(i,o.allLayers)}
+      <div class="pfoot">${esc(pages[i].title)} · side ${idx.indexOf(i)+1} af ${idx.length} · udskrevet ${stamp}</div>
+    </div>`).join('');
+ document.getElementById('pagestyle').textContent =
+   `@page{size:${o.paper} ${o.orient};margin:${o.margin}mm}
+    @media print{#printroot{width:${W}px;zoom:${k.toFixed(4)}}
+                 .psheet{width:${W}px}}`;
+ closeModal();
+ setTimeout(()=>{
+   window.print();
+   setTimeout(()=>{document.getElementById('printroot').innerHTML=''},600);
+ },120);
+}
+
+/* CSV med semikolon og BOM, så dansk Excel åbner det korrekt */
+function exportCSV(o){
+ const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+ const rows=[['Side','Afsender','Modtager','Feed/TX','Gruppe','Transport','Signaltype','Rolle','Retning','Kanal','Kanaltekst','Kanaltype']];
+ const idx = o.scope==='all' ? pages.map((_,i)=>i) : [activePage];
+ idx.forEach(pi=>{
+  const walk=(sh,prefix)=>{
+   sh.sections.forEach(sc=>sc.groups.forEach(g=>{
+    if(!o.allLayers&&!vis(g.layer,g.role))return;
+    const base=[prefix,sc.src,sc.dst,g.feed||'',g.label,g.transport||'',LAYERS[g.layer]||g.layer,g.role,g.dir==='rtl'?'retur':'frem'];
+    if(!g.channels.length)rows.push(base.concat(['','','']));
+    g.channels.forEach(ch=>rows.push(base.concat([ch.nr,ch.label||'',LAYERS[ch.layer]||ch.layer])));
+    if(o.subs&&g.sub)walk(g.sub,prefix+' › '+g.label);
+   }));
+  };
+  walk(pages[pi],pages[pi].title);
+ });
+ dl('\ufeff'+rows.map(r=>r.map(q).join(';')).join('\r\n'),
+    fileName('csv',o.scope!=='all'),'text/csv;charset=utf-8');
+ closeModal();
+}
+
+/* Selvstændig HTML-fil man kan sende videre – kræver ingen programmer */
+function exportHTML(o){
+ const css=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
+ const idx = o.scope==='all' ? pages.map((_,i)=>i) : [activePage];
+ const W = el.clientWidth || 1340;
+ const body=idx.map(i=>`<div class="psheet" style="position:relative;width:${W}px;margin:0 auto 28px;padding:26px 30px">
+    ${renderPageHTML(i,o.allLayers)}</div>`).join('');
+ const doc2=`<!DOCTYPE html><html lang="da"><head><meta charset="utf-8">
+<title>${esc(pages[activePage].title)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>${css}
+body{background:#f0efe9;overflow:auto;height:auto}
+#printroot{display:block}
+.mini,.add,.drill,.chcount,.grpfoot{display:none!important}
+.grp.collapsed .ch{display:flex!important}
+.psheet{background:#fbfaf6;border-radius:3px;box-shadow:0 6px 24px rgba(0,0,0,.14);position:relative}
+body{padding:24px 0}
+</style></head><body><div id="printroot">${body}</div></body></html>`;
+ dl(doc2,fileName('html',o.scope!=='all'),'text/html;charset=utf-8');
+ closeModal();
+}
+
+
+/* ---- eksport til draw.io (ren mxGraph-XML, kan redigeres videre) ---- */
+function exportDrawio(o){
+ const idx = o.scope==='all' ? pages.map((_,i)=>i) : [activePage];
+ const X=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+          .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'&#10;');
+ const SHEETW=1500, M=40;
+
+ const diagrams = idx.map((pi,n)=>{
+  const sh=pages[pi];
+  const cells=[]; let uid=2;
+  const id2=()=>'n'+(uid++);
+  const V=(val,style,x,y,w,h)=>{cells.push(
+    `<mxCell id="${id2()}" value="${X(val)}" style="${style}" vertex="1" parent="1">`
+   +`<mxGeometry x="${Math.round(x)}" y="${Math.round(y)}" width="${Math.round(w)}" height="${Math.round(h)}" as="geometry"/></mxCell>`)};
+  const E=(val,style,x1,y1,x2,y2)=>{cells.push(
+    `<mxCell id="${id2()}" value="${X(val)}" style="${style}" edge="1" parent="1">`
+   +`<mxGeometry relative="1" as="geometry">`
+   +`<mxPoint x="${Math.round(x1)}" y="${Math.round(y1)}" as="sourcePoint"/>`
+   +`<mxPoint x="${Math.round(x2)}" y="${Math.round(y2)}" as="targetPoint"/></mxGeometry></mxCell>`)};
+
+  let y=M;
+  V(sh.title,'text;html=1;fontSize=22;fontStyle=1;align=center;verticalAlign=middle;',
+    M,y,SHEETW-2*M,34);
+  y+=54;
+
+  sh.sections.forEach(sc=>{
+   const st=sc.style||{};
+   const srcW=+(st.srcW||190), dstW=+(st.dstW||210);
+   const rowsX=M+srcW+30, dstX=SHEETW-M-dstW, rowsW=dstX-30-rowsX;
+   const feedW=120, nameW=250;
+   const lineA=rowsX+feedW, lineB=rowsX+rowsW-nameW;
+   const cloudW=110, cloudX=(lineA+lineB)/2-cloudW/2;
+
+   const secTop=y; let ry=y+14;
+
+   sc.groups.forEach(g=>{
+    const col=(g.style&&g.style.lineColor)||{video:'#c62828',lyd:'#9a6500',intercom:'#1e7a55',net:'#1e56b0'}[g.layer]||'#333';
+    const dash=g.role==='backup'?'dashed=1;':'';
+    const sA=g.dir==='rtl'||g.dir==='both'?'startArrow=classic;startFill=1;':'startArrow=none;';
+    const eA=g.dir==='rtl'?'endArrow=none;':'endArrow=classic;endFill=1;';
+    const est=`html=1;${dash}${sA}${eA}strokeColor=${col};strokeWidth=1.6;`;
+
+    V((g.feed||'')+(g.role==='backup'?' · BACKUP':''),
+      `text;html=1;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;fontColor=${col};`,
+      rowsX,ry-9,feedW-6,18);
+    E('',est,lineA,ry,cloudX,ry);
+    V(g.transport||'—',
+      'rounded=1;arcSize=50;html=1;fontSize=10;fontStyle=1;fillColor=#ffffff;strokeColor=#b4b4b4;fontColor=#5c5c5c;',
+      cloudX,ry-11,cloudW,22);
+    E('',est,cloudX+cloudW,ry,lineB,ry);
+    V(g.label,`text;html=1;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;fontColor=${col};`,
+      lineB+8,ry-9,nameW,18);
+    if(g.tx)V(g.tx,'text;html=1;fontSize=8;align=center;verticalAlign=middle;fontColor=#666666;',lineA+2,ry-16,54,12);
+    if(g.rx)V(g.rx,'text;html=1;fontSize=8;align=center;verticalAlign=middle;fontColor=#666666;',lineB-56,ry-16,54,12);
+    ry+=20;
+
+    g.channels.forEach(ch=>{
+     const crole=ch.role||g.role;
+     const cdash=crole==='backup'?'dashed=1;':'';
+     const cdot={video:'#ff5252',lyd:'#ffb648',intercom:'#3fd99c',net:'#5ea3ff'}[ch.layer]||'#999';
+     V('','ellipse;html=1;fillColor='+cdot+';strokeColor=none;',rowsX+16,ry-4,8,8);
+     V((ch.nr||'')+'  '+(ch.label||''),
+       'text;html=1;fontSize=10;align=left;verticalAlign=middle;fontColor=#3a3a3a;',
+       rowsX+30,ry-8,250,16);
+     E('',`html=1;${cdash}${g.dir==='rtl'||g.dir==='both'?'startArrow=classic;startFill=1;':'startArrow=none;'}`
+        +`${g.dir==='rtl'?'endArrow=none;':'endArrow=classic;endFill=1;'}strokeColor=#3a3a3a;strokeWidth=1;`,
+       rowsX+290,ry,lineB,ry);
+     ry+=16;
+    });
+    ry+=10;
+   });
+
+   const secH=Math.max(ry-secTop+10, 90);
+   const boxS=(fill,stroke,font)=>`rounded=1;arcSize=4;html=1;whiteSpace=wrap;verticalAlign=top;align=left;`
+     +`fontSize=14;fontStyle=1;spacing=8;fillColor=${fill};strokeColor=${stroke};fontColor=${font};`;
+   const srcLines=(sc.srcLines||[]).map(l=>l.t).join('\n');
+   const dstLines=(sc.dstLines||[]).map(l=>l.t).join('\n');
+   V(sc.src+(srcLines?'\n\n'+srcLines:''),
+     boxS(st.srcBg||'#e9c440', st.srcBd||'#bd9a2c', st.srcFg||'#2b2417'), M,secTop,srcW,secH);
+   V(sc.dst+(dstLines?'\n\n'+dstLines:''),
+     boxS(st.dstBg||'#6d8764', st.dstBd||'#4c6245', st.dstFg||'#f3f7f1'), dstX,secTop,dstW,secH);
+
+   /* bokse der er låst fast i denne sektion – stables i den boks de hører til */
+   ['src','dst'].forEach(side=>{
+    let iy=secTop+42;
+    (sh.items||[]).filter(i=>i.anchor&&i.anchor.sec===sc.id&&i.anchor.side===side).forEach(it=>{
+     const w=Math.min(it.w||240, (side==='src'?srcW:dstW)-24);
+     const h=itemH(it);
+     V(itemText(it),
+       'rounded=1;arcSize=6;html=1;whiteSpace=wrap;verticalAlign=top;align=left;fontSize=10;'
+      +'fillColor=#ffffff;strokeColor=#cfcfcf;spacing=7;',
+       (side==='src'?M:dstX)+12, iy, w, h);
+     iy+=h+10;
+    });
+   });
+   y=secTop+secH+26;
+  });
+
+  /* frit placerede bokse */
+  const scale=(SHEETW-2*M)/Math.max(600,(el.clientWidth||1340));
+  (sh.items||[]).filter(i=>!i.anchor).forEach(it=>{
+   V(itemText(it),
+     'rounded=1;arcSize=6;html=1;whiteSpace=wrap;verticalAlign=top;align=left;fontSize=10;'
+    +(it.type==='text'?'fillColor=none;strokeColor=none;':'fillColor=#ffffff;strokeColor=#cfcfcf;')+'spacing=7;',
+     M+(it.x||0)*scale, M+40+(it.y||0)*scale, (it.w||240), itemH(it));
+  });
+
+  return `<diagram name="${X(sh.title)}" id="d${n+1}">`
+   +`<mxGraphModel dx="1200" dy="800" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" `
+   +`arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">`
+   +`<root><mxCell id="0"/><mxCell id="1" parent="0"/>${cells.join('')}</root>`
+   +`</mxGraphModel></diagram>`;
+ }).join('');
+
+ dl(`<mxfile host="SignalFlow" type="device">${diagrams}</mxfile>`,
+    fileName('drawio',o.scope!=='all'),'application/xml');
+ closeModal();
+}
+/* hjælpere til bokse i draw.io */
+function itemText(it){
+ if(it.type==='text')return it.text||'';
+ const rows=(it.rows||[]).map(r=>`${r.sym||'●'}  ${r.label||''}${(r.count===''||r.count==null)?'':'   '+r.count}`);
+ const tot=(it.rows||[]).reduce((a,r)=>a+(+r.count||0),0);
+ return [it.title||'Forklaring',''].concat(rows)
+   .concat(it.showTotal!==false?['','I alt   '+tot]:[]).join('\n');
+}
+function itemH(it){
+ if(it.type==='text')return Math.max(26,(String(it.text||'').split('\n').length)*16+14);
+ return 34+(it.rows||[]).length*15+(it.showTotal!==false?20:0);
+}
+
+function exportJSON(){
+ dl(JSON.stringify({app:'signalflow',name:projectName,pages},null,1),fileName('json'),'application/json');
+ closeModal();
+}
+
+/* Filnavnet følger det der rent faktisk ligger i filen: hele projektet,
+   eller den enkelte side hvis eksporten kun omfatter den. */
+function fileName(ext,onlyPage){
+ const raw = onlyPage ? (pages[activePage].title||'side') : (projectName||'signalflow');
+ const base = raw.replace(/[^\wæøåÆØÅ -]/g,'').trim().replace(/ +/g,'_');
+ return base+'.'+ext;
+}
+function dl(text,name,mime){
+ const b=new Blob([text],{type:mime});
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(b);a.download=name;a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+}
+
+function openExport(){
+ openModal('Eksportér',esc(projectName)+' · '+esc(pages[activePage].title),`
+  <div class="mf"><label>Format</label>
+    <select name="fmt">
+      <option value="pdf">PDF · til print og deling</option>
+      <option value="csv">CSV · regneark (Excel)</option>
+      <option value="drawio">draw.io · redigerbar tegning</option>
+      <option value="html">HTML · selvstændig fil</option>
+      <option value="json">JSON · projektfil til SignalFlow</option>
+    </select></div>
+
+  <div class="msec">Omfang</div>
+  <div class="mgrid one">
+    <div class="mf"><select name="scope">
+      <option value="page">Kun denne side</option>
+      <option value="all">Alle ${pages.length} sider</option>
+    </select></div>
+    <label class="chk"><input type="checkbox" name="allLayers" checked>
+      Tag alt med, også lag der er slået fra i filteret</label>
+    <label class="chk" id="rowSubs"><input type="checkbox" name="subs">
+      Tag underark med (kun CSV)</label>
+  </div>
+
+  <div id="pPdf">
+    <div class="msec">Sideopsætning</div>
+    <div class="mgrid">
+      <div class="mf"><label>Papir</label><select name="paper">
+        <option value="A3" selected>A3</option><option value="A4">A4</option>
+        <option value="Letter">Letter</option><option value="Tabloid">Tabloid</option>
+      </select></div>
+      <div class="mf"><label>Retning</label><select name="orient">
+        <option value="landscape" selected>Liggende</option>
+        <option value="portrait">Stående</option>
+      </select></div>
+      <div class="mf"><label>Margen (mm)</label><input type="number" name="margin" min="0" max="30" value="8"></div>
+    </div>
+    <div class="msub" style="margin:12px 0 0;text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6">
+      Sammenklappede grupper foldes automatisk ud. Vælg <b>Gem som PDF</b> i printvinduet,
+      og sæt flueben i <b>Baggrundsgrafik</b>, hvis boksenes farver mangler.
+    </div>
+  </div>
+
+  <div class="mrow">
+    <button class="btn go" data-ok="1">Eksportér</button>
+    <button class="btn" data-cancel="1">Annullér</button>
+  </div>`,root=>{
+   const fmt=root.querySelector('[name="fmt"]');
+   const sync=()=>{
+     root.querySelector('#pPdf').style.display = fmt.value==='pdf'?'':'none';
+     root.querySelector('#rowSubs').style.display = fmt.value==='csv'?'':'none';
+     root.querySelector('[name="scope"]').parentElement.parentElement.style.display = fmt.value==='json'?'none':'';
+   };
+   fmt.onchange=sync; sync();
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-ok]').onclick=()=>{
+     const o={
+       scope:val(root,'scope'),
+       allLayers:root.querySelector('[name="allLayers"]').checked,
+       subs:root.querySelector('[name="subs"]').checked,
+       paper:val(root,'paper'),orient:val(root,'orient'),margin:+val(root,'margin')||0
+     };
+     if(fmt.value==='pdf')exportPDF(o);
+     else if(fmt.value==='csv')exportCSV(o);
+     else if(fmt.value==='drawio')exportDrawio(o);
+     else if(fmt.value==='html')exportHTML(o);
+     else exportJSON();
+   };
+ });
+}
+
+/* ---- frie elementer: tekstfelt og symbolforklaring ---- */
+const SYMBOLS=['●','■','▲','◆','★','✚','👤','👥','🎧','🎙','📹','🖥','📞','🔊','⚑','◼'];
+
+function items(){const sh=sheet();return sh.items||(sh.items=[])}
+function findItem(iid){return items().find(i=>i.id===iid)}
+
+function dropSpot(){
+ const stg=document.getElementById('stage');
+ const y=Math.max(20,(stg.scrollTop||0)-(el.offsetTop||0)+70);
+ const n=items().length;
+ const maxX=Math.max(0,(el.clientWidth||900)-320);
+ return {x:Math.min(maxX,40+(n%3)*30), y:y+(n%3)*26};
+}
+function addText(){
+ snap();
+ const s0=dropSpot();
+ items().push({id:id(),type:'text',x:s0.x,y:s0.y,w:260,text:'Ny tekst',size:13,
+   color:'#1d1d1d',bg:'none',align:'left',bold:false,border:false});
+ draw();
+}
+function addLegend(){
+ snap();
+ const s0=dropSpot();
+ items().push({id:id(),type:'legend',x:s0.x,y:s0.y,w:250,title:'Bemanding',showTotal:true,
+  rows:[
+   {sym:'👤',color:'#1e56b0',label:'Vært',count:1},
+   {sym:'👤',color:'#1e7a55',label:'Ekspert',count:2},
+   {sym:'🎧',color:'#c62828',label:'Kommentator',count:2},
+   {sym:'🎙',color:'#9a6500',label:'Reporter',count:1}
+  ]});
+ draw();
+}
+
+function editText(iid){
+ const it=findItem(iid); if(!it)return;
+ openModal('Rediger tekstfelt','Frit felt på arket',`
+  <div class="mf"><label>Tekst (linjeskift bevares)</label>
+    <textarea name="text" rows="4" style="width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:8px;font:inherit;resize:vertical">${esc(it.text||'')}</textarea></div>
+  <div class="mgrid">
+    <div class="mf"><label>Skriftstørrelse (px)</label><input type="number" name="size" min="8" max="48" step="0.5" value="${px(it.size,13)}"></div>
+    <div class="mf"><label>Bredde (px)</label><input type="number" name="w" min="60" max="1200" step="10" value="${px(it.w,260)}"></div>
+    <div class="mf"><label>Justering</label><select name="align">
+      <option value="left" ${px(it.align,'left')==='left'?'selected':''}>Venstre</option>
+      <option value="center" ${it.align==='center'?'selected':''}>Midt</option>
+      <option value="right" ${it.align==='right'?'selected':''}>Højre</option>
+    </select></div>
+    <div class="mf"><label>Vægt</label><select name="bold">
+      <option value="0" ${it.bold?'':'selected'}>Normal</option>
+      <option value="1" ${it.bold?'selected':''}>Fed</option>
+    </select></div>
+  </div>
+  <div class="msec">Farver</div>
+  <div class="mgrid">
+    ${colorField('Tekstfarve','color',px(it.color,'#1d1d1d'),PALETTE)}
+    ${colorField('Baggrund','bg',it.bg&&it.bg!=='none'?it.bg:'#ffffff',BOXPAL)}
+  </div>
+  <div class="msec">Placering</div>
+  ${anchorField(it)}
+  <div class="mgrid one">
+    <label class="chk"><input type="checkbox" name="nobg" ${(!it.bg||it.bg==='none')?'checked':''}> Gennemsigtig baggrund</label>
+    <label class="chk"><input type="checkbox" name="border" ${it.border?'checked':''}> Vis ramme om feltet</label>
+  </div>
+  <div class="mrow">
+    <button class="btn go" data-ok="1">Gem</button>
+    <button class="btn" data-cancel="1">Annullér</button>
+  </div>`,root=>{
+   mountSwatches(root);
+   const un=root.querySelector('[data-unanchor]');
+   if(un)un.onclick=()=>{snap();unanchor(it);closeModal();draw()};
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-ok]').onclick=()=>{
+     snap();
+     it.text=root.querySelector('[name="text"]').value;
+     it.size=+val(root,'size')||13; it.w=+val(root,'w')||260;
+     it.align=val(root,'align'); it.bold=val(root,'bold')==='1';
+     it.color=val(root,'color');
+     it.bg=root.querySelector('[name="nobg"]').checked?'none':val(root,'bg');
+     it.border=root.querySelector('[name="border"]').checked;
+     closeModal(); draw();
+   };
+ });
+}
+
+function editLegend(iid){
+ const it=findItem(iid); if(!it)return;
+ const row=(r,i)=>`<div class="lrowedit" data-i="${i}" style="display:grid;grid-template-columns:64px 46px 1fr 62px 28px;gap:6px;margin-bottom:6px;align-items:center">
+   <select name="sym${i}" style="background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px;font-size:15px">
+     ${SYMBOLS.map(sm=>`<option ${sm===r.sym?'selected':''}>${sm}</option>`).join('')}
+   </select>
+   <input type="color" name="col${i}" value="${px(r.color,'#333333')}" style="width:100%;height:32px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px">
+   <input type="text" name="lab${i}" value="${esc(r.label||'')}" placeholder="Position" style="width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 7px;font:inherit">
+   <input type="number" name="cnt${i}" value="${r.count===''||r.count==null?'':r.count}" min="0" style="width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 7px;font:inherit">
+   <button class="mini" data-rmrow="${i}" style="opacity:1;color:var(--video)">✕</button>
+ </div>`;
+ openModal('Symbolforklaring','Bemanding og positioner',`
+  <div class="mgrid">
+    <div class="mf"><label>Overskrift</label><input type="text" name="title" value="${esc(it.title||'')}"></div>
+    <div class="mf"><label>Bredde (px)</label><input type="number" name="w" min="140" max="800" step="10" value="${px(it.w,250)}"></div>
+  </div>
+  <div class="msec">Linjer</div>
+  <div style="display:grid;grid-template-columns:64px 46px 1fr 62px 28px;gap:6px;margin-bottom:6px;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em">
+    <span>Symbol</span><span>Farve</span><span>Position</span><span>Antal</span><span></span>
+  </div>
+  <div id="rows">${(it.rows||[]).map(row).join('')}</div>
+  <button class="btn" data-addrow="1" style="margin-top:8px">+ Tilføj linje</button>
+  <div class="mgrid one" style="margin-top:10px">
+    <label class="chk"><input type="checkbox" name="tot" ${it.showTotal!==false?'checked':''}> Vis samlet antal nederst</label>
+  </div>
+  <div class="msec">Placering</div>
+  ${anchorField(it)}
+  <div class="mrow">
+    <button class="btn go" data-ok="1">Gem</button>
+    <button class="btn" data-cancel="1">Annullér</button>
+  </div>`,root=>{
+   const read=()=>[...root.querySelectorAll('.lrowedit')].map(d=>{
+     const i=d.dataset.i;
+     return {sym:val(root,'sym'+i),color:val(root,'col'+i),label:val(root,'lab'+i),
+             count:val(root,'cnt'+i)===''?'':+val(root,'cnt'+i)};
+   });
+   const rerender=rows=>{
+     it.rows=rows;
+     const box=root.querySelector('#rows');
+     box.innerHTML=rows.map(row).join('');
+     bindRows();
+   };
+   const bindRows=()=>root.querySelectorAll('[data-rmrow]').forEach(b=>b.onclick=()=>{
+     const rows=read(); rows.splice(+b.dataset.rmrow,1); rerender(rows);
+   });
+   bindRows();
+   const un=root.querySelector('[data-unanchor]');
+   if(un)un.onclick=()=>{snap();unanchor(it);closeModal();draw()};
+   root.querySelector('[data-addrow]').onclick=()=>{
+     const rows=read(); rows.push({sym:'●',color:'#333333',label:'',count:1}); rerender(rows);
+   };
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-ok]').onclick=()=>{
+     snap();
+     it.title=val(root,'title'); it.w=+val(root,'w')||250;
+     it.rows=read(); it.showTotal=root.querySelector('[name="tot"]').checked;
+     closeModal(); draw();
+   };
+ });
+}
+
+/* ---- træk og skalér ---- */
+let dragState=null;
+document.getElementById('sheet').addEventListener('mousedown',ev=>{
+ const rs=ev.target.closest('[data-rs]');
+ if(rs){
+  ev.preventDefault();
+  const [kind,ref]=rs.dataset.rs.split('|');
+  const sc=sheet().sections.find(s=>s.id===ref);
+  const it=kind==='item'?findItem(ref):null;
+  const st=sc?SS(sc):null;
+  dragState={mode:'resize',kind,ref,sc,it,st,x0:ev.clientX,y0:ev.clientY,
+    w0:it?it.w:(st?px(kind.startsWith('src')?st.srcW:st.dstW,kind.startsWith('src')?190:210):0),
+    h0:st?px(kind==='src'?st.srcH:st.dstH,0):0,
+    dx0:st?px(kind==='srcin'?st.srcDX:st.dstDX,0):0,
+    el:rs.parentElement};
+  snap(); document.body.style.userSelect='none';
+  return;
+ }
+ const dh=ev.target.closest('.fdrag');
+ if(dh){
+  const node=dh.closest('.fitem');
+  if(!node)return;
+  const it=findItem(node.dataset.item);
+  if(!it)return;
+  if(ev.target.closest('.mini')||ev.target.closest('.rs'))return;
+  ev.preventDefault();
+  const r=node.getBoundingClientRect();
+  dragState={mode:'move',it,el:node,
+    gx:ev.clientX-r.left, gy:ev.clientY-r.top, w:r.width};
+  node.classList.add('dragging');
+  node.style.width=r.width+'px';
+  node.style.left=r.left+'px';
+  node.style.top=r.top+'px';
+  sel={t:'item',id:it.id};
+  snap(); document.body.style.userSelect='none';
+ }
+});
+
+/* find den boks der ligger under punktet – ellers arket selv */
+function dropTarget(x,y){
+ const boxes=[];
+ el.querySelectorAll('.section').forEach(secEl=>{
+  const sec=secEl.dataset.sec;
+  const add=(sel2,side)=>{const c=secEl.querySelector(sel2); if(c)boxes.push({c,sec,side})};
+  add('.srcbox','src'); add('.dstbox','dst'); add('.rows','rows');
+ });
+ for(const b of boxes){
+  const r=b.c.getBoundingClientRect();
+  if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return b;
+ }
+ return null;
+}
+function highlightDrop(t){
+ el.querySelectorAll('.drophere').forEach(n=>n.classList.remove('drophere'));
+ if(t)t.c.classList.add('drophere');
+}
+
+document.addEventListener('mousemove',ev=>{
+ if(!dragState)return;
+ const dx=ev.clientX-dragState.x0, dy=ev.clientY-dragState.y0;
+ const d=dragState;
+ if(d.mode==='move'){
+  d.el.style.left=(ev.clientX-d.gx)+'px';
+  d.el.style.top =(ev.clientY-d.gy)+'px';
+  highlightDrop(dropTarget(ev.clientX-d.gx+14, ev.clientY-d.gy+12));
+ } else if(d.kind==='item'){
+  d.el.style.width=Math.max(90,d.w0+dx)+'px';
+ } else if(d.kind==='srcin'){
+  d.el.style.marginRight=Math.max(0,d.dx0-dx)+'px';
+ } else if(d.kind==='dstin'){
+  d.el.style.marginLeft=Math.max(0,d.dx0+dx)+'px';
+ } else {
+  const w=Math.max(90,d.w0+(d.kind==='src'?dx:-dx));
+  const h=Math.max(0,d.h0+dy);
+  const sec=d.el.closest('.section');
+  const st=SS(d.sc);
+  sec.style.gridTemplateColumns=`${d.kind==='src'?w:px(st.srcW,190)}px 1fr ${d.kind==='dst'?w:px(st.dstW,210)}px`;
+  d.el.style.minHeight=h+'px';
+  d.wNow=w; d.hNow=h;
+ }
+});
+document.addEventListener('mouseup',()=>{
+ const d=dragState; if(!d)return;
+ dragState=null; document.body.style.userSelect='';
+ if(d.mode==='move'){
+  const r=d.el.getBoundingClientRect();
+  const t=dropTarget(r.left+14, r.top+12);
+  highlightDrop(null);
+  if(t){
+   const cr=t.c.getBoundingClientRect();
+   const maxX=Math.max(0, t.c.clientWidth - r.width - 6);
+   d.it.anchor={sec:t.sec, side:t.side,
+     dx:Math.min(maxX, Math.max(6, Math.round(r.left-cr.left-t.c.clientLeft))),
+     dy:Math.max(6, Math.round(r.top -cr.top -t.c.clientTop))};
+  }else{
+   const sr=el.getBoundingClientRect();
+   delete d.it.anchor;
+   d.it.x=Math.max(0,Math.round(r.left-sr.left-el.clientLeft));
+   d.it.y=Math.max(0,Math.round(r.top -sr.top -el.clientTop));
+  }
+ } else if(d.kind==='item'){
+  let w=parseFloat(d.el.style.width)||d.w0;
+  if(d.it.anchor){
+   const c=d.el.parentElement;
+   if(c)w=Math.min(w, c.clientWidth - d.it.anchor.dx - 6);
+  }
+  d.it.w=Math.max(90,w);
+ } else if(d.kind==='srcin'){
+  SS(d.sc).srcDX=parseFloat(d.el.style.marginRight)||0;
+ } else if(d.kind==='dstin'){
+  SS(d.sc).dstDX=parseFloat(d.el.style.marginLeft)||0;
+ } else {
+  const st=SS(d.sc);
+  if(d.kind==='src'){st.srcW=d.wNow;st.srcH=d.hNow}else{st.dstW=d.wNow;st.dstH=d.hNow}
+ }
+ draw();
+});
+
+/* ================= handlinger ================= */
+function addSec(){snap();sheet().sections.push(newSection('Modtager '+(sheet().sections.length+1),sheet().sections[0]?sheet().sections[0].src:'Afsender'));draw()}
+function move(gid,d){snap();const[g,sc]=findGrp(gid);const i=sc.groups.indexOf(g),j=i+d;if(j<0||j>=sc.groups.length)return;sc.groups.splice(i,1);sc.groups.splice(j,0,g);draw()}
+function drill(gid){const[g]=findGrp(gid);if(!g)return;if(!g.sub){snap();g.sub=newSheet(g.label);g.sub.sections.push(newSection('Modtager',g.label))}path.push(g);sel=null;draw();document.getElementById('stage').scrollTop=0}
+
+/* inline redigering */
+let editing=null;
+
+/* Afslut en igangværende redigering uden at tegne om. Kaldes før enhver anden
+   handling, så et felt aldrig kan blive hængende og spærre for videre skrivning. */
+function commitEdit(save){
+ if(!editing)return;
+ const kind=editing.kind, ref=editing.ref, inp=editing.inp;
+ editing=null;
+ if(!inp||!inp.isConnected)return;          // feltet er allerede fjernet – glem det
+ if(save!==false){
+  const v=inp.value;
+  if(v!==getVal(kind,ref)){snap();setVal(kind,ref,v)}
+ }
+}
+
+function startEdit(node){
+ commitEdit(true);                          // gem det forrige felt i stedet for at blokere
+ const kind=node.dataset.e, ref=node.dataset.id;
+ const cur=getVal(kind,ref);
+ const inp=document.createElement('input');
+ inp.id='inlineEdit';
+ inp.value=cur;
+ inp.style.cssText='font:inherit;color:#111;background:#fff;border:1.5px solid #0a5bd3;'
+  +'border-radius:3px;padding:0 4px;min-width:80px;width:'+Math.max(90,cur.length*8+24)+'px';
+ editing={kind:kind,ref:ref,inp:inp};
+ node.replaceWith(inp); inp.focus(); inp.select();
+
+ const finish=function(save){
+  if(!editing||editing.inp!==inp)return;
+  commitEdit(save);
+  draw();
+ };
+ inp.onkeydown=function(e){
+  if(e.key==='Enter'){e.preventDefault();finish(true)}
+  else if(e.key==='Escape'){e.preventDefault();finish(false)}
+  else if(e.key==='Tab'){e.preventDefault();commitEdit(true);draw();focusNext(kind,ref,e.shiftKey)}
+  e.stopPropagation();
+ };
+ inp.onblur=function(){finish(true)};
+}
+
+/* Tab springer videre til næste tekst af samme slags – hurtigt når man skriver
+   mange kanaler i træk. Shift+Tab går tilbage. */
+function focusNext(kind,ref,back){
+ const all=[].slice.call(el.querySelectorAll('[data-e="'+kind+'"]'));
+ let i=-1;
+ for(let j=0;j<all.length;j++){if(all[j].dataset.id===ref){i=j;break}}
+ const next=all[i+(back?-1:1)];
+ if(next)startEdit(next);
+}
+function getVal(k,r){
+ if(k==='title')return sheetTitle();
+ if(k==='src'){const sc=sheet().sections.find(s=>s.id===r);return sc?sc.src:''}
+ if(k==='dst'){const sc=sheet().sections.find(s=>s.id===r);return sc?sc.dst:''}
+ if(k==='srcline'||k==='dstline'){const[sid,lid]=String(r).split('|');
+   const sc=sheet().sections.find(s=>s.id===sid);if(!sc)return '';
+   const L=(k==='srcline'?sc.srcLines:sc.dstLines)||[];const o=L.find(l=>l.id===lid);return o?o.t:''}
+ const [gid,cid]=String(r).split('|'); const [g]=findGrp(gid); if(!g)return '';
+ if(k==='feed')return g.feed; if(k==='glabel')return g.label; if(k==='transport')return g.transport;
+ if(k==='tx')return g.tx||''; if(k==='rx')return g.rx||'';
+ if(k==='chtx'||k==='chrx'){const c2=g.channels.find(c=>c.id===cid);return c2?(k==='chtx'?c2.tx:c2.rx)||'':''}
+ const ch=g.channels.find(c=>c.id===cid); if(!ch)return '';
+ return k==='chnr'?ch.nr:ch.label;
+}
+function setVal(k,r,v){
+ if(k==='title'){setSheetTitle(v);return}
+ if(k==='src'){const sc=sheet().sections.find(s=>s.id===r);if(sc)sc.src=v;return}
+ if(k==='dst'){const sc=sheet().sections.find(s=>s.id===r);if(sc)sc.dst=v;return}
+ if(k==='srcline'||k==='dstline'){const[sid,lid]=String(r).split('|');
+   const sc=sheet().sections.find(s=>s.id===sid);if(!sc)return;
+   const L=(k==='srcline'?sc.srcLines:sc.dstLines)||[];const o=L.find(l=>l.id===lid);
+   if(!o)return;
+   if(v.trim()==='')  {  // tom tekst fjerner linjen
+     if(k==='srcline')sc.srcLines=L.filter(l=>l.id!==lid); else sc.dstLines=L.filter(l=>l.id!==lid);
+   } else o.t=v;
+   return}
+ const [gid,cid]=String(r).split('|'); const [g]=findGrp(gid); if(!g)return;
+ if(k==='feed'){g.feed=v;return} if(k==='glabel'){g.label=v;return} if(k==='transport'){g.transport=v;return}
+ if(k==='tx'){g.tx=v;return} if(k==='rx'){g.rx=v;return}
+ if(k==='chtx'||k==='chrx'){const c2=g.channels.find(c=>c.id===cid);
+   if(c2){if(k==='chtx')c2.tx=v; else c2.rx=v} return}
+ const ch=g.channels.find(c=>c.id===cid); if(!ch)return;
+ if(k==='chnr')ch.nr=v; else ch.label=v;
+}
+
+/* klik på arket */
+el.addEventListener('click',ev=>{
+ const t=ev.target;
+ if(editing&&t!==editing.inp)commitEdit(true);   // gem det åbne felt før alt andet
+ const d=k=>t.closest('['+k+']');
+ let n;
+ if(n=d('data-addsec')){addSec();return}
+ if(n=d('data-addgrp')){snap();const sc=sheet().sections.find(s=>s.id===n.dataset.addgrp);const g=newGroup('Kilde '+(sc.groups.length+1));g.feed='TX '+(sc.groups.length+1);g.channels=[newCh(1)];sc.groups.push(g);sel={t:'grp',id:g.id};draw();return}
+ if(n=d('data-addch')){snap();const[g]=findGrp(n.dataset.addch);g.channels.push(newCh(g.channels.length+1));draw();return}
+ if(n=d('data-delg')){snap();const[g,sc]=findGrp(n.dataset.delg);sc.groups=sc.groups.filter(x=>x!==g);sel=null;draw();return}
+ if(n=d('data-crole')){snap();const[gid,cid]=n.dataset.crole.split('|');const[g]=findGrp(gid);
+   const c=g.channels.find(x=>x.id===cid);
+   c.role=(c.role||g.role)==='backup'?'primær':'backup';
+   draw();return}
+ if(n=d('data-delc')){snap();const[gid,cid]=n.dataset.delc.split('|');const[g]=findGrp(gid);g.channels=g.channels.filter(c=>c.id!==cid);draw();return}
+ if(n=d('data-delsec')){snap();sheet().sections=sheet().sections.filter(s=>s.id!==n.dataset.delsec);draw();return}
+ if(n=d('data-up')){move(n.dataset.up,-1);return}
+ if(n=d('data-down')){move(n.dataset.down,1);return}
+ if(n=d('data-dup')){snap();const[g,sc]=findGrp(n.dataset.dup);const cp=JSON.parse(JSON.stringify(g));cp.id=id();cp.channels.forEach(c=>c.id=id());sc.groups.splice(sc.groups.indexOf(g)+1,0,cp);draw();return}
+ if(n=d('data-drill')){drill(n.dataset.drill);return}
+ if(n=d('data-secedit')){editSection(n.dataset.secedit);return}
+ if(n=d('data-gedit')){editGroup(n.dataset.gedit);return}
+ if(n=d('data-seccopy')){copySection(n.dataset.seccopy);return}
+ if(n=d('data-gcopy')){copyGroup(n.dataset.gcopy);return}
+ if(n=d('data-secfocus')){focus={t:'sec',id:n.dataset.secfocus};sel=null;draw();return}
+ if(n=d('data-gfocus')){focus={t:'grp',id:n.dataset.gfocus};sel=null;draw();return}
+ if(n=d('data-unfocus')){focus=null;draw();return}
+ if(n=d('data-addtext')){addText();return}
+ if(n=d('data-addlegend')){addLegend();return}
+ if(n=d('data-iedit')){const it=findItem(n.dataset.iedit);it&&(it.type==='text'?editText(it.id):editLegend(it.id));return}
+ if(n=d('data-idel')){snap();sheet().items=items().filter(i=>i.id!==n.dataset.idel);sel=null;draw();return}
+ if(n=d('data-idup')){snap();const o=findItem(n.dataset.idup);const c=JSON.parse(JSON.stringify(o));c.id=id();c.x+=24;c.y+=24;items().push(c);draw();return}
+ if(n=d('data-boxadd')){const[sid,side]=n.dataset.boxadd.split('|');snap();
+   const sc=sheet().sections.find(x=>x.id===sid);const k=side+'Lines';
+   (sc[k]||(sc[k]=[])).push({id:id(),t:'Ny tekst'});draw();return}
+ if(n=d('data-fold')){const[g]=findGrp(n.dataset.fold);g.collapsed=!g.collapsed;draw();return}
+ if(n=d('data-cyc')){snap();const[gid,cid]=n.dataset.cyc.split('|');const[g]=findGrp(gid);const ch=g.channels.find(c=>c.id===cid);const ks=Object.keys(LAYERS);ch.layer=ks[(ks.indexOf(ch.layer)+1)%ks.length];draw();return}
+ if(n=d('data-e')){startEdit(n);return}
+ const fit=t.closest('[data-item]');
+ if(fit){const it=findItem(fit.dataset.item);if(it){sel={t:'item',id:it.id};draw();return}}
+ const gr=t.closest('[data-grp]');
+ sel=gr?{t:'grp',id:gr.dataset.grp}:null;
+ draw();
+});
+
+/* lag-knapper */
+document.querySelectorAll('.busbtn').forEach(b=>b.onclick=()=>{
+ const l=b.dataset.l;
+ if(l==='backup'){backupOn=!backupOn;b.classList.toggle('on',backupOn)}
+ else{on.has(l)?on.delete(l):on.add(l);b.classList.toggle('on',on.has(l))}
+ draw();
+});
+
+/* tastatur */
+document.addEventListener('keydown',e=>{
+ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
+ if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undo()}
+ if((e.ctrlKey||e.metaKey)&&e.key==='p'){e.preventDefault();openExport()}
+ if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();openExport()}
+ if(e.key==='Escape'){sel=null;draw()}
+});
+
+/* gem / åbn / print */
+document.getElementById('bUndo').onclick=undo;
+document.getElementById('bUndo').disabled=true;
+document.getElementById('bExport').onclick=openExport;
+document.getElementById('bFoldAll').onclick=()=>{
+ const gs=[];sheet().sections.forEach(sc=>sc.groups.forEach(g=>gs.push(g)));
+ const anyOpen=gs.some(g=>!g.collapsed);
+ snap(); gs.forEach(g=>g.collapsed=anyOpen); draw();
+};
+document.getElementById('bNew').onclick=()=>{if(confirm('Start forfra med ét tomt projekt? Alle sider slettes.')){snap();pages=[blank()];activePage=0;doc=pages[0];path=[];sel=null;draw()}};
+document.getElementById('bSave').onclick=()=>{
+ const project={app:'signalflow',name:projectName,pages};
+ const b=new Blob([JSON.stringify(project,null,1)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(b);
+ a.download=fileName('json');a.click();
+};
+document.getElementById('bOpen').onclick=()=>document.getElementById('file').click();
+document.getElementById('file').onchange=e=>{
+ const f=e.target.files[0]; if(!f)return;
+ const r=new FileReader();
+ r.onload=()=>{
+   try{
+     const data=JSON.parse(r.result);
+     pages = Array.isArray(data.pages)&&data.pages.length ? data.pages : [data];  // ældre filer var ét ark uden 'pages'
+     projectName = data.name || (f.name||'').replace(/\.json$/i,'').replace(/_/g,' ') || 'Projekt';
+     activePage=0; doc=pages[0]; path=[]; sel=null; undoStack=[];
+     document.getElementById('bUndo').disabled=true;
+     draw();
+   }catch(err){alert('Kunne ikke læse filen: '+err.message)}
+ };
+ r.readAsText(f); e.target.value='';
+};
+
+draw();
+</script>
+</body>
+</html>
