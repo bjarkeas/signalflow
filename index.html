@@ -29,6 +29,8 @@ header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 14px;b
 
 #crumbs .here{color:var(--text)}
 #crumbs .projname{color:var(--text);font-weight:600}
+#autoStatus{font-family:var(--fm);font-size:10px;color:var(--faint);white-space:nowrap;min-width:96px;text-align:right}
+#autoStatus.warn{color:var(--lyd)}
 #crumbs .projname:hover{background:var(--panel2);color:var(--lyd)}
 #crumbs .sep{color:var(--faint)}
 
@@ -82,6 +84,7 @@ header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 14px;b
 .grp.backup .wire{border-top-style:dashed}
 .ch.cbackup .wire{border-top-style:dashed}
 .ch:not(.cbackup) .wire{border-top-style:solid}
+.dirbtn{font-size:12px;font-weight:600}
 .chb{font-family:var(--fm);font-size:8px;font-weight:500;background:#b18cff;color:#fff;border-radius:3px;padding:0 3px;margin-right:5px;line-height:1.5}
 .cloud{font-family:var(--fd);font-weight:600;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:#5c5c5c;background:var(--paper);border:1px solid #b4b4b4;border-radius:14px;padding:1px 13px;cursor:text;white-space:nowrap}
 .cloud:hover{border-color:#0a5bd3;color:#0a5bd3}
@@ -237,7 +240,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <button class="hbtn" id="bExport" title="Eksportér">Eksportér</button>
     <button class="hbtn" id="bFoldAll" title="Fold alle grupper sammen/ud">⇕</button>
     <button class="hbtn" id="bNew" title="Tomt projekt">Nyt</button>
-    <button class="hbtn" id="bSave" title="Gem hele projektet – alle sider – som én fil">Gem projekt</button>
+    <span id="autoStatus" title="Autogem i browseren"></span>
+    <button class="hbtn" id="bCloud" title="Gem og hent projekter i databasen">☁ Sky</button>
+    <button class="hbtn" id="bSave" title="Gem hele projektet – alle sider – som fil på maskinen">Gem fil</button>
     <button class="hbtn" id="bOpen" title="Åbn en gemt projektfil">Åbn</button>
     <input type="file" id="file" accept=".json" hidden>
   </header>
@@ -424,6 +429,10 @@ function draw(keepSide){
 
    g.channels.forEach(ch=>{
     const crole=ch.role||g.role;          // tom = følger gruppen
+    const cdir=ch.dir||g.dir||'ltr';
+    const cw=cdir==='both'?'both':(cdir==='rtl'?'rtl':'');
+    const dirIcon={ltr:'→',rtl:'←',both:'↔'}[cdir];
+    const dirNext={ltr:'venstre',rtl:'begge veje',both:'højre'}[cdir];
     const cv=vis(ch.layer,crole);
     const chC=px(gs.chColor,'#3a3a3a'), chS=px(gs.chSize,11);
     h+=`<div class="ch ${crole==='backup'?'cbackup':''} ${cv?'':'faded'}" style="color:${chC}">
@@ -432,9 +441,10 @@ function draw(keepSide){
       ${crole==='backup'?'<span class="chb" title="Backup-linje">B</span>':''}
       <span class="lbl" data-e="chlabel" data-id="${g.id}|${ch.id}" style="font-size:${chS}px">${esc(ch.label||'…')}</span>
       <span class="endtag sm ${ch.tx?'':'ghost'}" data-e="chtx" data-id="${g.id}|${ch.id}">${esc(ch.tx||'TX')}</span>
-      <span class="wire ${wcls}"></span>
+      <span class="wire ${cw}"></span>
       <span class="endtag sm ${ch.rx?'':'ghost'}" data-e="chrx" data-id="${g.id}|${ch.id}">${esc(ch.rx||'RX')}</span>
       <span class="tools">
+        <button class="mini dirbtn" data-cdir="${g.id}|${ch.id}" title="Retning: ${cdir==='ltr'?'mod modtager':cdir==='rtl'?'retur':'begge veje'} – klik for ${dirNext}">${dirIcon}</button>
         <button class="mini" data-crole="${g.id}|${ch.id}" title="${crole==='backup'?'Backup – klik for primær':'Primær – klik for backup'}">${crole==='backup'?'⇢':'⇒'}</button>
         <button class="mini" data-delc="${g.id}|${ch.id}" title="Slet kanal">✕</button>
       </span>
@@ -474,6 +484,7 @@ function draw(keepSide){
  el.innerHTML=h;
  fitBoxes();
  crumbs(); if(!keepSide) side(); renderTabs();
+ if(typeof autosave==='function')autosave();
 }
 
 /* Lad afsender-/modtagerbokse vokse, så de altid omslutter de bokse der er låst i dem.
@@ -785,6 +796,15 @@ function editGroup(gid){
     <button class="btn" data-allprim="1">Alle primær</button>
     <button class="btn" data-allback="1">Alle backup</button>
   </div>
+  <div class="msec">Kanalernes retning</div>
+  <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;margin:-6px 0 8px">
+    Hver kanal kan vendes for sig ude på arket. Her sætter du dem alle på én gang.
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px">
+    <button class="btn" data-dltr="1" style="margin:0">→ Alle frem</button>
+    <button class="btn" data-drtl="1" style="margin:0">← Alle retur</button>
+    <button class="btn" data-dboth="1" style="margin:0">↔ Alle begge</button>
+  </div>
   <div class="msec">Visning</div>
   <div class="mgrid one">
     <label class="chk"><input type="checkbox" name="collapsed" ${g.collapsed?'checked':''}>
@@ -802,6 +822,10 @@ function editGroup(gid){
    root.querySelector('[data-reset]').onclick=()=>{snap();delete g.style;closeModal();draw()};
    root.querySelector('[data-allprim]').onclick=()=>{snap();g.channels.forEach(c=>c.role='primær');closeModal();draw()};
    root.querySelector('[data-allback]').onclick=()=>{snap();g.channels.forEach(c=>c.role='backup');closeModal();draw()};
+   const setDir=v=>{snap();g.channels.forEach(c=>c.dir=v);closeModal();draw()};
+   root.querySelector('[data-dltr]').onclick=()=>setDir('ltr');
+   root.querySelector('[data-drtl]').onclick=()=>setDir('rtl');
+   root.querySelector('[data-dboth]').onclick=()=>setDir('both');
    root.querySelector('[data-ok]').onclick=()=>{
      snap();
      g.label=val(root,'label'); g.feed=val(root,'feed'); g.transport=val(root,'transport');
@@ -925,6 +949,173 @@ function copySection(secId){
  });
 }
 
+
+/* ================= autogem i browseren ================= */
+const LS_DATA='signalflow:autosave', LS_CFG='signalflow:cloud';
+let autoTimer=null, lastSaved=0;
+
+function store(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}}
+function load(k){try{return localStorage.getItem(k)}catch(e){return null}}
+
+function setAuto(txt,warn){
+ const n=document.getElementById('autoStatus');
+ if(n){n.textContent=txt; n.className=warn?'warn':''}
+}
+
+/* Kaldes efter hver ændring. Skriver først når der har været ro i et sekund,
+   så der ikke skrives ved hvert tastetryk. */
+function autosave(){
+ clearTimeout(autoTimer);
+ autoTimer=setTimeout(()=>{
+  const ok=store(LS_DATA, JSON.stringify({name:projectName,pages,ts:Date.now(),cloudId:cloudId}));
+  lastSaved=Date.now();
+  setAuto(ok?'gemt '+new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'})
+            :'kan ikke gemme lokalt', !ok);
+ },900);
+}
+window.addEventListener('beforeunload',()=>{
+ clearTimeout(autoTimer);
+ store(LS_DATA, JSON.stringify({name:projectName,pages,ts:Date.now(),cloudId:cloudId}));
+});
+
+/* Ved start: genoptag hvor du slap */
+function restoreAuto(){
+ const raw=load(LS_DATA); if(!raw)return false;
+ try{
+  const d=JSON.parse(raw);
+  if(!d.pages||!d.pages.length)return false;
+  pages=d.pages; projectName=d.name||projectName; cloudId=d.cloudId||null;
+  activePage=0; doc=pages[0];
+  const when=new Date(d.ts||Date.now());
+  setAuto('genoptaget '+when.toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}));
+  return true;
+ }catch(e){return false}
+}
+
+/* ================= database (Supabase) ================= */
+let cloudId=null;
+const cfg=()=>{try{return JSON.parse(load(LS_CFG)||'{}')}catch(e){return {}}};
+const setCfg=o=>store(LS_CFG,JSON.stringify(o));
+
+async function sbFetch(path,opts){
+ const c=cfg();
+ if(!c.url||!c.key)throw new Error('Databasen er ikke sat op endnu.');
+ let r;
+ try{
+  r=await fetch(c.url.replace(/\/+$/,'')+'/rest/v1/'+path,Object.assign({
+    headers:{'apikey':c.key,'Authorization':'Bearer '+c.key,
+             'Content-Type':'application/json','Prefer':'return=representation'}
+  },opts||{}));
+ }catch(e){
+  throw new Error('Kunne ikke få forbindelse. Tjek projekt-URL og at du er på nettet.');
+ }
+ if(r.status===401||r.status===403)
+  throw new Error('Adgang nægtet. Tjek anon-nøglen og adgangsreglerne på tabellen.');
+ if(r.status===404)
+  throw new Error('Tabellen signalflow_projects findes ikke. Kør SQL-koden nedenfor i Supabase.');
+ if(!r.ok)throw new Error('Databasen svarede '+r.status+': '+(await r.text()).slice(0,140));
+ const t=await r.text();
+ return t?JSON.parse(t):null;
+}
+
+async function cloudList(){
+ return await sbFetch('signalflow_projects?select=id,name,updated_at,updated_by&order=updated_at.desc');
+}
+async function cloudSave(asNew){
+ const body={name:projectName,data:{app:'signalflow',name:projectName,pages},
+             updated_by:cfg().who||'', updated_at:new Date().toISOString()};
+ if(cloudId&&!asNew){
+  const r=await sbFetch('signalflow_projects?id=eq.'+cloudId,{method:'PATCH',body:JSON.stringify(body)});
+  if(!r||!r.length)throw new Error('Projektet findes ikke længere i databasen.');
+ }else{
+  const r=await sbFetch('signalflow_projects',{method:'POST',body:JSON.stringify(body)});
+  cloudId=r[0].id;
+ }
+ autosave();
+}
+async function cloudOpen(id){
+ const r=await sbFetch('signalflow_projects?id=eq.'+id+'&select=id,name,data');
+ if(!r||!r.length)throw new Error('Kunne ikke hente projektet.');
+ const d=r[0].data;
+ pages=d.pages; projectName=d.name||r[0].name; cloudId=r[0].id;
+ activePage=0; doc=pages[0]; path=[]; sel=null; focus=null; undoStack=[];
+ draw(); autosave();
+}
+
+const SQL=`create table if not exists signalflow_projects (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  data jsonb not null,
+  updated_by text,
+  updated_at timestamptz not null default now()
+);
+alter table signalflow_projects enable row level security;
+create policy "laes"  on signalflow_projects for select using (true);
+create policy "opret" on signalflow_projects for insert with check (true);
+create policy "ret"   on signalflow_projects for update using (true);`;
+
+function openCloud(){
+ const c=cfg();
+ const opsat=!!(c.url&&c.key);
+ openModal('Database', opsat?esc(projectName)+(cloudId?' · gemt i databasen':' · endnu ikke i databasen'):'Ikke sat op endnu',`
+  ${opsat?`
+   <div id="cloudList" class="chklist" style="max-height:230px">Henter …</div>
+   <div class="mrow">
+     <button class="btn go" data-csave="1">${cloudId?'Gem ændringer':'Gem i databasen'}</button>
+     ${cloudId?`<button class="btn" data-cnew="1">Gem som ny</button>`:''}
+   </div>
+   <div class="msec">Opsætning</div>`:''}
+  <div class="mgrid one">
+    <div class="mf"><label>Projekt-URL</label>
+      <input type="text" name="url" value="${esc(c.url||'')}" placeholder="https://xxxx.supabase.co"></div>
+    <div class="mf"><label>Anon-nøgle</label>
+      <input type="text" name="key" value="${esc(c.key||'')}" placeholder="eyJhbGciOi…"></div>
+    <div class="mf"><label>Dine initialer (vises ved ændringer)</label>
+      <input type="text" name="who" value="${esc(c.who||'')}" placeholder="BSAN"></div>
+  </div>
+  <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin:4px 0 0">
+    Kør denne tabel i Supabase under SQL Editor, første gang:
+    <textarea readonly rows="5" style="width:100%;margin-top:6px;background:var(--bg);border:1px solid var(--line);color:var(--dim);border-radius:6px;padding:8px;font:11px var(--fm);resize:vertical">${esc(SQL)}</textarea>
+    Anon-nøglen er beregnet til at ligge i browseren. Det er reglerne i databasen der styrer adgangen.
+  </div>
+  <div class="mrow">
+    <button class="btn go" data-cfg="1">Gem opsætning</button>
+    <button class="btn" data-cancel="1">Luk</button>
+  </div>`,root=>{
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-cfg]').onclick=()=>{
+     setCfg({url:val(root,'url').trim(),key:val(root,'key').trim(),who:val(root,'who').trim()});
+     closeModal(); openCloud();
+   };
+   const say=(el2,msg,bad)=>{el2.innerHTML=`<div class="msub" style="text-transform:none;letter-spacing:0;padding:8px;color:${bad?'var(--video)':'var(--dim)'}">${esc(msg)}</div>`};
+
+   const listEl=root.querySelector('#cloudList');
+   if(listEl){
+    cloudList().then(rows=>{
+      if(!rows.length)return say(listEl,'Ingen projekter i databasen endnu.');
+      listEl.innerHTML=rows.map(r=>`<div class="chk" data-open="${r.id}" style="justify-content:space-between">
+         <span>${esc(r.name)}${r.id===cloudId?' &nbsp;·&nbsp; <b>åben nu</b>':''}</span>
+         <span style="font-family:var(--fm);font-size:10px;color:var(--dim)">
+           ${new Date(r.updated_at).toLocaleString('da-DK',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}
+           ${r.updated_by?' · '+esc(r.updated_by):''}</span>
+       </div>`).join('');
+      listEl.querySelectorAll('[data-open]').forEach(n=>n.onclick=()=>{
+        cloudOpen(n.dataset.open).then(closeModal).catch(e=>alert(e.message));
+      });
+    }).catch(e=>say(listEl,e.message,true));
+
+    root.querySelector('[data-csave]').onclick=function(){
+      this.textContent='Gemmer …';
+      cloudSave(false).then(()=>{closeModal();setAuto('gemt i databasen')})
+                      .catch(e=>{alert(e.message);this.textContent='Prøv igen'});
+    };
+    const nb=root.querySelector('[data-cnew]');
+    if(nb)nb.onclick=()=>cloudSave(true).then(()=>{closeModal();setAuto('gemt i databasen')})
+                                        .catch(e=>alert(e.message));
+   }
+ });
+}
+
 /* ================= eksport ================= */
 
 /* Tegn en vilkårlig side som HTML uden at forstyrre det brugeren ser.
@@ -974,9 +1165,10 @@ function exportCSV(o){
   const walk=(sh,prefix)=>{
    sh.sections.forEach(sc=>sc.groups.forEach(g=>{
     if(!o.allLayers&&!vis(g.layer,g.role))return;
-    const base=[prefix,sc.src,sc.dst,g.feed||'',g.label,g.transport||'',LAYERS[g.layer]||g.layer,g.role,g.dir==='rtl'?'retur':'frem'];
-    if(!g.channels.length)rows.push(base.concat(['','','']));
-    g.channels.forEach(ch=>rows.push(base.concat([ch.nr,ch.label||'',LAYERS[ch.layer]||ch.layer])));
+    const dtxt=v=>({ltr:'frem',rtl:'retur',both:'begge veje'})[v||'ltr'];
+    const base=[prefix,sc.src,sc.dst,g.feed||'',g.label,g.transport||'',LAYERS[g.layer]||g.layer,g.role];
+    if(!g.channels.length)rows.push(base.concat([dtxt(g.dir),'','','']));
+    g.channels.forEach(ch=>rows.push(base.concat([dtxt(ch.dir||g.dir),ch.nr,ch.label||'',LAYERS[ch.layer]||ch.layer])));
     if(o.subs&&g.sub)walk(g.sub,prefix+' › '+g.label);
    }));
   };
@@ -1074,8 +1266,9 @@ function exportDrawio(o){
      V((ch.nr||'')+'  '+(ch.label||''),
        'text;html=1;fontSize=10;align=left;verticalAlign=middle;fontColor=#3a3a3a;',
        rowsX+30,ry-8,250,16);
-     E('',`html=1;${cdash}${g.dir==='rtl'||g.dir==='both'?'startArrow=classic;startFill=1;':'startArrow=none;'}`
-        +`${g.dir==='rtl'?'endArrow=none;':'endArrow=classic;endFill=1;'}strokeColor=#3a3a3a;strokeWidth=1;`,
+     const cd=ch.dir||g.dir||'ltr';
+     E('',`html=1;${cdash}${cd==='rtl'||cd==='both'?'startArrow=classic;startFill=1;':'startArrow=none;'}`
+        +`${cd==='rtl'?'endArrow=none;':'endArrow=classic;endFill=1;'}strokeColor=#3a3a3a;strokeWidth=1;`,
        rowsX+290,ry,lineB,ry);
      ry+=16;
     });
@@ -1593,6 +1786,11 @@ el.addEventListener('click',ev=>{
  if(n=d('data-addgrp')){snap();const sc=sheet().sections.find(s=>s.id===n.dataset.addgrp);const g=newGroup('Kilde '+(sc.groups.length+1));g.feed='TX '+(sc.groups.length+1);g.channels=[newCh(1)];sc.groups.push(g);sel={t:'grp',id:g.id};draw();return}
  if(n=d('data-addch')){snap();const[g]=findGrp(n.dataset.addch);g.channels.push(newCh(g.channels.length+1));draw();return}
  if(n=d('data-delg')){snap();const[g,sc]=findGrp(n.dataset.delg);sc.groups=sc.groups.filter(x=>x!==g);sel=null;draw();return}
+ if(n=d('data-cdir')){snap();const[gid,cid]=n.dataset.cdir.split('|');const[g]=findGrp(gid);
+   const c=g.channels.find(x=>x.id===cid);
+   const order=['ltr','rtl','both'];
+   c.dir=order[(order.indexOf(c.dir||g.dir||'ltr')+1)%3];
+   draw();return}
  if(n=d('data-crole')){snap();const[gid,cid]=n.dataset.crole.split('|');const[g]=findGrp(gid);
    const c=g.channels.find(x=>x.id===cid);
    c.role=(c.role||g.role)==='backup'?'primær':'backup';
@@ -1649,12 +1847,13 @@ document.addEventListener('keydown',e=>{
 document.getElementById('bUndo').onclick=undo;
 document.getElementById('bUndo').disabled=true;
 document.getElementById('bExport').onclick=openExport;
+document.getElementById('bCloud').onclick=openCloud;
 document.getElementById('bFoldAll').onclick=()=>{
  const gs=[];sheet().sections.forEach(sc=>sc.groups.forEach(g=>gs.push(g)));
  const anyOpen=gs.some(g=>!g.collapsed);
  snap(); gs.forEach(g=>g.collapsed=anyOpen); draw();
 };
-document.getElementById('bNew').onclick=()=>{if(confirm('Start forfra med ét tomt projekt? Alle sider slettes.')){snap();pages=[blank()];activePage=0;doc=pages[0];path=[];sel=null;draw()}};
+document.getElementById('bNew').onclick=()=>{if(confirm('Start forfra med ét tomt projekt? Alle sider slettes.')){snap();pages=[blank()];activePage=0;doc=pages[0];path=[];sel=null;cloudId=null;projectName='Nyt projekt';draw()}};
 document.getElementById('bSave').onclick=()=>{
  const project={app:'signalflow',name:projectName,pages};
  const b=new Blob([JSON.stringify(project,null,1)],{type:'application/json'});
@@ -1678,6 +1877,7 @@ document.getElementById('file').onchange=e=>{
  r.readAsText(f); e.target.value='';
 };
 
+if(restoreAuto()){/* genoptaget fra autogem */}
 draw();
 </script>
 </body>
