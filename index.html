@@ -1016,9 +1016,21 @@ function restoreAuto(){
  }catch(e){return false}
 }
 
-/* ================= database (Supabase) ================= */
+/* ================= database (Supabase) =================
+   Skriv jeres projekt-URL og publishable-nøgle ind her én gang, og læg filen
+   på GitHub. Så virker det for alle uden opsætning. Nøglen er beregnet til at
+   ligge i en browser – det er login og reglerne på tabellen der styrer adgangen. */
+const SUPABASE_URL = 'https://oqfwegzondrsvdbneury.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_blZoSR5idK-yHYwPJTzvxg_Ea6Mbrvq';
+
+const LS_SESSION='signalflow:session';
 let cloudId=null;
-const cfg=()=>{try{return JSON.parse(load(LS_CFG)||'{}')}catch(e){return {}}};
+
+const cfg=()=>{
+ let c={};
+ try{c=JSON.parse(load(LS_CFG)||'{}')}catch(e){}
+ return {url:c.url||SUPABASE_URL, key:c.key||SUPABASE_KEY, who:c.who||''};
+};
 const setCfg=o=>store(LS_CFG,JSON.stringify(o));
 
 /* Supabase viser adressen med /rest/v1/ bagpå. Vi sætter den selv på,
@@ -1027,22 +1039,72 @@ function baseUrl(u){
  return String(u||'').trim().replace(/\/+$/,'').replace(/\/rest\/v1$/i,'');
 }
 
-async function sbFetch(path,opts){
+/* ---- login ---- */
+const session=()=>{try{return JSON.parse(load(LS_SESSION)||'null')}catch(e){return null}};
+const setSession=s=>{s?store(LS_SESSION,JSON.stringify(s)):localStorage.removeItem(LS_SESSION)};
+const userName=()=>{const s=session();return s&&s.email?s.email:''};
+
+async function authCall(grant,body){
  const c=cfg();
  if(!c.url||!c.key)throw new Error('Databasen er ikke sat op endnu.');
  let r;
  try{
+  r=await fetch(baseUrl(c.url)+'/auth/v1/token?grant_type='+grant,{
+   method:'POST',
+   headers:{'apikey':c.key,'Content-Type':'application/json'},
+   body:JSON.stringify(body)});
+ }catch(e){throw new Error('Kunne ikke få forbindelse til serveren.')}
+ const t=await r.text();
+ let d={}; try{d=JSON.parse(t)}catch(e){}
+ if(!r.ok){
+  const m=(d.error_description||d.msg||d.message||'').toLowerCase();
+  if(m.includes('invalid'))throw new Error('Forkert e-mail eller adgangskode.');
+  if(m.includes('confirm'))throw new Error('Brugeren er ikke bekræftet endnu. Bekræft e-mailen, eller slå bekræftelse fra i Supabase.');
+  throw new Error(d.error_description||d.msg||('Login mislykkedes ('+r.status+')'));
+ }
+ return d;
+}
+async function signIn(email,password){
+ const d=await authCall('password',{email:email,password:password});
+ setSession({access_token:d.access_token,refresh_token:d.refresh_token,
+             email:(d.user&&d.user.email)||email});
+ return true;
+}
+async function refreshSession(){
+ const s=session(); if(!s||!s.refresh_token)return false;
+ try{
+  const d=await authCall('refresh_token',{refresh_token:s.refresh_token});
+  setSession({access_token:d.access_token,refresh_token:d.refresh_token,email:s.email});
+  return true;
+ }catch(e){setSession(null);return false}
+}
+function signOut(){
+ setSession(null); cloudId=null;
+}
+
+async function sbFetch(path,opts,retried){
+ const c=cfg();
+ if(!c.url||!c.key)throw new Error('Databasen er ikke sat op endnu.');
+ const s=session();
+ if(!s)throw new Error('Du er ikke logget ind.');
+ let r;
+ try{
   r=await fetch(baseUrl(c.url)+'/rest/v1/'+path,Object.assign({
-    headers:{'apikey':c.key,'Authorization':'Bearer '+c.key,
+    headers:{'apikey':c.key,'Authorization':'Bearer '+s.access_token,
              'Content-Type':'application/json','Prefer':'return=representation'}
   },opts||{}));
  }catch(e){
   throw new Error('Kunne ikke få forbindelse. Tjek projekt-URL og at du er på nettet.');
  }
+ if(r.status===401&&!retried){
+  /* adgangen er udløbet – forny og prøv igen én gang */
+  if(await refreshSession())return sbFetch(path,opts,true);
+  throw new Error('Du er blevet logget ud. Log ind igen.');
+ }
  if(r.status===401||r.status===403)
-  throw new Error('Adgang nægtet. Tjek anon-nøglen og adgangsreglerne på tabellen.');
+  throw new Error('Adgang nægtet. Tjek at din bruger har adgang i reglerne på tabellen.');
  if(r.status===404)
-  throw new Error('Tabellen signalflow_projects findes ikke. Kør SQL-koden nedenfor i Supabase.');
+  throw new Error('Tabellen findes ikke. Kør SQL-koden i opsætningen.');
  if(!r.ok)throw new Error('Databasen svarede '+r.status+': '+(await r.text()).slice(0,140));
  const t=await r.text();
  return t?JSON.parse(t):null;
@@ -1099,14 +1161,14 @@ drop policy if exists "p_laes" on signalflow_projects;
 drop policy if exists "p_opret" on signalflow_projects;
 drop policy if exists "p_ret" on signalflow_projects;
 drop policy if exists "p_slet" on signalflow_projects;
-create policy "p_laes"  on signalflow_projects for select using (true);
-create policy "p_opret" on signalflow_projects for insert with check (true);
-create policy "p_ret"   on signalflow_projects for update using (true);
-create policy "p_slet"  on signalflow_projects for delete using (true);
+create policy "p_laes"  on signalflow_projects for select using (auth.uid() is not null);
+create policy "p_opret" on signalflow_projects for insert with check (auth.uid() is not null);
+create policy "p_ret"   on signalflow_projects for update using (auth.uid() is not null);
+create policy "p_slet"  on signalflow_projects for delete using (auth.uid() is not null);
 drop policy if exists "v_laes" on signalflow_versions;
 drop policy if exists "v_opret" on signalflow_versions;
-create policy "v_laes"  on signalflow_versions for select using (true);
-create policy "v_opret" on signalflow_versions for insert with check (true);`;
+create policy "v_laes"  on signalflow_versions for select using (auth.uid() is not null);
+create policy "v_opret" on signalflow_versions for insert with check (auth.uid() is not null);`;
 
 /* ---- kald mod databasen ---- */
 const snapshot=()=>({app:'signalflow',name:projectName,pages:pages});
@@ -1114,7 +1176,7 @@ async function cloudList(){
  return await sbFetch('signalflow_projects?select=id,name,folder,updated_at,updated_by&order=updated_at.desc');
 }
 async function cloudSave(asNew,note){
- const who=cfg().who||'';
+ const who=cfg().who||userName().split('@')[0]||'';
  const body={name:projectName,data:snapshot(),updated_by:who,updated_at:new Date().toISOString()};
  if(cloudId&&!asNew){
   const r=await sbFetch('signalflow_projects?id=eq.'+cloudId,{method:'PATCH',body:JSON.stringify(body)});
@@ -1171,7 +1233,8 @@ function tid(v){
 function openProjects(){
  const c=cfg();
  if(!c.url||!c.key)return openCloudSetup();
- openModal('Projekter', esc(projectName)+(cloudId?'':' · ikke gemt i databasen endnu'),`
+ if(!session())return openLogin();
+ openModal('Projekter', esc(projectName)+(cloudId?'':' · ikke gemt i databasen endnu')+' · '+esc(userName()),`
   <div class="mf">
     <input type="text" name="q" placeholder="Søg i projekter …">
   </div>
@@ -1188,7 +1251,9 @@ function openProjects(){
     <button class="btn go" data-csave="1">${cloudId?'Gem ny version':'Gem som nyt projekt'}</button>
     ${cloudId?`<button class="btn" data-cnew="1">Gem som nyt projekt</button>`:''}
     <button class="btn" data-setup="1" style="white-space:nowrap">Opsætning</button>
+    <button class="btn" data-logout="1" style="white-space:nowrap">Log ud</button>
   </div>`,root=>{
+   root.querySelector('[data-logout]').onclick=()=>{signOut();closeModal();openLogin()};
    const listEl=root.querySelector('#plist');
    let rows=[];
 
@@ -1291,6 +1356,42 @@ function openProjects(){
  });
 }
 
+function openLogin(){
+ openModal('Log ind','Projekter og versioner kræver login',`
+  <div class="mgrid one">
+    <div class="mf"><label>E-mail</label>
+      <input type="text" name="email" autocomplete="username" placeholder="fornavn@tv2.dk"></div>
+    <div class="mf"><label>Adgangskode</label>
+      <input type="password" name="pw" autocomplete="current-password"></div>
+    <div class="mf"><label>Dine initialer (vises ved ændringer)</label>
+      <input type="text" name="who" value="${esc(cfg().who||'')}" placeholder="BSAN"></div>
+  </div>
+  <div id="loginMsg" class="msub" style="text-transform:none;letter-spacing:0;color:var(--video);min-height:16px;margin:2px 0 0"></div>
+  <div class="mrow">
+    <button class="btn go" data-login="1">Log ind</button>
+    <button class="btn" data-setup="1" style="white-space:nowrap">Opsætning</button>
+    <button class="btn" data-cancel="1">Luk</button>
+  </div>
+  <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin:14px 0 0">
+    Brugere oprettes i Supabase under <b>Authentication → Users → Add user</b>.
+    Sæt flueben i <b>Auto Confirm User</b>, så slipper de for at bekræfte en e-mail.
+  </div>`,root=>{
+   const msg=root.querySelector('#loginMsg');
+   const go=function(){
+    const btn=root.querySelector('[data-login]');
+    const c2=cfg(); setCfg({url:c2.url,key:c2.key,who:val(root,'who').trim()});
+    btn.textContent='Logger ind …'; msg.textContent='';
+    signIn(val(root,'email').trim(),root.querySelector('[name="pw"]').value)
+      .then(()=>{closeModal();openProjects()})
+      .catch(e=>{msg.textContent=e.message;btn.textContent='Log ind'});
+   };
+   root.querySelector('[data-login]').onclick=go;
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-setup]').onclick=openCloudSetup;
+   root.querySelectorAll('input').forEach(i=>i.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go()}});
+ });
+}
+
 function openCloudSetup(){
  const c=cfg();
  openModal('Opsætning af database','Engangsopsætning på denne maskine',`
@@ -1301,6 +1402,9 @@ function openCloudSetup(){
       <input type="text" name="key" value="${esc(c.key||'')}" placeholder="sb_publishable_… eller eyJ…"></div>
     <div class="mf"><label>Dine initialer (vises ved ændringer)</label>
       <input type="text" name="who" value="${esc(c.who||'')}" placeholder="BSAN"></div>
+  </div>
+  <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin:2px 0 10px">
+    ${(SUPABASE_URL&&SUPABASE_KEY)?'Adressen og nøglen ligger allerede i filen, så felterne her behøver du kun at røre, hvis du vil pege et andet sted hen.':'Udfyld felterne her, eller skriv dem fast ind i filen (linjerne SUPABASE_URL og SUPABASE_KEY), så slipper alle andre for det.'}
   </div>
   <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin:4px 0 0">
     Kør denne kode i Supabase under SQL Editor, første gang. Den opretter både projekter og versionshistorik:
