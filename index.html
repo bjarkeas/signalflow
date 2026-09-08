@@ -170,6 +170,30 @@ header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 14px;b
 .chk:hover{background:var(--panel2)}
 .chk input{accent-color:var(--intercom)}
 .chklist{max-height:210px;overflow-y:auto;border:1px solid var(--line);border-radius:7px;padding:5px;background:var(--bg)}
+/* projektmodul */
+.folderhead{display:flex;align-items:center;gap:7px;font-family:var(--fd);font-weight:600;font-size:13px;
+ letter-spacing:.06em;text-transform:uppercase;color:var(--dim);padding:7px 6px 5px;cursor:pointer}
+.folderhead:hover{color:var(--text)}
+.caretf{font-size:9px;width:9px}
+.folderhead .cnt{margin-left:auto;font-family:var(--fm);font-size:9.5px;color:var(--faint)}
+.prow{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px}
+.prow:hover{background:var(--panel2)}
+.prow.here{background:var(--panel2);box-shadow:inset 2px 0 0 var(--intercom)}
+.pmain{flex:1;min-width:0}
+.pname{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pmeta{font-family:var(--fm);font-size:9.5px;color:var(--faint);margin-top:1px}
+.badge{font-family:var(--fm);font-size:8px;background:var(--intercom);color:#0b0e13;border-radius:6px;padding:1px 5px;vertical-align:1px}
+.pacts{display:flex;gap:3px;opacity:0}
+.prow:hover .pacts,.prow.here .pacts{opacity:1}
+.pacts .mini{opacity:1;font-size:10.5px;border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+.hist{margin:2px 0 8px 22px;border-left:2px solid var(--line);padding-left:10px}
+.vrow{display:flex;align-items:center;gap:8px;padding:4px 2px;font-size:11.5px}
+.vrow:hover{background:var(--panel2);border-radius:5px}
+.vnum{font-family:var(--fm);font-size:9.5px;color:var(--faint);min-width:18px}
+.vnote{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.vmeta{font-family:var(--fm);font-size:9.5px;color:var(--faint);white-space:nowrap}
+.vrow .mini{opacity:1;border:1px solid var(--line);border-radius:5px;padding:2px 7px;font-size:10.5px}
+.vempty{font-family:var(--fm);font-size:10.5px;color:var(--faint);padding:5px 2px}
 .swatches{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
 .sw{width:22px;height:22px;border-radius:5px;border:1px solid rgba(255,255,255,.16);cursor:pointer}
 .sw:hover{transform:scale(1.12)}
@@ -241,7 +265,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <button class="hbtn" id="bFoldAll" title="Fold alle grupper sammen/ud">⇕</button>
     <button class="hbtn" id="bNew" title="Tomt projekt">Nyt</button>
     <span id="autoStatus" title="Autogem i browseren"></span>
-    <button class="hbtn" id="bCloud" title="Gem og hent projekter i databasen">☁ Sky</button>
+    <button class="hbtn" id="bCloud" title="Projekter, mapper og versionshistorik">☁ Projekter</button>
     <button class="hbtn" id="bSave" title="Gem hele projektet – alle sider – som fil på maskinen">Gem fil</button>
     <button class="hbtn" id="bOpen" title="Åbn en gemt projektfil">Åbn</button>
     <input type="file" id="file" accept=".json" hidden>
@@ -997,12 +1021,18 @@ let cloudId=null;
 const cfg=()=>{try{return JSON.parse(load(LS_CFG)||'{}')}catch(e){return {}}};
 const setCfg=o=>store(LS_CFG,JSON.stringify(o));
 
+/* Supabase viser adressen med /rest/v1/ bagpå. Vi sætter den selv på,
+   så den fjernes her, uanset hvordan brugeren har indsat den. */
+function baseUrl(u){
+ return String(u||'').trim().replace(/\/+$/,'').replace(/\/rest\/v1$/i,'');
+}
+
 async function sbFetch(path,opts){
  const c=cfg();
  if(!c.url||!c.key)throw new Error('Databasen er ikke sat op endnu.');
  let r;
  try{
-  r=await fetch(c.url.replace(/\/+$/,'')+'/rest/v1/'+path,Object.assign({
+  r=await fetch(baseUrl(c.url)+'/rest/v1/'+path,Object.assign({
     headers:{'apikey':c.key,'Authorization':'Bearer '+c.key,
              'Content-Type':'application/json','Prefer':'return=representation'}
   },opts||{}));
@@ -1042,41 +1072,240 @@ async function cloudOpen(id){
  draw(); autosave();
 }
 
-const SQL=`create table if not exists signalflow_projects (
+const SQL=`-- Kør denne én gang. Den kan køres igen uden at ødelægge noget.
+create table if not exists signalflow_projects (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  folder text,
   data jsonb not null,
   updated_by text,
   updated_at timestamptz not null default now()
 );
-alter table signalflow_projects enable row level security;
-create policy "laes"  on signalflow_projects for select using (true);
-create policy "opret" on signalflow_projects for insert with check (true);
-create policy "ret"   on signalflow_projects for update using (true);`;
+alter table signalflow_projects add column if not exists folder text;
 
-function openCloud(){
+create table if not exists signalflow_versions (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid not null references signalflow_projects(id) on delete cascade,
+  data jsonb not null,
+  note text,
+  created_by text,
+  created_at timestamptz not null default now()
+);
+create index if not exists sfv_pid on signalflow_versions(project_id, created_at desc);
+
+alter table signalflow_projects enable row level security;
+alter table signalflow_versions enable row level security;
+drop policy if exists "p_laes" on signalflow_projects;
+drop policy if exists "p_opret" on signalflow_projects;
+drop policy if exists "p_ret" on signalflow_projects;
+drop policy if exists "p_slet" on signalflow_projects;
+create policy "p_laes"  on signalflow_projects for select using (true);
+create policy "p_opret" on signalflow_projects for insert with check (true);
+create policy "p_ret"   on signalflow_projects for update using (true);
+create policy "p_slet"  on signalflow_projects for delete using (true);
+drop policy if exists "v_laes" on signalflow_versions;
+drop policy if exists "v_opret" on signalflow_versions;
+create policy "v_laes"  on signalflow_versions for select using (true);
+create policy "v_opret" on signalflow_versions for insert with check (true);`;
+
+/* ---- kald mod databasen ---- */
+const snapshot=()=>({app:'signalflow',name:projectName,pages:pages});
+async function cloudList(){
+ return await sbFetch('signalflow_projects?select=id,name,folder,updated_at,updated_by&order=updated_at.desc');
+}
+async function cloudSave(asNew,note){
+ const who=cfg().who||'';
+ const body={name:projectName,data:snapshot(),updated_by:who,updated_at:new Date().toISOString()};
+ if(cloudId&&!asNew){
+  const r=await sbFetch('signalflow_projects?id=eq.'+cloudId,{method:'PATCH',body:JSON.stringify(body)});
+  if(!r||!r.length)throw new Error('Projektet findes ikke længere i databasen.');
+ }else{
+  body.folder=currentFolder||null;
+  const r=await sbFetch('signalflow_projects',{method:'POST',body:JSON.stringify(body)});
+  cloudId=r[0].id;
+ }
+ /* hver gemning lægger sig som en version, så man altid kan gå tilbage */
+ await sbFetch('signalflow_versions',{method:'POST',body:JSON.stringify(
+   {project_id:cloudId,data:snapshot(),note:note||'',created_by:who})});
+ autosave();
+}
+async function cloudOpen(id){
+ const r=await sbFetch('signalflow_projects?id=eq.'+id+'&select=id,name,folder,data');
+ if(!r||!r.length)throw new Error('Kunne ikke hente projektet.');
+ const d=r[0].data;
+ pages=d.pages; projectName=d.name||r[0].name; cloudId=r[0].id; currentFolder=r[0].folder||'';
+ activePage=0; doc=pages[0]; path=[]; sel=null; focus=null; undoStack=[];
+ draw(); autosave();
+}
+async function cloudVersions(pid){
+ return await sbFetch('signalflow_versions?project_id=eq.'+pid
+   +'&select=id,note,created_by,created_at&order=created_at.desc&limit=40');
+}
+async function cloudRestore(vid){
+ const r=await sbFetch('signalflow_versions?id=eq.'+vid+'&select=data,project_id');
+ if(!r||!r.length)throw new Error('Kunne ikke hente versionen.');
+ const d=r[0].data;
+ pages=d.pages; projectName=d.name||projectName; cloudId=r[0].project_id;
+ activePage=0; doc=pages[0]; path=[]; sel=null; focus=null; undoStack=[];
+ draw(); autosave();
+}
+async function cloudRename(pid,name,folder){
+ await sbFetch('signalflow_projects?id=eq.'+pid,{method:'PATCH',
+   body:JSON.stringify({name:name,folder:folder||null})});
+}
+async function cloudDelete(pid){
+ await sbFetch('signalflow_projects?id=eq.'+pid,{method:'DELETE'});
+ if(cloudId===pid){cloudId=null;autosave()}
+}
+
+/* ================= projektmodul ================= */
+let currentFolder='';
+let openFolders={};   // hvilke mapper der er foldet ud
+let openHistory=null; // hvilket projekt der viser historik
+
+function tid(v){
+ const d=new Date(v);
+ return d.toLocaleString('da-DK',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+function openProjects(){
  const c=cfg();
- const opsat=!!(c.url&&c.key);
- openModal('Database', opsat?esc(projectName)+(cloudId?' · gemt i databasen':' · endnu ikke i databasen'):'Ikke sat op endnu',`
-  ${opsat?`
-   <div id="cloudList" class="chklist" style="max-height:230px">Henter …</div>
-   <div class="mrow">
-     <button class="btn go" data-csave="1">${cloudId?'Gem ændringer':'Gem i databasen'}</button>
-     ${cloudId?`<button class="btn" data-cnew="1">Gem som ny</button>`:''}
-   </div>
-   <div class="msec">Opsætning</div>`:''}
+ if(!c.url||!c.key)return openCloudSetup();
+ openModal('Projekter', esc(projectName)+(cloudId?'':' · ikke gemt i databasen endnu'),`
+  <div class="mf">
+    <input type="text" name="q" placeholder="Søg i projekter …">
+  </div>
+  <div id="plist" class="chklist" style="max-height:320px">Henter …</div>
+  <div class="msec">Gem det du arbejder i nu</div>
+  <div class="mgrid">
+    <div class="mf"><label>Mappe</label>
+      <input type="text" name="folder" list="folderList" value="${esc(currentFolder)}" placeholder="fx Fodbold 2026">
+      <datalist id="folderList"></datalist></div>
+    <div class="mf"><label>Hvad har du lavet om?</label>
+      <input type="text" name="note" placeholder="fx tilføjet backup-linjer"></div>
+  </div>
+  <div class="mrow">
+    <button class="btn go" data-csave="1">${cloudId?'Gem ny version':'Gem som nyt projekt'}</button>
+    ${cloudId?`<button class="btn" data-cnew="1">Gem som nyt projekt</button>`:''}
+    <button class="btn" data-setup="1" style="white-space:nowrap">Opsætning</button>
+  </div>`,root=>{
+   const listEl=root.querySelector('#plist');
+   let rows=[];
+
+   const render=()=>{
+    const q=(val(root,'q')||'').toLowerCase();
+    const vis2=rows.filter(r=>!q||(r.name+' '+(r.folder||'')).toLowerCase().includes(q));
+    if(!vis2.length){listEl.innerHTML='<div class="msub" style="padding:10px;text-transform:none;letter-spacing:0">Ingen projekter matcher.</div>';return}
+    const groups={};
+    vis2.forEach(r=>{const f=r.folder||'Uden mappe';(groups[f]=groups[f]||[]).push(r)});
+    listEl.innerHTML=Object.keys(groups).sort().map(f=>{
+     const open=openFolders[f]!==false;
+     return `<div class="folder">
+       <div class="folderhead" data-folder="${esc(f)}">
+         <span class="caretf">${open?'▾':'▸'}</span> ${esc(f)}
+         <span class="cnt">${groups[f].length}</span>
+       </div>
+       ${open?groups[f].map(r=>`
+         <div class="prow ${r.id===cloudId?'here':''}" data-pid="${r.id}">
+           <div class="pmain">
+             <div class="pname">${esc(r.name)}${r.id===cloudId?' <span class="badge">åben</span>':''}</div>
+             <div class="pmeta">${tid(r.updated_at)}${r.updated_by?' · '+esc(r.updated_by):''}</div>
+           </div>
+           <div class="pacts">
+             <button class="mini" data-open="${r.id}" title="Åbn">Åbn</button>
+             <button class="mini" data-hist="${r.id}" title="Tidligere versioner">Historik</button>
+             <button class="mini" data-ren="${r.id}" title="Omdøb / flyt">✎</button>
+             <button class="mini" data-del="${r.id}" title="Slet">✕</button>
+           </div>
+         </div>
+         ${openHistory===r.id?`<div class="hist" id="hist-${r.id}">Henter versioner …</div>`:''}
+       `).join(''):''}
+     </div>`;
+    }).join('');
+
+    listEl.querySelectorAll('[data-folder]').forEach(n=>n.onclick=()=>{
+      const f=n.dataset.folder; openFolders[f]=openFolders[f]===false; render();
+    });
+    listEl.querySelectorAll('[data-open]').forEach(n=>n.onclick=()=>
+      cloudOpen(n.dataset.open).then(closeModal).catch(e=>alert(e.message)));
+    listEl.querySelectorAll('[data-hist]').forEach(n=>n.onclick=()=>{
+      openHistory=openHistory===n.dataset.hist?null:n.dataset.hist; render(); loadHist();
+    });
+    listEl.querySelectorAll('[data-ren]').forEach(n=>n.onclick=()=>{
+      const r=rows.find(x=>x.id===n.dataset.ren);
+      const nn=prompt('Projektets navn:',r.name); if(nn===null)return;
+      const nf=prompt('Mappe (tom = ingen):',r.folder||''); if(nf===null)return;
+      cloudRename(r.id,nn.trim()||r.name,nf.trim()).then(()=>{
+        if(r.id===cloudId){projectName=nn.trim()||r.name;currentFolder=nf.trim();draw()}
+        refresh();
+      }).catch(e=>alert(e.message));
+    });
+    listEl.querySelectorAll('[data-del]').forEach(n=>n.onclick=()=>{
+      const r=rows.find(x=>x.id===n.dataset.del);
+      if(!confirm('Slet "'+r.name+'" og alle dets versioner? Det kan ikke fortrydes.'))return;
+      cloudDelete(r.id).then(refresh).catch(e=>alert(e.message));
+    });
+
+    const dl2=root.querySelector('#folderList');
+    if(dl2)dl2.innerHTML=[...new Set(rows.map(r=>r.folder).filter(Boolean))]
+      .map(f=>`<option value="${esc(f)}">`).join('');
+   };
+
+   const loadHist=()=>{
+    if(!openHistory)return;
+    const box=listEl.querySelector('#hist-'+openHistory);
+    if(!box)return;
+    cloudVersions(openHistory).then(vs=>{
+     if(!vs.length){box.innerHTML='<div class="vempty">Ingen tidligere versioner endnu.</div>';return}
+     box.innerHTML=vs.map((v,i)=>`<div class="vrow">
+        <span class="vnum">${vs.length-i}</span>
+        <span class="vnote">${esc(v.note||'(ingen beskrivelse)')}</span>
+        <span class="vmeta">${tid(v.created_at)}${v.created_by?' · '+esc(v.created_by):''}</span>
+        <button class="mini" data-rest="${v.id}">Gendan</button>
+      </div>`).join('');
+     box.querySelectorAll('[data-rest]').forEach(n=>n.onclick=()=>{
+       if(!confirm('Hent denne version ind? Det du har åbent nu bliver erstattet.\n\nDen nuværende udgave bliver stående i databasen som nyeste version.'))return;
+       cloudRestore(n.dataset.rest).then(closeModal).catch(e=>alert(e.message));
+     });
+    }).catch(e=>{box.innerHTML='<div class="vempty">'+esc(e.message)+'</div>'});
+   };
+
+   const refresh=()=>cloudList().then(r=>{rows=r;render();loadHist()})
+     .catch(e=>{listEl.innerHTML='<div class="msub" style="padding:10px;color:var(--video);text-transform:none;letter-spacing:0">'+esc(e.message)+'</div>'});
+   refresh();
+
+   root.querySelector('[name="q"]').oninput=render;
+   root.querySelector('[data-setup]').onclick=openCloudSetup;
+   root.querySelector('[data-csave]').onclick=function(){
+     this.textContent='Gemmer …';
+     currentFolder=val(root,'folder').trim();
+     cloudSave(false,val(root,'note')).then(()=>{closeModal();setAuto('gemt i databasen')})
+       .catch(e=>{alert(e.message);this.textContent='Prøv igen'});
+   };
+   const nb=root.querySelector('[data-cnew]');
+   if(nb)nb.onclick=()=>{
+     currentFolder=val(root,'folder').trim();
+     cloudSave(true,val(root,'note')).then(()=>{closeModal();setAuto('gemt som nyt projekt')})
+       .catch(e=>alert(e.message));
+   };
+ });
+}
+
+function openCloudSetup(){
+ const c=cfg();
+ openModal('Opsætning af database','Engangsopsætning på denne maskine',`
   <div class="mgrid one">
     <div class="mf"><label>Projekt-URL</label>
       <input type="text" name="url" value="${esc(c.url||'')}" placeholder="https://xxxx.supabase.co"></div>
-    <div class="mf"><label>Anon-nøgle</label>
-      <input type="text" name="key" value="${esc(c.key||'')}" placeholder="eyJhbGciOi…"></div>
+    <div class="mf"><label>Publishable- eller anon-nøgle</label>
+      <input type="text" name="key" value="${esc(c.key||'')}" placeholder="sb_publishable_… eller eyJ…"></div>
     <div class="mf"><label>Dine initialer (vises ved ændringer)</label>
       <input type="text" name="who" value="${esc(c.who||'')}" placeholder="BSAN"></div>
   </div>
   <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin:4px 0 0">
-    Kør denne tabel i Supabase under SQL Editor, første gang:
-    <textarea readonly rows="5" style="width:100%;margin-top:6px;background:var(--bg);border:1px solid var(--line);color:var(--dim);border-radius:6px;padding:8px;font:11px var(--fm);resize:vertical">${esc(SQL)}</textarea>
-    Anon-nøglen er beregnet til at ligge i browseren. Det er reglerne i databasen der styrer adgangen.
+    Kør denne kode i Supabase under SQL Editor, første gang. Den opretter både projekter og versionshistorik:
+    <textarea readonly rows="6" style="width:100%;margin-top:6px;background:var(--bg);border:1px solid var(--line);color:var(--dim);border-radius:6px;padding:8px;font:11px var(--fm);resize:vertical">${esc(SQL)}</textarea>
+    Nøglen er beregnet til at ligge i browseren. Det er reglerne i databasen der styrer adgangen.
   </div>
   <div class="mrow">
     <button class="btn go" data-cfg="1">Gem opsætning</button>
@@ -1084,37 +1313,12 @@ function openCloud(){
   </div>`,root=>{
    root.querySelector('[data-cancel]').onclick=closeModal;
    root.querySelector('[data-cfg]').onclick=()=>{
-     setCfg({url:val(root,'url').trim(),key:val(root,'key').trim(),who:val(root,'who').trim()});
-     closeModal(); openCloud();
+     setCfg({url:baseUrl(val(root,'url')),key:val(root,'key').trim(),who:val(root,'who').trim()});
+     closeModal(); openProjects();
    };
-   const say=(el2,msg,bad)=>{el2.innerHTML=`<div class="msub" style="text-transform:none;letter-spacing:0;padding:8px;color:${bad?'var(--video)':'var(--dim)'}">${esc(msg)}</div>`};
-
-   const listEl=root.querySelector('#cloudList');
-   if(listEl){
-    cloudList().then(rows=>{
-      if(!rows.length)return say(listEl,'Ingen projekter i databasen endnu.');
-      listEl.innerHTML=rows.map(r=>`<div class="chk" data-open="${r.id}" style="justify-content:space-between">
-         <span>${esc(r.name)}${r.id===cloudId?' &nbsp;·&nbsp; <b>åben nu</b>':''}</span>
-         <span style="font-family:var(--fm);font-size:10px;color:var(--dim)">
-           ${new Date(r.updated_at).toLocaleString('da-DK',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}
-           ${r.updated_by?' · '+esc(r.updated_by):''}</span>
-       </div>`).join('');
-      listEl.querySelectorAll('[data-open]').forEach(n=>n.onclick=()=>{
-        cloudOpen(n.dataset.open).then(closeModal).catch(e=>alert(e.message));
-      });
-    }).catch(e=>say(listEl,e.message,true));
-
-    root.querySelector('[data-csave]').onclick=function(){
-      this.textContent='Gemmer …';
-      cloudSave(false).then(()=>{closeModal();setAuto('gemt i databasen')})
-                      .catch(e=>{alert(e.message);this.textContent='Prøv igen'});
-    };
-    const nb=root.querySelector('[data-cnew]');
-    if(nb)nb.onclick=()=>cloudSave(true).then(()=>{closeModal();setAuto('gemt i databasen')})
-                                        .catch(e=>alert(e.message));
-   }
  });
 }
+const openCloud=openProjects;
 
 /* ================= eksport ================= */
 
