@@ -1830,9 +1830,12 @@ function printBlocks(){
  document.getElementById('printroot').innerHTML=
   `<div class="psheet blockprint"><div class="sheettitle">${esc(projectName)} · ${esc(bp().title)}</div>
    <div class="bcanvas printed" style="width:${w}px;height:${hgt}px">${c.innerHTML}</div></div>`;
- const avail=(420-16)*96/25.4, k=Math.min(1,avail/w);
+ const padPx=8*96/25.4;
+ const k=Math.min(1,(420*96/25.4)/(w+2*padPx));
  document.getElementById('pagestyle').textContent=
-  `@page{size:A3 landscape;margin:8mm}@media print{#printroot{width:${w}px;zoom:${k.toFixed(4)}}}`;
+  `@page{size:A3 landscape;margin:0}
+   @media print{#printroot{width:${w+2*padPx}px;zoom:${k.toFixed(4)}}
+                .psheet{margin:${padPx}px}}`;
  setTimeout(()=>{window.print();setTimeout(()=>{document.getElementById('printroot').innerHTML=''},600)},150);
 }
 
@@ -2658,17 +2661,19 @@ function exportPDF(o){
     ned til papiret. Ellers ombrydes indholdet, mens de frie bokse bliver liggende. */
  const W = el.clientWidth || 1340;
  const mm = (PAPER[o.paper]||PAPER.A4)[o.orient==='landscape'?'l':'p'];
- const avail = (mm - 2*o.margin) * 96/25.4;
- const k = Math.min(1, avail / W);
+ /* Marginen lægges inde i arket, ikke som sidemargin. Så har browseren ingen
+    margin at skrive adresse og sidehoved i, og papiret bliver rent. */
+ const padPx = o.margin * 96/25.4;
+ const k = Math.min(1, (mm*96/25.4) / (W + 2*padPx));
  const stamp = new Date().toLocaleDateString('da-DK',{day:'2-digit',month:'2-digit',year:'numeric'});
  document.getElementById('printroot').innerHTML = idx.map(i=>
    `<div class="psheet">${renderPageHTML(i,o.allLayers)}
       <div class="pfoot">${esc(pages[i].title)} · side ${idx.indexOf(i)+1} af ${idx.length} · udskrevet ${stamp}</div>
     </div>`).join('');
  document.getElementById('pagestyle').textContent =
-   `@page{size:${o.paper} ${o.orient};margin:${o.margin}mm}
-    @media print{#printroot{width:${W}px;zoom:${k.toFixed(4)}}
-                 .psheet{width:${W}px}}`;
+   `@page{size:${o.paper} ${o.orient};margin:0}
+    @media print{#printroot{width:${W+2*padPx}px;zoom:${k.toFixed(4)}}
+                 .psheet{width:${W}px;margin:${padPx}px}}`;
  closeModal();
  setTimeout(()=>{
    window.print();
@@ -2750,9 +2755,13 @@ function exportDrawio(o){
   sh.sections.forEach(sc=>{
    const st=sc.style||{};
    const srcW=+(st.srcW||190), dstW=+(st.dstW||210);
-   const rowsX=M+srcW+30, dstX=SHEETW-M-dstW, rowsW=dstX-30-rowsX;
+   const rowsX=M+srcW+30, dstX=SHEETW-M-dstW;
    const feedW=120, nameW=250;
-   const lineA=rowsX+feedW, lineB=rowsX+rowsW-nameW;
+   /* stregerne skal gå helt frem til modtagerboksen, og gruppenavnet skal
+      stå lige før den – ellers hænger det hele i luften midt på arket */
+   const lineEnd=dstX-12;                 // her ender kanalpilene
+   const nameX=lineEnd-nameW;             // gruppenavnet står lige før boksen
+   const lineA=rowsX+feedW, lineB=nameX-8;
    const cloudW=110, cloudX=(lineA+lineB)/2-cloudW/2;
 
    const secTop=y; let ry=y+14;
@@ -2773,7 +2782,7 @@ function exportDrawio(o){
       cloudX,ry-11,cloudW,22);
     E('',est,cloudX+cloudW,ry,lineB,ry);
     V(g.label,`text;html=1;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;fontColor=${col};`,
-      lineB+8,ry-9,nameW,18);
+      nameX,ry-9,nameW,18);
     if(g.tx)V(g.tx,'text;html=1;fontSize=8;align=center;verticalAlign=middle;fontColor=#666666;',lineA+2,ry-16,54,12);
     if(g.rx)V(g.rx,'text;html=1;fontSize=8;align=center;verticalAlign=middle;fontColor=#666666;',lineB-56,ry-16,54,12);
     ry+=20;
@@ -2783,19 +2792,26 @@ function exportDrawio(o){
      const cdash=crole==='backup'?'dashed=1;':'';
      const cdot={video:'#ff5252',lyd:'#ffb648',intercom:'#3fd99c',net:'#5ea3ff'}[ch.layer]||'#999';
      V('','ellipse;html=1;fillColor='+cdot+';strokeColor=none;',rowsX+16,ry-4,8,8);
-     V((ch.nr||'')+'  '+(ch.label||''),
+     V((ch.nr||'')+'  '+(ch.label||'')+(crole==='backup'?'   [B]':''),
        'text;html=1;fontSize=10;align=left;verticalAlign=middle;fontColor=#3a3a3a;',
-       rowsX+30,ry-8,250,16);
+       rowsX+30,ry-8,260,16);
      const cd=ch.dir||g.dir||'ltr';
      E('',`html=1;${cdash}${cd==='rtl'||cd==='both'?'startArrow=classic;startFill=1;':'startArrow=none;'}`
         +`${cd==='rtl'?'endArrow=none;':'endArrow=classic;endFill=1;'}strokeColor=#3a3a3a;strokeWidth=1;`,
-       rowsX+290,ry,lineB,ry);
+       rowsX+296,ry,lineEnd,ry);
      ry+=16;
     });
     ry+=10;
    });
 
-   const secH=Math.max(ry-secTop+10, 90);
+   /* kassen skal også kunne rumme de bemandingsbokse der er låst fast i den */
+   const stackH=side=>{
+    let iy=42;
+    (sh.items||[]).filter(i=>i.anchor&&i.anchor.sec===sc.id&&i.anchor.side===side)
+      .forEach(it=>{iy+=itemH(it)+10});
+    return iy+10;
+   };
+   const secH=Math.max(ry-secTop+10, stackH('src'), stackH('dst'), 90);
    const boxS=(fill,stroke,font)=>`rounded=1;arcSize=4;html=1;whiteSpace=wrap;verticalAlign=top;align=left;`
      +`fontSize=14;fontStyle=1;spacing=8;fillColor=${fill};strokeColor=${stroke};fontColor=${font};`;
    const srcLines=(sc.srcLines||[]).map(l=>l.t).join('\n');
@@ -2888,8 +2904,10 @@ function planPrintHTML(){
 }
 function exportPlanPDF(o){
  document.getElementById('printroot').innerHTML=`<div class="psheet planprint">${planPrintHTML()}</div>`;
+ const padPx=o.margin*96/25.4;
  document.getElementById('pagestyle').textContent=
-   `@page{size:${o.paper} ${o.orient};margin:${o.margin}mm}`;
+   `@page{size:${o.paper} ${o.orient};margin:0}
+    @media print{.psheet{margin:${padPx}px}}`;
  closeModal();
  setTimeout(()=>{window.print();setTimeout(()=>{document.getElementById('printroot').innerHTML=''},600)},120);
 }
@@ -2954,6 +2972,9 @@ function openExport(){
     <div class="msub" style="margin:12px 0 0;text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6">
       Sammenklappede grupper foldes automatisk ud. Vælg <b>Gem som PDF</b> i printvinduet,
       og sæt flueben i <b>Baggrundsgrafik</b>, hvis boksenes farver mangler.
+      Skriver browseren alligevel adresse og dato i toppen, slår du
+      <b>sidehoved og sidefod</b> fra i printvinduet – arket har sin egen sidefod med
+      projekt, sidetal og dato.
     </div>
   </div>
 
