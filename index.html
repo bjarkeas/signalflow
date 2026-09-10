@@ -96,6 +96,47 @@ header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 14px;b
 .chnr{font-family:var(--fm);font-size:10.5px;min-width:44px;cursor:text;padding:1px 3px;border-radius:3px}
 .chnr:hover{background:#e6eefc}
 
+
+/* ---- link direkte til kanalplanen ---- */
+function planLink(onlyPlan){
+ const u=location.origin+location.pathname;
+ const q=['view=plan'];
+ if(cloudId)q.push('p='+cloudId);
+ q.push('dom='+planDom);
+ if(onlyPlan)q.push('only=1');
+ return u+'?'+q.join('&');
+}
+function copyLink(onlyPlan,btn){
+ const link=planLink(onlyPlan);
+ const done=()=>{const t=btn.textContent;btn.textContent='Kopieret ✓';setTimeout(()=>btn.textContent=t,1600)};
+ if(navigator.clipboard&&navigator.clipboard.writeText){
+  navigator.clipboard.writeText(link).then(done).catch(()=>prompt('Kopiér linket:',link));
+ }else prompt('Kopiér linket:',link);
+}
+
+/* ---- åbn efter det der står i adressen ---- */
+function applyUrl(){
+ const q=new URLSearchParams(location.search);
+ if(q.get('dom')&&PLANDOMS[q.get('dom')])planDom=q.get('dom');
+ if(q.get('only')==='1')document.body.classList.add('onlyplan');
+ const wantPlan=q.get('view')==='plan'||q.get('only')==='1';
+ const pid=q.get('p');
+ if(pid){
+  if(!session()){
+   /* linket kræver login – log ind og fortsæt derefter til projektet */
+   pendingOpen=pid; pendingPlan=wantPlan;
+   if(wantPlan)setView('plan');
+   openLogin();
+   return;
+  }
+  cloudOpen(pid).then(()=>{if(wantPlan)setView('plan')})
+    .catch(e=>{if(wantPlan)setView('plan');setSync(e.message,true)});
+  return;
+ }
+ if(wantPlan)setView('plan');
+}
+let pendingOpen=null, pendingPlan=false;
+
 /* ---- skift mellem tegning og kanalplan ---- */
 .viewsw{display:flex;gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:2px}
 .vbtn{background:none;border:none;color:var(--dim);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12.5px;white-space:nowrap}
@@ -118,6 +159,12 @@ body.planview #stage{background:#0b0e13;padding:16px}
 .newsbadge{background:rgba(63,217,156,.13);border:1px solid var(--intercom);color:var(--intercom);
  border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer}
 .newsbadge:hover{background:rgba(63,217,156,.22)}
+.sharebtn{background:var(--panel);border:1px solid var(--line);color:var(--dim);border-radius:8px;
+ padding:8px 12px;cursor:pointer;font-size:12px;white-space:nowrap}
+.sharebtn:hover{color:var(--text);border-color:var(--faint)}
+/* kun kanalplanen – til dem der får et link */
+body.onlyplan .viewsw,body.onlyplan #tabbar,body.onlyplan .bus,
+body.onlyplan #bFoldAll,body.onlyplan #bNew{display:none}
 .whobox{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 10px;font:inherit;width:130px}
 .whotag{font-family:var(--fm);font-size:10.5px;color:var(--dim);border:1px solid var(--line);
  border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap}
@@ -1150,7 +1197,14 @@ function usedLabels(){
 }
 
 /* ---- hvem har rettet hvad, og hvad er nyt siden sidst ---- */
-const seenKey=()=>'signalflow:seen:'+(cloudId||projectName);
+const seenKey=()=>'signalflow:seen:'+(cloudId||'lokal');
+/* Når et projekt gemmes i databasen første gang, skifter nøglen fra "lokal" til
+   projektets id. Uden dette ville alt pludselig se ulæst ud igen. */
+function migrateSeen(){
+ if(!cloudId)return;
+ const k='signalflow:seen:'+cloudId, lokal=load('signalflow:seen:lokal');
+ if(!load(k)&&lokal)store(k,lokal);
+}
 const lastSeen=()=>{const v=load(seenKey());return v?+v:0};
 function markSeen(){store(seenKey(),String(Date.now()));drawPlan()}
 function newCount(){
@@ -1177,6 +1231,7 @@ function ago(ms){
 
 /* ---- tegn kanalplanen ---- */
 function drawPlan(){
+ if(!lastSeen())store(seenKey(),String(Date.now()));   // første besøg: alt regnes som set
  const el2=document.getElementById('plan');
  const d=dom();
  const nyt=newCount();
@@ -1188,6 +1243,7 @@ function drawPlan(){
    ${nyt?`<button class="newsbadge" data-seen="1">${nyt} ${nyt===1?'ny ændring':'nye ændringer'} siden sidst · markér som set</button>`:''}
    ${meName()==='?'?`<input class="whobox" id="whoBox" placeholder="Dine initialer" title="Vises ud for de linjer du retter">`:
      `<span class="whotag" title="Dine initialer – klik for at rette">${esc(meName())}</span>`}
+   <button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan">Del link</button>
    <div class="planadd">
      <select id="devPick">
        <option value="">+ Tilføj udstyr …</option>
@@ -1265,6 +1321,11 @@ function bindPlan(){
  if(wt)wt.onclick=()=>{const v=prompt('Dine initialer:',meName());
    if(v!==null){const c=cfg();setCfg({url:c.url,key:c.key,who:v.trim()});drawPlan()}};
 
+ const sh2=el2.querySelector('[data-share]');
+ if(sh2)sh2.onclick=function(){
+   if(!cloudId){alert('Gem projektet i databasen først, så linket peger på noget.');return}
+   copyLink(true,this);
+ };
  const pick=el2.querySelector('#devPick');
  if(pick)pick.onchange=()=>{
   const v=pick.value; pick.value='';
@@ -1334,6 +1395,47 @@ function bindPlan(){
  });
 }
 
+
+/* ---- link direkte til kanalplanen ---- */
+function planLink(onlyPlan){
+ const u=location.origin+location.pathname;
+ const q=['view=plan'];
+ if(cloudId)q.push('p='+cloudId);
+ q.push('dom='+planDom);
+ if(onlyPlan)q.push('only=1');
+ return u+'?'+q.join('&');
+}
+function copyLink(onlyPlan,btn){
+ const link=planLink(onlyPlan);
+ const done=()=>{const t=btn.textContent;btn.textContent='Kopieret ✓';setTimeout(()=>btn.textContent=t,1600)};
+ if(navigator.clipboard&&navigator.clipboard.writeText){
+  navigator.clipboard.writeText(link).then(done).catch(()=>prompt('Kopiér linket:',link));
+ }else prompt('Kopiér linket:',link);
+}
+
+/* ---- åbn efter det der står i adressen ---- */
+function applyUrl(){
+ const q=new URLSearchParams(location.search);
+ if(q.get('dom')&&PLANDOMS[q.get('dom')])planDom=q.get('dom');
+ if(q.get('only')==='1')document.body.classList.add('onlyplan');
+ const wantPlan=q.get('view')==='plan'||q.get('only')==='1';
+ const pid=q.get('p');
+ if(pid){
+  if(!session()){
+   /* linket kræver login – log ind og fortsæt derefter til projektet */
+   pendingOpen=pid; pendingPlan=wantPlan;
+   if(wantPlan)setView('plan');
+   openLogin();
+   return;
+  }
+  cloudOpen(pid).then(()=>{if(wantPlan)setView('plan')})
+    .catch(e=>{if(wantPlan)setView('plan');setSync(e.message,true)});
+  return;
+ }
+ if(wantPlan)setView('plan');
+}
+let pendingOpen=null, pendingPlan=false;
+
 /* ---- skift mellem tegning og kanalplan ---- */
 let view='flow';
 function setView(v){
@@ -1341,6 +1443,110 @@ function setView(v){
  document.body.classList.toggle('planview',v==='plan');
  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
  if(v==='plan')drawPlan(); else draw();
+}
+
+
+/* ================= samtidig redigering =================
+   Hvert par sekunder spørger vi databasen, om nogen har gemt noget nyere.
+   Er der det, flettes deres ændringer ind i vores – linje for linje, hvor den
+   nyeste rettelse vinder. Derfor kan to personer rette hver sin stagebox
+   samtidig uden at slette for hinanden. */
+let lastSync=null;      // serverens tidsstempel vi sidst har set
+let pushTimer=null, syncTimer=null, dirty=false;
+
+function planDevices(pl,k){return (pl&&pl[k]&&pl[k].devices)||[]}
+
+function mergePlan(mine,theirs){
+ if(!theirs)return mine;
+ if(!mine)return theirs;
+ const out={};
+ Object.keys(PLANDOMS).forEach(k=>{
+  const a=planDevices(mine,k), b=planDevices(theirs,k);
+  const byId={}; const order=[];
+  const put=d=>{if(!byId[d.id]){byId[d.id]=JSON.parse(JSON.stringify(d));order.push(d.id)}
+                else byId[d.id]=mergeDev(byId[d.id],d)};
+  a.forEach(put); b.forEach(put);
+  out[k]={devices:order.map(i=>byId[i])};
+ });
+ return out;
+}
+function mergeDev(a,b){
+ const d=JSON.parse(JSON.stringify(a));
+ /* navn og placering: den der er rettet sidst på en linje bruges som pejling */
+ if((b.at||0)>(a.at||0)){d.name=b.name;d.place=b.place}
+ ['ins','outs'].forEach(side=>{
+  const byId={}; const order=[];
+  (a[side]||[]).forEach(p=>{byId[p.id]=p;order.push(p.id)});
+  (b[side]||[]).forEach(p=>{
+   if(!byId[p.id]){byId[p.id]=p;order.push(p.id)}
+   else if((p.at||0)>(byId[p.id].at||0))byId[p.id]=p;   // nyeste rettelse vinder
+  });
+  d[side]=order.map(i=>byId[i]);
+ });
+ return d;
+}
+
+async function pull(){
+ if(!cloudId||!session())return;
+ let r;
+ try{ r=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=updated_at,updated_by'); }
+ catch(e){ setSync('ingen forbindelse',true); return; }
+ if(!r||!r.length)return;
+ const t=r[0].updated_at;
+ if(lastSync&&t===lastSync){setSync('opdateret');return}
+ if(!lastSync){lastSync=t;setSync('opdateret');return}
+ /* der er noget nyere – hent det og flet ind */
+ const full=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=name,data,updated_at,updated_by');
+ const d=full[0].data||{};
+ plan=mergePlan(ensurePlan(),d.plan);
+ if(!dirty&&d.pages)pages=d.pages;          // tegningen tages kun hvis vi ikke selv har rettet
+ if(!dirty&&d.name)projectName=d.name;
+ if(activePage>=pages.length)activePage=0;
+ doc=pages[activePage];
+ lastSync=full[0].updated_at;
+ setSync('opdateret · '+(full[0].updated_by||'')); 
+ autosave();
+ if(view==='plan')drawPlan(); else draw();
+ if(dirty)push();                            // send vores egne rettelser videre
+}
+
+function push(){
+ clearTimeout(pushTimer);
+ pushTimer=setTimeout(async()=>{
+  if(!cloudId||!session()||!dirty)return;
+  try{
+   setSync('gemmer …');
+   await cloudSaveQuiet();
+   dirty=false;
+   setSync('gemt');
+  }catch(e){ setSync('kunne ikke gemme',true) }
+ },1800);
+}
+async function cloudSaveQuiet(){
+ const who=cfg().who||userName().split('@')[0]||'';
+ const r=await sbFetch('signalflow_projects?id=eq.'+cloudId,
+   {method:'PATCH',body:JSON.stringify({name:projectName,data:snapshot(),updated_by:who})});
+ if(r&&r.length&&r[0].updated_at)lastSync=r[0].updated_at;
+}
+
+function setSync(txt,warn){
+ const n=document.getElementById('autoStatus');
+ if(!n)return;
+ const t=lastSync?new Date(lastSync).toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}):'';
+ n.textContent=cloudId?(txt+(t?' '+t:'')):txt;
+ n.className=warn?'warn':'';
+ n.title=cloudId?('Delt projekt · sidst gemt på serveren '+(lastSync?new Date(lastSync).toLocaleString('da-DK'):'—')) 
+                :'Gemt lokalt i denne browser';
+}
+function startSync(){
+ clearInterval(syncTimer);
+ if(!cloudId||!session())return;
+ pull();
+ syncTimer=setInterval(pull,6000);
+}
+function markDirty(){
+ if(!cloudId||!session())return;
+ dirty=true; push();
 }
 
 /* ================= autogem i browseren ================= */
@@ -1365,6 +1571,7 @@ function autosave(){
   setAuto(ok?'gemt '+new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'})
             :'kan ikke gemme lokalt', !ok);
  },900);
+ if(typeof markDirty==='function')markDirty();
 }
 window.addEventListener('beforeunload',()=>{
  clearTimeout(autoTimer);
@@ -1479,30 +1686,6 @@ async function sbFetch(path,opts,retried){
  return t?JSON.parse(t):null;
 }
 
-async function cloudList(){
- return await sbFetch('signalflow_projects?select=id,name,updated_at,updated_by&order=updated_at.desc');
-}
-async function cloudSave(asNew){
- const body={name:projectName,data:{app:'signalflow',name:projectName,pages},
-             updated_by:cfg().who||'', updated_at:new Date().toISOString()};
- if(cloudId&&!asNew){
-  const r=await sbFetch('signalflow_projects?id=eq.'+cloudId,{method:'PATCH',body:JSON.stringify(body)});
-  if(!r||!r.length)throw new Error('Projektet findes ikke længere i databasen.');
- }else{
-  const r=await sbFetch('signalflow_projects',{method:'POST',body:JSON.stringify(body)});
-  cloudId=r[0].id;
- }
- autosave();
-}
-async function cloudOpen(id){
- const r=await sbFetch('signalflow_projects?id=eq.'+id+'&select=id,name,data');
- if(!r||!r.length)throw new Error('Kunne ikke hente projektet.');
- const d=r[0].data;
- pages=d.pages; projectName=d.name||r[0].name; cloudId=r[0].id;
- activePage=0; doc=pages[0]; path=[]; sel=null; focus=null; undoStack=[];
- draw(); autosave();
-}
-
 const SQL=`-- Kør denne én gang. Den kan køres igen uden at ødelægge noget.
 create table if not exists signalflow_projects (
   id uuid primary key default gen_random_uuid(),
@@ -1523,6 +1706,13 @@ create table if not exists signalflow_versions (
   created_at timestamptz not null default now()
 );
 create index if not exists sfv_pid on signalflow_versions(project_id, created_at desc);
+
+-- Serveren sætter selv tidsstemplet, så alle enheder viser det samme
+create or replace function sf_touch() returns trigger as $$
+begin new.updated_at = now(); return new; end $$ language plpgsql;
+drop trigger if exists sf_touch_t on signalflow_projects;
+create trigger sf_touch_t before update on signalflow_projects
+  for each row execute function sf_touch();
 
 alter table signalflow_projects enable row level security;
 alter table signalflow_versions enable row level security;
@@ -1546,7 +1736,7 @@ async function cloudList(){
 }
 async function cloudSave(asNew,note){
  const who=cfg().who||userName().split('@')[0]||'';
- const body={name:projectName,data:snapshot(),updated_by:who,updated_at:new Date().toISOString()};
+ const body={name:projectName,data:snapshot(),updated_by:who};
  if(cloudId&&!asNew){
   const r=await sbFetch('signalflow_projects?id=eq.'+cloudId,{method:'PATCH',body:JSON.stringify(body)});
   if(!r||!r.length)throw new Error('Projektet findes ikke længere i databasen.');
@@ -1558,7 +1748,7 @@ async function cloudSave(asNew,note){
  /* hver gemning lægger sig som en version, så man altid kan gå tilbage */
  await sbFetch('signalflow_versions',{method:'POST',body:JSON.stringify(
    {project_id:cloudId,data:snapshot(),note:note||'',created_by:who})});
- autosave();
+ dirty=false; lastSync=null; migrateSeen(); autosave(); startSync();
 }
 async function cloudOpen(id){
  const r=await sbFetch('signalflow_projects?id=eq.'+id+'&select=id,name,folder,data');
@@ -1566,7 +1756,7 @@ async function cloudOpen(id){
  const d=r[0].data;
  pages=d.pages; plan=d.plan||blankPlan(); projectName=d.name||r[0].name; cloudId=r[0].id; currentFolder=r[0].folder||'';
  activePage=0; doc=pages[0]; path=[]; sel=null; focus=null; undoStack=[];
- draw(); autosave();
+ draw(); autosave(); lastSync=null; dirty=false; migrateSeen(); startSync();
 }
 async function cloudVersions(pid){
  return await sbFetch('signalflow_versions?project_id=eq.'+pid
@@ -1751,7 +1941,12 @@ function openLogin(){
     const c2=cfg(); setCfg({url:c2.url,key:c2.key,who:val(root,'who').trim()});
     btn.textContent='Logger ind …'; msg.textContent='';
     signIn(val(root,'email').trim(),root.querySelector('[name="pw"]').value)
-      .then(()=>{closeModal();openProjects()})
+      .then(()=>{
+        closeModal();
+        if(pendingOpen){const pid=pendingOpen;pendingOpen=null;
+          cloudOpen(pid).then(()=>{if(pendingPlan)setView('plan')}).catch(e=>alert(e.message));
+        }else openProjects();
+      })
       .catch(e=>{msg.textContent=e.message;btn.textContent='Log ind'});
    };
    root.querySelector('[data-login]').onclick=go;
@@ -2608,6 +2803,8 @@ if(restoreAuto()){/* genoptaget fra autogem */}
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
 ensurePlan();
 draw();
+applyUrl();
+startSync();
 </script>
 </body>
 </html>
