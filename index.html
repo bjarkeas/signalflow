@@ -1243,6 +1243,7 @@ function drawPlan(){
    ${nyt?`<button class="newsbadge" data-seen="1">${nyt} ${nyt===1?'ny ændring':'nye ændringer'} siden sidst · markér som set</button>`:''}
    ${meName()==='?'?`<input class="whobox" id="whoBox" placeholder="Dine initialer" title="Vises ud for de linjer du retter">`:
      `<span class="whotag" title="Dine initialer – klik for at rette">${esc(meName())}</span>`}
+   <button class="sharebtn" data-refresh="1" title="Hent kollegernes ændringer nu">↻ Opdatér</button>
    <button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan">Del link</button>
    <div class="planadd">
      <select id="devPick">
@@ -1321,6 +1322,9 @@ function bindPlan(){
  if(wt)wt.onclick=()=>{const v=prompt('Dine initialer:',meName());
    if(v!==null){const c=cfg();setCfg({url:c.url,key:c.key,who:v.trim()});drawPlan()}};
 
+ const rf=el2.querySelector('[data-refresh]');
+ if(rf)rf.onclick=function(){this.textContent='↻ Henter …';
+   pull().then(()=>{this.textContent='↻ Opdatér'}).catch(()=>{this.textContent='↻ Opdatér'})};
  const sh2=el2.querySelector('[data-share]');
  if(sh2)sh2.onclick=function(){
    if(!cloudId){alert('Gem projektet i databasen først, så linket peger på noget.');return}
@@ -1486,6 +1490,7 @@ function mergeDev(a,b){
  return d;
 }
 
+let pollN=0;
 async function pull(){
  if(!cloudId||!session())return;
  let r;
@@ -1493,10 +1498,21 @@ async function pull(){
  catch(e){ setSync('ingen forbindelse',true); return; }
  if(!r||!r.length)return;
  const t=r[0].updated_at;
- if(lastSync&&t===lastSync){setSync('opdateret');return}
- if(!lastSync){lastSync=t;setSync('opdateret');return}
- /* der er noget nyere – hent det og flet ind */
+ pollN++;
+ /* Står tidsstemplet stille (fx hvis triggeren ikke er kørt), henter vi alligevel
+    hele projektet en gang imellem og sammenligner indholdet. */
+ const forced = (pollN%4===0);
+ if(lastSync&&t===lastSync&&!forced){setSync('opdateret');return}
  const full=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=name,data,updated_at,updated_by');
+ if(lastSync&&t===lastSync&&forced){
+  const same=JSON.stringify((full[0].data||{}).plan||null)===JSON.stringify(ensurePlan());
+  if(same){setSync('opdateret');return}
+ }
+ if(!lastSync){lastSync=t;setSync('opdateret');
+  const d0=full[0].data||{};
+  plan=mergePlan(ensurePlan(),d0.plan);
+  if(view==='plan')drawPlan();
+  return;}
  const d=full[0].data||{};
  plan=mergePlan(ensurePlan(),d.plan);
  if(!dirty&&d.pages)pages=d.pages;          // tegningen tages kun hvis vi ikke selv har rettet
@@ -1525,17 +1541,17 @@ function push(){
 async function cloudSaveQuiet(){
  const who=cfg().who||userName().split('@')[0]||'';
  const r=await sbFetch('signalflow_projects?id=eq.'+cloudId,
-   {method:'PATCH',body:JSON.stringify({name:projectName,data:snapshot(),updated_by:who})});
+   {method:'PATCH',body:JSON.stringify({name:projectName,data:snapshot(),updated_by:who,updated_at:new Date().toISOString()})});
  if(r&&r.length&&r[0].updated_at)lastSync=r[0].updated_at;
 }
 
 function setSync(txt,warn){
  const n=document.getElementById('autoStatus');
  if(!n)return;
- const t=lastSync?new Date(lastSync).toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}):'';
+ const d0=parseTS(lastSync); const t=d0?d0.toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}):'';
  n.textContent=cloudId?(txt+(t?' '+t:'')):txt;
  n.className=warn?'warn':'';
- n.title=cloudId?('Delt projekt · sidst gemt på serveren '+(lastSync?new Date(lastSync).toLocaleString('da-DK'):'—')) 
+ n.title=cloudId?('Delt projekt · sidst gemt på serveren '+(d0?d0.toLocaleString('da-DK'):'—')) 
                 :'Gemt lokalt i denne browser';
 }
 function startSync(){
@@ -1736,7 +1752,7 @@ async function cloudList(){
 }
 async function cloudSave(asNew,note){
  const who=cfg().who||userName().split('@')[0]||'';
- const body={name:projectName,data:snapshot(),updated_by:who};
+ const body={name:projectName,data:snapshot(),updated_by:who,updated_at:new Date().toISOString()};
  if(cloudId&&!asNew){
   const r=await sbFetch('signalflow_projects?id=eq.'+cloudId,{method:'PATCH',body:JSON.stringify(body)});
   if(!r||!r.length)throw new Error('Projektet findes ikke længere i databasen.');
@@ -1784,8 +1800,18 @@ let currentFolder='';
 let openFolders={};   // hvilke mapper der er foldet ud
 let openHistory=null; // hvilket projekt der viser historik
 
+/* PostgreSQL kan svare med og uden tidszone. Mangler den, er tiden UTC –
+   uden dette ville alt se to timer gammelt ud her i dansk sommertid. */
+function parseTS(v){
+ if(!v)return null;
+ if(typeof v==='number')return new Date(v);
+ let t=String(v).trim().replace(' ','T');
+ if(!/(Z|[+-]\d{2}:?\d{2})$/.test(t))t+='Z';
+ const d=new Date(t);
+ return isNaN(d)?new Date(v):d;
+}
 function tid(v){
- const d=new Date(v);
+ const d=parseTS(v)||new Date(v);
  return d.toLocaleString('da-DK',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 }
 
