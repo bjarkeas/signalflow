@@ -1229,6 +1229,85 @@ function ago(ms){
 }
 
 
+
+/* ---- opdatér skærmen uden at forstyrre den der skriver ----
+   I stedet for at tegne planen forfra, retter vi kun de felter der rent faktisk
+   har ændret sig – og aldrig det felt markøren står i. */
+let applyingRemote=false;
+
+function focusedRef(){
+ const a=document.activeElement;
+ if(!a)return null;
+ return a.dataset&&(a.dataset.plabel||a.dataset.pnum||a.dataset.dname||a.dataset.dplace)?a:null;
+}
+
+function planStructure(){
+ return (Object.keys(PLANDOMS).map(k=>
+   planDevices(ensurePlan(),k).map(d=>d.id+':'+d.ins.length+'/'+d.outs.length).join(',')
+ )).join('|');
+}
+
+function syncPlanDOM(){
+ const el2=document.getElementById('plan');
+ if(!el2||!el2.querySelector('.devgrid'))return drawPlan();
+ const foc=focusedRef();
+
+ /* er der kommet eller forsvundet udstyr eller linjer, må vi tegne forfra –
+    men kun hvis ingen står og skriver lige nu */
+ if(el2.dataset.struct!==planStructure()){
+  if(foc){el2.dataset.pending='1';return}
+  return drawPlan();
+ }
+
+ dom().devices.forEach(dv=>{
+  const card=el2.querySelector('[data-dev="'+dv.id+'"]');
+  if(!card)return;
+  const nm=card.querySelector('[data-dname]');
+  if(nm&&nm!==foc&&nm.value!==dv.name)nm.value=dv.name;
+  const pl=card.querySelector('[data-dplace]');
+  if(pl&&pl!==foc&&pl.value!==(dv.place||''))pl.value=dv.place||'';
+
+  ['ins','outs'].forEach(side=>{
+   dv[side].forEach(p=>{
+    const ref=dv.id+'|'+side+'|'+p.id;
+    const inp=el2.querySelector('[data-plabel="'+CSS.escape(ref)+'"]');
+    if(!inp)return;
+    const row=inp.closest('.port');
+    if(inp!==foc&&inp.value!==(p.label||''))inp.value=p.label||'';
+    const num=row.querySelector('[data-pnum]');
+    if(num&&num!==foc&&num.value!==p.n)num.value=p.n;
+    row.classList.toggle('set',!!p.label);
+    row.classList.toggle('fresh',fresh(p));
+    const by=row.querySelector('.pby');
+    if(by)by.textContent=p.by?(p.by+' · '+ago(p.at)):'';
+   });
+   const col=card.querySelector('.portcol.'+side);
+   if(col)col.querySelector('.portitle span').textContent=
+     dv[side].filter(p=>p.label).length+'/'+dv[side].length;
+  });
+  const meta=card.querySelector('.devmeta');
+  if(meta)meta.textContent=(dv.ins.filter(p=>p.label).length+dv.outs.filter(p=>p.label).length)
+    +'/'+(dv.ins.length+dv.outs.length)+' sat';
+ });
+
+ /* bjælken med "nye ændringer" opdateres for sig */
+ const bar=el2.querySelector('.planbar');
+ const n=newCount(), badge=el2.querySelector('.newsbadge');
+ if(n&&!badge){ if(!foc)drawPlan(); }
+ else if(badge&&!n)badge.remove();
+ else if(badge)badge.textContent=n+' '+(n===1?'ny ændring':'nye ændringer')+' siden sidst · markér som set';
+}
+
+/* når man forlader et felt, tegnes de ventende ændringer ind */
+document.addEventListener('focusout',()=>{
+ const el2=document.getElementById('plan');
+ setTimeout(()=>{
+  if(view!=='plan'||!el2)return;
+  if(focusedRef())return;
+  if(el2.dataset.pending==='1'){el2.dataset.pending='';drawPlan()}
+ },120);
+});
+
 /* ---- tegn kanalplanen ---- */
 function drawPlan(){
  if(!lastSeen())store(seenKey(),String(Date.now()));   // første besøg: alt regnes som set
@@ -1285,6 +1364,8 @@ function drawPlan(){
   <datalist id="lbls">${labels.map(l=>`<option value="${esc(l)}">`).join('')}</datalist>`;
 
  el2.innerHTML=h;
+ el2.dataset.struct=planStructure();
+ el2.dataset.pending='';
  bindPlan();
 }
 
@@ -1493,6 +1574,10 @@ function mergeDev(a,b){
 let pollN=0;
 async function pull(){
  if(!cloudId||!session())return;
+ applyingRemote=true;
+ try{ return await pullInner() } finally { applyingRemote=false }
+}
+async function pullInner(){
  let r;
  try{ r=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=updated_at,updated_by'); }
  catch(e){ setSync('ingen forbindelse',true); return; }
@@ -1514,7 +1599,15 @@ async function pull(){
   if(view==='plan')drawPlan();
   return;}
  const d=full[0].data||{};
+ const foc=focusedRef();
+ const keep=foc&&foc.dataset.plabel?{ref:foc.dataset.plabel,val:foc.value}:null;
  plan=mergePlan(ensurePlan(),d.plan);
+ if(keep){
+  const [did,side,pid]=keep.ref.split('|');
+  const dv=(planDevices(plan,planDom)||[]).find(x=>x.id===did);
+  const p=dv&&dv[side].find(x=>x.id===pid);
+  if(p)p.label=keep.val;      // det man er i gang med at skrive, vinder
+ }
  if(!dirty&&d.pages)pages=d.pages;          // tegningen tages kun hvis vi ikke selv har rettet
  if(!dirty&&d.name)projectName=d.name;
  if(activePage>=pages.length)activePage=0;
@@ -1522,7 +1615,7 @@ async function pull(){
  lastSync=full[0].updated_at;
  setSync('opdateret · '+(full[0].updated_by||'')); 
  autosave();
- if(view==='plan')drawPlan(); else draw();
+ if(view==='plan')syncPlanDOM(); else draw();
  if(dirty)push();                            // send vores egne rettelser videre
 }
 
@@ -1587,7 +1680,7 @@ function autosave(){
   setAuto(ok?'gemt '+new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'})
             :'kan ikke gemme lokalt', !ok);
  },900);
- if(typeof markDirty==='function')markDirty();
+ if(typeof markDirty==='function'&&!applyingRemote)markDirty();
 }
 window.addEventListener('beforeunload',()=>{
  clearTimeout(autoTimer);
