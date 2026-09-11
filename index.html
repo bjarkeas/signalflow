@@ -2732,6 +2732,8 @@ function exportDrawio(o){
  const idx = o.scope==='all' ? pages.map((_,i)=>i) : [activePage];
  const X=v=>String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;')
           .replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'&#10;');
+ /* groft mål af tekstbredden, så stregen kan starte lige efter teksten */
+ const tw=(t,px2)=>Math.round(String(t||'').length*(px2||10)*0.56);
  const SHEETW=1500, M=40;
 
  const diagrams = idx.map((pi,n)=>{
@@ -2773,10 +2775,12 @@ function exportDrawio(o){
     const eA=g.dir==='rtl'?'endArrow=none;':'endArrow=classic;endFill=1;';
     const est=`html=1;${dash}${sA}${eA}strokeColor=${col};strokeWidth=1.6;`;
 
-    V((g.feed||'')+(g.role==='backup'?' · BACKUP':''),
+    const feedTxt=(g.feed||'')+(g.role==='backup'?' · BACKUP':'');
+    const feedW2=Math.min(feedW-6, Math.max(46, tw(feedTxt,11)+8));
+    V(feedTxt,
       `text;html=1;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;fontColor=${col};`,
-      rowsX,ry-9,feedW-6,18);
-    E('',est,lineA,ry,cloudX,ry);
+      rowsX,ry-9,feedW2,18);
+    E('',est,rowsX+feedW2+10,ry,cloudX,ry);
     V(g.transport||'—',
       'rounded=1;arcSize=50;html=1;fontSize=10;fontStyle=1;fillColor=#ffffff;strokeColor=#b4b4b4;fontColor=#5c5c5c;',
       cloudX,ry-11,cloudW,22);
@@ -2792,13 +2796,14 @@ function exportDrawio(o){
      const cdash=crole==='backup'?'dashed=1;':'';
      const cdot={video:'#ff5252',lyd:'#ffb648',intercom:'#3fd99c',net:'#5ea3ff'}[ch.layer]||'#999';
      V('','ellipse;html=1;fillColor='+cdot+';strokeColor=none;',rowsX+16,ry-4,8,8);
-     V((ch.nr||'')+'  '+(ch.label||'')+(crole==='backup'?'   [B]':''),
-       'text;html=1;fontSize=10;align=left;verticalAlign=middle;fontColor=#3a3a3a;',
-       rowsX+30,ry-8,260,16);
+     const chTxt=(ch.nr||'')+'  '+(ch.label||'')+(crole==='backup'?'   [B]':'');
+     const chW=Math.min(300, Math.max(60, tw(chTxt,10)+10));
+     V(chTxt,'text;html=1;fontSize=10;align=left;verticalAlign=middle;fontColor=#3a3a3a;',
+       rowsX+30,ry-8,chW,16);
      const cd=ch.dir||g.dir||'ltr';
      E('',`html=1;${cdash}${cd==='rtl'||cd==='both'?'startArrow=classic;startFill=1;':'startArrow=none;'}`
         +`${cd==='rtl'?'endArrow=none;':'endArrow=classic;endFill=1;'}strokeColor=#3a3a3a;strokeWidth=1;`,
-       rowsX+296,ry,lineEnd,ry);
+       rowsX+30+chW+12,ry,lineEnd,ry);
      ry+=16;
     });
     ry+=10;
