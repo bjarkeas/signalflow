@@ -131,6 +131,13 @@ body:not(.unlocked) #app{filter:blur(7px);pointer-events:none;user-select:none}
 #gMsg{color:var(--video);font-size:12px;min-height:16px;text-align:center}
 .gatefoot{font-family:var(--fm);font-size:10px;color:var(--faint);text-align:center;margin-top:14px;line-height:1.6}
 
+
+/* forklaringsboble */
+#tipbox{position:fixed;display:none;z-index:10000;pointer-events:none;max-width:290px;
+ background:#0d1219;color:var(--text);border:1px solid var(--line);border-radius:7px;
+ padding:7px 10px;font:12px/1.45 var(--fb);box-shadow:0 8px 22px rgba(0,0,0,.55)}
+@media print{#tipbox{display:none!important}}
+
 /* ---- blokdiagram ---- */
 #blocks{display:none}
 body.blockview #sheet,body.blockview #tabbar,body.blockview #side,
@@ -245,14 +252,14 @@ body.guest .gastmark{display:inline-flex}
 .dev:hover .devacts .mini{opacity:1}
 
 .ports{display:grid;grid-template-columns:1fr 1fr;gap:0}
-.portcol{padding:9px 10px 11px;min-width:0}
+.portcol{padding:9px 8px 11px;min-width:0}
 .portcol.ins{border-right:1px solid var(--line)}
 .portitle{font-family:var(--fd);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;
  color:var(--dim);padding:2px 2px 7px;display:flex;justify-content:space-between}
 .portitle span{font-family:var(--fm);font-size:9.5px;color:var(--faint);letter-spacing:0}
-.port{display:flex;align-items:center;gap:5px;padding:2px 0;position:relative;min-width:0}
-.pnum{width:34px;flex:none;background:var(--bg);border:1px solid var(--line);color:var(--dim);
- border-radius:5px;padding:5px 4px;font:11px var(--fm);text-align:center}
+.port{display:flex;align-items:center;gap:4px;padding:2px 0;position:relative;min-width:0}
+.pnum{width:30px;flex:none;background:var(--bg);border:1px solid var(--line);color:var(--dim);
+ border-radius:5px;padding:5px 2px;font:10.5px var(--fm);text-align:center}
 .plabel{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--text);
  border-radius:5px;padding:5px 7px;font:12px var(--fb)}
 .plabel:focus,.pnum:focus{outline:none;border-color:var(--intercom)}
@@ -260,7 +267,10 @@ body.guest .gastmark{display:inline-flex}
 .port.fresh .plabel{border-color:var(--lyd);box-shadow:0 0 0 1px rgba(255,182,72,.28)}
 .port.fresh::before{content:'';position:absolute;left:-6px;top:50%;transform:translateY(-50%);
  width:5px;height:5px;border-radius:50%;background:var(--lyd)}
-.pby{font-family:var(--fm);font-size:8.5px;color:var(--faint);white-space:nowrap;max-width:74px;overflow:hidden;text-overflow:ellipsis}
+.pby{display:none;pointer-events:none;position:absolute;right:76px;top:50%;transform:translateY(-50%);z-index:2;
+ font-family:var(--fm);font-size:8.5px;color:var(--dim);white-space:nowrap;max-width:52px;
+ overflow:hidden;text-overflow:ellipsis;background:var(--panel);padding:2px 4px;border-radius:4px}
+.port:hover .pby{display:block}
 .port .mini{opacity:0}
 .port:hover .mini{opacity:.7}
 .portcol .add{color:var(--dim);margin-top:5px}
@@ -268,28 +278,22 @@ body.guest .gastmark{display:inline-flex}
 
 
 /* større kort, afkrydsning og diode */
-.devgrid{grid-template-columns:repeat(auto-fill,minmax(620px,1fr))}
-.dev.done{border-color:#2f7a52;box-shadow:0 0 0 1px rgba(63,217,156,.25)}
 .dev.moving{opacity:.5}
-.dev.dropzone{outline:2px dashed var(--intercom);outline-offset:2px}
 .draghandle{cursor:grab;color:var(--faint);font-size:14px;user-select:none;padding:0 2px}
 .draghandle:active{cursor:grabbing}
-.diode{width:9px;height:9px;border-radius:50%;background:#3b4553;flex:none;
- box-shadow:inset 0 0 2px rgba(0,0,0,.6)}
-.diode.on{background:var(--intercom);box-shadow:0 0 7px var(--intercom)}
 .devmeta{display:flex;gap:8px}
-.porthead{display:flex;align-items:center;gap:5px;padding:1px 0 4px;font-family:var(--fm);
+.porthead{display:flex;align-items:center;gap:4px;padding:1px 0 4px;font-family:var(--fm);
  font-size:8.5px;color:var(--faint);letter-spacing:.06em}
-.ph-n{width:34px;text-align:center}
+.ph-n{width:30px;text-align:center}
 .ph-l{flex:1}
 .ph-c{width:20px;text-align:center}
-.plabel{font-size:12.5px;padding:6px 8px}
+.plabel{font-size:12.5px;padding:6px 7px;min-width:0}
 .tick{width:20px;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer}
 .tick input{width:15px;height:15px;accent-color:#3fd99c;cursor:pointer}
 .tick.t2 input{accent-color:#5ea3ff}
 .tickgap{width:20px;flex:none}
 .port.ok .plabel{border-color:#2f7a52;background:#14201a}
-.pby{max-width:42px}
+
 
 /* arkivet */
 .arow{display:flex;align-items:center;gap:9px;padding:6px 7px;border-radius:6px}
@@ -305,7 +309,44 @@ body.guest .gastmark{display:inline-flex}
 .aacts{display:flex;gap:3px;opacity:0}
 .arow:hover .aacts{opacity:1}
 .sharebtn.save{border-color:var(--intercom);color:var(--intercom)}
-@media (max-width:820px){.devgrid{grid-template-columns:1fr}.plabel{font-size:16px}}
+@media (max-width:820px){
+ .devcanvas{width:auto;height:auto}
+ .dev{position:relative!important;left:auto!important;top:auto!important;width:auto!important;margin-bottom:12px}
+ .plabel{font-size:16px}
+ .dev .rs,.draghandle{display:none}
+}
+
+
+/* fri placering af kortene */
+.devcanvas{position:relative;width:3400px;height:2600px}
+/* smalt kort: input og output under hinanden, så teksten stadig kan ses */
+.dev.narrow .ports{grid-template-columns:1fr}
+.dev.narrow .portcol.ins{border-right:none;border-bottom:1px solid var(--line)}
+.dev{position:absolute}
+.dev.moving{opacity:.75;z-index:50;box-shadow:0 14px 34px rgba(0,0,0,.5)}
+.dev .rs{right:-5px;bottom:-5px;opacity:0}
+.dev:hover .rs{opacity:.8}
+/* P- og T-mærker der lyser når alt er sat */
+.devmeta{display:flex;gap:6px;align-items:center}
+.pt{display:flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--line);
+ color:var(--faint);border-radius:7px;padding:4px 9px;cursor:pointer;font:600 12px var(--fb);line-height:1}
+.pt em{font-style:normal;font-family:var(--fm);font-size:9px;opacity:.8}
+.pt:hover{border-color:var(--faint);color:var(--dim)}
+.pt.p.lit{background:rgba(63,217,156,.16);border-color:var(--intercom);color:var(--intercom);
+ box-shadow:0 0 9px rgba(63,217,156,.35)}
+.pt.t.lit{background:rgba(94,163,255,.16);border-color:var(--net);color:var(--net);
+ box-shadow:0 0 9px rgba(94,163,255,.35)}
+/* overskrifter præcis over felterne */
+.porthead{display:flex;align-items:center;gap:4px;padding:1px 0 4px;font-family:var(--fm);
+ font-size:8.5px;color:var(--faint);letter-spacing:.06em}
+.ph-n{width:30px;flex:none;text-align:center}
+.ph-l{flex:1;min-width:0;padding-left:7px}
+.ph-c{width:20px;flex:none;text-align:center}
+.ph-by{display:none}
+.ph-x{display:none}
+/* initialer og sletteknap lægger sig ovenpå ved musen over, så rækken ikke hopper */
+.port .mini{display:none;position:absolute;right:54px;top:50%;transform:translateY(-50%);z-index:2}
+.port:hover .mini{display:block}
 
 /* ---- iPhone og andre små skærme ---- */
 @media (max-width:820px){
@@ -505,22 +546,22 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   <header>
     <div class="logo">Signal<em>Flow</em></div>
     <div class="viewsw">
-      <button class="vbtn on" data-view="flow">Tegning</button>
-      <button class="vbtn" data-view="plan">Kanalplan</button>
-      <button class="vbtn" data-view="blocks">Blokdiagram</button>
+      <button class="vbtn on" data-view="flow" title="Signalflow-tegningen med afsender, signaler og modtager">Tegning</button>
+      <button class="vbtn" data-view="plan" title="Hvilke signaler der sidder i hvilke stik, med patch og tjek">Kanalplan</button>
+      <button class="vbtn" data-view="blocks" title="Kasser, udstyr og forbindelser – til at forklare et setup">Blokdiagram</button>
     </div>
     <div id="crumbs"></div>
     <div class="bus">
-      <button class="busbtn on" data-l="video">Video</button>
-      <button class="busbtn on" data-l="lyd">Lyd</button>
-      <button class="busbtn on" data-l="intercom">Intercom</button>
-      <button class="busbtn on" data-l="net">Net</button>
-      <button class="busbtn on" data-l="backup">Backup</button>
+      <button class="busbtn on" data-l="video" title="Vis eller skjul alle videosignaler">Video</button>
+      <button class="busbtn on" data-l="lyd" title="Vis eller skjul alle lydsignaler">Lyd</button>
+      <button class="busbtn on" data-l="intercom" title="Vis eller skjul alle intercomsignaler">Intercom</button>
+      <button class="busbtn on" data-l="net" title="Vis eller skjul alle netværkssignaler">Net</button>
+      <button class="busbtn on" data-l="backup" title="Vis eller skjul alt der er markeret som backup">Backup</button>
     </div>
-    <button class="hbtn" id="bUndo" title="Fortryd (Ctrl+Z)">↩</button>
-    <button class="hbtn" id="bExport" title="Eksportér">Eksportér</button>
-    <button class="hbtn" id="bFoldAll" title="Fold alle grupper sammen/ud">⇕</button>
-    <button class="hbtn" id="bNew" title="Tomt projekt">Nyt</button>
+    <button class="hbtn" id="bUndo" title="Fortryd sidste ændring · Ctrl+Z">↩</button>
+    <button class="hbtn" id="bExport" title="Gem som PDF, CSV, draw.io, HTML eller projektfil">Eksportér</button>
+    <button class="hbtn" id="bFoldAll" title="Fold alle grupper sammen eller ud – giver overblik på store ark">⇕</button>
+    <button class="hbtn" id="bNew" title="Start forfra med et tomt projekt">Nyt</button>
     <span class="gastmark" title="Du er inde via et delelink og ser kun kanalplanen">delt kanalplan</span>
     <span id="autoStatus" title="Autogem i browseren"></span>
     <button class="hbtn" id="bCloud" title="Projekter, mapper og versionshistorik">☁ Projekter</button>
@@ -561,6 +602,52 @@ window.onerror=function(m,src,line,col){
     +'\n\nVis denne tekst til udvikleren.';
   (document.body||document.documentElement).appendChild(d);
 };
+
+/* ================= forklaringer =================
+   Browserens egen boble kommer langsomt og kan ikke læses ordentligt.
+   Den her overtager alle title-tekster og viser dem hurtigt ved musen. */
+(function(){
+ let box=null, timer=null, cur=null;
+ const make=()=>{
+  if(box)return box;
+  box=document.createElement('div');
+  box.id='tipbox';
+  document.body.appendChild(box);
+  return box;
+ };
+ const show=(el,x,y)=>{
+  const t=el.getAttribute('data-tip'); if(!t)return;
+  const b=make();
+  b.textContent=t;
+  b.style.display='block';
+  const r=b.getBoundingClientRect();
+  let left=x+14, top=y+18;
+  if(left+r.width>innerWidth-8)left=innerWidth-r.width-8;
+  if(top+r.height>innerHeight-8)top=y-r.height-12;
+  b.style.left=Math.max(8,left)+'px';
+  b.style.top=Math.max(8,top)+'px';
+ };
+ const hide=()=>{clearTimeout(timer); if(box)box.style.display='none'; cur=null};
+ document.addEventListener('mouseover',e=>{
+  const el=e.target.closest('[title],[data-tip]');
+  if(!el){hide();return}
+  if(el.hasAttribute('title')){        // flyt teksten væk fra browseren
+   el.setAttribute('data-tip',el.getAttribute('title'));
+   el.removeAttribute('title');
+  }
+  if(el===cur)return;
+  cur=el; clearTimeout(timer);
+  const x=e.clientX, y=e.clientY;
+  timer=setTimeout(()=>show(el,x,y),260);
+ });
+ document.addEventListener('mouseout',e=>{
+  if(cur&&!cur.contains(e.relatedTarget))hide();
+ });
+ document.addEventListener('mousedown',hide);
+ document.addEventListener('scroll',hide,true);
+ window.addEventListener('blur',hide);
+})();
+
 /* ================= model ================= */
 const LAYERS={video:'Video',lyd:'Lyd',intercom:'Intercom',net:'Net'};
 const COL={video:'#c62828',lyd:'#9a6500',intercom:'#1e7a55',net:'#1e56b0'};
@@ -650,11 +737,11 @@ function draw(keepSide){
     ? (sh.sections.find(s=>s.id===focus.id)||{}).dst
     : (findGrp(focus.id)[0]||{}).label;
   h+=`<div class="focusbar">Viser kun <b>${esc(what||'')}</b> · resten er skjult
-       <button class="add" data-unfocus="1">vis hele arket</button></div>`;
+       <button class="add" data-unfocus="1" title="Vis alle sektioner igen">vis hele arket</button></div>`;
  }
 
  if(!sh.sections.length){
-  h+=`<div class="empty">Tomt ark.<br><button class="add" data-addsec="1">+ tilføj sektion</button></div>`;
+  h+=`<div class="empty">Tomt ark.<br><button class="add" data-addsec="1" title="Ny sektion: en afsender, et spor med signaler og en modtager">+ tilføj sektion</button></div>`;
  }
 
  sh.sections.forEach(sc=>{
@@ -680,11 +767,11 @@ function draw(keepSide){
       <div class="boxname lbl" data-e="src" data-id="${sc.id}" style="${nameS};color:inherit">${esc(sc.src)}</div>
       <div class="boxsub">${sc.groups.length} grupper</div>
       <div class="boxlines">${lines(sc.srcLines,'src')}</div>
-      <button class="boxadd" data-boxadd="${sc.id}|src">+ tekst</button>
+      <button class="boxadd" data-boxadd="${sc.id}|src" title="Skriv en linje i afsenderboksen, fx hvilket udstyr der står">+ tekst</button>
       <span class="tools">
-        <button class="mini" data-secedit="${sc.id}" title="Rediger sektion" style="color:inherit">✎</button>
-        <button class="mini" data-seccopy="${sc.id}" title="Kopiér sektion" style="color:inherit">⧉</button>
-        <button class="mini" data-secfocus="${sc.id}" title="Vis kun denne sektion" style="color:inherit">⤢</button>
+        <button class="mini" data-secedit="${sc.id}" title="Navne, farver og skriftstørrelse på boksene" style="color:inherit">✎</button>
+        <button class="mini" data-seccopy="${sc.id}" title="Kopiér eller flyt hele sektionen til en anden side" style="color:inherit">⧉</button>
+        <button class="mini" data-secfocus="${sc.id}" title="Skjul alt andet og arbejd kun med denne sektion" style="color:inherit">⤢</button>
       </span>
       ${held('src')}
       <span class="rs" data-rs="src|${sc.id}" title="Træk for at ændre størrelse"></span>
@@ -705,7 +792,7 @@ function draw(keepSide){
 
    h+=`<div class="grp ${g.role==='backup'?'backup':''} ${collapsed} ${sel&&sel.t==='grp'&&sel.id===g.id?'sel':''}" data-grp="${g.id}">
      <div class="feed" style="color:${lineC}">
-       <button class="mini caret" data-fold="${g.id}" title="${g.collapsed?'Fold ud':'Fold sammen'}">${g.collapsed?'▸':'▾'}</button>
+       <button class="mini caret" data-fold="${g.id}" title="${g.collapsed?'Fold gruppen ud igen':'Fold gruppen sammen – kanalerne skjules på skærmen, men kommer med på print'}">${g.collapsed?'▸':'▾'}</button>
        <span class="lbl" data-e="feed" data-id="${g.id}" style="color:${feedC};font-size:${px(gs.labelSize,11.5)}px">${esc(g.feed||'TX')}${g.role==='backup'?' · BACKUP':''}</span>
        <span class="endtag ${g.tx?'':'ghost'}" data-e="tx" data-id="${g.id}">${esc(g.tx||'TX')}</span>
        <span class="wire ${wcls}"></span>
@@ -715,9 +802,9 @@ function draw(keepSide){
        <span class="lbl" data-e="glabel" data-id="${g.id}" style="font-weight:600;color:${labC};font-size:${px(gs.labelSize,11.5)}px">${esc(g.label)}</span>
        <span class="chcount">${g.collapsed?g.channels.length+' kanaler':''}</span>
        <span class="tools">
-         <button class="mini" data-gedit="${g.id}" title="Rediger gruppe">✎</button>
-         <button class="mini" data-gcopy="${g.id}" title="Kopiér">⧉</button>
-         <button class="mini" data-gfocus="${g.id}" title="Vis kun denne gruppe">⤢</button>
+         <button class="mini" data-gedit="${g.id}" title="Navn, transport, signaltype, retning og farver">✎</button>
+         <button class="mini" data-gcopy="${g.id}" title="Kopiér gruppen eller udvalgte kanaler et andet sted hen">⧉</button>
+         <button class="mini" data-gfocus="${g.id}" title="Skjul alt andet og arbejd kun med denne gruppe">⤢</button>
          <button class="mini" data-up="${g.id}" title="Flyt op">▲</button>
          <button class="mini" data-down="${g.id}" title="Flyt ned">▼</button>
          <button class="mini" data-delg="${g.id}" title="Slet gruppe">✕</button>
@@ -733,7 +820,7 @@ function draw(keepSide){
     const cv=vis(ch.layer,crole);
     const chC=px(gs.chColor,'#3a3a3a'), chS=px(gs.chSize,11);
     h+=`<div class="ch ${crole==='backup'?'cbackup':''} ${cv?'':'faded'}" style="color:${chC}">
-      <span class="dot" style="background:${DOT[ch.layer]}" data-cyc="${g.id}|${ch.id}" title="${LAYERS[ch.layer]} – klik for at skifte"></span>
+      <span class="dot" style="background:${DOT[ch.layer]}" data-cyc="${g.id}|${ch.id}" title="Signaltype: ${LAYERS[ch.layer]} – klik for at skifte til den næste"></span>
       <span class="chnr" data-e="chnr" data-id="${g.id}|${ch.id}" style="font-size:${chS-0.5}px">${esc(ch.nr)}</span>
       ${crole==='backup'?'<span class="chb" title="Backup-linje">B</span>':''}
       <span class="lbl" data-e="chlabel" data-id="${g.id}|${ch.id}" style="font-size:${chS}px">${esc(ch.label||'…')}</span>
@@ -749,19 +836,19 @@ function draw(keepSide){
    });
 
    h+=`<div class="grpfoot">
-      <button class="add" data-addch="${g.id}">+ kanal</button>
-      <button class="drill" data-drill="${g.id}">⊞ åbn ${g.sub?'('+g.sub.sections.reduce((a,s)=>a+s.groups.length,0)+')':''}</button>
+      <button class="add" data-addch="${g.id}" title="Tilføj en kanal til denne gruppe">+ kanal</button>
+      <button class="drill" data-drill="${g.id}" title="Åbn et underark for denne gruppe – fx hvad der sidder i racket">⊞ åbn ${g.sub?'('+g.sub.sections.reduce((a,s)=>a+s.groups.length,0)+')':''}</button>
      </div></div>`;
   });
 
-  h+=`<button class="add" data-addgrp="${sc.id}">+ gruppe</button>
+  h+=`<button class="add" data-addgrp="${sc.id}" title="Tilføj en ny signallinje (TX) i denne sektion">+ gruppe</button>
     ${held('rows')}
     </div>
     <div class="dstbox" style="${dstS}">
       <div class="boxname lbl" data-e="dst" data-id="${sc.id}" style="${nameS};color:inherit">${esc(sc.dst)}</div>
       <div class="boxsub">${sc.groups.length} linjer</div>
       <div class="boxlines">${lines(sc.dstLines,'dst')}</div>
-      <button class="boxadd" data-boxadd="${sc.id}|dst">+ tekst</button>
+      <button class="boxadd" data-boxadd="${sc.id}|dst" title="Skriv en linje i modtagerboksen">+ tekst</button>
       <span class="tools"><button class="mini" data-delsec="${sc.id}" title="Slet sektion" style="color:inherit">✕</button></span>
       ${held('dst')}
       <span class="rs" data-rs="dst|${sc.id}" title="Træk for at ændre størrelse"></span>
@@ -770,9 +857,9 @@ function draw(keepSide){
   </div>`;
  });
  if(sh.sections.length&&!focus)h+=`<div style="text-align:center">
-   <button class="add" data-addsec="1">+ sektion</button>
-   <button class="add" data-addtext="1">+ tekstfelt</button>
-   <button class="add" data-addlegend="1">+ symbolforklaring</button>
+   <button class="add" data-addsec="1" title="Ny sektion: en afsender, et spor med signaler og en modtager">+ sektion</button>
+   <button class="add" data-addtext="1" title="Frit tekstfelt du kan placere hvor som helst på arket">+ tekstfelt</button>
+   <button class="add" data-addlegend="1" title="Boks med symboler, positioner og antal – fx bemanding">+ symbolforklaring</button>
  </div>`;
 
  /* frit placerede elementer ovenpå arket (låste er tegnet inde i boksene) */
@@ -801,10 +888,10 @@ function fitBoxes(){
 function renderTabs(){
  const tb=document.getElementById('tabbar');
  let h=pages.map((p,i)=>`<div class="tab ${i===activePage?'on':''}" data-tab="${i}">
-   <span class="tname" data-tabname="${i}">${esc(p.title)}</span>
+   <span class="tname" data-tabname="${i}" title="Klik for at skifte side. Klik igen på den åbne side for at omdøbe">${esc(p.title)}</span>
    ${pages.length>1?`<button class="tx" data-tabdel="${i}" title="Slet side">✕</button>`:''}
  </div>`).join('');
- h+=`<button class="tabadd" data-tabadd="1" title="Ny side">+</button>`;
+ h+=`<button class="tabadd" data-tabadd="1" title="Tilføj en ny side til tegningen">+</button>`;
  tb.innerHTML=h;
  tb.querySelector('[data-tabadd]').onclick=addPage;
 }
@@ -869,9 +956,9 @@ function itemHTML(it){
  const pos=`left:${a?a.dx:it.x}px;top:${a?a.dy:it.y}px;width:${it.w}px`;
  const tag=a?`<span class="anchortag">låst</span>`:'';
  const tools=`<span class="fitools">
-     <button class="mini" data-iedit="${it.id}" title="Rediger">✎</button>
+     <button class="mini" data-iedit="${it.id}" title="Tekst, farver, størrelse og placering">✎</button>
      <button class="mini" data-idup="${it.id}" title="Dublér">⧉</button>
-     <button class="mini" data-idel="${it.id}" title="Slet">✕</button>
+     <button class="mini" data-idel="${it.id}" title="Fjern boksen fra arket">✕</button>
    </span><span class="rs" data-rs="item|${it.id}"></span>`;
 
  if(it.type==='text'){
@@ -1539,19 +1626,19 @@ function drawBlocks(){
  const p=bp();
  let h=`<div class="blockbar">
    <div class="btabs">${ensureBlocks().pages.map((pg,i)=>
-     `<button class="btab ${i===blockPage?'on':''}" data-bpage="${i}">${esc(pg.title)}</button>`).join('')}
-     <button class="btabadd" data-bpadd="1" title="Ny side">+</button></div>
+     `<button class="btab ${i===blockPage?'on':''}" data-bpage="${i}" title="Skift til siden ${esc(pg.title)}">${esc(pg.title)}</button>`).join('')}
+     <button class="btabadd" data-bpadd="1" title="Ny side i blokdiagrammet, fx strømplan">+</button></div>
    <div class="btools">
-     <button class="btool" data-badd="box">▭ Kasse</button>
-     <button class="btool" data-badd="item">⬚ Udstyr / stik</button>
-     <button class="btool" data-badd="import">⤒ Importér</button>
-     <button class="btool" data-badd="text">T Tekst</button>
-     <button class="btool" data-badd="head">H Overskrift</button>
-     <button class="btool ${blockTool==='link'?'on':''}" data-badd="link">⟋ Forbind</button>
-     <button class="btool" data-bexp="1">↧ PDF</button>
+     <button class="btool" data-badd="box" title="Ny kasse, fx Studie eller TV Compound. Udstyr kan lægges indeni">▭ Kasse</button>
+     <button class="btool" data-badd="item" title="Hent udstyr, stik eller symboler fra det fælles arkiv">⌸ Udstyr / stik</button>
+     <button class="btool" data-badd="import" title="Hent udstyr der allerede er brugt i kanalplanen">⤒ Importér</button>
+     <button class="btool" data-badd="text" title="Frit tekstfelt">T Tekst</button>
+     <button class="btool" data-badd="head" title="Stor overskrift til diagrammet">H Overskrift</button>
+     <button class="btool ${blockTool==='link'?'on':''}" data-badd="link" title="Tegn en streg: klik først afsender, så modtager">⟋ Forbind</button>
+     <button class="btool" data-bexp="1" title="Gem diagrammet som PDF i A3">↧ PDF</button>
    </div>
  </div>
- ${blockTool==='link'?`<div class="linkhint">Klik på det der sender, og derefter på det der modtager. <button class="add" data-bcancel="1">afbryd</button></div>`:''}
+ ${blockTool==='link'?`<div class="linkhint">Klik på det der sender, og derefter på det der modtager. <button class="add" data-bcancel="1" title="Stop med at tegne forbindelser">afbryd</button></div>`:''}
  <div class="canvaswrap"><div id="bcanvas" class="bcanvas">
    <svg class="blinks" id="blinks"></svg>`;
 
@@ -1568,7 +1655,7 @@ function drawBlocks(){
      <div class="bboxhead" style="background:${n.color||'#1e7a55'}">
        <span class="btxt" data-btext="${n.id}">${esc(n.label)}</span>${nodeTools(n)}</div>
      ${kids(n.id).map(nodeHTML).join('')}
-     <span class="rs" data-brs="${n.id}"></span></div>`;
+     <span class="rs" data-brs="${n.id}" title="Træk for at ændre kassens størrelse"></span></div>`;
   }
   const pic=n.img?`<img src="${IMGLIB[n.img]?IMGLIB[n.img].src:''}" alt="">`
         :n.src?`<img src="${n.src}" alt="">`
@@ -1587,9 +1674,9 @@ function drawBlocks(){
 }
 function nodeTools(n){
  return `<span class="bntools">
-   <button class="mini" data-bedit="${n.id}" title="Rediger">✎</button>
+   <button class="mini" data-bedit="${n.id}" title="Navn, farve og størrelse">✎</button>
    <button class="mini" data-bdup="${n.id}" title="Dublér">⧉</button>
-   <button class="mini" data-bdel="${n.id}" title="Slet">✕</button></span>`;
+   <button class="mini" data-bdel="${n.id}" title="Fjern denne og alt der ligger i den">✕</button></span>`;
 }
 
 /* stregerne tegnes ovenpå, ud fra hvor kasserne faktisk står */
@@ -1654,7 +1741,7 @@ function bindBlocks(){
   if(k==='box')addBox();
   else if(k==='text')addBlockText('t');
   else if(k==='head')addBlockText('h');
-  else if(k==='item')pickItem();
+  else if(k==='item')openArchive('block');
   else if(k==='import')importItems();
   else if(k==='link'){blockTool=blockTool==='link'?null:'link';linkFrom=null;drawBlocks()}
  });
@@ -1994,6 +2081,7 @@ function printBlocks(){
 }
 
 /* ---- tegn kanalplanen ---- */
+const CARDW=760;
 const labelled=(dv,side)=>ports(dv,side).filter(p=>p.label);
 const devDone=dv=>{
  const all=labelled(dv,'ins').concat(labelled(dv,'outs'));
@@ -2008,11 +2096,11 @@ function drawPlan(){
 
  let h=`<div class="planbar">
    <div class="domtabs">${Object.keys(PLANDOMS).map(k=>
-     `<button class="domtab ${k===planDom?'on':''}" data-dom="${k}">${PLANDOMS[k]}</button>`).join('')}</div>
+     `<button class="domtab ${k===planDom?'on':''}" data-dom="${k}" title="${PLANDOMS[k]}-planen – hvert område har sit eget udstyr">${PLANDOMS[k]}</button>`).join('')}</div>
    ${nyt?`<button class="newsbadge" data-seen="1">${nyt} ${nyt===1?'ny ændring':'nye ændringer'} siden sidst · markér som set</button>`:''}
    ${meName()==='?'?`<input class="whobox" id="whoBox" placeholder="Dine initialer" title="Vises ud for de linjer du retter">`:
      `<span class="whotag" title="Dine initialer – klik for at rette">${esc(meName())}</span>`}
-   <button class="sharebtn save" data-save="1" title="Gem nu">Gem</button>
+   <button class="sharebtn save" data-save="1" title="Gem i databasen nu, så kollegerne kan se det">Gem</button>
    <button class="sharebtn" data-refresh="1" title="Hent kollegernes ændringer nu">↻ Opdatér</button>
    <button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan">Del link</button>
    ${guestToken?'':`<button class="sharebtn" data-arch="1" title="Arkivet med jeres udstyr">⌸ Arkiv</button>`}
@@ -2032,32 +2120,49 @@ function drawPlan(){
       Vælg et stykke udstyr i menuen ovenfor for at komme i gang.</div>`;
  }
 
- h+=`<div class="devgrid">`;
+
+ /* Kort uden plads får en, så de ikke lander oven i hinanden.
+    Højden gættes ud fra antal linjer, så stakken bliver pæn fra start. */
+ const estH=d=>74+Math.max(ports(d,'ins').length,ports(d,'outs').length)*30+46;
+ const colY=[20,20,20];
+ list.forEach(d=>{
+  if(typeof d.x==='number'&&typeof d.y==='number'){
+   const c=Math.min(2,Math.max(0,Math.round((d.x-20)/(CARDW+40))));
+   colY[c]=Math.max(colY[c], d.y+estH(d)+24);
+   return;
+  }
+  let c=0; for(let i=1;i<3;i++)if(colY[i]<colY[c])c=i;
+  d.x=20+c*(CARDW+40); d.y=colY[c]; colY[c]+=estH(d)+24;
+ });
+ h+=`<div class="devcanvas" id="devcanvas">`;
  list.forEach(dv=>{
   const lab=labelled(dv,'ins').concat(labelled(dv,'outs'));
   const np=lab.filter(p=>p.patched).length, nc=lab.filter(p=>p.checked).length;
   const done=devDone(dv);
-  h+=`<div class="dev ${done?'done':''}" data-dev="${dv.id}">
+  h+=`<div class="dev ${(dv.w||CARDW)<580?'narrow':''}" data-dev="${dv.id}" style="left:${dv.x}px;top:${dv.y}px;width:${dv.w||CARDW}px">
     <div class="devhead">
       <span class="draghandle" data-dragdev="${dv.id}" title="Træk for at flytte kortet">⠿</span>
-      <span class="diode ${done?'on':''}" title="${done?'Alt er patchet og tjekket':'Mangler patch eller tjek'}"></span>
       <div class="devnames">
         <input class="devname" value="${esc(dv.name)}" data-dname="${dv.id}" placeholder="Navn på udstyr">
         <input class="devplace" value="${esc(dv.place||'')}" data-dplace="${dv.id}" placeholder="Placering, fx Studie">
       </div>
-      <div class="devmeta"><span title="Patchet">${np}/${lab.length} P</span><span title="Tjekket">${nc}/${lab.length} T</span></div>
+      <div class="devmeta">
+        <button class="pt p ${lab.length&&np===lab.length?'lit':''}" data-dall="${dv.id}|patched"
+          title="Patchet – ${np} af ${lab.length}. Klik for at sætte alle">P<em>${np}/${lab.length}</em></button>
+        <button class="pt t ${lab.length&&nc===lab.length?'lit':''}" data-dall="${dv.id}|checked"
+          title="Tjekket – ${nc} af ${lab.length}. Klik for at sætte alle">T<em>${nc}/${lab.length}</em></button>
+      </div>
       <div class="devacts">
-        <button class="mini" data-dall="${dv.id}|patched" title="Sæt patchet på alle udfyldte linjer">P✓</button>
-        <button class="mini" data-dall="${dv.id}|checked" title="Sæt tjekket på alle udfyldte linjer">T✓</button>
         ${guestToken?'':`<button class="mini" data-darch="${dv.id}" title="Gem dette udstyr i arkivet">⤓</button>`}
-        <button class="mini" data-ddup="${dv.id}" title="Dublér">⧉</button>
-        <button class="mini" data-ddel="${dv.id}" title="Slet udstyr">✕</button>
+        <button class="mini" data-ddup="${dv.id}" title="Lav en kopi af hele kortet">⧉</button>
+        <button class="mini" data-ddel="${dv.id}" title="Slet kortet og alle dets linjer">✕</button>
       </div>
     </div>
     <div class="ports">
       ${portList(dv,'ins','Input')}
       ${portList(dv,'outs','Output')}
     </div>
+    <span class="rs" data-devrs="${dv.id}" title="Træk for at gøre kortet bredere eller smallere"></span>
   </div>`;
  });
  h+=`</div>
@@ -2074,7 +2179,8 @@ function portList(dv,side,title){
  return `<div class="portcol ${side}">
    <div class="portitle">${title} <span>${n}/${arr.length}</span></div>
    <div class="porthead"><span class="ph-n">Nr</span><span class="ph-l">Signal</span>
-     <span class="ph-c" title="Patchet">P</span><span class="ph-c" title="Tjekket">T</span></div>
+     <span class="ph-c" title="Patchet">P</span><span class="ph-c" title="Tjekket">T</span>
+     <span class="ph-by"></span><span class="ph-x"></span></div>
    ${arr.map(p=>`
      <div class="port ${p.label?'set':''} ${fresh(p)?'fresh':''} ${p.label&&p.patched&&p.checked?'ok':''}"
           data-port="${dv.id}|${side}|${p.id}">
@@ -2082,16 +2188,30 @@ function portList(dv,side,title){
        <input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
               title="${esc(p.label)}" data-plabel="${dv.id}|${side}|${p.id}">
        ${p.label?`
-        <label class="tick" title="Patchet${p.pby?' · '+esc(p.pby):''}">
+        <label class="tick" title="Patchet${p.pby?' · sat af '+esc(p.pby):''}">
           <input type="checkbox" data-tick="${dv.id}|${side}|${p.id}|patched" ${p.patched?'checked':''}></label>
-        <label class="tick t2" title="Tjekket${p.cby?' · '+esc(p.cby):''}">
+        <label class="tick t2" title="Tjekket${p.cby?' · sat af '+esc(p.cby):''}">
           <input type="checkbox" data-tick="${dv.id}|${side}|${p.id}|checked" ${p.checked?'checked':''}></label>`
         :`<span class="tickgap"></span><span class="tickgap"></span>`}
        <span class="pby" title="${p.by?esc(p.by)+' · '+new Date(p.at).toLocaleString('da-DK'):''}">${p.by?esc(p.by):''}</span>
-       <button class="mini" data-pdel="${dv.id}|${side}|${p.id}" title="Fjern linje">✕</button>
+       <button class="mini" data-pdel="${dv.id}|${side}|${p.id}" title="Fjern denne linje fra kortet">✕</button>
      </div>`).join('')}
-   <button class="add" data-padd="${dv.id}|${side}">+ ${title.toLowerCase()}</button>
+   <button class="add" data-padd="${dv.id}|${side}" title="Tilføj endnu en ${title.toLowerCase()}-linje">+ ${title.toLowerCase()}</button>
  </div>`;
+}
+
+/* opdaterer P- og T-mærket i kortets hoved */
+function ptBadges(card,dv){
+ if(!card)return;
+ const lab=labelled(dv,'ins').concat(labelled(dv,'outs'));
+ const np=lab.filter(x=>x.patched).length, nc=lab.filter(x=>x.checked).length;
+ const set=(sel,n,txt)=>{
+  const b=card.querySelector(sel); if(!b)return;
+  b.classList.toggle('lit',lab.length>0&&n===lab.length);
+  b.innerHTML=txt+'<em>'+n+'/'+lab.length+'</em>';
+  b.title=(txt==='P'?'Patchet':'Tjekket')+' – '+n+' af '+lab.length+'. Klik for at sætte alle';
+ };
+ set('.pt.p',np,'P'); set('.pt.t',nc,'T');
 }
 
 function bindPlan(){
@@ -2123,7 +2243,7 @@ function bindPlan(){
    (guestToken?guestPull():pull()).then(()=>{btn.textContent='↻ Opdatér'})
      .catch(()=>{btn.textContent='↻ Opdatér'});
  };
- const ar=el2.querySelector('[data-arch]'); if(ar)ar.onclick=()=>openArchive(false);
+ const ar=el2.querySelector('[data-arch]'); if(ar)ar.onclick=()=>openArchive('');
  const sh2=el2.querySelector('[data-share]');
  if(sh2)sh2.onclick=function(){
    if(guestToken){copyLink(location.href,this);return}
@@ -2137,7 +2257,7 @@ function bindPlan(){
  if(pick)pick.onchange=()=>{
   const v=pick.value; pick.value='';
   if(v==='')return;
-  if(v==='arch')return openArchive(true);
+  if(v==='arch')return openArchive('plan');
   if(v==='custom'){
    const t=prompt('Hvad hedder udstyret?','Nyt udstyr'); if(t===null)return;
    const i=parseInt(prompt('Hvor mange inputs?','8'),10); if(isNaN(i))return;
@@ -2189,14 +2309,7 @@ function bindPlan(){
   touch(p); autosave();
   const row=cb.closest('.port');
   row.classList.toggle('ok',!!(p.label&&p.patched&&p.checked));
-  const card=cb.closest('.dev');
-  const dd=devDone(dv);
-  card.classList.toggle('done',dd);
-  const dio=card.querySelector('.diode'); if(dio)dio.classList.toggle('on',dd);
-  const lab=labelled(dv,'ins').concat(labelled(dv,'outs'));
-  const m=card.querySelector('.devmeta');
-  if(m)m.innerHTML=`<span title="Patchet">${lab.filter(x=>x.patched).length}/${lab.length} P</span>`
-    +`<span title="Tjekket">${lab.filter(x=>x.checked).length}/${lab.length} T</span>`;
+  ptBadges(cb.closest('.dev'),dv);
  });
 
  el2.querySelectorAll('[data-plabel]').forEach(inp=>{
@@ -2241,38 +2354,94 @@ function bindPlan(){
  bindDevDrag(el2);
 }
 
-/* ---- flyt kortene rundt for at få et bedre overblik ---- */
+/* ---- kortene ligger hvor du lægger dem ---- */
 function bindDevDrag(el2){
+ const canvas=el2.querySelector('#devcanvas');
  el2.querySelectorAll('[data-dragdev]').forEach(h2=>{
   h2.onmousedown=e=>{
    e.preventDefault();
-   const from=h2.dataset.dragdev;
+   const dv=dom().devices.find(x=>x.id===h2.dataset.dragdev);
    const card=h2.closest('.dev');
+   const cr=card.getBoundingClientRect(), wr=canvas.getBoundingClientRect();
+   const gx=e.clientX-cr.left, gy=e.clientY-cr.top;
    card.classList.add('moving');
+   snap();
    const move=ev=>{
-    const over=document.elementFromPoint(ev.clientX,ev.clientY);
-    const t=over&&over.closest('.dev');
-    el2.querySelectorAll('.dev').forEach(d=>d.classList.remove('dropzone'));
-    if(t&&t!==card)t.classList.add('dropzone');
+    card.style.left=Math.max(0,ev.clientX-gx-wr.left)+'px';
+    card.style.top =Math.max(0,ev.clientY-gy-wr.top)+'px';
    };
-   const up=ev=>{
+   const up=()=>{
     document.removeEventListener('mousemove',move);
     document.removeEventListener('mouseup',up);
     card.classList.remove('moving');
-    const over=document.elementFromPoint(ev.clientX,ev.clientY);
-    const t=over&&over.closest('.dev');
-    el2.querySelectorAll('.dev').forEach(d=>d.classList.remove('dropzone'));
-    if(t&&t.dataset.dev!==from){
-     snap();
-     const arr=dom().devices;
-     const a=arr.findIndex(x=>x.id===from), b=arr.findIndex(x=>x.id===t.dataset.dev);
-     if(a>=0&&b>=0){const m=arr.splice(a,1)[0]; arr.splice(b,0,m); drawPlan()}
-    }
+    dv.x=Math.round(parseFloat(card.style.left)||0);
+    dv.y=Math.round(parseFloat(card.style.top)||0);
+    dv.mt=Date.now(); autosave();
    };
    document.addEventListener('mousemove',move);
    document.addEventListener('mouseup',up);
   };
  });
+ /* træk i hjørnet for at gøre kortet bredere */
+ el2.querySelectorAll('[data-devrs]').forEach(hn=>hn.onmousedown=e=>{
+  e.preventDefault(); e.stopPropagation();
+  const dv=dom().devices.find(x=>x.id===hn.dataset.devrs);
+  const card=hn.closest('.dev');
+  const x0=e.clientX, w0=card.getBoundingClientRect().width;
+  snap();
+  const move=ev=>{card.style.width=Math.max(340,w0+(ev.clientX-x0))+'px'};
+  const up=()=>{document.removeEventListener('mousemove',move);
+    document.removeEventListener('mouseup',up);
+    dv.w=Math.round(parseFloat(card.style.width)||CARDW); dv.mt=Date.now(); autosave()};
+  document.addEventListener('mousemove',move);
+  document.addEventListener('mouseup',up);
+ });
+}
+
+
+/* ---- link direkte til kanalplanen ---- */
+let pendingOpen=null, pendingPlan=false;
+
+function planLink(tok){
+ const u=location.origin+location.pathname;
+ const q=['view=plan','only=1','dom='+planDom];
+ if(tok)q.push('t='+tok); else if(cloudId)q.push('p='+cloudId);
+ return u+'?'+q.join('&');
+}
+/* Laver en nøgle til projektet første gang der deles, og genbruger den siden. */
+async function shareToken(){
+ const r=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=share_token');
+ if(r&&r.length&&r[0].share_token)return r[0].share_token;
+ const tok=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2));
+ await sbFetch('signalflow_projects?id=eq.'+cloudId,
+   {method:'PATCH',body:JSON.stringify({share_token:tok})});
+ return tok;
+}
+function copyLink(link,btn){
+ const done=()=>{const t=btn.textContent;btn.textContent='Kopieret ✓';setTimeout(()=>{btn.textContent=t},1600)};
+ if(navigator.clipboard&&navigator.clipboard.writeText){
+  navigator.clipboard.writeText(link).then(done).catch(()=>prompt('Kopiér linket:',link));
+ }else prompt('Kopiér linket:',link);
+}
+
+/* ---- åbn efter det der står i adressen ---- */
+function applyUrl(){
+ const q=new URLSearchParams(location.search);
+ if(q.get('dom')&&PLANDOMS[q.get('dom')])planDom=q.get('dom');
+ if(q.get('only')==='1')document.body.classList.add('onlyplan');
+ const wantPlan=q.get('view')==='plan'||q.get('only')==='1';
+ const pid=q.get('p');
+ if(pid){
+  if(!session()){
+   pendingOpen=pid; pendingPlan=wantPlan;
+   if(wantPlan)setView('plan');
+   return;
+  }
+  cloudOpen(pid).then(()=>{if(wantPlan)setView('plan')})
+    .catch(e=>{if(wantPlan)setView('plan');setSync(e.message,true)});
+  return;
+ }
+ if(wantPlan)setView('plan');
 }
 
 /* ---- skift mellem tegning og kanalplan ---- */
@@ -2889,7 +3058,7 @@ function openProjects(){
         <span class="vnum">${vs.length-i}</span>
         <span class="vnote">${esc(v.note||'(ingen beskrivelse)')}</span>
         <span class="vmeta">${tid(v.created_at)}${v.created_by?' · '+esc(v.created_by):''}</span>
-        <button class="mini" data-rest="${v.id}">Gendan</button>
+        <button class="mini" data-rest="${v.id}" title="Hent denne version ind i stedet for den nuværende">Gendan</button>
       </div>`).join('');
      box.querySelectorAll('[data-rest]').forEach(n=>n.onclick=()=>{
        if(!confirm('Hent denne version ind? Det du har åbent nu bliver erstattet.\n\nDen nuværende udgave bliver stående i databasen som nyeste version.'))return;
@@ -3023,32 +3192,48 @@ function archToDevice(a){
  return d;
 }
 
-function openArchive(insertMode){
- openModal('Udstyrsarkiv', insertMode?'Vælg hvad der skal ind i planen':'Fælles for alle projekter', `
+function openArchive(mode){
+ /* mode: 'plan' = indsæt som udstyr i kanalplanen, 'block' = indsæt på blokdiagrammet,
+    tom = bare se og redigere arkivet. Det er det SAMME arkiv begge steder. */
+ const forPlan=mode==='plan', forBlock=mode==='block';
+ openModal('Udstyrsarkiv',
+   forPlan?'Vælg hvad der skal i kanalplanen':forBlock?'Vælg hvad der skal på blokdiagrammet':'Fælles for alle projekter og faner', `
   <div class="mf"><input type="text" name="q" placeholder="Søg i arkivet …"></div>
-  <div id="archList" class="chklist" style="max-height:340px">Henter …</div>
-  <div class="mrow">
-    ${insertMode?`<button class="btn go" data-ains="1">Indsæt i planen</button>`:''}
-    <button class="btn" data-cancel="1">Luk</button>
+  <div id="archList" class="chklist" style="max-height:300px">Henter …</div>
+  ${forBlock?`
+   <div class="msec">Indbyggede billeder og symboler</div>
+   <div class="picks">
+    ${Object.keys(IMGLIB).map(k=>`<button class="pick" data-img="${k}">
+       <img src="${IMGLIB[k].src}"><span>${esc(IMGLIB[k].n)}</span></button>`).join('')}
+    ${Object.keys(SYMLIB).map(k=>`<button class="pick" data-sym="${k}">
+       <span class="bsym">${SYMLIB[k]}</span><span>${k}</span></button>`).join('')}
+   </div>`:''}
+  <div class="msec">Læg nyt i arkivet</div>
+  <div class="mf">
+    <input type="file" id="imgUp" accept="image/*">
+    <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;margin-top:6px">
+      Billedet skaleres ned og gemmes i arkivet, så alle kan bruge det – både her og i kanalplanen.
+      Udstyr med kanaler lægges i arkivet med ⤓ på et kort i kanalplanen.
+    </div>
   </div>
-  <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;margin-top:10px">
-    Udstyr lægges i arkivet med ⤓ på et kort i kanalplanen. Billeder sættes på her,
-    så de kan bruges i blokdiagrammet.
+  <div class="mrow">
+    ${(forPlan||forBlock)?`<button class="btn go" data-ains="1">Indsæt valgte</button>`:''}
+    <button class="btn" data-cancel="1">Luk</button>
   </div>`,root=>{
    const box=root.querySelector('#archList');
    let rows=[];
    const render=()=>{
     const q=(val(root,'q')||'').toLowerCase();
     const vis2=rows.filter(r=>!q||(r.name+' '+(r.place||'')+' '+(r.domain||'')).toLowerCase().includes(q));
-    if(!vis2.length){box.innerHTML='<div class="msub" style="padding:10px;text-transform:none;letter-spacing:0">Arkivet er tomt. Gem et stykke udstyr med ⤓ i kanalplanen.</div>';return}
+    if(!vis2.length){box.innerHTML='<div class="msub" style="padding:10px;text-transform:none;letter-spacing:0">Arkivet er tomt endnu.</div>';return}
     box.innerHTML=vis2.map(r=>`<div class="arow" data-aid="${r.id}">
       <input type="checkbox" class="asel" data-asel="${r.id}">
       <span class="apic">${r.img?`<img src="${r.img}">`:'<span class="anoimg">—</span>'}</span>
       <span class="amain"><b>${esc(r.name)}</b>
-        <em>${esc(PLANDOMS[r.domain]||r.domain||'')}${r.place?' · '+esc(r.place):''} ·
-        ${(r.ins||[]).length} ind / ${(r.outs||[]).length} ud</em></span>
+        <em>${esc(PLANDOMS[r.domain]||r.domain||'udstyr')}${r.place?' · '+esc(r.place):''}${
+          ((r.ins||[]).length||(r.outs||[]).length)?' · '+(r.ins||[]).length+' ind / '+(r.outs||[]).length+' ud':''}</em></span>
       <span class="aacts">
-        <button class="mini" data-aimg="${r.id}" title="Sæt billede på">🖼</button>
+        <button class="mini" data-aimg="${r.id}" title="Sæt eller skift billede">🖼</button>
         <button class="mini" data-aren="${r.id}" title="Omdøb">✎</button>
         <button class="mini" data-adel="${r.id}" title="Fjern fra arkivet">✕</button>
       </span></div>`).join('');
@@ -3056,49 +3241,86 @@ function openArchive(insertMode){
       const r=rows.find(x=>x.id===b.dataset.adel);
       if(!confirm('Fjern "'+r.name+'" fra arkivet?'))return;
       await sbFetch('signalflow_equipment?id=eq.'+r.id,{method:'DELETE'});
-      archCache=null; rows=await archiveList(true); render();
+      rows=await archiveList(true); render();
     });
     box.querySelectorAll('[data-aren]').forEach(b=>b.onclick=async()=>{
       const r=rows.find(x=>x.id===b.dataset.aren);
       const nm=prompt('Navn:',r.name); if(nm===null)return;
       await sbFetch('signalflow_equipment?id=eq.'+r.id,{method:'PATCH',body:JSON.stringify({name:nm})});
-      archCache=null; rows=await archiveList(true); render();
+      rows=await archiveList(true); render();
     });
-    box.querySelectorAll('[data-aimg]').forEach(b=>b.onclick=()=>{
-      const r=rows.find(x=>x.id===b.dataset.aimg);
-      const fi=document.createElement('input'); fi.type='file'; fi.accept='image/*';
-      fi.onchange=()=>{
-       const f=fi.files[0]; if(!f)return;
-       const rd=new FileReader();
-       rd.onload=()=>{const im=new Image();
-        im.onload=async()=>{
-         const max=260, sc=Math.min(1,max/Math.max(im.width,im.height));
-         const cv=document.createElement('canvas');
-         cv.width=Math.round(im.width*sc); cv.height=Math.round(im.height*sc);
-         cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
-         await sbFetch('signalflow_equipment?id=eq.'+r.id,
-           {method:'PATCH',body:JSON.stringify({img:cv.toDataURL('image/png')})});
-         archCache=null; rows=await archiveList(true); render();
-        };
-        im.src=rd.result;};
-       rd.readAsDataURL(f);
-      };
-      fi.click();
-    });
+    box.querySelectorAll('[data-aimg]').forEach(b=>b.onclick=()=>
+      pickImageFile(async src=>{
+        await sbFetch('signalflow_equipment?id=eq.'+b.dataset.aimg,
+          {method:'PATCH',body:JSON.stringify({img:src})});
+        rows=await archiveList(true); render();
+      }));
    };
    archiveList(true).then(r=>{rows=r||[];render()})
      .catch(e=>{box.innerHTML='<div class="msub" style="padding:10px;color:var(--video)">'+esc(e.message)+'</div>'});
    root.querySelector('[name="q"]').oninput=render;
    root.querySelector('[data-cancel]').onclick=closeModal;
+
+   /* indbyggede billeder og symboler – kun på blokdiagrammet */
+   root.querySelectorAll('[data-img]').forEach(b=>b.onclick=()=>{
+     addItem('img',b.dataset.img,IMGLIB[b.dataset.img].n); closeModal()});
+   root.querySelectorAll('[data-sym]').forEach(b=>b.onclick=()=>{
+     addItem('sym',b.dataset.sym,b.dataset.sym); closeModal()});
+
+   /* nyt billede direkte i arkivet */
+   root.querySelector('#imgUp').onchange=e=>{
+     const f=e.target.files[0]; if(!f)return;
+     readImage(f, async src=>{
+      const nm=prompt('Navn i arkivet:',(f.name||'Billede').replace(/\.[^.]+$/,''));
+      if(nm===null)return;
+      await sbFetch('signalflow_equipment',{method:'POST',body:JSON.stringify(
+        {name:nm||'Billede',domain:forBlock?'blok':planDom,img:src,ins:[],outs:[],updated_by:meName()})});
+      rows=await archiveList(true); render();
+     });
+   };
+
    const ins=root.querySelector('[data-ains]');
    if(ins)ins.onclick=()=>{
     const picked=[...root.querySelectorAll('[data-asel]:checked')].map(c=>rows.find(r=>r.id===c.dataset.asel));
     if(!picked.length)return closeModal();
     snap();
-    picked.forEach(a=>dom().devices.push(archToDevice(a)));
-    closeModal(); drawPlan();
+    if(forPlan){
+     picked.forEach(a=>dom().devices.push(archToDevice(a)));
+     closeModal(); drawPlan();
+    }else{
+     picked.forEach(a=>{
+      const s0=freeSpot(130,120);
+      const n={id:id(),t:'item',x:s0.x,y:s0.y,w:120,label:a.name};
+      if(a.img)n.src=a.img; else n.sym='rack';
+      if(lastBox){n.parent=lastBox;n.x=18;n.y=46+bp().nodes.filter(x=>x.parent===lastBox).length*126}
+      bp().nodes.push(n);
+     });
+     closeModal(); drawBlocks();
+    }
    };
  });
+}
+
+/* fælles billedhåndtering: skalér ned og giv en data-URL tilbage */
+function readImage(f,cb){
+ const rd=new FileReader();
+ rd.onload=()=>{
+  const im=new Image();
+  im.onload=()=>{
+   const max=260, sc=Math.min(1,max/Math.max(im.width,im.height));
+   const cv=document.createElement('canvas');
+   cv.width=Math.round(im.width*sc); cv.height=Math.round(im.height*sc);
+   cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+   cb(cv.toDataURL('image/png'));
+  };
+  im.src=rd.result;
+ };
+ rd.readAsDataURL(f);
+}
+function pickImageFile(cb){
+ const fi=document.createElement('input'); fi.type='file'; fi.accept='image/*';
+ fi.onchange=()=>{const f=fi.files[0]; if(f)readImage(f,cb)};
+ fi.click();
 }
 
 /* gem med det samme, uanset hvor man er */
@@ -3575,7 +3797,7 @@ function editLegend(iid){
    <input type="color" name="col${i}" value="${px(r.color,'#333333')}" style="width:100%;height:32px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px">
    <input type="text" name="lab${i}" value="${esc(r.label||'')}" placeholder="Position" style="width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 7px;font:inherit">
    <input type="number" name="cnt${i}" value="${r.count===''||r.count==null?'':r.count}" min="0" style="width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 7px;font:inherit">
-   <button class="mini" data-rmrow="${i}" style="opacity:1;color:var(--video)">✕</button>
+   <button class="mini" data-rmrow="${i}" style="opacity:1;color:var(--video)" title="Fjern denne linje">✕</button>
  </div>`;
  openModal('Symbolforklaring','Bemanding og positioner',`
   <div class="mgrid">
