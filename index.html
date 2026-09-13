@@ -138,6 +138,66 @@ body:not(.unlocked) #app{filter:blur(7px);pointer-events:none;user-select:none}
  padding:7px 10px;font:12px/1.45 var(--fb);box-shadow:0 8px 22px rgba(0,0,0,.55)}
 @media print{#tipbox{display:none!important}}
 
+
+/* ---- arkivsiden ---- */
+#archive{display:none}
+body.archview #sheet,body.archview #tabbar,body.archview #plan,body.archview #blocks,
+body.archview #side,body.archview .bus,body.archview #bFoldAll{display:none}
+body.archview #archive{display:block}
+body.archview #stage{grid-column:1/3;background:#0b0e13;padding:16px}
+
+.archwrap{display:grid;grid-template-columns:330px 1fr;gap:16px;align-items:start}
+.archlist{background:var(--panel);border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.archtop{display:flex;gap:7px;padding:11px;border-bottom:1px solid var(--line)}
+.archtop input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--text);
+ border-radius:7px;padding:8px 10px;font:inherit}
+.architems{max-height:calc(100vh - 230px);overflow-y:auto;padding:6px}
+.aitem{display:flex;align-items:center;gap:9px;padding:7px;border-radius:7px;cursor:pointer}
+.aitem:hover{background:var(--panel2)}
+.aitem.on{background:var(--panel2);box-shadow:inset 2px 0 0 var(--intercom)}
+.archcount{font-family:var(--fm);font-size:9.5px;color:var(--faint);padding:9px 12px;border-top:1px solid var(--line)}
+.archempty{color:var(--dim);font-size:12.5px;line-height:1.7;padding:22px 14px;text-align:center}
+.archempty.big{padding:70px 20px}
+
+.archedit{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:16px 18px 18px}
+.aehead{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.aename{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--text);
+ font-family:var(--fd);font-weight:700;font-size:20px;letter-spacing:.04em;border-radius:8px;padding:9px 11px}
+.aename:focus{outline:none;border-color:var(--intercom)}
+.aeacts{display:flex;gap:6px}
+.aegrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.aefield label{display:block;font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.aefield input,.aefield select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);
+ border-radius:7px;padding:8px 9px;font:inherit}
+.aepic{display:flex;gap:14px;align-items:center;padding:12px;background:var(--bg);
+ border:1px solid var(--line);border-radius:9px;margin-bottom:14px}
+.aepicbox{width:132px;height:92px;flex:none;display:flex;align-items:center;justify-content:center;
+ background:var(--panel2);border-radius:7px;overflow:hidden}
+.aepicbox img{max-width:100%;max-height:100%;object-fit:contain}
+.aepicacts{display:flex;flex-direction:column;gap:7px;align-items:flex-start}
+.aehint{font-family:var(--fm);font-size:9.5px;color:var(--faint);line-height:1.6}
+.aeports{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.aecol{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px 11px 12px}
+.aecolhead{display:flex;align-items:center;gap:8px;font-family:var(--fd);font-weight:600;font-size:12.5px;
+ letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.aecolhead span{font-family:var(--fm);font-size:9.5px;color:var(--faint);letter-spacing:0}
+.aecolhead .mini{margin-left:auto;opacity:1;border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+.aerow{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.aenum{width:46px;flex:none;background:var(--panel);border:1px solid var(--line);color:var(--dim);
+ border-radius:5px;padding:6px 4px;font:11px var(--fm);text-align:center}
+.aelab{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);color:var(--text);
+ border-radius:5px;padding:6px 8px;font:12px var(--fb)}
+.aerow .mini{opacity:.45}
+.aerow:hover .mini{opacity:1}
+.aenone{font-family:var(--fm);font-size:10px;color:var(--faint);padding:4px 2px}
+.aefoot{display:flex;gap:8px;align-items:center;border-top:1px solid var(--line);padding-top:13px}
+.aemeta{margin-left:auto;font-family:var(--fm);font-size:9.5px;color:var(--faint)}
+@media (max-width:820px){
+ .archwrap{grid-template-columns:1fr}
+ .aeports,.aegrid{grid-template-columns:1fr}
+ .architems{max-height:300px}
+}
+
 /* ---- blokdiagram ---- */
 #blocks{display:none}
 body.blockview #sheet,body.blockview #tabbar,body.blockview #side,
@@ -549,6 +609,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <button class="vbtn on" data-view="flow" title="Signalflow-tegningen med afsender, signaler og modtager">Tegning</button>
       <button class="vbtn" data-view="plan" title="Hvilke signaler der sidder i hvilke stik, med patch og tjek">Kanalplan</button>
       <button class="vbtn" data-view="blocks" title="Kasser, udstyr og forbindelser – til at forklare et setup">Blokdiagram</button>
+      <button class="vbtn" data-view="arch" title="Jeres fælles udstyr: rediger, sæt billeder på og genbrug i alle projekter">Arkiv</button>
     </div>
     <div id="crumbs"></div>
     <div class="bus">
@@ -574,6 +635,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div id="sheet"></div>
     <div id="plan"></div>
     <div id="blocks"></div>
+    <div id="archive"></div>
   </main>
   <aside id="side"></aside>
 </div>
@@ -2444,14 +2506,208 @@ function applyUrl(){
  if(wantPlan)setView('plan');
 }
 
+
+/* ================= arkivsiden =================
+   Her bor jeres udstyr. Det kan redigeres, få billeder på og hentes ind i
+   både kanalplanen og blokdiagrammet – i alle projekter, for alle brugere. */
+let archRows=[], archSel=null, archQ='', archDirty=false;
+
+function drawArchive(){
+ const el2=document.getElementById('archive');
+ const q=archQ.toLowerCase();
+ const vis2=archRows.filter(r=>!q||((r.name||'')+' '+(r.place||'')+' '+(PLANDOMS[r.domain]||r.domain||''))
+   .toLowerCase().includes(q));
+ const cur=archRows.find(r=>r.id===archSel);
+
+ el2.innerHTML=`
+  <div class="archwrap">
+    <div class="archlist">
+      <div class="archtop">
+        <input type="text" id="archq" value="${esc(archQ)}" placeholder="Søg i udstyr …">
+        <button class="sharebtn save" id="archnew" title="Opret et nyt stykke udstyr i arkivet">+ Nyt</button>
+      </div>
+      <div class="architems">
+        ${vis2.length?vis2.map(r=>`
+          <div class="aitem ${r.id===archSel?'on':''}" data-asel="${r.id}">
+            <span class="apic">${r.img?`<img src="${r.img}">`:'<span class="anoimg">—</span>'}</span>
+            <span class="amain"><b>${esc(r.name||'(uden navn)')}</b>
+              <em>${esc(PLANDOMS[r.domain]||r.domain||'udstyr')}${r.place?' · '+esc(r.place):''}
+              · ${(r.ins||[]).length} ind / ${(r.outs||[]).length} ud</em></span>
+          </div>`).join('')
+         :`<div class="archempty">${archRows.length?'Ingen match.':'Arkivet er tomt.<br>Tryk <b>+ Nyt</b>, eller gem et kort fra kanalplanen med ⤓.'}</div>`}
+      </div>
+      <div class="archcount">${archRows.length} stk. i arkivet · fælles for alle projekter</div>
+    </div>
+
+    <div class="archedit">
+      ${cur?`
+      <div class="aehead">
+        <input class="aename" id="ae-name" value="${esc(cur.name||'')}" placeholder="Navn på udstyret">
+        <div class="aeacts">
+          <button class="sharebtn save" id="ae-save" title="Gem ændringerne i arkivet">Gem</button>
+          <button class="sharebtn" id="ae-dup" title="Lav en kopi som du kan rette i">Dublér</button>
+          <button class="sharebtn" id="ae-del" title="Fjern udstyret fra arkivet">Slet</button>
+        </div>
+      </div>
+      <div class="aegrid">
+        <div class="aefield"><label>Område</label>
+          <select id="ae-dom">
+            ${Object.keys(PLANDOMS).map(k=>`<option value="${k}" ${cur.domain===k?'selected':''}>${PLANDOMS[k]}</option>`).join('')}
+            <option value="blok" ${cur.domain==='blok'?'selected':''}>Kun blokdiagram / stik</option>
+          </select></div>
+        <div class="aefield"><label>Standardplacering</label>
+          <input type="text" id="ae-place" value="${esc(cur.place||'')}" placeholder="fx Studie eller Teko rack"></div>
+      </div>
+
+      <div class="aepic">
+        <div class="aepicbox">${cur.img?`<img src="${cur.img}">`:'<span class="anoimg">Intet billede</span>'}</div>
+        <div class="aepicacts">
+          <button class="sharebtn" id="ae-img" title="Vælg et billede fra maskinen – det skaleres ned automatisk">${cur.img?'Skift billede':'Sæt billede på'}</button>
+          ${cur.img?`<button class="sharebtn" id="ae-imgdel" title="Fjern billedet">Fjern</button>`:''}
+          <div class="aehint">Billedet bruges på blokdiagrammet, når udstyret hentes ind.</div>
+        </div>
+      </div>
+
+      <div class="aeports">
+        ${archPortCol(cur,'ins','Input')}
+        ${archPortCol(cur,'outs','Output')}
+      </div>
+
+      <div class="aefoot">
+        <button class="sharebtn" id="ae-toplan" title="Læg udstyret ind i den kanalplan du arbejder i">→ Indsæt i kanalplan</button>
+        <button class="sharebtn" id="ae-toblock" title="Læg udstyret på blokdiagrammet">→ Indsæt på blokdiagram</button>
+        <span class="aemeta">${cur.updated_by?'sidst rettet af '+esc(cur.updated_by):''}</span>
+      </div>`
+      :`<div class="archempty big">Vælg et stykke udstyr til venstre, eller tryk <b>+ Nyt</b>.</div>`}
+    </div>
+  </div>`;
+
+ bindArchive();
+}
+
+function archPortCol(cur,side,title){
+ const arr=cur[side]||[];
+ return `<div class="aecol">
+   <div class="aecolhead">${title} <span>${arr.length}</span>
+     <button class="mini" data-aeadd="${side}" title="Tilføj en linje">+</button></div>
+   ${arr.map((p,i)=>`
+     <div class="aerow">
+       <input class="aenum" value="${esc(p.n||'')}" data-aen="${side}|${i}" title="Nummer på stikket">
+       <input class="aelab" value="${esc(p.label||'')}" data-ael="${side}|${i}"
+              placeholder="Standardtekst (valgfri)" title="Teksten kommer med, når udstyret hentes ind i en plan">
+       <button class="mini" data-aeup="${side}|${i}" title="Flyt op">▲</button>
+       <button class="mini" data-aedel="${side}|${i}" title="Fjern linjen">✕</button>
+     </div>`).join('')||'<div class="aenone">Ingen linjer endnu</div>'}
+ </div>`;
+}
+
+function bindArchive(){
+ const el2=document.getElementById('archive');
+ const cur=archRows.find(r=>r.id===archSel);
+
+ const q=el2.querySelector('#archq');
+ if(q)q.oninput=()=>{archQ=q.value;const pos=q.selectionStart;drawArchive();
+   const n=document.getElementById('archq');if(n){n.focus();n.setSelectionRange(pos,pos)}};
+ el2.querySelectorAll('[data-asel]').forEach(n=>n.onclick=()=>{
+   if(archDirty&&!confirm('Du har ikke gemt dine ændringer. Skift alligevel?'))return;
+   archSel=n.dataset.asel; archDirty=false; drawArchive();
+ });
+ const nb=el2.querySelector('#archnew');
+ if(nb)nb.onclick=async()=>{
+   try{
+    const r=await sbFetch('signalflow_equipment',{method:'POST',body:JSON.stringify(
+      {name:'Nyt udstyr',domain:planDom,place:'',ins:[],outs:[],updated_by:meName()})});
+    archRows=await archiveList(true); archSel=r[0].id; archDirty=false; drawArchive();
+   }catch(e){alert(e.message)}
+ };
+ if(!cur)return;
+
+ /* alle felter skriver direkte i den valgte post, og Gem sender den til databasen */
+ const mark=()=>{archDirty=true;const b=el2.querySelector('#ae-save');if(b)b.textContent='Gem *'};
+ const nm=el2.querySelector('#ae-name'); if(nm)nm.oninput=()=>{cur.name=nm.value;mark()};
+ const dm=el2.querySelector('#ae-dom');  if(dm)dm.onchange=()=>{cur.domain=dm.value;mark()};
+ const pl=el2.querySelector('#ae-place');if(pl)pl.oninput=()=>{cur.place=pl.value;mark()};
+
+ el2.querySelectorAll('[data-aen]').forEach(inp=>inp.oninput=()=>{
+   const [side,i]=inp.dataset.aen.split('|'); cur[side][+i].n=inp.value; mark()});
+ el2.querySelectorAll('[data-ael]').forEach(inp=>inp.oninput=()=>{
+   const [side,i]=inp.dataset.ael.split('|'); cur[side][+i].label=inp.value; mark()});
+ el2.querySelectorAll('[data-aeadd]').forEach(b=>b.onclick=()=>{
+   const side=b.dataset.aeadd; cur[side]=cur[side]||[];
+   cur[side].push({n:String(cur[side].length+1),label:''}); mark(); drawArchive()});
+ el2.querySelectorAll('[data-aedel]').forEach(b=>b.onclick=()=>{
+   const [side,i]=b.dataset.aedel.split('|'); cur[side].splice(+i,1); mark(); drawArchive()});
+ el2.querySelectorAll('[data-aeup]').forEach(b=>b.onclick=()=>{
+   const [side,i]=b.dataset.aeup.split('|'); const k=+i; if(k<1)return;
+   const a=cur[side]; const t=a[k-1]; a[k-1]=a[k]; a[k]=t; mark(); drawArchive()});
+
+ const im=el2.querySelector('#ae-img');
+ if(im)im.onclick=()=>pickImageFile(src=>{cur.img=src;mark();drawArchive()});
+ const imd=el2.querySelector('#ae-imgdel');
+ if(imd)imd.onclick=()=>{cur.img=null;mark();drawArchive()};
+
+ const sv=el2.querySelector('#ae-save');
+ if(sv)sv.onclick=async function(){
+   this.textContent='Gemmer …';
+   try{
+    await sbFetch('signalflow_equipment?id=eq.'+cur.id,{method:'PATCH',body:JSON.stringify(
+      {name:cur.name,domain:cur.domain,place:cur.place,ins:cur.ins||[],outs:cur.outs||[],
+       img:cur.img||null,updated_by:meName(),updated_at:new Date().toISOString()})});
+    archRows=await archiveList(true); archDirty=false; drawArchive();
+   }catch(e){this.textContent='Gem';alert(e.message)}
+ };
+ const dl2=el2.querySelector('#ae-dup');
+ if(dl2)dl2.onclick=async()=>{
+   try{
+    const r=await sbFetch('signalflow_equipment',{method:'POST',body:JSON.stringify(
+      {name:(cur.name||'Udstyr')+' (kopi)',domain:cur.domain,place:cur.place,
+       ins:cur.ins||[],outs:cur.outs||[],img:cur.img||null,updated_by:meName()})});
+    archRows=await archiveList(true); archSel=r[0].id; drawArchive();
+   }catch(e){alert(e.message)}
+ };
+ const de=el2.querySelector('#ae-del');
+ if(de)de.onclick=async()=>{
+   if(!confirm('Fjern "'+(cur.name||'')+'" fra arkivet? Det gælder for alle projekter.'))return;
+   try{
+    await sbFetch('signalflow_equipment?id=eq.'+cur.id,{method:'DELETE'});
+    archRows=await archiveList(true); archSel=null; archDirty=false; drawArchive();
+   }catch(e){alert(e.message)}
+ };
+
+ const tp=el2.querySelector('#ae-toplan');
+ if(tp)tp.onclick=()=>{
+   snap();
+   if(cur.domain&&PLANDOMS[cur.domain])planDom=cur.domain;
+   dom().devices.push(archToDevice(cur));
+   setView('plan');
+ };
+ const tb=el2.querySelector('#ae-toblock');
+ if(tb)tb.onclick=()=>{
+   snap();
+   const s0=freeSpot(130,120);
+   const n={id:id(),t:'item',x:s0.x,y:s0.y,w:120,label:cur.name||'Udstyr'};
+   if(cur.img)n.src=cur.img; else n.sym='rack';
+   bp().nodes.push(n);
+   setView('blocks');
+ };
+}
+
 /* ---- skift mellem tegning og kanalplan ---- */
 let view='flow';
 function setView(v){
  view=v;
  document.body.classList.toggle('planview',v==='plan');
  document.body.classList.toggle('blockview',v==='blocks');
+ document.body.classList.toggle('archview',v==='arch');
  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
- if(v==='plan')drawPlan(); else if(v==='blocks')drawBlocks(); else draw();
+ if(v==='plan')drawPlan(); else if(v==='blocks')drawBlocks();
+ else if(v==='arch'){
+  drawArchive();
+  archiveList(true).then(r=>{archRows=r||[];drawArchive()})
+    .catch(e=>{const el3=document.getElementById('archive');
+      if(el3)el3.innerHTML='<div class="archempty big" style="color:var(--video)">'+esc(e.message)+'</div>'});
+ }
+ else draw();
 }
 
 
