@@ -112,6 +112,25 @@ body.planview #plan{display:block}
 body.planview #stage{background:#0b0e13;padding:16px}
 
 
+
+/* ---- låseskærm ---- */
+#gate{position:fixed;top:0;right:0;bottom:0;left:0;z-index:9998;background:var(--bg);
+ display:flex;align-items:center;justify-content:center;padding:24px}
+body.unlocked #gate{display:none}
+body:not(.unlocked) #app{filter:blur(7px);pointer-events:none;user-select:none}
+.gatebox{width:100%;max-width:340px;display:flex;flex-direction:column;gap:9px}
+.gatelogo{font-family:var(--fd);font-weight:700;font-size:30px;letter-spacing:.09em;text-transform:uppercase;text-align:center}
+.gatelogo em{font-style:normal;color:var(--lyd)}
+.gatesub{font-family:var(--fm);font-size:11px;color:var(--dim);text-align:center;margin-bottom:12px}
+#gate input{background:var(--panel);border:1px solid var(--line);color:var(--text);
+ border-radius:8px;padding:12px 12px;font:16px var(--fb)}
+#gate input:focus{outline:none;border-color:var(--intercom)}
+.gatebtn{background:var(--panel2);border:1px solid var(--intercom);color:var(--intercom);
+ border-radius:8px;padding:12px;cursor:pointer;font:15px var(--fb);margin-top:4px}
+.gatebtn:hover{background:rgba(63,217,156,.13)}
+#gMsg{color:var(--video);font-size:12px;min-height:16px;text-align:center}
+.gatefoot{font-family:var(--fm);font-size:10px;color:var(--faint);text-align:center;margin-top:14px;line-height:1.6}
+
 /* ---- blokdiagram ---- */
 #blocks{display:none}
 body.blockview #sheet,body.blockview #tabbar,body.blockview #side,
@@ -201,6 +220,11 @@ body.blockview #stage{grid-column:1/3;background:#0b0e13;padding:14px}
 /* kun kanalplanen – til dem der får et link */
 body.onlyplan .viewsw,body.onlyplan #tabbar,body.onlyplan .bus,
 body.onlyplan #bFoldAll,body.onlyplan #bNew{display:none}
+body.guest #bCloud,body.guest #bSave,body.guest #bOpen,body.guest #bExport,
+body.guest #bUndo,body.guest #crumbs .projname{display:none}
+body.guest .gastmark{display:inline-flex}
+.gastmark{display:none;align-items:center;gap:6px;font-family:var(--fm);font-size:10px;
+ color:var(--intercom);border:1px solid var(--intercom);border-radius:7px;padding:5px 9px;white-space:nowrap}
 .whobox{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 10px;font:inherit;width:130px}
 .whotag{font-family:var(--fm);font-size:10.5px;color:var(--dim);border:1px solid var(--line);
  border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap}
@@ -241,6 +265,47 @@ body.onlyplan #bFoldAll,body.onlyplan #bNew{display:none}
 .port:hover .mini{opacity:.7}
 .portcol .add{color:var(--dim);margin-top:5px}
 .portcol .add:hover{color:var(--intercom);background:none}
+
+
+/* større kort, afkrydsning og diode */
+.devgrid{grid-template-columns:repeat(auto-fill,minmax(620px,1fr))}
+.dev.done{border-color:#2f7a52;box-shadow:0 0 0 1px rgba(63,217,156,.25)}
+.dev.moving{opacity:.5}
+.dev.dropzone{outline:2px dashed var(--intercom);outline-offset:2px}
+.draghandle{cursor:grab;color:var(--faint);font-size:14px;user-select:none;padding:0 2px}
+.draghandle:active{cursor:grabbing}
+.diode{width:9px;height:9px;border-radius:50%;background:#3b4553;flex:none;
+ box-shadow:inset 0 0 2px rgba(0,0,0,.6)}
+.diode.on{background:var(--intercom);box-shadow:0 0 7px var(--intercom)}
+.devmeta{display:flex;gap:8px}
+.porthead{display:flex;align-items:center;gap:5px;padding:1px 0 4px;font-family:var(--fm);
+ font-size:8.5px;color:var(--faint);letter-spacing:.06em}
+.ph-n{width:34px;text-align:center}
+.ph-l{flex:1}
+.ph-c{width:20px;text-align:center}
+.plabel{font-size:12.5px;padding:6px 8px}
+.tick{width:20px;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer}
+.tick input{width:15px;height:15px;accent-color:#3fd99c;cursor:pointer}
+.tick.t2 input{accent-color:#5ea3ff}
+.tickgap{width:20px;flex:none}
+.port.ok .plabel{border-color:#2f7a52;background:#14201a}
+.pby{max-width:42px}
+
+/* arkivet */
+.arow{display:flex;align-items:center;gap:9px;padding:6px 7px;border-radius:6px}
+.arow:hover{background:var(--panel2)}
+.asel{accent-color:var(--intercom);width:15px;height:15px}
+.apic{width:44px;height:32px;display:flex;align-items:center;justify-content:center;flex:none;
+ background:var(--bg);border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.apic img{max-width:100%;max-height:100%;object-fit:contain}
+.anoimg{color:var(--faint);font-size:10px}
+.amain{flex:1;min-width:0;display:flex;flex-direction:column}
+.amain b{font-size:12.5px;font-weight:500}
+.amain em{font-style:normal;font-family:var(--fm);font-size:9.5px;color:var(--faint)}
+.aacts{display:flex;gap:3px;opacity:0}
+.arow:hover .aacts{opacity:1}
+.sharebtn.save{border-color:var(--intercom);color:var(--intercom)}
+@media (max-width:820px){.devgrid{grid-template-columns:1fr}.plabel{font-size:16px}}
 
 /* ---- iPhone og andre små skærme ---- */
 @media (max-width:820px){
@@ -456,6 +521,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <button class="hbtn" id="bExport" title="Eksportér">Eksportér</button>
     <button class="hbtn" id="bFoldAll" title="Fold alle grupper sammen/ud">⇕</button>
     <button class="hbtn" id="bNew" title="Tomt projekt">Nyt</button>
+    <span class="gastmark" title="Du er inde via et delelink og ser kun kanalplanen">delt kanalplan</span>
     <span id="autoStatus" title="Autogem i browseren"></span>
     <button class="hbtn" id="bCloud" title="Projekter, mapper og versionshistorik">☁ Projekter</button>
     <button class="hbtn" id="bSave" title="Gem hele projektet – alle sider – som fil på maskinen">Gem fil</button>
@@ -469,6 +535,18 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div id="blocks"></div>
   </main>
   <aside id="side"></aside>
+</div>
+<div id="gate">
+  <div class="gatebox">
+    <div class="gatelogo">Signal<em>Flow</em></div>
+    <div class="gatesub">Log ind for at se projekterne</div>
+    <input type="text" id="gEmail" placeholder="E-mail" autocomplete="username">
+    <input type="password" id="gPw" placeholder="Adgangskode" autocomplete="current-password">
+    <input type="text" id="gWho" placeholder="Dine initialer (fx BSAN)">
+    <div id="gMsg"></div>
+    <button class="gatebtn" id="gGo">Log ind</button>
+    <div class="gatefoot">Adgang gives af den ansvarlige for opsætningen.</div>
+  </div>
 </div>
 <div id="modal"></div>
 <div id="printroot"></div>
@@ -506,11 +584,11 @@ function blank(){
 }
 
 
-/* ====== OSLO · Remote 2 – dine arbejdsdata ====== */
-const OSLO_DATA=[{"title":"TX/RX Main","sections":[{"id":"x1tet","dst":"MCR / AFV. A","src":"Nimbra 2 · Remote 2","style":{"dstH":0,"dstW":275,"srcH":22,"srcW":200,"dstDX":66,"srcDX":10},"groups":[{"id":"x2tet","sub":null,"feed":"Nimbra 2 TX 1","role":"primær","label":"Kamera 1 Studie Morten","layer":"video","style":{},"channels":[{"id":"x3tet","nr":"Ch. 1","label":"Vært.","layer":"lyd"},{"id":"x4teu","nr":"Ch. 2","label":"EXP. 1.","layer":"lyd"},{"id":"x5teu","nr":"Ch. 3","label":"EXP. 2","layer":"lyd"},{"id":"x6teu","nr":"Ch. 4","label":"EXP. 3.","layer":"lyd"},{"id":"x7teu","nr":"Ch. 5","label":"Gæst 1.","layer":"lyd"},{"id":"x8teu","nr":"Ch. 6","label":"Gæst 2.","layer":"lyd"},{"id":"x9teu","nr":"Ch. 7","label":"","layer":"lyd"},{"id":"x10teu","nr":"Ch. 8","label":"ST Mic L","layer":"lyd"},{"id":"x1wsm","nr":"Ch. 9","label":"ST Mic R","layer":"lyd"},{"id":"x2cha","nr":"Ch. 10","role":"backup","label":"Spare HM ","layer":"lyd"},{"id":"x3w1a","nr":"Ch. 11","role":"backup","label":"Spare HM","layer":"lyd"}],"transport":"EPL"},{"id":"x11teu","sub":null,"feed":"Nimbra 2 TX 2","role":"primær","label":"Kamera 2 Studie Morten","layer":"video","style":{},"channels":[{"id":"x12teu","nr":"Ch. 1","role":"backup","label":"Vært. MCR 42","layer":"lyd"},{"id":"x13teu","nr":"Ch. 2","role":"backup","label":"Hånd Mic. MCR 42","layer":"lyd"},{"id":"x14teu","nr":"Ch. 3","role":"backup","label":"Spare Hånd Mic. 1.","layer":"lyd"},{"id":"x15teu","nr":"Ch. 4","role":"backup","label":"Spare Hånd Mic. 2.","layer":"lyd"}],"transport":"EPL"},{"id":"x16teu","sub":null,"feed":"Nimbra 2 TX 3","role":"primær","label":"Kamera 3 / Komm Kamera.","layer":"video","style":{},"channels":[{"id":"x17teu","nr":"Ch. 1","label":"Komm 1. I Billedet.","layer":"lyd"},{"id":"x18teu","nr":"Ch. 2","label":"Komm 2. I Billedet.","layer":"lyd"}],"transport":"EPL"},{"id":"x21teu","sub":null,"feed":"Nimbra 2 TX 4","role":"primær","label":"Steadicam Pitch Camila","layer":"video","style":{},"channels":[{"id":"x22teu","nr":"Ch. 1","label":"Reporter Pitch Rack modtager","layer":"lyd"},{"id":"x23teu","nr":"Ch. 2","label":"Ekspert Pitch Rack modtager","layer":"lyd"},{"id":"x24teu","nr":"Ch. 3","label":"Gæst Pitch Rack modtager","layer":"lyd"},{"id":"x26teu","nr":"Ch. 4","label":"Reporter Pitch MCR 42","layer":"lyd"},{"id":"x27teu","nr":"Ch. 5","label":"Ekspert Pitch MCR 42","layer":"lyd"}],"transport":"EPL"},{"id":"x30teu","sub":null,"feed":"Nimbra 2 TX 5","role":"primær","label":"WF","layer":"video","style":{},"channels":[{"id":"x31teu","nr":"Ch. 1","label":"Komm 1","layer":"lyd"},{"id":"x32teu","nr":"Ch. 2","label":"Komm 2","layer":"lyd"},{"id":"x33teu","nr":"Ch. 3","label":"IT. L.","layer":"lyd"},{"id":"x34teu","nr":"Ch. 4","label":"IT. R.","layer":"lyd"},{"id":"x35teu","nr":"Ch. 5","label":"Dolby E.","layer":"lyd"},{"id":"x36teu","nr":"Ch. 6","label":"Dolby E.","layer":"lyd"},{"id":"x37teu","nr":"Ch. 7","label":"TBA","layer":"lyd"},{"id":"x38teu","nr":"Ch. 8","label":"TBA","layer":"lyd"},{"id":"x41teu","nr":"Ch. 11","role":"backup","label":"Komm 1 / Backup Dante","layer":"lyd"},{"id":"x42teu","nr":"Ch. 12","role":"backup","label":"Komm 2 / Backup Dante","layer":"lyd"}],"transport":"EPL"}],"srcLines":[{"t":"Ny tekst","id":"x160xzg"}]},{"id":"x43teu","dst":"Remote 2 <> Odense","src":"MCR / AFV. A","style":{},"groups":[{"id":"x44teu","dir":"rtl","sub":null,"feed":"Nimbra 2 RX 1","role":"primær","label":"PGM","layer":"video","style":{},"channels":[{"id":"x45teu","nr":"Ch. 1","label":"PGM L","layer":"lyd"},{"id":"x46teu","nr":"Ch. 2","label":"PGM R","layer":"lyd"}],"transport":"EPL"},{"id":"x47teu","dir":"rtl","sub":null,"feed":"Nimbra 2 RX 2","role":"primær","label":"DISP","layer":"video","style":{},"channels":[{"id":"x48teu","nr":"Ch. 1","label":"PGM L","layer":"lyd"},{"id":"x49teu","nr":"Ch. 2","label":"PGM R","layer":"lyd"}],"transport":"EPL"}]}]},{"title":"TX/RX Sekunder","sections":[{"id":"x50teu","dst":"MCR / AFV. A","src":"Remote 2 Arena 2","style":{},"groups":[{"id":"x51teu","sub":null,"feed":"Arena 2 TX 1","role":"primær","label":"Opvarmning sidelinje","layer":"video","style":{},"channels":[{"id":"x52teu","nr":"Ch. 1","label":"Komm A (Til redigering)","layer":"lyd","role":"backup"},{"id":"x53teu","nr":"Ch. 2","label":"Komm B ( Til redigering)","layer":"lyd","role":"backup"},{"id":"x54teu","nr":"Ch. 3","label":"Mic. L.","layer":"lyd"},{"id":"x55teu","nr":"Ch. 4","label":"Mic. R.","layer":"lyd"}],"transport":"Internet"},{"id":"x56teu","sub":null,"feed":"Arena 2 TX 2","role":"primær","label":"Opvarmning og Kamp modsat kamera.","layer":"video","style":{},"channels":[{"id":"x57teu","nr":"Ch. 1","label":"Komm A ( Til redigering)","layer":"lyd","role":"backup"},{"id":"x58teu","nr":"Ch. 2","label":"Komm B (Til redigering)","layer":"lyd","role":"backup"},{"id":"x59teu","nr":"Ch. 3","label":"Mic. L.","layer":"lyd"},{"id":"x60teu","nr":"Ch. 4","label":"Mic. R.","layer":"lyd"}],"transport":"Internet"},{"id":"x61teu","sub":null,"feed":"AVI 40 FJUM","role":"primær","label":"Reporter før kamp / Bag mål til EVS under kamp","layer":"video","style":{},"channels":[{"id":"x62teu","nr":"Ch. 1","label":"Repoter","layer":"lyd"},{"id":"x63teu","nr":"Ch. 2","label":"Kamera Mic","layer":"lyd"}],"transport":"Internet 4/5 G"}]}]},{"title":"Backup Studie","sections":[{"id":"x64teu","dst":"MCR / AFV. A","src":"Første Backup · Arena 2","style":{},"groups":[{"id":"x65teu","sub":null,"feed":"Arena 2 TX 3","role":"backup","label":"Studie Cam 1 Morten","layer":"video","style":{},"channels":[{"id":"x66teu","nr":"Ch. 1","label":"Vært.","layer":"lyd"},{"id":"x67teu","nr":"Ch. 2","label":"EXP. 1.","layer":"lyd"},{"id":"x68teu","nr":"Ch. 3","label":"EXP. 2","layer":"lyd"},{"id":"x69teu","nr":"Ch. 4","label":"EXP. 3.","layer":"lyd"},{"id":"x70teu","nr":"Ch. 5","label":"Gæst 1","layer":"lyd"},{"id":"x71teu","nr":"Ch. 6","label":"Gæst 2","layer":"lyd"},{"id":"x72teu","nr":"Ch. 7","label":"Spare Hånd Mic 1","layer":"lyd"},{"id":"x73teu","nr":"Ch. 8","label":"Spare Hånd Mic 2","layer":"lyd"}],"transport":"Internet"},{"id":"x74teu","sub":null,"feed":"Arena 2 TX 4","role":"backup","label":"Steadicam Pitch Camilla","layer":"video","style":{},"channels":[{"id":"x75teu","nr":"Ch. 1","label":"Reporter Pitch Rack modtager","layer":"lyd"},{"id":"x76teu","nr":"Ch. 2","label":"Ekspert Pitch Rack modtager","layer":"lyd"},{"id":"x77teu","nr":"Ch. 3","label":"Gæst Pitch Rack modtager","layer":"lyd"},{"id":"x79teu","nr":"Ch. 4","label":"Reporter Pitch MCR 42","layer":"lyd"},{"id":"x80teu","nr":"Ch. 5","label":"Ekspert Pitch MCR 42","layer":"lyd"}],"transport":"Internet"}]},{"id":"x83teu","dst":"MCR / AFV. A","src":"Anden Backup","style":{},"groups":[{"id":"x84teu","sub":null,"feed":"AVI ?","role":"backup","label":"Remote 2 Nød setup","layer":"video","style":{},"channels":[{"id":"x85teu","nr":"Ch. 1","label":"Remote 2 PGM L.","layer":"lyd"},{"id":"x86teu","nr":"Ch. 2","label":"Remote 2 PGM R.","layer":"lyd"}],"transport":"5G Internet / Starlink"}]},{"id":"x87teu","dst":"Remote 2","src":"Backup Retur","style":{},"groups":[{"id":"x88teu","dir":"rtl","sub":null,"feed":"Web mon Retur","role":"backup","label":"PGM","layer":"video","style":{},"channels":[{"id":"x89teu","nr":"Ch. 1","label":"PGM L","layer":"lyd"},{"id":"x90teu","nr":"Ch. 2","label":"PGM R","layer":"lyd"}],"transport":"Internet"}]}]},{"title":"Backup Kampe","sections":[{"id":"x91teu","dst":"MCR / AFV. A","src":"Remote 2 <> Odense","style":{"dstBd":"#57714e","dstBg":"#6d8764","dstFg":"#f3f7f1","srcBd":"#b37979","srcBg":"#c98f8f","srcFg":"#2b2417","boxSize":16},"groups":[{"id":"x92teu","sub":null,"feed":"AETA","role":"backup","label":"AETA · Serie# 694 · SIP User 905280","layer":"lyd","style":{},"channels":[{"id":"x93teu","nr":"Ch. 1","label":"Komm 1 Spare","layer":"lyd"},{"id":"x94teu","nr":"Ch. 2","label":"Komm 2 Spare","layer":"lyd"}],"transport":"Internet 20/20 Mbit"}]},{"id":"x95teu","dst":"MCR / AFV. A","src":"Host Uplink","style":{"dstBd":"#57714e","dstBg":"#6d8764","dstFg":"#f3f7f1","srcBd":"#929f8a","srcBg":"#a8b5a0","srcFg":"#2b2417","boxSize":16},"groups":[{"id":"x96teu","sub":null,"feed":"Host Uplink","role":"backup","label":"WF Host","layer":"video","style":{},"channels":[{"id":"x97teu","nr":"Ch. 1","label":"IT. L.","layer":"lyd"},{"id":"x98teu","nr":"Ch. 2","label":"IT. R.","layer":"lyd"},{"id":"x99teu","nr":"Ch. 3","label":"","layer":"lyd"},{"id":"x100teu","nr":"Ch. 4","label":"Mix af vores Kommentatorer","layer":"lyd"},{"id":"x101teu","nr":"Ch. 5","label":"Dolby E.","layer":"lyd"},{"id":"x102teu","nr":"Ch. 6","label":"Dolby E.","layer":"lyd"}],"transport":"Sattelit"}]}]},{"items":[{"w":178,"id":"x163ke2","rows":[{"sym":"👤","color":"#1e56b0","count":1,"label":"Vært IFB"},{"sym":"👤","color":"#1e7a55","count":3,"label":"Ekspert IFB"},{"sym":"👥","color":"#333333","count":1,"label":"Gæst IFB"}],"type":"legend","title":"STUDIE Morten","anchor":{"dx":226,"dy":46,"sec":"x103teu","side":"src"},"showTotal":false},{"w":178,"id":"x164bqs","rows":[{"sym":"👤","color":"#1e56b0","count":1,"label":"Vært IFB"},{"sym":"👤","color":"#1e7a55","count":1,"label":"Ekspert IFB"},{"sym":"👤","color":"#333333","count":1,"label":"Gæst IFB"}],"type":"legend","title":"PITCH Camilla ","anchor":{"dx":227,"dy":179,"sec":"x103teu","side":"src"},"showTotal":false},{"w":178,"id":"x166lgc","rows":[{"sym":"👤","color":"#1e56b0","count":1,"label":"Vært IFB"},{"sym":"👤","color":"#1e7a55","count":3,"label":"Ekspert IFB"},{"sym":"👥","color":"#333333","count":1,"label":"Gæst IFB"}],"type":"legend","title":"STUDIE Morten","anchor":{"dx":235,"dy":46,"sec":"x121teu","side":"src"},"showTotal":false},{"w":178,"id":"x167rbv","rows":[{"sym":"👤","color":"#1e56b0","count":1,"label":"Vært IFB"},{"sym":"👤","color":"#1e7a55","count":1,"label":"Ekspert IFB"},{"sym":"👤","color":"#333333","count":1,"label":"Gæst IFB"}],"type":"legend","title":"PITCH Camilla ","anchor":{"dx":237,"dy":186,"sec":"x121teu","side":"src"},"showTotal":false},{"w":178,"id":"x168dbf","rows":[{"sym":"👤","color":"#1e56b0","count":1,"label":"LYD Ass"},{"sym":"👤","color":"#1e7a55","count":1,"label":"Teko"},{"sym":"👤","color":"#00f900","count":1,"label":"Regisør"},{"sym":"👤","color":"#669c35","count":4,"label":"Foto"}],"type":"legend","title":"BOLERO WL Intercom","anchor":{"dx":17,"dy":146,"sec":"x121teu","side":"src"},"showTotal":false}],"title":"Intercom Primær og Backup","sections":[{"id":"x103teu","dst":"MCR / AFV. A","src":"Unity Connect 4W Sæt 2","style":{"srcH":31,"srcW":450,"dstBd":"#57714e","dstBg":"#6d8764","dstFg":"#f3f7f1","srcBd":"#7993b3","srcBg":"#8fa9c9","srcDX":0,"srcFg":"#2b2417","boxSize":16},"groups":[{"id":"x104teu","rx":"","tx":"","dir":"both","sub":null,"feed":"4W","role":"primær","label":"Unity Connect 4W Sæt 2 ","layer":"intercom","style":{"chSize":11,"chColor":"#3a3a3a","feedColor":"#1e7a55","labelSize":11.5,"lineColor":"#1e7a55","labelColor":"#1e7a55"},"channels":[{"id":"x105teu","nr":"4W1","rx":"Morten TB","tx":"Morten Conf","label":"Morten IFB","layer":"intercom"},{"id":"x106teu","nr":"4W2","rx":"Exp 1 TB","tx":"Exp 1 Conf","label":"Exp 1 IFB","layer":"intercom"},{"id":"x107teu","nr":"4W3","rx":"Exp 2 TB","tx":"Exp 2 Conf","label":"Exp 2 IFB","layer":"intercom"},{"id":"x108teu","nr":"4W4","label":"Mix% Studie.","layer":"intercom","dir":"rtl"},{"id":"x109teu","nr":"4W5","rx":"Camilla TB","tx":"Camilla Conf","label":"Camilla IFB","layer":"intercom"},{"id":"x110teu","nr":"4W6","rx":"Exp Pitch TB","tx":"Exp Pitch IFB","label":"Exp Pitch IFB","layer":"intercom"},{"id":"x111teu","nr":"4W7","label":"Mix % Pitch","layer":"intercom","dir":"rtl"},{"id":"x112teu","nr":"4W8","label":"PGM A","layer":"intercom","dir":"rtl"},{"id":"x113teu","nr":"4W9","label":"","layer":"intercom"},{"id":"x114teu","nr":"4W10","label":"MCR Conf.","layer":"intercom"},{"id":"x115teu","nr":"4W11","label":"Prod Conf.","layer":"intercom"},{"id":"x116teu","nr":"4W12","label":"Lyd Conf.","layer":"intercom"},{"id":"x117teu","nr":"4W13","label":"EVS Conf.","layer":"intercom"},{"id":"x118teu","nr":"4W14","label":"Adhoc Conf.","layer":"intercom"},{"id":"x119teu","nr":"4W15","label":"IFB Adhoc","layer":"intercom"}],"collapsed":false,"transport":"Internet"}],"dstLines":[{"t":"Alt skift mellem main- og backup-intercom laves i Remote 2, så det skal ligge dobbelt i MCR Odense.","id":"x165yys"}],"srcLines":[]},{"id":"x121teu","dst":"MCR / AFV. A","src":"Remote 2 IVC 32","style":{"srcH":0,"srcW":449,"dstBd":"#57714e","dstBg":"#6d8764","dstFg":"#f3f7f1","srcBd":"#8679b3","srcBg":"#9c8fc9","srcFg":"#111111","boxSize":16},"groups":[{"id":"x122teu","sub":null,"feed":"R2H IP4W","role":"primær","label":"Clearcom Trunks","layer":"intercom","style":{},"channels":[{"id":"x123teu","nr":"4W1","label":"Morten IFB","layer":"intercom","tx":"Morten Conf","rx":"Morten TB"},{"id":"x124teu","nr":"4W2","label":"Exp 1 IFB","layer":"intercom","tx":"Exp 1 Conf","rx":"Exp 1 TB"},{"id":"x125teu","nr":"4W3","label":"Exp 2 IFB","layer":"intercom","tx":"Exp 2 Conf ","rx":"Exp TB"},{"id":"x126teu","nr":"4W4","label":"Mix % Studie","layer":"intercom","dir":"rtl"},{"id":"x127teu","nr":"4W5","label":"Camilla IFB","layer":"intercom","tx":"Camilla Conf","rx":"Camilla TB"},{"id":"x128teu","nr":"4W6","label":"Pitch Exp IFB","layer":"intercom","tx":"Exp Conf","rx":"Exp TB"},{"id":"x129teu","nr":"4W7","label":"Mix% Pitch","layer":"intercom","dir":"rtl"},{"id":"x130teu","nr":"4W8","label":"IFB Komm 1 SPARE Hjemme IFB ","layer":"intercom","role":"backup","dir":"both"},{"id":"x131teu","nr":"4W9","label":"IFB Komm 2 SPARE Hjemme IFB","layer":"intercom","role":"backup","dir":"both"},{"id":"x132teu","nr":"4W10","label":"MCR Conf.","layer":"intercom","dir":"both"},{"id":"x133teu","nr":"4W11","label":"PROD Conf.","layer":"intercom","dir":"both"},{"id":"x134teu","nr":"4W12","label":"Lyd Conf.","layer":"intercom","dir":"both"},{"id":"x135teu","nr":"4W13","label":"EVS Conf.","layer":"intercom","dir":"both"}],"transport":"Internet"}],"dstLines":[{"id":"x1n8q","t":"Kommentator Spare bliver først tændt hvis Aeta går ned. "}]},{"id":"x136teu","dst":"MCR / AFV. A","src":"AVI / Unity","style":{},"groups":[{"id":"x137teu","sub":null,"feed":"4W","role":"primær","label":"AVI / Unity · Mixzone","layer":"intercom","style":{},"channels":[{"id":"x140teu","nr":"IFB","label":"IFB Reporter","layer":"intercom","dir":"rtl"}],"transport":"Internet"}]},{"id":"x141teu","dst":"MCR / AFV. A","src":"AETA (TB) Sæt C","style":{},"groups":[{"id":"x142teu","sub":null,"feed":"AETA","role":"primær","label":"AETA (TB) SÆT C · Serie# 695 · SIP User 905281","layer":"intercom","style":{},"channels":[{"id":"x143teu","nr":"Komm 1","label":"IFB & TB → EV_A_KOMM1 ifb","layer":"intercom"},{"id":"x144teu","nr":"Komm 2","label":"IFB → EV_A_KOMM2 ifb","layer":"intercom"}],"transport":"Internet"}]}]}];
-function oslo(){return JSON.parse(JSON.stringify(OSLO_DATA))}
+/* Ingen produktionsdata ligger i filen. Alt hentes fra databasen efter login,
+   så hverken tegninger, kanalplaner eller bemanding kan læses af udenforstående. */
+function oslo(){return [blank()]}
 
-let projectName='Oslo · Remote 2';
+let projectName='Nyt projekt';
 let pages=oslo();
 let activePage=0;
 let doc=pages[activePage];
@@ -1309,6 +1387,14 @@ function blankPlan(){
 function ensurePlan(){ if(!plan)plan=blankPlan();
  Object.keys(PLANDOMS).forEach(k=>{if(!plan[k])plan[k]={devices:[]}}); return plan }
 const dom=()=>ensurePlan()[planDom];
+/* Slettet udstyr og slettede linjer får et sletningstidspunkt i stedet for at
+   forsvinde. Ellers ville kollegaens kopi bare lægge dem tilbage ved næste
+   synkronisering – det var derfor slettede kort dukkede op igen. */
+const alive=arr=>(arr||[]).filter(x=>!x.del);
+const devs=()=>alive(dom().devices);
+const ports=(dv,side)=>alive(dv[side]);
+const newestTouch=d=>Math.max(0,(d.mt||0),
+  ...(d.ins||[]).concat(d.outs||[]).map(p=>Math.max(p.at||0,p.del||0)));
 
 function mkPorts(n,pre){
  const a=[];
@@ -1458,6 +1544,7 @@ function drawBlocks(){
    <div class="btools">
      <button class="btool" data-badd="box">▭ Kasse</button>
      <button class="btool" data-badd="item">⬚ Udstyr / stik</button>
+     <button class="btool" data-badd="import">⤒ Importér</button>
      <button class="btool" data-badd="text">T Tekst</button>
      <button class="btool" data-badd="head">H Overskrift</button>
      <button class="btool ${blockTool==='link'?'on':''}" data-badd="link">⟋ Forbind</button>
@@ -1568,6 +1655,7 @@ function bindBlocks(){
   else if(k==='text')addBlockText('t');
   else if(k==='head')addBlockText('h');
   else if(k==='item')pickItem();
+  else if(k==='import')importItems();
   else if(k==='link'){blockTool=blockTool==='link'?null:'link';linkFrom=null;drawBlocks()}
  });
  const ex=el2.querySelector('[data-bexp]'); if(ex)ex.onclick=printBlocks;
@@ -1687,6 +1775,72 @@ document.addEventListener('mouseup',e=>{
  }
 });
 
+
+
+/* ---- hent udstyr fra kanalplanen eller arkivet ind i blokdiagrammet ---- */
+function importItems(){
+ const fromPlan=[];
+ Object.keys(PLANDOMS).forEach(k=>alive((ensurePlan()[k]||{}).devices||[]).forEach(d=>{
+  fromPlan.push({key:'p:'+d.id, name:d.name, sub:PLANDOMS[k]+(d.place?' · '+d.place:''),
+                 ins:alive(d.ins).length, outs:alive(d.outs).length, img:null});
+ }));
+ openModal('Importér udstyr','Fra kanalplanen og arkivet',`
+  <div class="msec">Brugt i kanalplanen</div>
+  <div id="impPlan" class="chklist" style="max-height:180px">
+   ${fromPlan.length?fromPlan.map(r=>`<label class="chk">
+     <input type="checkbox" data-imp="${r.key}"> <b>${esc(r.name)}</b>
+     <span style="margin-left:auto;font-family:var(--fm);font-size:9.5px;color:var(--faint)">
+       ${esc(r.sub)} · ${r.ins}/${r.outs}</span></label>`).join('')
+    :'<div class="msub" style="padding:9px;text-transform:none;letter-spacing:0">Ingen udstyr i kanalplanen endnu.</div>'}
+  </div>
+  <div class="msec">Arkivet</div>
+  <div id="impArch" class="chklist" style="max-height:180px">Henter …</div>
+  <div class="mrow">
+    <button class="btn go" data-ok="1">Importér</button>
+    <button class="btn" data-cancel="1">Annullér</button>
+  </div>`,root=>{
+   let arch=[];
+   archiveList().then(r=>{
+    arch=r||[];
+    const box=root.querySelector('#impArch');
+    box.innerHTML=arch.length?arch.map(r2=>`<label class="chk">
+      <input type="checkbox" data-imp="a:${r2.id}">
+      ${r2.img?`<img src="${r2.img}" style="width:26px;height:20px;object-fit:contain">`:''}
+      <b>${esc(r2.name)}</b>
+      <span style="margin-left:auto;font-family:var(--fm);font-size:9.5px;color:var(--faint)">
+        ${esc(PLANDOMS[r2.domain]||'')}</span></label>`).join('')
+     :'<div class="msub" style="padding:9px;text-transform:none;letter-spacing:0">Arkivet er tomt.</div>';
+   }).catch(e=>{root.querySelector('#impArch').innerHTML=
+     '<div class="msub" style="padding:9px;color:var(--video)">'+esc(e.message)+'</div>'});
+
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-ok]').onclick=()=>{
+    const picked=[...root.querySelectorAll('[data-imp]:checked')].map(c=>c.dataset.imp);
+    if(!picked.length)return closeModal();
+    snap();
+    picked.forEach(k=>{
+     if(k.startsWith('a:')){
+      const a=arch.find(x=>x.id===k.slice(2)); if(!a)return;
+      const s0=freeSpot(130,120);
+      const n={id:id(),t:'item',x:s0.x,y:s0.y,w:120,label:a.name};
+      if(a.img)n.src=a.img; else n.sym='rack';
+      if(lastBox){n.parent=lastBox;n.x=18;n.y=46+bp().nodes.filter(x=>x.parent===lastBox).length*126}
+      bp().nodes.push(n);
+     }else{
+      const did=k.slice(2);
+      let dev=null;
+      Object.keys(PLANDOMS).forEach(dm=>{const f=(ensurePlan()[dm].devices||[]).find(d=>d.id===did); if(f)dev=f});
+      if(!dev)return;
+      const s0=freeSpot(130,120);
+      const n={id:id(),t:'item',x:s0.x,y:s0.y,w:120,label:dev.name,sym:'rack'};
+      if(lastBox){n.parent=lastBox;n.x=18;n.y=46+bp().nodes.filter(x=>x.parent===lastBox).length*126}
+      bp().nodes.push(n);
+     }
+    });
+    closeModal(); drawBlocks();
+   };
+ });
+}
 
 /* ---- vælg udstyr eller stik ---- */
 function pickItem(){
@@ -1840,10 +1994,15 @@ function printBlocks(){
 }
 
 /* ---- tegn kanalplanen ---- */
+const labelled=(dv,side)=>ports(dv,side).filter(p=>p.label);
+const devDone=dv=>{
+ const all=labelled(dv,'ins').concat(labelled(dv,'outs'));
+ return all.length>0 && all.every(p=>p.patched&&p.checked);
+};
+
 function drawPlan(){
- if(!lastSeen())store(seenKey(),String(Date.now()));   // første besøg: alt regnes som set
+ if(!lastSeen())store(seenKey(),String(Date.now()));
  const el2=document.getElementById('plan');
- const d=dom();
  const nyt=newCount();
  const labels=usedLabels();
 
@@ -1853,34 +2012,44 @@ function drawPlan(){
    ${nyt?`<button class="newsbadge" data-seen="1">${nyt} ${nyt===1?'ny ændring':'nye ændringer'} siden sidst · markér som set</button>`:''}
    ${meName()==='?'?`<input class="whobox" id="whoBox" placeholder="Dine initialer" title="Vises ud for de linjer du retter">`:
      `<span class="whotag" title="Dine initialer – klik for at rette">${esc(meName())}</span>`}
+   <button class="sharebtn save" data-save="1" title="Gem nu">Gem</button>
    <button class="sharebtn" data-refresh="1" title="Hent kollegernes ændringer nu">↻ Opdatér</button>
    <button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan">Del link</button>
+   ${guestToken?'':`<button class="sharebtn" data-arch="1" title="Arkivet med jeres udstyr">⌸ Arkiv</button>`}
    <div class="planadd">
      <select id="devPick">
        <option value="">+ Tilføj udstyr …</option>
        ${DEVICES[planDom].map((t,i)=>`<option value="${i}">${esc(t.t)} · ${t.i} ind / ${t.o} ud</option>`).join('')}
+       ${guestToken?'':`<option value="arch">Fra arkivet …</option>`}
        <option value="custom">Andet udstyr …</option>
      </select>
    </div>
  </div>`;
 
- if(!d.devices.length){
+ const list=devs();
+ if(!list.length){
   h+=`<div class="planempty">Ingen ${PLANDOMS[planDom].toLowerCase()}-udstyr endnu.<br>
       Vælg et stykke udstyr i menuen ovenfor for at komme i gang.</div>`;
  }
 
  h+=`<div class="devgrid">`;
- d.devices.forEach(dv=>{
-  const cnt=dv.ins.filter(p=>p.label).length+dv.outs.filter(p=>p.label).length;
-  const tot=dv.ins.length+dv.outs.length;
-  h+=`<div class="dev" data-dev="${dv.id}">
+ list.forEach(dv=>{
+  const lab=labelled(dv,'ins').concat(labelled(dv,'outs'));
+  const np=lab.filter(p=>p.patched).length, nc=lab.filter(p=>p.checked).length;
+  const done=devDone(dv);
+  h+=`<div class="dev ${done?'done':''}" data-dev="${dv.id}">
     <div class="devhead">
+      <span class="draghandle" data-dragdev="${dv.id}" title="Træk for at flytte kortet">⠿</span>
+      <span class="diode ${done?'on':''}" title="${done?'Alt er patchet og tjekket':'Mangler patch eller tjek'}"></span>
       <div class="devnames">
         <input class="devname" value="${esc(dv.name)}" data-dname="${dv.id}" placeholder="Navn på udstyr">
         <input class="devplace" value="${esc(dv.place||'')}" data-dplace="${dv.id}" placeholder="Placering, fx Studie">
       </div>
-      <div class="devmeta">${cnt}/${tot} sat</div>
+      <div class="devmeta"><span title="Patchet">${np}/${lab.length} P</span><span title="Tjekket">${nc}/${lab.length} T</span></div>
       <div class="devacts">
+        <button class="mini" data-dall="${dv.id}|patched" title="Sæt patchet på alle udfyldte linjer">P✓</button>
+        <button class="mini" data-dall="${dv.id}|checked" title="Sæt tjekket på alle udfyldte linjer">T✓</button>
+        ${guestToken?'':`<button class="mini" data-darch="${dv.id}" title="Gem dette udstyr i arkivet">⤓</button>`}
         <button class="mini" data-ddup="${dv.id}" title="Dublér">⧉</button>
         <button class="mini" data-ddel="${dv.id}" title="Slet udstyr">✕</button>
       </div>
@@ -1895,22 +2064,30 @@ function drawPlan(){
   <datalist id="lbls">${labels.map(l=>`<option value="${esc(l)}">`).join('')}</datalist>`;
 
  el2.innerHTML=h;
- el2.dataset.struct=planStructure();
- el2.dataset.pending='';
  bindPlan();
+ if(typeof autosave==='function')autosave();
 }
 
 function portList(dv,side,title){
- const arr=dv[side];
+ const arr=ports(dv,side);
+ const n=arr.filter(p=>p.label).length;
  return `<div class="portcol ${side}">
-   <div class="portitle">${title} <span>${arr.filter(p=>p.label).length}/${arr.length}</span></div>
+   <div class="portitle">${title} <span>${n}/${arr.length}</span></div>
+   <div class="porthead"><span class="ph-n">Nr</span><span class="ph-l">Signal</span>
+     <span class="ph-c" title="Patchet">P</span><span class="ph-c" title="Tjekket">T</span></div>
    ${arr.map(p=>`
-     <div class="port ${p.label?'set':''} ${fresh(p)?'fresh':''}" data-port="${dv.id}|${side}|${p.id}">
+     <div class="port ${p.label?'set':''} ${fresh(p)?'fresh':''} ${p.label&&p.patched&&p.checked?'ok':''}"
+          data-port="${dv.id}|${side}|${p.id}">
        <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|${side}|${p.id}">
        <input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
-              data-plabel="${dv.id}|${side}|${p.id}">
-       <span class="pby" title="${p.by?esc(p.by)+' · '+new Date(p.at).toLocaleString('da-DK'):''}">
-         ${p.by?esc(p.by)+' · '+ago(p.at):''}</span>
+              title="${esc(p.label)}" data-plabel="${dv.id}|${side}|${p.id}">
+       ${p.label?`
+        <label class="tick" title="Patchet${p.pby?' · '+esc(p.pby):''}">
+          <input type="checkbox" data-tick="${dv.id}|${side}|${p.id}|patched" ${p.patched?'checked':''}></label>
+        <label class="tick t2" title="Tjekket${p.cby?' · '+esc(p.cby):''}">
+          <input type="checkbox" data-tick="${dv.id}|${side}|${p.id}|checked" ${p.checked?'checked':''}></label>`
+        :`<span class="tickgap"></span><span class="tickgap"></span>`}
+       <span class="pby" title="${p.by?esc(p.by)+' · '+new Date(p.at).toLocaleString('da-DK'):''}">${p.by?esc(p.by):''}</span>
        <button class="mini" data-pdel="${dv.id}|${side}|${p.id}" title="Fjern linje">✕</button>
      </div>`).join('')}
    <button class="add" data-padd="${dv.id}|${side}">+ ${title.toLowerCase()}</button>
@@ -1934,18 +2111,33 @@ function bindPlan(){
  if(wt)wt.onclick=()=>{const v=prompt('Dine initialer:',meName());
    if(v!==null){const c=cfg();setCfg({url:c.url,key:c.key,who:v.trim()});drawPlan()}};
 
+ const sv=el2.querySelector('[data-save]');
+ if(sv)sv.onclick=function(){
+   const btn=this; btn.textContent='Gemmer …';
+   saveNow().then(()=>{btn.textContent='Gemt ✓';setTimeout(()=>{btn.textContent='Gem'},1600)})
+            .catch(e=>{btn.textContent='Gem';alert(e.message)});
+ };
  const rf=el2.querySelector('[data-refresh]');
- if(rf)rf.onclick=function(){this.textContent='↻ Henter …';
-   pull().then(()=>{this.textContent='↻ Opdatér'}).catch(()=>{this.textContent='↻ Opdatér'})};
+ if(rf)rf.onclick=function(){
+   const btn=this; btn.textContent='↻ Henter …';
+   (guestToken?guestPull():pull()).then(()=>{btn.textContent='↻ Opdatér'})
+     .catch(()=>{btn.textContent='↻ Opdatér'});
+ };
+ const ar=el2.querySelector('[data-arch]'); if(ar)ar.onclick=()=>openArchive(false);
  const sh2=el2.querySelector('[data-share]');
  if(sh2)sh2.onclick=function(){
+   if(guestToken){copyLink(location.href,this);return}
    if(!cloudId){alert('Gem projektet i databasen først, så linket peger på noget.');return}
-   copyLink(true,this);
+   const btn=this; btn.textContent='Laver link …';
+   shareToken().then(tok=>{btn.textContent='Del link';copyLink(planLink(tok),btn)})
+     .catch(e=>{btn.textContent='Del link';alert(e.message)});
  };
+
  const pick=el2.querySelector('#devPick');
  if(pick)pick.onchange=()=>{
   const v=pick.value; pick.value='';
   if(v==='')return;
+  if(v==='arch')return openArchive(true);
   if(v==='custom'){
    const t=prompt('Hvad hedder udstyret?','Nyt udstyr'); if(t===null)return;
    const i=parseInt(prompt('Hvor mange inputs?','8'),10); if(isNaN(i))return;
@@ -1956,42 +2148,78 @@ function bindPlan(){
 
  el2.querySelectorAll('[data-dname]').forEach(inp=>{
   inp.onchange=()=>{const dv=dom().devices.find(x=>x.id===inp.dataset.dname);
-   if(dv){snap();dv.name=inp.value;autosave()}};
+   if(dv){snap();dv.name=inp.value;dv.mt=Date.now();autosave()}};
  });
  el2.querySelectorAll('[data-dplace]').forEach(inp=>{
   inp.onchange=()=>{const dv=dom().devices.find(x=>x.id===inp.dataset.dplace);
-   if(dv){snap();dv.place=inp.value;autosave()}};
+   if(dv){snap();dv.place=inp.value;dv.mt=Date.now();autosave()}};
  });
  el2.querySelectorAll('[data-ddel]').forEach(b=>b.onclick=()=>{
   const dv=dom().devices.find(x=>x.id===b.dataset.ddel);
   if(!confirm('Slet "'+dv.name+'" med alle linjer?'))return;
-  snap(); dom().devices=dom().devices.filter(x=>x.id!==dv.id); drawPlan();
+  snap(); dv.del=Date.now(); dv.mt=Date.now(); drawPlan();
  });
  el2.querySelectorAll('[data-ddup]').forEach(b=>b.onclick=()=>{
   snap();
   const dv=dom().devices.find(x=>x.id===b.dataset.ddup);
-  const c=JSON.parse(JSON.stringify(dv)); c.id=id(); c.name=dv.name+' (kopi)';
-  c.ins.forEach(p=>p.id=id()); c.outs.forEach(p=>p.id=id());
+  const c=JSON.parse(JSON.stringify(dv)); c.id=id(); c.name=dv.name+' (kopi)'; c.mt=Date.now(); delete c.del;
+  c.ins.forEach(p=>{p.id=id();p.patched=false;p.checked=false});
+  c.outs.forEach(p=>{p.id=id();p.patched=false;p.checked=false});
   dom().devices.splice(dom().devices.indexOf(dv)+1,0,c); drawPlan();
+ });
+ el2.querySelectorAll('[data-darch]').forEach(b=>b.onclick=()=>
+   archiveSave(dom().devices.find(x=>x.id===b.dataset.darch)));
+ el2.querySelectorAll('[data-dall]').forEach(b=>b.onclick=()=>{
+  const [did,what]=b.dataset.dall.split('|');
+  const dv=dom().devices.find(x=>x.id===did);
+  const lab=labelled(dv,'ins').concat(labelled(dv,'outs'));
+  const alle=lab.length>0&&lab.every(p=>p[what]);
+  snap();
+  lab.forEach(p=>{p[what]=!alle; p[what==='patched'?'pby':'cby']=!alle?meName():''; touch(p)});
+  drawPlan();
+ });
+
+ el2.querySelectorAll('[data-tick]').forEach(cb=>cb.onchange=()=>{
+  const parts=cb.dataset.tick.split('|');
+  const what=parts[3];
+  const [dv,p]=find(parts[0]+'|'+parts[1]+'|'+parts[2]);
+  if(!p)return;
+  snap(); p[what]=cb.checked;
+  p[what==='patched'?'pby':'cby']=cb.checked?meName():'';
+  touch(p); autosave();
+  const row=cb.closest('.port');
+  row.classList.toggle('ok',!!(p.label&&p.patched&&p.checked));
+  const card=cb.closest('.dev');
+  const dd=devDone(dv);
+  card.classList.toggle('done',dd);
+  const dio=card.querySelector('.diode'); if(dio)dio.classList.toggle('on',dd);
+  const lab=labelled(dv,'ins').concat(labelled(dv,'outs'));
+  const m=card.querySelector('.devmeta');
+  if(m)m.innerHTML=`<span title="Patchet">${lab.filter(x=>x.patched).length}/${lab.length} P</span>`
+    +`<span title="Tjekket">${lab.filter(x=>x.checked).length}/${lab.length} T</span>`;
  });
 
  el2.querySelectorAll('[data-plabel]').forEach(inp=>{
   const commit=()=>{
    const [dv,p]=find(inp.dataset.plabel);
    if(!p||p.label===inp.value)return;
-   snap(); p.label=inp.value; touch(p); autosave();
-   const row=inp.closest('.port');
-   row.classList.toggle('set',!!p.label);
-   row.querySelector('.pby').textContent=p.by+' · '+ago(p.at);
-   const col=inp.closest('.portcol');
-   const arr=col.querySelectorAll('.port'), n=col.querySelectorAll('.port.set').length;
-   col.querySelector('.portitle span').textContent=n+'/'+arr.length;
+   const vaerdi=inp.value;
+   snap(); p.label=vaerdi; touch(p); autosave();
+   drawPlan();
+   const nxt=document.querySelector('[data-plabel="'+CSS.escape(inp.dataset.plabel)+'"]');
+   if(nxt)nxt.title=vaerdi;
   };
   inp.onchange=commit;
   inp.onkeydown=e=>{
-   if(e.key==='Enter'){e.preventDefault();commit();
-    const all=[...el2.querySelectorAll('.plabel')];
-    const nx=all[all.indexOf(inp)+1]; if(nx){nx.focus();nx.select()}}
+   if(e.key==='Enter'){
+    e.preventDefault();
+    const ref=inp.dataset.plabel;
+    commit();
+    const all=[...document.querySelectorAll('.plabel')];
+    const cur=document.querySelector('[data-plabel="'+CSS.escape(ref)+'"]');
+    const nx=all[all.indexOf(cur)+1];
+    if(nx){nx.focus();nx.select()}
+   }
   };
  });
  el2.querySelectorAll('[data-pnum]').forEach(inp=>{
@@ -2000,57 +2228,52 @@ function bindPlan(){
  });
  el2.querySelectorAll('[data-pdel]').forEach(b=>b.onclick=()=>{
   const [dv,p,side]=find(b.dataset.pdel);
-  snap(); dv[side]=dv[side].filter(x=>x.id!==p.id); drawPlan();
+  snap(); p.del=Date.now(); p.by=meName(); drawPlan();
  });
  el2.querySelectorAll('[data-padd]').forEach(b=>b.onclick=()=>{
   const [did,side]=b.dataset.padd.split('|');
   const dv=dom().devices.find(x=>x.id===did);
   snap();
-  dv[side].push({id:id(),n:String(dv[side].length+1),label:'',by:'',at:0});
+  dv[side].push({id:id(),n:String(ports(dv,side).length+1),label:'',by:'',at:0});
   drawPlan();
  });
+
+ bindDevDrag(el2);
 }
 
-
-/* ---- link direkte til kanalplanen ---- */
-function planLink(onlyPlan){
- const u=location.origin+location.pathname;
- const q=['view=plan'];
- if(cloudId)q.push('p='+cloudId);
- q.push('dom='+planDom);
- if(onlyPlan)q.push('only=1');
- return u+'?'+q.join('&');
+/* ---- flyt kortene rundt for at få et bedre overblik ---- */
+function bindDevDrag(el2){
+ el2.querySelectorAll('[data-dragdev]').forEach(h2=>{
+  h2.onmousedown=e=>{
+   e.preventDefault();
+   const from=h2.dataset.dragdev;
+   const card=h2.closest('.dev');
+   card.classList.add('moving');
+   const move=ev=>{
+    const over=document.elementFromPoint(ev.clientX,ev.clientY);
+    const t=over&&over.closest('.dev');
+    el2.querySelectorAll('.dev').forEach(d=>d.classList.remove('dropzone'));
+    if(t&&t!==card)t.classList.add('dropzone');
+   };
+   const up=ev=>{
+    document.removeEventListener('mousemove',move);
+    document.removeEventListener('mouseup',up);
+    card.classList.remove('moving');
+    const over=document.elementFromPoint(ev.clientX,ev.clientY);
+    const t=over&&over.closest('.dev');
+    el2.querySelectorAll('.dev').forEach(d=>d.classList.remove('dropzone'));
+    if(t&&t.dataset.dev!==from){
+     snap();
+     const arr=dom().devices;
+     const a=arr.findIndex(x=>x.id===from), b=arr.findIndex(x=>x.id===t.dataset.dev);
+     if(a>=0&&b>=0){const m=arr.splice(a,1)[0]; arr.splice(b,0,m); drawPlan()}
+    }
+   };
+   document.addEventListener('mousemove',move);
+   document.addEventListener('mouseup',up);
+  };
+ });
 }
-function copyLink(onlyPlan,btn){
- const link=planLink(onlyPlan);
- const done=()=>{const t=btn.textContent;btn.textContent='Kopieret ✓';setTimeout(()=>btn.textContent=t,1600)};
- if(navigator.clipboard&&navigator.clipboard.writeText){
-  navigator.clipboard.writeText(link).then(done).catch(()=>prompt('Kopiér linket:',link));
- }else prompt('Kopiér linket:',link);
-}
-
-/* ---- åbn efter det der står i adressen ---- */
-function applyUrl(){
- const q=new URLSearchParams(location.search);
- if(q.get('dom')&&PLANDOMS[q.get('dom')])planDom=q.get('dom');
- if(q.get('only')==='1')document.body.classList.add('onlyplan');
- const wantPlan=q.get('view')==='plan'||q.get('only')==='1';
- const pid=q.get('p');
- if(pid){
-  if(!session()){
-   /* linket kræver login – log ind og fortsæt derefter til projektet */
-   pendingOpen=pid; pendingPlan=wantPlan;
-   if(wantPlan)setView('plan');
-   openLogin();
-   return;
-  }
-  cloudOpen(pid).then(()=>{if(wantPlan)setView('plan')})
-    .catch(e=>{if(wantPlan)setView('plan');setSync(e.message,true)});
-  return;
- }
- if(wantPlan)setView('plan');
-}
-let pendingOpen=null, pendingPlan=false;
 
 /* ---- skift mellem tegning og kanalplan ---- */
 let view='flow';
@@ -2062,6 +2285,72 @@ function setView(v){
  if(v==='plan')drawPlan(); else if(v==='blocks')drawBlocks(); else draw();
 }
 
+
+
+/* ================= gæsteadgang til kanalplanen =================
+   Et delelink bærer en nøgle. Med den kan man se og rette kanalplanen for
+   ét projekt – men intet andet. Hverken tegninger, blokdiagrammer eller
+   de øvrige projekter kan nås med nøglen. */
+let guestToken=null, guestPush=null, guestSync=null;
+
+async function rpc(fn,body){
+ const c=cfg();
+ if(!c.url||!c.key)throw new Error('Databasen er ikke sat op.');
+ let r;
+ try{
+  r=await fetch(baseUrl(c.url)+'/rest/v1/rpc/'+fn,{method:'POST',
+    headers:{'apikey':c.key,'Authorization':'Bearer '+c.key,'Content-Type':'application/json'},
+    body:JSON.stringify(body)});
+ }catch(e){throw new Error('Ingen forbindelse til serveren.')}
+ if(!r.ok)throw new Error('Serveren svarede '+r.status);
+ const t=await r.text();
+ return t?JSON.parse(t):null;
+}
+
+async function guestPull(){
+ if(!guestToken)return;
+ let rows;
+ try{ rows=await rpc('sf_plan_get',{tok:guestToken}) }
+ catch(e){ setSync(e.message,true); return }
+ if(!rows||!rows.length){setSync('linket virker ikke længere',true);return}
+ const row=rows[0];
+ projectName=row.name||'Kanalplan';
+ if(row.updated_at===lastSync&&plan)return;
+ const foc=focusedRef();
+ const keep=foc&&foc.dataset.plabel?{ref:foc.dataset.plabel,val:foc.value}:null;
+ plan=mergePlan(plan||blankPlan(), row.plan||blankPlan());
+ if(keep){
+  const [did,side,pid]=keep.ref.split('|');
+  const dv=(planDevices(plan,planDom)||[]).find(x=>x.id===did);
+  const p=dv&&dv[side].find(x=>x.id===pid);
+  if(p)p.label=keep.val;
+ }
+ lastSync=row.updated_at;
+ setSync('opdateret');
+ if(document.getElementById('plan').innerHTML)syncPlanDOM(); else drawPlan();
+}
+function guestSave(){
+ clearTimeout(guestPush);
+ guestPush=setTimeout(async()=>{
+  try{
+   setSync('gemmer …');
+   const ts=await rpc('sf_plan_set',{tok:guestToken,newplan:ensurePlan(),who:meName()});
+   if(ts)lastSync=ts;
+   setSync('gemt');
+  }catch(e){setSync('kunne ikke gemme',true)}
+ },1500);
+}
+function startGuest(tok){
+ guestToken=tok;
+ document.body.classList.add('unlocked','onlyplan','guest');
+ view='plan'; document.body.classList.add('planview');
+ ensurePlan(); ensureBlocks();
+ guestPull().then(()=>{
+  if(!plan||!planDevices(plan,planDom).length)drawPlan();
+ });
+ clearInterval(guestSync);
+ guestSync=setInterval(guestPull,6000);
+}
 
 /* ================= samtidig redigering =================
    Hvert par sekunder spørger vi databasen, om nogen har gemt noget nyere.
@@ -2089,14 +2378,19 @@ function mergePlan(mine,theirs){
 }
 function mergeDev(a,b){
  const d=JSON.parse(JSON.stringify(a));
- /* navn og placering: den der er rettet sidst på en linje bruges som pejling */
- if((b.at||0)>(a.at||0)){d.name=b.name;d.place=b.place}
+ /* en sletning står ved magt, medmindre den anden side har rettet bagefter */
+ const adel=a.del||0, bdel=b.del||0, del=Math.max(adel,bdel);
+ d.del = del && del >= Math.max(newestTouch(a),newestTouch(b)) ? del : 0;
+ if((b.mt||0)>(a.mt||0)){d.name=b.name;d.place=b.place;d.mt=b.mt}
  ['ins','outs'].forEach(side=>{
   const byId={}; const order=[];
   (a[side]||[]).forEach(p=>{byId[p.id]=p;order.push(p.id)});
   (b[side]||[]).forEach(p=>{
    if(!byId[p.id]){byId[p.id]=p;order.push(p.id)}
-   else if((p.at||0)>(byId[p.id].at||0))byId[p.id]=p;   // nyeste rettelse vinder
+   else{
+    const cur=byId[p.id];
+    if(Math.max(p.at||0,p.del||0) > Math.max(cur.at||0,cur.del||0))byId[p.id]=p;
+   }
   });
   d[side]=order.map(i=>byId[i]);
  });
@@ -2186,6 +2480,7 @@ function startSync(){
  syncTimer=setInterval(pull,6000);
 }
 function markDirty(){
+ if(guestToken){guestSave();return}
  if(!cloudId||!session())return;
  dirty=true; push();
 }
@@ -2205,6 +2500,7 @@ function setAuto(txt,warn){
 /* Kaldes efter hver ændring. Skriver først når der har været ro i et sekund,
    så der ikke skrives ved hvert tastetryk. */
 function autosave(){
+ if(guestToken){if(typeof markDirty==='function')markDirty();return}
  clearTimeout(autoTimer);
  autoTimer=setTimeout(()=>{
   const ok=store(LS_DATA, JSON.stringify({name:projectName,pages,plan:plan,blocks:blocks,ts:Date.now(),cloudId:cloudId}));
@@ -2297,6 +2593,12 @@ async function refreshSession(){
 }
 function signOut(){
  setSession(null); cloudId=null;
+ /* den lokale kopi ryddes, så næste bruger af maskinen ikke kan se noget */
+ try{localStorage.removeItem(LS_DATA)}catch(e){}
+ pages=[blank()]; activePage=0; doc=pages[0]; plan=blankPlan(); blocks=null;
+ projectName='Nyt projekt'; lastSync=null; dirty=false;
+ clearInterval(syncTimer);
+ if(typeof lockOut==='function')lockOut();
 }
 
 async function sbFetch(path,opts,retried){
@@ -2316,6 +2618,7 @@ async function sbFetch(path,opts,retried){
  if(r.status===401&&!retried){
   /* adgangen er udløbet – forny og prøv igen én gang */
   if(await refreshSession())return sbFetch(path,opts,true);
+  if(typeof lockOut==='function')lockOut();
   throw new Error('Du er blevet logget ud. Log ind igen.');
  }
  if(r.status===401||r.status===403)
@@ -2368,7 +2671,57 @@ create policy "p_slet"  on signalflow_projects for delete using (auth.uid() is n
 drop policy if exists "v_laes" on signalflow_versions;
 drop policy if exists "v_opret" on signalflow_versions;
 create policy "v_laes"  on signalflow_versions for select using (auth.uid() is not null);
-create policy "v_opret" on signalflow_versions for insert with check (auth.uid() is not null);`;
+create policy "v_opret" on signalflow_versions for insert with check (auth.uid() is not null);
+
+-- Fælles udstyrsarkiv, som alle projekter og brugere kan hente fra
+create table if not exists signalflow_equipment (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  domain text,
+  place text,
+  ins jsonb default '[]'::jsonb,
+  outs jsonb default '[]'::jsonb,
+  img text,
+  updated_by text,
+  updated_at timestamptz not null default now()
+);
+alter table signalflow_equipment enable row level security;
+drop policy if exists "e_laes" on signalflow_equipment;
+drop policy if exists "e_opret" on signalflow_equipment;
+drop policy if exists "e_ret" on signalflow_equipment;
+drop policy if exists "e_slet" on signalflow_equipment;
+create policy "e_laes"  on signalflow_equipment for select using (auth.uid() is not null);
+create policy "e_opret" on signalflow_equipment for insert with check (auth.uid() is not null);
+create policy "e_ret"   on signalflow_equipment for update using (auth.uid() is not null);
+create policy "e_slet"  on signalflow_equipment for delete using (auth.uid() is not null);
+
+-- Delelink til kanalplanen: gæsten ser KUN planen, og kun for det ene projekt.
+alter table signalflow_projects add column if not exists share_token uuid;
+create unique index if not exists sfp_share on signalflow_projects(share_token);
+
+create or replace function sf_plan_get(tok uuid)
+returns table(name text, plan jsonb, updated_at timestamptz, updated_by text)
+language sql security definer set search_path = public as $$
+  select p.name, p.data->'plan', p.updated_at, p.updated_by
+  from signalflow_projects p where p.share_token = tok
+$$;
+
+create or replace function sf_plan_set(tok uuid, newplan jsonb, who text)
+returns timestamptz language plpgsql security definer set search_path = public as $$
+declare ts timestamptz;
+begin
+  update signalflow_projects
+     set data = jsonb_set(data, '{plan}', newplan, true),
+         updated_by = coalesce(who,''), updated_at = now()
+   where share_token = tok
+   returning updated_at into ts;
+  return ts;
+end $$;
+
+revoke all on function sf_plan_get(uuid) from public;
+revoke all on function sf_plan_set(uuid, jsonb, text) from public;
+grant execute on function sf_plan_get(uuid) to anon, authenticated;
+grant execute on function sf_plan_set(uuid, jsonb, text) to anon, authenticated;`;
 
 /* ---- kald mod databasen ---- */
 const snapshot=()=>({app:'signalflow',name:projectName,pages:pages,plan:ensurePlan(),blocks:ensureBlocks()});
@@ -2463,7 +2816,7 @@ function openProjects(){
     <button class="btn" data-setup="1" style="white-space:nowrap">Opsætning</button>
     <button class="btn" data-logout="1" style="white-space:nowrap">Log ud</button>
   </div>`,root=>{
-   root.querySelector('[data-logout]').onclick=()=>{signOut();closeModal();openLogin()};
+   root.querySelector('[data-logout]').onclick=()=>{closeModal();signOut()};
    const listEl=root.querySelector('#plist');
    let rows=[];
 
@@ -2638,6 +2991,123 @@ function openCloudSetup(){
  });
 }
 const openCloud=openProjects;
+
+
+/* ================= udstyrsarkiv =================
+   Fælles for alle projekter og alle brugere. Herfra kan udstyr hentes ind i
+   både kanalplanen og blokdiagrammet. */
+let archCache=null;
+
+async function archiveList(force){
+ if(archCache&&!force)return archCache;
+ archCache=await sbFetch('signalflow_equipment?select=id,name,domain,place,ins,outs,img,updated_by,updated_at&order=name.asc');
+ return archCache;
+}
+async function archiveSave(dv){
+ if(!dv)return;
+ const nm=prompt('Navn i arkivet:',dv.name); if(nm===null)return;
+ const body={name:nm||dv.name, domain:planDom, place:dv.place||'',
+   ins:alive(dv.ins).map(p=>({n:p.n,label:p.label})),
+   outs:alive(dv.outs).map(p=>({n:p.n,label:p.label})),
+   updated_by:meName()};
+ try{
+  await sbFetch('signalflow_equipment',{method:'POST',body:JSON.stringify(body)});
+  archCache=null;
+  setSync('gemt i arkivet');
+ }catch(e){alert(e.message)}
+}
+function archToDevice(a){
+ const d={id:id(),type:a.name,name:a.name,place:a.place||'',mt:Date.now(),
+   ins:(a.ins||[]).map(p=>({id:id(),n:String(p.n||''),label:p.label||'',by:'',at:0})),
+   outs:(a.outs||[]).map(p=>({id:id(),n:String(p.n||''),label:p.label||'',by:'',at:0}))};
+ return d;
+}
+
+function openArchive(insertMode){
+ openModal('Udstyrsarkiv', insertMode?'Vælg hvad der skal ind i planen':'Fælles for alle projekter', `
+  <div class="mf"><input type="text" name="q" placeholder="Søg i arkivet …"></div>
+  <div id="archList" class="chklist" style="max-height:340px">Henter …</div>
+  <div class="mrow">
+    ${insertMode?`<button class="btn go" data-ains="1">Indsæt i planen</button>`:''}
+    <button class="btn" data-cancel="1">Luk</button>
+  </div>
+  <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;margin-top:10px">
+    Udstyr lægges i arkivet med ⤓ på et kort i kanalplanen. Billeder sættes på her,
+    så de kan bruges i blokdiagrammet.
+  </div>`,root=>{
+   const box=root.querySelector('#archList');
+   let rows=[];
+   const render=()=>{
+    const q=(val(root,'q')||'').toLowerCase();
+    const vis2=rows.filter(r=>!q||(r.name+' '+(r.place||'')+' '+(r.domain||'')).toLowerCase().includes(q));
+    if(!vis2.length){box.innerHTML='<div class="msub" style="padding:10px;text-transform:none;letter-spacing:0">Arkivet er tomt. Gem et stykke udstyr med ⤓ i kanalplanen.</div>';return}
+    box.innerHTML=vis2.map(r=>`<div class="arow" data-aid="${r.id}">
+      <input type="checkbox" class="asel" data-asel="${r.id}">
+      <span class="apic">${r.img?`<img src="${r.img}">`:'<span class="anoimg">—</span>'}</span>
+      <span class="amain"><b>${esc(r.name)}</b>
+        <em>${esc(PLANDOMS[r.domain]||r.domain||'')}${r.place?' · '+esc(r.place):''} ·
+        ${(r.ins||[]).length} ind / ${(r.outs||[]).length} ud</em></span>
+      <span class="aacts">
+        <button class="mini" data-aimg="${r.id}" title="Sæt billede på">🖼</button>
+        <button class="mini" data-aren="${r.id}" title="Omdøb">✎</button>
+        <button class="mini" data-adel="${r.id}" title="Fjern fra arkivet">✕</button>
+      </span></div>`).join('');
+    box.querySelectorAll('[data-adel]').forEach(b=>b.onclick=async()=>{
+      const r=rows.find(x=>x.id===b.dataset.adel);
+      if(!confirm('Fjern "'+r.name+'" fra arkivet?'))return;
+      await sbFetch('signalflow_equipment?id=eq.'+r.id,{method:'DELETE'});
+      archCache=null; rows=await archiveList(true); render();
+    });
+    box.querySelectorAll('[data-aren]').forEach(b=>b.onclick=async()=>{
+      const r=rows.find(x=>x.id===b.dataset.aren);
+      const nm=prompt('Navn:',r.name); if(nm===null)return;
+      await sbFetch('signalflow_equipment?id=eq.'+r.id,{method:'PATCH',body:JSON.stringify({name:nm})});
+      archCache=null; rows=await archiveList(true); render();
+    });
+    box.querySelectorAll('[data-aimg]').forEach(b=>b.onclick=()=>{
+      const r=rows.find(x=>x.id===b.dataset.aimg);
+      const fi=document.createElement('input'); fi.type='file'; fi.accept='image/*';
+      fi.onchange=()=>{
+       const f=fi.files[0]; if(!f)return;
+       const rd=new FileReader();
+       rd.onload=()=>{const im=new Image();
+        im.onload=async()=>{
+         const max=260, sc=Math.min(1,max/Math.max(im.width,im.height));
+         const cv=document.createElement('canvas');
+         cv.width=Math.round(im.width*sc); cv.height=Math.round(im.height*sc);
+         cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+         await sbFetch('signalflow_equipment?id=eq.'+r.id,
+           {method:'PATCH',body:JSON.stringify({img:cv.toDataURL('image/png')})});
+         archCache=null; rows=await archiveList(true); render();
+        };
+        im.src=rd.result;};
+       rd.readAsDataURL(f);
+      };
+      fi.click();
+    });
+   };
+   archiveList(true).then(r=>{rows=r||[];render()})
+     .catch(e=>{box.innerHTML='<div class="msub" style="padding:10px;color:var(--video)">'+esc(e.message)+'</div>'});
+   root.querySelector('[name="q"]').oninput=render;
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   const ins=root.querySelector('[data-ains]');
+   if(ins)ins.onclick=()=>{
+    const picked=[...root.querySelectorAll('[data-asel]:checked')].map(c=>rows.find(r=>r.id===c.dataset.asel));
+    if(!picked.length)return closeModal();
+    snap();
+    picked.forEach(a=>dom().devices.push(archToDevice(a)));
+    closeModal(); drawPlan();
+   };
+ });
+}
+
+/* gem med det samme, uanset hvor man er */
+async function saveNow(){
+ if(guestToken){await rpc('sf_plan_set',{tok:guestToken,newplan:ensurePlan(),who:meName()});return}
+ if(cloudId&&session()){await cloudSaveQuiet(); dirty=false; setSync('gemt'); return}
+ if(session())return openProjects();
+ throw new Error('Log ind for at gemme.');
+}
 
 /* ================= eksport ================= */
 
@@ -3476,11 +3946,46 @@ document.getElementById('file').onchange=e=>{
 
 if(restoreAuto()){/* genoptaget fra autogem */}
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
-ensurePlan();
-ensureBlocks();
-draw();
-applyUrl();
-startSync();
+
+/* ---- intet vises før der er logget ind ---- */
+function unlock(){
+ document.body.classList.add('unlocked');
+ ensurePlan(); ensureBlocks();
+ restoreAuto();
+ draw();
+ applyUrl();
+ startSync();
+ if(!cloudId&&!new URLSearchParams(location.search).get('p'))setTimeout(openProjects,400);
+}
+function lockOut(){
+ document.body.classList.remove('unlocked');
+ const m=document.getElementById('gMsg'); if(m)m.textContent='';
+ const pw=document.getElementById('gPw'); if(pw)pw.value='';
+}
+document.getElementById('gGo').onclick=function(){
+ const msg=document.getElementById('gMsg');
+ const who=document.getElementById('gWho').value.trim();
+ const c=cfg(); setCfg({url:c.url,key:c.key,who:who||c.who});
+ this.textContent='Logger ind …'; msg.textContent='';
+ signIn(document.getElementById('gEmail').value.trim(),
+        document.getElementById('gPw').value)
+   .then(()=>{this.textContent='Log ind';unlock()})
+   .catch(e=>{msg.textContent=e.message;this.textContent='Log ind'});
+};
+['gEmail','gPw','gWho'].forEach(i=>{
+ document.getElementById(i).onkeydown=e=>{
+  if(e.key==='Enter'){e.preventDefault();document.getElementById('gGo').click()}
+ };
+});
+const _t=new URLSearchParams(location.search).get('t');
+if(_t){
+ startGuest(_t);
+}else if(session()){
+ unlock();
+}else{
+ document.getElementById('gWho').value=cfg().who||'';
+ setTimeout(()=>document.getElementById('gEmail').focus(),100);
+}
 </script>
 </body>
 </html>
