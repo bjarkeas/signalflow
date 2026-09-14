@@ -209,6 +209,11 @@ body.archview #stage{grid-column:1/3;background:#0b0e13;padding:16px}
 
 
 /* lagersidens felter */
+.archtop2{padding:0 11px 11px}
+.archtop2 .sharebtn{width:100%}
+.chk.harede{opacity:.5}
+.apic.small{width:30px;height:24px}
+.apic.small .bsym svg{width:22px;height:18px}
 .archfilter{padding:0 11px 10px;border-bottom:1px solid var(--line)}
 .archfilter select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--dim);
  border-radius:7px;padding:7px 9px;font:inherit}
@@ -2569,6 +2574,82 @@ function noteRecent(navn){
 }
 
 
+
+/* ---- opret de stik man tegner med som udstyr under Dokumentation ----
+   De hører til dokumentationen, ikke i puljen sammen med kameraer og lyd,
+   så de får deres egen kategori. */
+const DOKKAT='DOKUMENTATION';
+
+function docCandidates(){
+ const ud=[];
+ /* de indbyggede stikbilleder */
+ Object.keys(IMGLIB).forEach(k=>ud.push({key:'img:'+k, name:IMGLIB[k].n, src:IMGLIB[k].src,
+   sub:'indbygget billede'}));
+ /* symbolerne */
+ Object.keys(SYMLIB).forEach(k=>ud.push({key:'sym:'+k, name:k.charAt(0).toUpperCase()+k.slice(1),
+   sym:k, sub:'symbol'}));
+ /* alt hvad der rent faktisk står på blokdiagrammets sider */
+ (ensureBlocks().pages||[]).forEach(pg=>(pg.nodes||[]).filter(n=>n.t==='item').forEach(n=>{
+  ud.push({key:'node:'+n.id, name:n.label||'Uden navn', src:n.src||(n.img&&IMGLIB[n.img]?IMGLIB[n.img].src:null),
+    sym:n.sym||null, sub:'brugt på '+(pg.title||'diagrammet')});
+ }));
+ /* samme navn kun én gang */
+ const set={}; return ud.filter(x=>{const n=(x.name||'').toLowerCase();
+   if(set[n])return false; set[n]=1; return true});
+}
+
+function openDocImport(){
+ const kand=docCandidates();
+ const findes=n=>(lagerRows||[]).some(r=>(r.name||'').toLowerCase()===(n||'').toLowerCase());
+ openModal('Hent stik fra blokdiagrammet','Oprettes på lageret under '+DOKKAT,`
+  <div class="mf"><label>Kategori</label>
+    <input type="text" name="kat" value="${DOKKAT}" title="Du kan skrive en anden kategori, hvis du hellere vil det"></div>
+  <div class="msec">Vælg hvad der skal oprettes</div>
+  <div class="chklist" style="max-height:330px">
+   ${kand.map(k=>`<label class="chk ${findes(k.name)?'harede':''}">
+      <input type="checkbox" data-doc="${esc(k.key)}" ${findes(k.name)?'':'checked'}>
+      <span class="apic small">${k.src?`<img src="${k.src}">`:
+        k.sym?`<span class="bsym">${SYMLIB[k.sym]||''}</span>`:'<span class="anoimg">—</span>'}</span>
+      <b>${esc(k.name)}</b>
+      <span style="margin-left:auto;font-family:var(--fm);font-size:9.5px;color:var(--faint)">
+        ${findes(k.name)?'findes allerede':esc(k.sub)}</span>
+    </label>`).join('')}
+  </div>
+  <div class="mrow">
+    <button class="btn go" data-ok="1">Opret på lageret</button>
+    <button class="btn" data-cancel="1">Annullér</button>
+  </div>
+  <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;margin-top:10px">
+    Stikkene får antal 1 og kan rettes bagefter. Billedet følger med, så det kan
+    bruges igen på blokdiagrammet – også i andre projekter.
+  </div>`,root=>{
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-ok]').onclick=async function(){
+    const valgt=[...root.querySelectorAll('[data-doc]:checked')].map(c=>c.dataset.doc);
+    if(!valgt.length)return closeModal();
+    const kat=(val(root,'kat')||DOKKAT).trim()||DOKKAT;
+    this.textContent='Opretter …';
+    try{
+     /* sørg for at kategorien findes, så den også kan vælges i lagerprogrammet */
+     if(!lagerCats.some(c=>(c.name||'').toLowerCase()===kat.toLowerCase())){
+      try{ await sbFetch('categories',{method:'POST',body:JSON.stringify(
+        {name:kat,sort_order:(lagerCats.length+1)*10})}); await lagerCategories() }catch(e){}
+     }
+     for(const key of valgt){
+      const k=kand.find(x=>x.key===key); if(!k)continue;
+      const row={name:k.name, category:kat, qty:1,
+        tech:{ins:[],outs:[],conIn:k.name,conOut:''},
+        custom_fields:[{label:'Type',value:'Stik / dokumentation'}]};
+      if(k.src)row.image_url=k.src;
+      await sbFetch('equipment',{method:'POST',body:JSON.stringify(row)});
+     }
+     lagerRows=await lagerList(true);
+     lagCat=kat; closeModal(); drawArchive();
+    }catch(e){this.textContent='Opret på lageret';alert(e.message)}
+   };
+ });
+}
+
 /* ================= lagersiden =================
    Arbejder direkte i equipment-tabellen, som lagerprogrammet også bruger.
    Navn, kategori, antal, serienummer, billede og noter er deres felter.
@@ -2591,6 +2672,9 @@ function drawArchive(){
       <div class="archtop">
         <input type="text" id="archq" value="${esc(lagQ)}" placeholder="Søg i lageret …">
         <button class="sharebtn save" id="archnew" title="Opret et nyt stykke udstyr på lageret">+ Nyt</button>
+      </div>
+      <div class="archtop2">
+        <button class="sharebtn" id="archdoc" title="Opret de stik og symboler du bruger på blokdiagrammet som udstyr under Dokumentation">⤒ Hent stik fra blokdiagram</button>
       </div>
       <div class="archfilter">
         <select id="archcat" title="Vis kun én kategori">
@@ -2720,6 +2804,7 @@ function bindArchive(){
    if(lagDirty&&!confirm('Du har ikke gemt dine ændringer. Skift alligevel?'))return;
    lagSel=n.dataset.asel; lagDirty=false; drawArchive();
  });
+ const dk=el2.querySelector('#archdoc'); if(dk)dk.onclick=openDocImport;
  const nb=el2.querySelector('#archnew');
  if(nb)nb.onclick=async()=>{
    try{
