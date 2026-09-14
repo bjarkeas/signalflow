@@ -139,6 +139,21 @@ body:not(.unlocked) #app{filter:blur(7px);pointer-events:none;user-select:none}
 @media print{#tipbox{display:none!important}}
 
 
+
+/* symbolvinduet */
+.dropzone{display:flex;align-items:center;gap:14px;padding:16px 18px;border:2px dashed var(--line);
+ border-radius:11px;cursor:pointer;background:var(--bg);transition:.12s}
+.dropzone:hover,.dropzone.over{border-color:var(--intercom);background:rgba(63,217,156,.06)}
+.dzicon{font-size:26px;color:var(--faint);line-height:1}
+.dztxt{display:flex;flex-direction:column;gap:2px}
+.dztxt b{font-size:13px;font-weight:600}
+.dztxt span{font-family:var(--fm);font-size:10.5px;color:var(--faint)}
+.symnew{display:flex;align-items:center;gap:9px;margin-top:11px;padding:10px;
+ background:var(--panel2);border:1px solid var(--intercom);border-radius:9px}
+.symnew img{width:54px;height:42px;object-fit:contain;flex:none}
+.symnew input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--text);
+ border-radius:7px;padding:9px 10px;font:inherit}
+
 /* ---- arkivsiden ---- */
 #archive{display:none}
 body.archview #sheet,body.archview #tabbar,body.archview #plan,body.archview #blocks,
@@ -873,7 +888,6 @@ function draw(keepSide){
   h+=`<div class="section" data-sec="${sc.id}" style="${gridS}">
     <div class="srcbox" style="${srcS}">
       <div class="boxname lbl" data-e="src" data-id="${sc.id}" style="${nameS};color:inherit">${esc(sc.src)}</div>
-      <div class="boxsub">${sc.groups.length} grupper</div>
       <div class="boxlines">${lines(sc.srcLines,'src')}</div>
       <button class="boxadd" data-boxadd="${sc.id}|src" title="Skriv en linje i afsenderboksen, fx hvilket udstyr der står">+ tekst</button>
       <span class="tools">
@@ -954,7 +968,6 @@ function draw(keepSide){
     </div>
     <div class="dstbox" style="${dstS}">
       <div class="boxname lbl" data-e="dst" data-id="${sc.id}" style="${nameS};color:inherit">${esc(sc.dst)}</div>
-      <div class="boxsub">${sc.groups.length} linjer</div>
       <div class="boxlines">${lines(sc.dstLines,'dst')}</div>
       <button class="boxadd" data-boxadd="${sc.id}|dst" title="Skriv en linje i modtagerboksen">+ tekst</button>
       <span class="tools"><button class="mini" data-delsec="${sc.id}" title="Slet sektion" style="color:inherit">✕</button></span>
@@ -1743,7 +1756,8 @@ function drawBlocks(){
    <button class="btool left" data-badd="import" title="Hent udstyr der allerede er brugt i kanalplanen">⤒ Importér</button>
    <div class="btools">
      <button class="btool" data-badd="box" title="Ny kasse, fx Studie eller TV Compound. Udstyr kan lægges indeni">▭ Kasse</button>
-     <button class="btool" data-badd="item" title="Hent udstyr, stik eller symboler fra lageret">+ Udstyr</button>
+     <button class="btool" data-badd="item" title="Hent udstyr fra det fælles lager">+ Udstyr</button>
+     <button class="btool" data-badd="sym" title="Stik, tegnede symboler og dine egne billeder">◇ Symboler</button>
      <button class="btool" data-badd="text" title="Frit tekstfelt">T Tekst</button>
      <button class="btool" data-badd="head" title="Stor overskrift til diagrammet">H Overskrift</button>
      <button class="btool ${blockTool==='link'?'on':''}" data-badd="link" title="Tegn en streg: klik først afsender, så modtager">⟋ Forbind</button>
@@ -1854,6 +1868,7 @@ function bindBlocks(){
   else if(k==='text')addBlockText('t');
   else if(k==='head')addBlockText('h');
   else if(k==='item')openArchive('block');
+  else if(k==='sym')openSymbols();
   else if(k==='import')importItems();
   else if(k==='link'){blockTool=blockTool==='link'?null:'link';linkFrom=null;drawBlocks()}
  });
@@ -1976,6 +1991,91 @@ document.addEventListener('mouseup',e=>{
 
 
 
+
+/* ================= symboler =================
+   Tegneværktøj til blokdiagrammet – ikke lagervarer. De indbyggede ligger i
+   programmet, og dine egne gemmes i projektet, så kollegerne ser dem også. */
+function ownSyms(){ const b=ensureBlocks(); b.imgs=b.imgs||{}; return b.imgs }
+
+function openSymbols(){
+ const own=ownSyms();
+ openModal('Symboler','Til blokdiagrammet – klik for at sætte ind',`
+  <div class="dropzone" id="symdrop">
+    <div class="dzicon">＋</div>
+    <div class="dztxt"><b>Træk et billede herind</b><span>eller klik for at vælge en fil</span></div>
+    <input type="file" id="symfile" accept="image/*" hidden>
+  </div>
+  <div id="symnew"></div>
+
+  ${Object.keys(own).length?`
+   <div class="msec">Dine symboler</div>
+   <div class="picks">
+    ${Object.keys(own).map(k=>`<button class="pick" data-own="${k}">
+       <img src="${own[k].src}"><span>${esc(own[k].n)}</span>
+       <b class="mini" data-rmsym="${k}" title="Fjern fra symbolerne">✕</b></button>`).join('')}
+   </div>`:''}
+
+  <div class="msec">Stik</div>
+  <div class="picks">
+   ${Object.keys(IMGLIB).map(k=>`<button class="pick" data-img="${k}">
+      <img src="${IMGLIB[k].src}"><span>${esc(IMGLIB[k].n)}</span></button>`).join('')}
+  </div>
+
+  <div class="msec">Tegnede symboler</div>
+  <div class="picks sym">
+   ${Object.keys(SYMLIB).map(k=>`<button class="pick" data-sym="${k}">
+      <span class="bsym">${SYMLIB[k]}</span><span>${k}</span></button>`).join('')}
+  </div>
+
+  <div class="mrow"><button class="btn" data-cancel="1">Luk</button></div>`,root=>{
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelectorAll('[data-img]').forEach(b=>b.onclick=()=>{
+     addItem('img',b.dataset.img,IMGLIB[b.dataset.img].n); closeModal()});
+   root.querySelectorAll('[data-sym]').forEach(b=>b.onclick=()=>{
+     addItem('sym',b.dataset.sym,b.dataset.sym.charAt(0).toUpperCase()+b.dataset.sym.slice(1)); closeModal()});
+   root.querySelectorAll('[data-own]').forEach(b=>b.onclick=e=>{
+     if(e.target.dataset.rmsym)return;
+     const k=b.dataset.own; addItem('own',own[k].src,own[k].n); closeModal()});
+   root.querySelectorAll('[data-rmsym]').forEach(b=>b.onclick=e=>{
+     e.stopPropagation();
+     if(!confirm('Fjern symbolet fra projektet?'))return;
+     snap(); delete ownSyms()[b.dataset.rmsym]; closeModal(); openSymbols();
+   });
+
+   /* træk et billede ind, giv det et navn, og det ligger i symbolerne */
+   const dz=root.querySelector('#symdrop'), fi=root.querySelector('#symfile');
+   const box=root.querySelector('#symnew');
+   const tag=src=>{
+    box.innerHTML=`<div class="symnew">
+      <img src="${src}">
+      <input type="text" id="symname" placeholder="Hvad hedder symbolet?" autocomplete="off">
+      <button class="btn go" id="symsave" style="width:auto;margin:0">Gem symbol</button>
+      <button class="btn" id="symdrop2" style="width:auto;margin:0">Fortryd</button>
+    </div>`;
+    const nm=box.querySelector('#symname'); nm.focus();
+    const gem=()=>{
+     const n=nm.value.trim(); if(!n){nm.focus();return}
+     snap();
+     const k=id(); ownSyms()[k]={n:n,src:src};
+     autosave(); closeModal(); openSymbols();
+    };
+    box.querySelector('#symsave').onclick=gem;
+    nm.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();gem()}};
+    box.querySelector('#symdrop2').onclick=()=>{box.innerHTML=''};
+   };
+   dz.onclick=()=>fi.click();
+   fi.onchange=()=>{const f=fi.files[0]; if(f)readImage(f,tag)};
+   ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{
+     e.preventDefault(); e.stopPropagation(); dz.classList.add('over')}));
+   ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{
+     e.preventDefault(); e.stopPropagation(); dz.classList.remove('over')}));
+   dz.addEventListener('drop',e=>{
+     const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+     if(f&&/^image\//.test(f.type))readImage(f,tag);
+   });
+ });
+}
+
 /* ---- importér mellem kanalplan og blokdiagram ----
    target='blocks': hent det der står i kanalplanen ind på diagrammet.
    target='plan'  : hent det der står på diagrammet ind i kanalplanen. */
@@ -2088,10 +2188,6 @@ function pickItem(){
   </div>
   <div class="mrow"><button class="btn" data-cancel="1">Luk</button></div>`,root=>{
    root.querySelector('[data-cancel]').onclick=closeModal;
-   root.querySelectorAll('[data-img]').forEach(b=>b.onclick=()=>{
-     addItem('img',b.dataset.img,IMGLIB[b.dataset.img].n); closeModal()});
-   root.querySelectorAll('[data-sym]').forEach(b=>b.onclick=()=>{
-     addItem('sym',b.dataset.sym,b.dataset.sym); closeModal()});
    root.querySelectorAll('[data-own]').forEach(b=>b.onclick=e=>{
      if(e.target.dataset.rmimg)return;
      const k=b.dataset.own; addItem('own',own[k].src,own[k].n); closeModal()});
@@ -2575,81 +2671,6 @@ function noteRecent(navn){
 
 
 
-/* ---- opret de stik man tegner med som udstyr under Dokumentation ----
-   De hører til dokumentationen, ikke i puljen sammen med kameraer og lyd,
-   så de får deres egen kategori. */
-const DOKKAT='DOKUMENTATION';
-
-function docCandidates(){
- const ud=[];
- /* de indbyggede stikbilleder */
- Object.keys(IMGLIB).forEach(k=>ud.push({key:'img:'+k, name:IMGLIB[k].n, src:IMGLIB[k].src,
-   sub:'indbygget billede'}));
- /* symbolerne */
- Object.keys(SYMLIB).forEach(k=>ud.push({key:'sym:'+k, name:k.charAt(0).toUpperCase()+k.slice(1),
-   sym:k, sub:'symbol'}));
- /* alt hvad der rent faktisk står på blokdiagrammets sider */
- (ensureBlocks().pages||[]).forEach(pg=>(pg.nodes||[]).filter(n=>n.t==='item').forEach(n=>{
-  ud.push({key:'node:'+n.id, name:n.label||'Uden navn', src:n.src||(n.img&&IMGLIB[n.img]?IMGLIB[n.img].src:null),
-    sym:n.sym||null, sub:'brugt på '+(pg.title||'diagrammet')});
- }));
- /* samme navn kun én gang */
- const set={}; return ud.filter(x=>{const n=(x.name||'').toLowerCase();
-   if(set[n])return false; set[n]=1; return true});
-}
-
-function openDocImport(){
- const kand=docCandidates();
- const findes=n=>(lagerRows||[]).some(r=>(r.name||'').toLowerCase()===(n||'').toLowerCase());
- openModal('Hent stik fra blokdiagrammet','Oprettes på lageret under '+DOKKAT,`
-  <div class="mf"><label>Kategori</label>
-    <input type="text" name="kat" value="${DOKKAT}" title="Du kan skrive en anden kategori, hvis du hellere vil det"></div>
-  <div class="msec">Vælg hvad der skal oprettes</div>
-  <div class="chklist" style="max-height:330px">
-   ${kand.map(k=>`<label class="chk ${findes(k.name)?'harede':''}">
-      <input type="checkbox" data-doc="${esc(k.key)}" ${findes(k.name)?'':'checked'}>
-      <span class="apic small">${k.src?`<img src="${k.src}">`:
-        k.sym?`<span class="bsym">${SYMLIB[k.sym]||''}</span>`:'<span class="anoimg">—</span>'}</span>
-      <b>${esc(k.name)}</b>
-      <span style="margin-left:auto;font-family:var(--fm);font-size:9.5px;color:var(--faint)">
-        ${findes(k.name)?'findes allerede':esc(k.sub)}</span>
-    </label>`).join('')}
-  </div>
-  <div class="mrow">
-    <button class="btn go" data-ok="1">Opret på lageret</button>
-    <button class="btn" data-cancel="1">Annullér</button>
-  </div>
-  <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;margin-top:10px">
-    Stikkene får antal 1 og kan rettes bagefter. Billedet følger med, så det kan
-    bruges igen på blokdiagrammet – også i andre projekter.
-  </div>`,root=>{
-   root.querySelector('[data-cancel]').onclick=closeModal;
-   root.querySelector('[data-ok]').onclick=async function(){
-    const valgt=[...root.querySelectorAll('[data-doc]:checked')].map(c=>c.dataset.doc);
-    if(!valgt.length)return closeModal();
-    const kat=(val(root,'kat')||DOKKAT).trim()||DOKKAT;
-    this.textContent='Opretter …';
-    try{
-     /* sørg for at kategorien findes, så den også kan vælges i lagerprogrammet */
-     if(!lagerCats.some(c=>(c.name||'').toLowerCase()===kat.toLowerCase())){
-      try{ await sbFetch('categories',{method:'POST',body:JSON.stringify(
-        {name:kat,sort_order:(lagerCats.length+1)*10})}); await lagerCategories() }catch(e){}
-     }
-     for(const key of valgt){
-      const k=kand.find(x=>x.key===key); if(!k)continue;
-      const row={name:k.name, category:kat, qty:1,
-        tech:{ins:[],outs:[],conIn:k.name,conOut:''},
-        custom_fields:[{label:'Type',value:'Stik / dokumentation'}]};
-      if(k.src)row.image_url=k.src;
-      await sbFetch('equipment',{method:'POST',body:JSON.stringify(row)});
-     }
-     lagerRows=await lagerList(true);
-     lagCat=kat; closeModal(); drawArchive();
-    }catch(e){this.textContent='Opret på lageret';alert(e.message)}
-   };
- });
-}
-
 /* ================= lagersiden =================
    Arbejder direkte i equipment-tabellen, som lagerprogrammet også bruger.
    Navn, kategori, antal, serienummer, billede og noter er deres felter.
@@ -2674,7 +2695,6 @@ function drawArchive(){
         <button class="sharebtn save" id="archnew" title="Opret et nyt stykke udstyr på lageret">+ Nyt</button>
       </div>
       <div class="archtop2">
-        <button class="sharebtn" id="archdoc" title="Opret de stik og symboler du bruger på blokdiagrammet som udstyr under Dokumentation">⤒ Hent stik fra blokdiagram</button>
       </div>
       <div class="archfilter">
         <select id="archcat" title="Vis kun én kategori">
@@ -2804,7 +2824,6 @@ function bindArchive(){
    if(lagDirty&&!confirm('Du har ikke gemt dine ændringer. Skift alligevel?'))return;
    lagSel=n.dataset.asel; lagDirty=false; drawArchive();
  });
- const dk=el2.querySelector('#archdoc'); if(dk)dk.onclick=openDocImport;
  const nb=el2.querySelector('#archnew');
  if(nb)nb.onclick=async()=>{
    try{
@@ -3711,14 +3730,6 @@ function openArchive(mode){
        <b>${esc(t.t)}</b><span>${t.i} ind / ${t.o} ud</span></button>`).join('')}
     <button class="pick" data-std="custom" title="Skriv selv navn og antal"><b>Andet udstyr</b><span>skriv selv antal</span></button>
    </div>`:''}
-  ${forBlock?`
-   <div class="msec">Indbyggede billeder og symboler</div>
-   <div class="picks">
-    ${Object.keys(IMGLIB).map(k=>`<button class="pick" data-img="${k}">
-       <img src="${IMGLIB[k].src}"><span>${esc(IMGLIB[k].n)}</span></button>`).join('')}
-    ${Object.keys(SYMLIB).map(k=>`<button class="pick" data-sym="${k}">
-       <span class="bsym">${SYMLIB[k]}</span><span>${k}</span></button>`).join('')}
-   </div>`:''}
   <div class="mrow">
     ${(forPlan||forBlock)?`<button class="btn go" data-ains="1">Indsæt valgte</button>`:''}
     <button class="btn" data-lager="1">Åbn lageret</button>
@@ -3759,10 +3770,6 @@ function openArchive(mode){
      closeModal();
    });
    /* indbyggede billeder og symboler – kun på blokdiagrammet */
-   root.querySelectorAll('[data-img]').forEach(b=>b.onclick=()=>{
-     addItem('img',b.dataset.img,IMGLIB[b.dataset.img].n); closeModal()});
-   root.querySelectorAll('[data-sym]').forEach(b=>b.onclick=()=>{
-     addItem('sym',b.dataset.sym,b.dataset.sym); closeModal()});
 
    const ins=root.querySelector('[data-ains]');
    if(ins)ins.onclick=()=>{
