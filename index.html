@@ -198,6 +198,42 @@ body.archview #stage{grid-column:1/3;background:#0b0e13;padding:16px}
  .architems{max-height:300px}
 }
 
+
+.acathead{display:flex;align-items:center;gap:8px;font-family:var(--fd);font-weight:600;font-size:11.5px;
+ letter-spacing:.09em;text-transform:uppercase;color:var(--dim);padding:10px 8px 5px;position:sticky;top:0;
+ background:var(--panel);z-index:1}
+.acathead span{font-family:var(--fm);font-size:9px;color:var(--faint);letter-spacing:0}
+.acatgroup{margin-bottom:2px}
+.aegrid.three{grid-template-columns:1fr 1fr 1fr}
+@media (max-width:820px){.aegrid.three{grid-template-columns:1fr}}
+
+
+/* lagersidens felter */
+.archfilter{padding:0 11px 10px;border-bottom:1px solid var(--line)}
+.archfilter select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--dim);
+ border-radius:7px;padding:7px 9px;font:inherit}
+.warnk{color:var(--lyd)}
+.aegrid3{display:grid;grid-template-columns:1.4fr .7fr 1fr;gap:12px;margin-bottom:14px}
+.aegrid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+.msec2{font-family:var(--fd);font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;
+ color:var(--dim);margin:16px 0 10px;padding-top:13px;border-top:1px solid var(--line);
+ display:flex;align-items:center;gap:8px}
+.msec2 .mini{opacity:1;border:1px solid var(--line);border-radius:5px;padding:1px 8px}
+.aetyp{width:96px;flex:none;background:var(--panel);border:1px solid var(--line);color:var(--dim);
+ border-radius:5px;padding:6px 7px;font:11px var(--fb)}
+.aecf{display:flex;flex-direction:column;gap:5px;margin-bottom:6px}
+.cfrow{display:flex;gap:6px;align-items:center}
+.cflab{width:34%;flex:none;background:var(--bg);border:1px solid var(--line);color:var(--text);
+ border-radius:6px;padding:7px 9px;font:12px var(--fb)}
+.cfval{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--text);
+ border-radius:6px;padding:7px 9px;font:12px var(--fb)}
+.cfrow .mini{opacity:.45}
+.cfrow:hover .mini{opacity:1}
+@media (max-width:820px){
+ .aegrid3,.aegrid4{grid-template-columns:1fr 1fr}
+ .aetyp{width:70px}
+}
+
 /* ---- blokdiagram ---- */
 #blocks{display:none}
 body.blockview #sheet,body.blockview #tabbar,body.blockview #side,
@@ -256,6 +292,11 @@ body.blockview #stage{grid-column:1/3;background:#0b0e13;padding:14px}
 .pick img{max-width:88px;max-height:62px;object-fit:contain}
 .pick .mini{position:absolute;top:2px;right:2px;opacity:.6;font-size:10px}
 .picks.sym .bsym svg{width:46px;height:38px}
+.picks.std .pick{align-items:flex-start;text-align:left;gap:3px}
+.picks.std b{font-size:12px;font-weight:600}
+.picks.std span{font-family:var(--fm);font-size:9.5px;color:var(--faint)}
+.btool.left{margin-left:0}
+.planadd{display:flex;gap:6px;margin-left:auto}
 
 /* udskrift af blokdiagram */
 .blockprint .bcanvas{background:#fff}
@@ -609,7 +650,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <button class="vbtn on" data-view="flow" title="Signalflow-tegningen med afsender, signaler og modtager">Tegning</button>
       <button class="vbtn" data-view="plan" title="Hvilke signaler der sidder i hvilke stik, med patch og tjek">Kanalplan</button>
       <button class="vbtn" data-view="blocks" title="Kasser, udstyr og forbindelser – til at forklare et setup">Blokdiagram</button>
-      <button class="vbtn" data-view="arch" title="Jeres fælles udstyr: rediger, sæt billeder på og genbrug i alle projekter">Arkiv</button>
+      <button class="vbtn" data-view="arch" title="Jeres fælles lager – det samme som i lagerprogrammet">Lager</button>
     </div>
     <div id="crumbs"></div>
     <div class="bus">
@@ -1496,6 +1537,10 @@ let lastBox=null;
 /* Én plan pr. domæne. Hvert stykke udstyr har inputs og outputs med hver sin
    tekst, og hver linje husker hvem der har rettet den og hvornår. */
 const PLANDOMS={lyd:'Lyd',video:'Video',net:'Netværk'};
+/* almindelige stiktyper – kun forslag, man kan skrive hvad som helst */
+const CONNECTORS=['XLR han','XLR hun','XLR 3-pol','XLR 5-pol','Jack 6,3 mm','Minijack 3,5 mm',
+ 'BNC','SDI BNC','HDMI','RJ45','etherCON','SMPTE 311M','LC fiber','SC fiber','opticalCON',
+ 'Speakon','powerCON','Schuko','CEE 16A','CEE 32A','DB25','Dante/RJ45','MADI BNC','AES/EBU XLR'];
 let planDom='lyd';
 let plan=null;          // {lyd:{devices:[]},video:{...},net:{...}}
 
@@ -1690,10 +1735,10 @@ function drawBlocks(){
    <div class="btabs">${ensureBlocks().pages.map((pg,i)=>
      `<button class="btab ${i===blockPage?'on':''}" data-bpage="${i}" title="Skift til siden ${esc(pg.title)}">${esc(pg.title)}</button>`).join('')}
      <button class="btabadd" data-bpadd="1" title="Ny side i blokdiagrammet, fx strømplan">+</button></div>
+   <button class="btool left" data-badd="import" title="Hent udstyr der allerede er brugt i kanalplanen">⤒ Importér</button>
    <div class="btools">
      <button class="btool" data-badd="box" title="Ny kasse, fx Studie eller TV Compound. Udstyr kan lægges indeni">▭ Kasse</button>
-     <button class="btool" data-badd="item" title="Hent udstyr, stik eller symboler fra det fælles arkiv">⌸ Udstyr / stik</button>
-     <button class="btool" data-badd="import" title="Hent udstyr der allerede er brugt i kanalplanen">⤒ Importér</button>
+     <button class="btool" data-badd="item" title="Hent udstyr, stik eller symboler fra lageret">+ Udstyr</button>
      <button class="btool" data-badd="text" title="Frit tekstfelt">T Tekst</button>
      <button class="btool" data-badd="head" title="Stor overskrift til diagrammet">H Overskrift</button>
      <button class="btool ${blockTool==='link'?'on':''}" data-badd="link" title="Tegn en streg: klik først afsender, så modtager">⟋ Forbind</button>
@@ -1926,21 +1971,33 @@ document.addEventListener('mouseup',e=>{
 
 
 
-/* ---- hent udstyr fra kanalplanen eller arkivet ind i blokdiagrammet ---- */
-function importItems(){
- const fromPlan=[];
- Object.keys(PLANDOMS).forEach(k=>alive((ensurePlan()[k]||{}).devices||[]).forEach(d=>{
-  fromPlan.push({key:'p:'+d.id, name:d.name, sub:PLANDOMS[k]+(d.place?' · '+d.place:''),
-                 ins:alive(d.ins).length, outs:alive(d.outs).length, img:null});
- }));
- openModal('Importér udstyr','Fra kanalplanen og arkivet',`
-  <div class="msec">Brugt i kanalplanen</div>
-  <div id="impPlan" class="chklist" style="max-height:180px">
-   ${fromPlan.length?fromPlan.map(r=>`<label class="chk">
-     <input type="checkbox" data-imp="${r.key}"> <b>${esc(r.name)}</b>
-     <span style="margin-left:auto;font-family:var(--fm);font-size:9.5px;color:var(--faint)">
-       ${esc(r.sub)} · ${r.ins}/${r.outs}</span></label>`).join('')
-    :'<div class="msub" style="padding:9px;text-transform:none;letter-spacing:0">Ingen udstyr i kanalplanen endnu.</div>'}
+/* ---- importér mellem kanalplan og blokdiagram ----
+   target='blocks': hent det der står i kanalplanen ind på diagrammet.
+   target='plan'  : hent det der står på diagrammet ind i kanalplanen. */
+function importItems(target){
+ const tilBlok=target!=='plan';
+ const kilder=[];
+ if(tilBlok){
+  Object.keys(PLANDOMS).forEach(k=>alive((ensurePlan()[k]||{}).devices||[]).forEach(d=>{
+   kilder.push({key:'p:'+k+':'+d.id, name:d.name,
+     sub:PLANDOMS[k]+(d.place?' · '+d.place:'')+' · '+alive(d.ins).length+'/'+alive(d.outs).length});
+  }));
+ }else{
+  (ensureBlocks().pages||[]).forEach((pg,pi)=>(pg.nodes||[]).filter(n=>n.t==='item').forEach(n=>{
+   kilder.push({key:'b:'+pi+':'+n.id, name:n.label, sub:pg.title, img:n.src||null});
+  }));
+ }
+ openModal('Importér udstyr',
+   tilBlok?'Fra kanalplanen og arkivet':'Fra blokdiagrammet og arkivet',`
+  <div class="msec">${tilBlok?'Brugt i kanalplanen':'Står på blokdiagrammet'}</div>
+  <div id="impSrc" class="chklist" style="max-height:180px">
+   ${kilder.length?kilder.map(r=>`<label class="chk">
+     <input type="checkbox" data-imp="${r.key}">
+     ${r.img?`<img src="${r.img}" style="width:26px;height:20px;object-fit:contain">`:''}
+     <b>${esc(r.name||'(uden navn)')}</b>
+     <span style="margin-left:auto;font-family:var(--fm);font-size:9.5px;color:var(--faint)">${esc(r.sub||'')}</span>
+    </label>`).join('')
+    :`<div class="msub" style="padding:9px;text-transform:none;letter-spacing:0">Der er ikke noget at hente ${tilBlok?'i kanalplanen':'på blokdiagrammet'} endnu.</div>`}
   </div>
   <div class="msec">Arkivet</div>
   <div id="impArch" class="chklist" style="max-height:180px">Henter …</div>
@@ -1949,7 +2006,7 @@ function importItems(){
     <button class="btn" data-cancel="1">Annullér</button>
   </div>`,root=>{
    let arch=[];
-   archiveList().then(r=>{
+   lagerList().then(r=>{
     arch=r||[];
     const box=root.querySelector('#impArch');
     box.innerHTML=arch.length?arch.map(r2=>`<label class="chk">
@@ -1957,7 +2014,7 @@ function importItems(){
       ${r2.img?`<img src="${r2.img}" style="width:26px;height:20px;object-fit:contain">`:''}
       <b>${esc(r2.name)}</b>
       <span style="margin-left:auto;font-family:var(--fm);font-size:9.5px;color:var(--faint)">
-        ${esc(PLANDOMS[r2.domain]||'')}</span></label>`).join('')
+        ${esc(PLANDOMS[r2.domain]||r2.domain||'')}</span></label>`).join('')
      :'<div class="msub" style="padding:9px;text-transform:none;letter-spacing:0">Arkivet er tomt.</div>';
    }).catch(e=>{root.querySelector('#impArch').innerHTML=
      '<div class="msub" style="padding:9px;color:var(--video)">'+esc(e.message)+'</div>'});
@@ -1968,25 +2025,34 @@ function importItems(){
     if(!picked.length)return closeModal();
     snap();
     picked.forEach(k=>{
-     if(k.startsWith('a:')){
-      const a=arch.find(x=>x.id===k.slice(2)); if(!a)return;
+     const arkiv = k.startsWith('a:') ? arch.find(x=>x.id===k.slice(2)) : null;
+     if(tilBlok){
+      /* ind på diagrammet som en kasse med billede eller symbol */
+      let navn='Udstyr', img=null;
+      if(arkiv){navn=arkiv.name; img=arkiv.img}
+      else{
+       const [,dm,did]=k.split(':');
+       const d=((ensurePlan()[dm]||{}).devices||[]).find(x=>x.id===did);
+       if(!d)return; navn=d.name;
+      }
       const s0=freeSpot(130,120);
-      const n={id:id(),t:'item',x:s0.x,y:s0.y,w:120,label:a.name};
-      if(a.img)n.src=a.img; else n.sym='rack';
+      const n={id:id(),t:'item',x:s0.x,y:s0.y,w:120,label:navn};
+      if(img)n.src=img; else n.sym='rack';
       if(lastBox){n.parent=lastBox;n.x=18;n.y=46+bp().nodes.filter(x=>x.parent===lastBox).length*126}
       bp().nodes.push(n);
      }else{
-      const did=k.slice(2);
-      let dev=null;
-      Object.keys(PLANDOMS).forEach(dm=>{const f=(ensurePlan()[dm].devices||[]).find(d=>d.id===did); if(f)dev=f});
-      if(!dev)return;
-      const s0=freeSpot(130,120);
-      const n={id:id(),t:'item',x:s0.x,y:s0.y,w:120,label:dev.name,sym:'rack'};
-      if(lastBox){n.parent=lastBox;n.x=18;n.y=46+bp().nodes.filter(x=>x.parent===lastBox).length*126}
-      bp().nodes.push(n);
+      /* ind i kanalplanen som et kort */
+      if(arkiv){dom().devices.push(lagerToDevice(arkiv));return}
+      const [,pi,nid]=k.split(':');
+      const pg=(ensureBlocks().pages||[])[+pi];
+      const n=pg&&(pg.nodes||[]).find(x=>x.id===nid);
+      if(!n)return;
+      dom().devices.push({id:id(),type:n.label,name:n.label||'Udstyr',place:pg.title||'',mt:Date.now(),
+        ins:[{id:id(),n:'1',label:'',by:'',at:0}],outs:[{id:id(),n:'1',label:'',by:'',at:0}]});
      }
     });
-    closeModal(); drawBlocks();
+    closeModal();
+    if(tilBlok)drawBlocks(); else drawPlan();
    };
  });
 }
@@ -2159,21 +2225,17 @@ function drawPlan(){
  let h=`<div class="planbar">
    <div class="domtabs">${Object.keys(PLANDOMS).map(k=>
      `<button class="domtab ${k===planDom?'on':''}" data-dom="${k}" title="${PLANDOMS[k]}-planen – hvert område har sit eget udstyr">${PLANDOMS[k]}</button>`).join('')}</div>
+   ${guestToken?'':`<button class="sharebtn left" data-imp="1" title="Hent udstyr der allerede er brugt på blokdiagrammet">⤒ Importér</button>`}
    ${nyt?`<button class="newsbadge" data-seen="1">${nyt} ${nyt===1?'ny ændring':'nye ændringer'} siden sidst · markér som set</button>`:''}
    ${meName()==='?'?`<input class="whobox" id="whoBox" placeholder="Dine initialer" title="Vises ud for de linjer du retter">`:
      `<span class="whotag" title="Dine initialer – klik for at rette">${esc(meName())}</span>`}
    <button class="sharebtn save" data-save="1" title="Gem i databasen nu, så kollegerne kan se det">Gem</button>
    <button class="sharebtn" data-refresh="1" title="Hent kollegernes ændringer nu">↻ Opdatér</button>
    <button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan">Del link</button>
-   ${guestToken?'':`<button class="sharebtn" data-arch="1" title="Arkivet med jeres udstyr">⌸ Arkiv</button>`}
-   <div class="planadd">
-     <select id="devPick">
-       <option value="">+ Tilføj udstyr …</option>
-       ${DEVICES[planDom].map((t,i)=>`<option value="${i}">${esc(t.t)} · ${t.i} ind / ${t.o} ud</option>`).join('')}
-       ${guestToken?'':`<option value="arch">Fra arkivet …</option>`}
-       <option value="custom">Andet udstyr …</option>
-     </select>
-   </div>
+   ${guestToken?'':`
+     <div class="planadd">
+       <button class="sharebtn save" data-arch="1" title="Hent udstyr fra lageret">+ Udstyr</button>
+     </div>`}
  </div>`;
 
  const list=devs();
@@ -2215,7 +2277,7 @@ function drawPlan(){
           title="Tjekket – ${nc} af ${lab.length}. Klik for at sætte alle">T<em>${nc}/${lab.length}</em></button>
       </div>
       <div class="devacts">
-        ${guestToken?'':`<button class="mini" data-darch="${dv.id}" title="Gem dette udstyr i arkivet">⤓</button>`}
+        ${guestToken?'':`<button class="mini" data-darch="${dv.id}" title="Læg dette udstyr på lageret">⤓</button>`}
         <button class="mini" data-ddup="${dv.id}" title="Lav en kopi af hele kortet">⧉</button>
         <button class="mini" data-ddel="${dv.id}" title="Slet kortet og alle dets linjer">✕</button>
       </div>
@@ -2305,7 +2367,8 @@ function bindPlan(){
    (guestToken?guestPull():pull()).then(()=>{btn.textContent='↻ Opdatér'})
      .catch(()=>{btn.textContent='↻ Opdatér'});
  };
- const ar=el2.querySelector('[data-arch]'); if(ar)ar.onclick=()=>openArchive('');
+ const ar=el2.querySelector('[data-arch]'); if(ar)ar.onclick=()=>openArchive('plan');
+ const ip=el2.querySelector('[data-imp]'); if(ip)ip.onclick=()=>importItems('plan');
  const sh2=el2.querySelector('[data-share]');
  if(sh2)sh2.onclick=function(){
    if(guestToken){copyLink(location.href,this);return}
@@ -2313,19 +2376,6 @@ function bindPlan(){
    const btn=this; btn.textContent='Laver link …';
    shareToken().then(tok=>{btn.textContent='Del link';copyLink(planLink(tok),btn)})
      .catch(e=>{btn.textContent='Del link';alert(e.message)});
- };
-
- const pick=el2.querySelector('#devPick');
- if(pick)pick.onchange=()=>{
-  const v=pick.value; pick.value='';
-  if(v==='')return;
-  if(v==='arch')return openArchive('plan');
-  if(v==='custom'){
-   const t=prompt('Hvad hedder udstyret?','Nyt udstyr'); if(t===null)return;
-   const i=parseInt(prompt('Hvor mange inputs?','8'),10); if(isNaN(i))return;
-   const o=parseInt(prompt('Hvor mange outputs?','4'),10); if(isNaN(o))return;
-   addDevice({t:t||'Nyt udstyr',i:Math.max(0,i),o:Math.max(0,o)});
-  }else addDevice(DEVICES[planDom][+v]);
  };
 
  el2.querySelectorAll('[data-dname]').forEach(inp=>{
@@ -2350,7 +2400,7 @@ function bindPlan(){
   dom().devices.splice(dom().devices.indexOf(dv)+1,0,c); drawPlan();
  });
  el2.querySelectorAll('[data-darch]').forEach(b=>b.onclick=()=>
-   archiveSave(dom().devices.find(x=>x.id===b.dataset.darch)));
+   lagerSaveFromDevice(dom().devices.find(x=>x.id===b.dataset.darch)));
  el2.querySelectorAll('[data-dall]').forEach(b=>b.onclick=()=>{
   const [did,what]=b.dataset.dall.split('|');
   const dv=dom().devices.find(x=>x.id===did);
@@ -2507,36 +2557,60 @@ function applyUrl(){
 }
 
 
-/* ================= arkivsiden =================
-   Her bor jeres udstyr. Det kan redigeres, få billeder på og hentes ind i
-   både kanalplanen og blokdiagrammet – i alle projekter, for alle brugere. */
-let archRows=[], archSel=null, archQ='', archDirty=false;
+
+/* ---- grundudstyr og stik lægges i arkivet første gang ---- */
+/* ---- sidst brugt ---- */
+const LS_RECENT='signalflow:recent';
+function recentList(){try{return JSON.parse(load(LS_RECENT)||'[]')}catch(e){return []}}
+function noteRecent(navn){
+ if(!navn)return;
+ const r=recentList().filter(x=>x!==navn);
+ r.unshift(navn); store(LS_RECENT,JSON.stringify(r.slice(0,8)));
+}
+
+
+/* ================= lagersiden =================
+   Arbejder direkte i equipment-tabellen, som lagerprogrammet også bruger.
+   Navn, kategori, antal, serienummer, billede og noter er deres felter.
+   Kanaler og stiktyper ligger i 'tech', egne felter i 'custom_fields'. */
+let lagSel=null, lagQ='', lagDirty=false, lagCat='';
 
 function drawArchive(){
  const el2=document.getElementById('archive');
- const q=archQ.toLowerCase();
- const vis2=archRows.filter(r=>!q||((r.name||'')+' '+(r.place||'')+' '+(PLANDOMS[r.domain]||r.domain||''))
-   .toLowerCase().includes(q));
- const cur=archRows.find(r=>r.id===archSel);
+ const rows=lagerRows||[];
+ const q=lagQ.toLowerCase();
+ const vis2=rows.filter(r=>(!q||((r.name||'')+' '+(r.category||'')+' '+(r.serial_number||'')).toLowerCase().includes(q))
+                        && (!lagCat||r.category===lagCat));
+ const cur=rows.find(r=>r.id===lagSel);
+ const t=cur?techOf(cur):null;
+ const kats=[...new Set(rows.map(r=>r.category).filter(Boolean))].sort();
 
  el2.innerHTML=`
   <div class="archwrap">
     <div class="archlist">
       <div class="archtop">
-        <input type="text" id="archq" value="${esc(archQ)}" placeholder="Søg i udstyr …">
-        <button class="sharebtn save" id="archnew" title="Opret et nyt stykke udstyr i arkivet">+ Nyt</button>
+        <input type="text" id="archq" value="${esc(lagQ)}" placeholder="Søg i lageret …">
+        <button class="sharebtn save" id="archnew" title="Opret et nyt stykke udstyr på lageret">+ Nyt</button>
+      </div>
+      <div class="archfilter">
+        <select id="archcat" title="Vis kun én kategori">
+          <option value="">Alle kategorier</option>
+          ${kats.map(k=>`<option value="${esc(k)}" ${lagCat===k?'selected':''}>${esc(k)}</option>`).join('')}
+        </select>
       </div>
       <div class="architems">
-        ${vis2.length?vis2.map(r=>`
-          <div class="aitem ${r.id===archSel?'on':''}" data-asel="${r.id}">
-            <span class="apic">${r.img?`<img src="${r.img}">`:'<span class="anoimg">—</span>'}</span>
+        ${vis2.length?vis2.map(r=>{
+          const tt=techOf(r);
+          const mangler=!tt.ins.length&&!tt.outs.length;
+          return `<div class="aitem ${r.id===lagSel?'on':''}" data-asel="${r.id}">
+            <span class="apic">${r.image_url?`<img src="${r.image_url}">`:'<span class="anoimg">—</span>'}</span>
             <span class="amain"><b>${esc(r.name||'(uden navn)')}</b>
-              <em>${esc(PLANDOMS[r.domain]||r.domain||'udstyr')}${r.place?' · '+esc(r.place):''}
-              · ${(r.ins||[]).length} ind / ${(r.outs||[]).length} ud</em></span>
-          </div>`).join('')
-         :`<div class="archempty">${archRows.length?'Ingen match.':'Arkivet er tomt.<br>Tryk <b>+ Nyt</b>, eller gem et kort fra kanalplanen med ⤓.'}</div>`}
+              <em>${esc(r.category||'')}${r.qty?' · '+r.qty+' stk':''}
+              · ${mangler?'<span class="warnk">mangler kanaler</span>':tt.ins.length+' ind / '+tt.outs.length+' ud'}</em></span>
+          </div>`}).join('')
+         :`<div class="archempty">${rows.length?'Ingen match.':'Lageret er tomt, eller det kunne ikke hentes.'}</div>`}
       </div>
-      <div class="archcount">${archRows.length} stk. i arkivet · fælles for alle projekter</div>
+      <div class="archcount">${rows.length} stk. på lageret · deles med lagerprogrammet</div>
     </div>
 
     <div class="archedit">
@@ -2544,49 +2618,78 @@ function drawArchive(){
       <div class="aehead">
         <input class="aename" id="ae-name" value="${esc(cur.name||'')}" placeholder="Navn på udstyret">
         <div class="aeacts">
-          <button class="sharebtn save" id="ae-save" title="Gem ændringerne i arkivet">Gem</button>
-          <button class="sharebtn" id="ae-dup" title="Lav en kopi som du kan rette i">Dublér</button>
-          <button class="sharebtn" id="ae-del" title="Fjern udstyret fra arkivet">Slet</button>
+          <button class="sharebtn save" id="ae-save" title="Gem ændringerne på lageret">Gem</button>
+          <button class="sharebtn" id="ae-dup" title="Lav en kopi du kan rette i">Dublér</button>
+          <button class="sharebtn" id="ae-del" title="Fjern udstyret fra lageret – det gælder også lagerprogrammet">Slet</button>
         </div>
       </div>
-      <div class="aegrid">
-        <div class="aefield"><label>Område</label>
-          <select id="ae-dom">
-            ${Object.keys(PLANDOMS).map(k=>`<option value="${k}" ${cur.domain===k?'selected':''}>${PLANDOMS[k]}</option>`).join('')}
-            <option value="blok" ${cur.domain==='blok'?'selected':''}>Kun blokdiagram / stik</option>
-          </select></div>
-        <div class="aefield"><label>Standardplacering</label>
-          <input type="text" id="ae-place" value="${esc(cur.place||'')}" placeholder="fx Studie eller Teko rack"></div>
+
+      <div class="aegrid3">
+        <div class="aefield"><label>Kategori</label>
+          <input type="text" id="ae-cat" list="katlist" value="${esc(cur.category||'')}" placeholder="fx Lyd">
+          <datalist id="katlist">${kats.concat(lagerCats.map(c=>c.name)).filter((v,i,a)=>v&&a.indexOf(v)===i)
+            .map(k=>`<option value="${esc(k)}">`).join('')}</datalist></div>
+        <div class="aefield"><label>Antal på lager</label>
+          <input type="number" id="ae-qty" value="${cur.qty==null?'':cur.qty}" min="0"></div>
+        <div class="aefield"><label>Serienummer</label>
+          <input type="text" id="ae-serial" value="${esc(cur.serial_number||'')}"></div>
       </div>
 
       <div class="aepic">
-        <div class="aepicbox">${cur.img?`<img src="${cur.img}">`:'<span class="anoimg">Intet billede</span>'}</div>
+        <div class="aepicbox">${cur.image_url?`<img src="${cur.image_url}">`:'<span class="anoimg">Intet billede</span>'}</div>
         <div class="aepicacts">
-          <button class="sharebtn" id="ae-img" title="Vælg et billede fra maskinen – det skaleres ned automatisk">${cur.img?'Skift billede':'Sæt billede på'}</button>
-          ${cur.img?`<button class="sharebtn" id="ae-imgdel" title="Fjern billedet">Fjern</button>`:''}
-          <div class="aehint">Billedet bruges på blokdiagrammet, når udstyret hentes ind.</div>
+          <button class="sharebtn" id="ae-img" title="Vælg et billede – det skaleres ned automatisk">${cur.image_url?'Skift billede':'Sæt billede på'}</button>
+          ${cur.image_url?`<button class="sharebtn" id="ae-imgdel" title="Fjern billedet">Fjern</button>`:''}
+          <div class="aehint">Billedet bruges på blokdiagrammet og i lagerprogrammet.</div>
         </div>
       </div>
 
+      <div class="msec2">Tekniske detaljer</div>
+      <div class="aegrid4">
+        <div class="aefield"><label>Antal inputs</label>
+          <input type="number" id="ae-nin" value="${t.ins.length}" min="0" max="256"
+                 title="Ændrer antallet af linjer nedenfor"></div>
+        <div class="aefield"><label>Antal outputs</label>
+          <input type="number" id="ae-nout" value="${t.outs.length}" min="0" max="256"
+                 title="Ændrer antallet af linjer nedenfor"></div>
+        <div class="aefield"><label>Stiktype ind</label>
+          <input type="text" id="ae-conin" list="stiklist" value="${esc(t.conIn)}" placeholder="fx XLR han"></div>
+        <div class="aefield"><label>Stiktype ud</label>
+          <input type="text" id="ae-conout" list="stiklist" value="${esc(t.conOut)}" placeholder="fx XLR hun"></div>
+      </div>
+      <datalist id="stiklist">${CONNECTORS.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>
+
       <div class="aeports">
-        ${archPortCol(cur,'ins','Input')}
-        ${archPortCol(cur,'outs','Output')}
+        ${lagPortCol(cur,'ins','Input')}
+        ${lagPortCol(cur,'outs','Output')}
+      </div>
+
+      <div class="msec2">Egne felter
+        <button class="mini" id="ae-cfadd" title="Tilføj et felt du selv bestemmer – det ses også i lagerprogrammet">+</button></div>
+      <div class="aecf">
+        ${((cur.custom_fields)||[]).map((f,i)=>`
+          <div class="cfrow">
+            <input class="cflab" value="${esc(f.label||'')}" data-cfl="${i}" placeholder="Navn, fx Strøm">
+            <input class="cfval" value="${esc(f.value||'')}" data-cfv="${i}" placeholder="Værdi, fx 230V 16A">
+            <button class="mini" data-cfdel="${i}" title="Fjern feltet">✕</button>
+          </div>`).join('')||'<div class="aenone">Ingen egne felter endnu</div>'}
       </div>
 
       <div class="aefoot">
         <button class="sharebtn" id="ae-toplan" title="Læg udstyret ind i den kanalplan du arbejder i">→ Indsæt i kanalplan</button>
         <button class="sharebtn" id="ae-toblock" title="Læg udstyret på blokdiagrammet">→ Indsæt på blokdiagram</button>
-        <span class="aemeta">${cur.updated_by?'sidst rettet af '+esc(cur.updated_by):''}</span>
+        <span class="aemeta">${cur.qr_code?'QR: '+esc(cur.qr_code):''}</span>
       </div>`
-      :`<div class="archempty big">Vælg et stykke udstyr til venstre, eller tryk <b>+ Nyt</b>.</div>`}
+      :`<div class="archempty big">Vælg et stykke udstyr til venstre, eller tryk <b>+ Nyt</b>.<br>
+         <span style="font-size:11.5px;color:var(--faint)">Lageret er det samme som i lagerprogrammet – retter du her, retter du begge steder.</span></div>`}
     </div>
   </div>`;
 
  bindArchive();
 }
 
-function archPortCol(cur,side,title){
- const arr=cur[side]||[];
+function lagPortCol(cur,side,title){
+ const arr=techOf(cur)[side];
  return `<div class="aecol">
    <div class="aecolhead">${title} <span>${arr.length}</span>
      <button class="mini" data-aeadd="${side}" title="Tilføj en linje">+</button></div>
@@ -2594,7 +2697,9 @@ function archPortCol(cur,side,title){
      <div class="aerow">
        <input class="aenum" value="${esc(p.n||'')}" data-aen="${side}|${i}" title="Nummer på stikket">
        <input class="aelab" value="${esc(p.label||'')}" data-ael="${side}|${i}"
-              placeholder="Standardtekst (valgfri)" title="Teksten kommer med, når udstyret hentes ind i en plan">
+              placeholder="Standardtekst (valgfri)" title="Teksten følger med, når udstyret hentes ind i en kanalplan">
+       <input class="aetyp" value="${esc(p.type||'')}" data-aet="${side}|${i}" list="stiklist"
+              placeholder="Stik" title="Stiktype på netop denne linje">
        <button class="mini" data-aeup="${side}|${i}" title="Flyt op">▲</button>
        <button class="mini" data-aedel="${side}|${i}" title="Fjern linjen">✕</button>
      </div>`).join('')||'<div class="aenone">Ingen linjer endnu</div>'}
@@ -2603,95 +2708,130 @@ function archPortCol(cur,side,title){
 
 function bindArchive(){
  const el2=document.getElementById('archive');
- const cur=archRows.find(r=>r.id===archSel);
+ const rows=lagerRows||[];
+ const cur=rows.find(r=>r.id===lagSel);
 
  const q=el2.querySelector('#archq');
- if(q)q.oninput=()=>{archQ=q.value;const pos=q.selectionStart;drawArchive();
+ if(q)q.oninput=()=>{lagQ=q.value;const pos=q.selectionStart;drawArchive();
    const n=document.getElementById('archq');if(n){n.focus();n.setSelectionRange(pos,pos)}};
+ const cf=el2.querySelector('#archcat');
+ if(cf)cf.onchange=()=>{lagCat=cf.value;drawArchive()};
  el2.querySelectorAll('[data-asel]').forEach(n=>n.onclick=()=>{
-   if(archDirty&&!confirm('Du har ikke gemt dine ændringer. Skift alligevel?'))return;
-   archSel=n.dataset.asel; archDirty=false; drawArchive();
+   if(lagDirty&&!confirm('Du har ikke gemt dine ændringer. Skift alligevel?'))return;
+   lagSel=n.dataset.asel; lagDirty=false; drawArchive();
  });
  const nb=el2.querySelector('#archnew');
  if(nb)nb.onclick=async()=>{
    try{
-    const r=await sbFetch('signalflow_equipment',{method:'POST',body:JSON.stringify(
-      {name:'Nyt udstyr',domain:planDom,place:'',ins:[],outs:[],updated_by:meName()})});
-    archRows=await archiveList(true); archSel=r[0].id; archDirty=false; drawArchive();
+    const r=await sbFetch('equipment',{method:'POST',body:JSON.stringify(
+      {name:'Nyt udstyr',category:lagCat||(lagerCats[0]&&lagerCats[0].name)||'Udstyr',qty:1,
+       tech:{ins:[],outs:[],conIn:'',conOut:''},custom_fields:[]})});
+    lagerRows=await lagerList(true); lagSel=r[0].id; lagDirty=false; drawArchive();
    }catch(e){alert(e.message)}
  };
  if(!cur)return;
 
- /* alle felter skriver direkte i den valgte post, og Gem sender den til databasen */
- const mark=()=>{archDirty=true;const b=el2.querySelector('#ae-save');if(b)b.textContent='Gem *'};
- const nm=el2.querySelector('#ae-name'); if(nm)nm.oninput=()=>{cur.name=nm.value;mark()};
- const dm=el2.querySelector('#ae-dom');  if(dm)dm.onchange=()=>{cur.domain=dm.value;mark()};
- const pl=el2.querySelector('#ae-place');if(pl)pl.oninput=()=>{cur.place=pl.value;mark()};
+ const mark=()=>{lagDirty=true;const b=el2.querySelector('#ae-save');if(b)b.textContent='Gem *'};
+ const tech=()=>{cur.tech=cur.tech||{ins:[],outs:[],conIn:'',conOut:''};
+   cur.tech.ins=cur.tech.ins||[]; cur.tech.outs=cur.tech.outs||[]; return cur.tech};
+
+ const bind=(sel,fn)=>{const n=el2.querySelector(sel); if(n)n.oninput=()=>{fn(n.value);mark()}};
+ bind('#ae-name',v=>cur.name=v);
+ bind('#ae-cat', v=>cur.category=v);
+ bind('#ae-qty', v=>cur.qty=v===''?null:+v);
+ bind('#ae-serial',v=>cur.serial_number=v);
+ bind('#ae-conin', v=>tech().conIn=v);
+ bind('#ae-conout',v=>tech().conOut=v);
+
+ /* antal inputs/outputs laver eller fjerner linjer nedenfor */
+ [['#ae-nin','ins'],['#ae-nout','outs']].forEach(([sel,side])=>{
+  const n=el2.querySelector(sel);
+  if(n)n.onchange=()=>{
+   const want=Math.max(0,Math.min(256,parseInt(n.value,10)||0));
+   const a=tech()[side];
+   while(a.length<want)a.push({n:String(a.length+1),label:'',type:''});
+   while(a.length>want)a.pop();
+   mark(); drawArchive();
+  };
+ });
 
  el2.querySelectorAll('[data-aen]').forEach(inp=>inp.oninput=()=>{
-   const [side,i]=inp.dataset.aen.split('|'); cur[side][+i].n=inp.value; mark()});
+   const [side,i]=inp.dataset.aen.split('|'); tech()[side][+i].n=inp.value; mark()});
  el2.querySelectorAll('[data-ael]').forEach(inp=>inp.oninput=()=>{
-   const [side,i]=inp.dataset.ael.split('|'); cur[side][+i].label=inp.value; mark()});
+   const [side,i]=inp.dataset.ael.split('|'); tech()[side][+i].label=inp.value; mark()});
+ el2.querySelectorAll('[data-aet]').forEach(inp=>inp.oninput=()=>{
+   const [side,i]=inp.dataset.aet.split('|'); tech()[side][+i].type=inp.value; mark()});
  el2.querySelectorAll('[data-aeadd]').forEach(b=>b.onclick=()=>{
-   const side=b.dataset.aeadd; cur[side]=cur[side]||[];
-   cur[side].push({n:String(cur[side].length+1),label:''}); mark(); drawArchive()});
+   const side=b.dataset.aeadd, a=tech()[side];
+   a.push({n:String(a.length+1),label:'',type:''}); mark(); drawArchive()});
  el2.querySelectorAll('[data-aedel]').forEach(b=>b.onclick=()=>{
-   const [side,i]=b.dataset.aedel.split('|'); cur[side].splice(+i,1); mark(); drawArchive()});
+   const [side,i]=b.dataset.aedel.split('|'); tech()[side].splice(+i,1); mark(); drawArchive()});
  el2.querySelectorAll('[data-aeup]').forEach(b=>b.onclick=()=>{
    const [side,i]=b.dataset.aeup.split('|'); const k=+i; if(k<1)return;
-   const a=cur[side]; const t=a[k-1]; a[k-1]=a[k]; a[k]=t; mark(); drawArchive()});
+   const a=tech()[side]; const t2=a[k-1]; a[k-1]=a[k]; a[k]=t2; mark(); drawArchive()});
+
+ /* egne felter – samme format som lagerprogrammet: {label, value} */
+ const cfa=el2.querySelector('#ae-cfadd');
+ if(cfa)cfa.onclick=()=>{cur.custom_fields=(cur.custom_fields||[]).concat([{label:'',value:''}]);mark();drawArchive()};
+ el2.querySelectorAll('[data-cfl]').forEach(inp=>inp.oninput=()=>{
+   cur.custom_fields[+inp.dataset.cfl].label=inp.value; mark()});
+ el2.querySelectorAll('[data-cfv]').forEach(inp=>inp.oninput=()=>{
+   cur.custom_fields[+inp.dataset.cfv].value=inp.value; mark()});
+ el2.querySelectorAll('[data-cfdel]').forEach(b=>b.onclick=()=>{
+   cur.custom_fields.splice(+b.dataset.cfdel,1); mark(); drawArchive()});
 
  const im=el2.querySelector('#ae-img');
- if(im)im.onclick=()=>pickImageFile(src=>{cur.img=src;mark();drawArchive()});
+ if(im)im.onclick=()=>pickImageFile(src=>{cur.image_url=src;mark();drawArchive()});
  const imd=el2.querySelector('#ae-imgdel');
- if(imd)imd.onclick=()=>{cur.img=null;mark();drawArchive()};
+ if(imd)imd.onclick=()=>{cur.image_url=null;mark();drawArchive()};
 
  const sv=el2.querySelector('#ae-save');
  if(sv)sv.onclick=async function(){
    this.textContent='Gemmer …';
+   const t=techOf(cur);
+   /* skriv også antal og stiktyper i egne felter, så lagerprogrammet kan se dem */
+   cfSet(cur,'Inputs',t.ins.length?t.ins.length:'');
+   cfSet(cur,'Outputs',t.outs.length?t.outs.length:'');
+   cfSet(cur,'Stik ind',t.conIn);
+   cfSet(cur,'Stik ud',t.conOut);
    try{
-    await sbFetch('signalflow_equipment?id=eq.'+cur.id,{method:'PATCH',body:JSON.stringify(
-      {name:cur.name,domain:cur.domain,place:cur.place,ins:cur.ins||[],outs:cur.outs||[],
-       img:cur.img||null,updated_by:meName(),updated_at:new Date().toISOString()})});
-    archRows=await archiveList(true); archDirty=false; drawArchive();
+    await sbFetch('equipment?id=eq.'+cur.id,{method:'PATCH',body:JSON.stringify(
+      {name:cur.name,category:cur.category,qty:cur.qty,serial_number:cur.serial_number||null,
+       image_url:cur.image_url||null,tech:cur.tech||null,
+       custom_fields:(cur.custom_fields||[]).filter(f=>(f.label||'').trim()||(f.value||'').trim())})});
+    lagerRows=await lagerList(true); lagDirty=false; drawArchive();
    }catch(e){this.textContent='Gem';alert(e.message)}
  };
- const dl2=el2.querySelector('#ae-dup');
- if(dl2)dl2.onclick=async()=>{
+ const du=el2.querySelector('#ae-dup');
+ if(du)du.onclick=async()=>{
    try{
-    const r=await sbFetch('signalflow_equipment',{method:'POST',body:JSON.stringify(
-      {name:(cur.name||'Udstyr')+' (kopi)',domain:cur.domain,place:cur.place,
-       ins:cur.ins||[],outs:cur.outs||[],img:cur.img||null,updated_by:meName()})});
-    archRows=await archiveList(true); archSel=r[0].id; drawArchive();
+    const r=await sbFetch('equipment',{method:'POST',body:JSON.stringify(
+      {name:(cur.name||'Udstyr')+' (kopi)',category:cur.category,qty:cur.qty,
+       image_url:cur.image_url||null,tech:cur.tech||null,custom_fields:cur.custom_fields||[]})});
+    lagerRows=await lagerList(true); lagSel=r[0].id; drawArchive();
    }catch(e){alert(e.message)}
  };
  const de=el2.querySelector('#ae-del');
  if(de)de.onclick=async()=>{
-   if(!confirm('Fjern "'+(cur.name||'')+'" fra arkivet? Det gælder for alle projekter.'))return;
+   if(!confirm('Fjern "'+(cur.name||'')+'" fra lageret?\n\nDet forsvinder også fra lagerprogrammet.'))return;
    try{
-    await sbFetch('signalflow_equipment?id=eq.'+cur.id,{method:'DELETE'});
-    archRows=await archiveList(true); archSel=null; archDirty=false; drawArchive();
+    await sbFetch('equipment?id=eq.'+cur.id,{method:'DELETE'});
+    lagerRows=await lagerList(true); lagSel=null; lagDirty=false; drawArchive();
    }catch(e){alert(e.message)}
  };
 
  const tp=el2.querySelector('#ae-toplan');
- if(tp)tp.onclick=()=>{
-   snap();
-   if(cur.domain&&PLANDOMS[cur.domain])planDom=cur.domain;
-   dom().devices.push(archToDevice(cur));
-   setView('plan');
- };
+ if(tp)tp.onclick=()=>{snap(); dom().devices.push(lagerToDevice(cur)); setView('plan')};
  const tb=el2.querySelector('#ae-toblock');
  if(tb)tb.onclick=()=>{
    snap();
    const s0=freeSpot(130,120);
    const n={id:id(),t:'item',x:s0.x,y:s0.y,w:120,label:cur.name||'Udstyr'};
-   if(cur.img)n.src=cur.img; else n.sym='rack';
+   if(cur.image_url)n.src=cur.image_url; else n.sym='rack';
    bp().nodes.push(n);
    setView('blocks');
  };
 }
-
 /* ---- skift mellem tegning og kanalplan ---- */
 let view='flow';
 function setView(v){
@@ -2703,9 +2843,10 @@ function setView(v){
  if(v==='plan')drawPlan(); else if(v==='blocks')drawBlocks();
  else if(v==='arch'){
   drawArchive();
-  archiveList(true).then(r=>{archRows=r||[];drawArchive()})
+  Promise.all([lagerList(true),lagerCategories()]).then(()=>drawArchive())
     .catch(e=>{const el3=document.getElementById('archive');
-      if(el3)el3.innerHTML='<div class="archempty big" style="color:var(--video)">'+esc(e.message)+'</div>'});
+      if(el3)el3.innerHTML='<div class="archempty big" style="color:var(--video)">'+esc(e.message)
+        +'<br><span style="font-size:11.5px">Kør SQL-koden i opsætningen, hvis lageret ikke kan hentes.</span></div>'});
  }
  else draw();
 }
@@ -3098,27 +3239,26 @@ drop policy if exists "v_opret" on signalflow_versions;
 create policy "v_laes"  on signalflow_versions for select using (auth.uid() is not null);
 create policy "v_opret" on signalflow_versions for insert with check (auth.uid() is not null);
 
--- Fælles udstyrsarkiv, som alle projekter og brugere kan hente fra
-create table if not exists signalflow_equipment (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  domain text,
-  place text,
-  ins jsonb default '[]'::jsonb,
-  outs jsonb default '[]'::jsonb,
-  img text,
-  updated_by text,
-  updated_at timestamptz not null default now()
-);
-alter table signalflow_equipment enable row level security;
-drop policy if exists "e_laes" on signalflow_equipment;
-drop policy if exists "e_opret" on signalflow_equipment;
-drop policy if exists "e_ret" on signalflow_equipment;
-drop policy if exists "e_slet" on signalflow_equipment;
-create policy "e_laes"  on signalflow_equipment for select using (auth.uid() is not null);
-create policy "e_opret" on signalflow_equipment for insert with check (auth.uid() is not null);
-create policy "e_ret"   on signalflow_equipment for update using (auth.uid() is not null);
-create policy "e_slet"  on signalflow_equipment for delete using (auth.uid() is not null);
+-- Lageret deles med lagerprogrammet (East Production). Vi tilføjer kun én kolonne
+-- til SignalFlows tekniske detaljer – resten af tabellen røres ikke.
+alter table equipment add column if not exists tech jsonb;
+alter table equipment add column if not exists custom_fields jsonb;
+alter table equipment add column if not exists image_url text;
+
+-- Begge programmer skal kunne læse og skrive lageret
+alter table equipment enable row level security;
+drop policy if exists "eq_laes" on equipment;
+drop policy if exists "eq_opret" on equipment;
+drop policy if exists "eq_ret" on equipment;
+drop policy if exists "eq_slet" on equipment;
+create policy "eq_laes"  on equipment for select using (true);
+create policy "eq_opret" on equipment for insert with check (true);
+create policy "eq_ret"   on equipment for update using (true);
+create policy "eq_slet"  on equipment for delete using (true);
+
+alter table categories enable row level security;
+drop policy if exists "cat_laes" on categories;
+create policy "cat_laes" on categories for select using (true);
 
 -- Delelink til kanalplanen: gæsten ser KUN planen, og kun for det ene projekt.
 alter table signalflow_projects add column if not exists share_token uuid;
@@ -3418,44 +3558,74 @@ function openCloudSetup(){
 const openCloud=openProjects;
 
 
-/* ================= udstyrsarkiv =================
-   Fælles for alle projekter og alle brugere. Herfra kan udstyr hentes ind i
-   både kanalplanen og blokdiagrammet. */
-let archCache=null;
+/* ================= lager =================
+   Samme equipment-tabel som lagerprogrammet (East Production). Vi rører kun
+   de felter der findes i forvejen, og lægger SignalFlows tekniske detaljer i
+   'tech'. Egne felter ligger i 'custom_fields' – præcis som i lagerprogrammet,
+   så begge programmer kan læse og skrive det samme udstyr. */
+let lagerRows=null, lagerCats=[];
 
-async function archiveList(force){
- if(archCache&&!force)return archCache;
- archCache=await sbFetch('signalflow_equipment?select=id,name,domain,place,ins,outs,img,updated_by,updated_at&order=name.asc');
- return archCache;
+const techOf=e=>{
+ const t=e&&e.tech;
+ if(!t)return {ins:[],outs:[],conIn:'',conOut:''};
+ return {ins:t.ins||[], outs:t.outs||[], conIn:t.conIn||'', conOut:t.conOut||''};
+};
+/* skriver en værdi ind i custom_fields, så lagerprogrammet også kan se den */
+function cfSet(e,label,value){
+ e.custom_fields=Array.isArray(e.custom_fields)?e.custom_fields.slice():[];
+ const i=e.custom_fields.findIndex(x=>(x.label||'').toLowerCase()===label.toLowerCase());
+ if(value===''||value==null){ if(i>=0)e.custom_fields.splice(i,1); return }
+ if(i>=0)e.custom_fields[i]={label:e.custom_fields[i].label,value:String(value)};
+ else e.custom_fields.push({label:label,value:String(value)});
 }
-async function archiveSave(dv){
+
+async function lagerList(force){
+ if(lagerRows&&!force)return lagerRows;
+ lagerRows=await sbFetch('equipment?select=*&order=category.asc,name.asc');
+ return lagerRows;
+}
+async function lagerCategories(){
+ try{ lagerCats=await sbFetch('categories?select=*&order=sort_order.asc,name.asc') }
+ catch(e){ lagerCats=[] }
+ return lagerCats;
+}
+/* gem et kort fra kanalplanen som nyt udstyr på lageret */
+async function lagerSaveFromDevice(dv){
  if(!dv)return;
- const nm=prompt('Navn i arkivet:',dv.name); if(nm===null)return;
- const body={name:nm||dv.name, domain:planDom, place:dv.place||'',
-   ins:alive(dv.ins).map(p=>({n:p.n,label:p.label})),
-   outs:alive(dv.outs).map(p=>({n:p.n,label:p.label})),
-   updated_by:meName()};
+ const nm=prompt('Navn på lageret:',dv.name); if(nm===null)return;
+ const row={name:nm||dv.name, qty:1,
+   category:(lagerCats[0]&&lagerCats[0].name)||'Udstyr',
+   tech:{ins:alive(dv.ins).map(p=>({n:p.n,label:p.label,type:''})),
+         outs:alive(dv.outs).map(p=>({n:p.n,label:p.label,type:''})),conIn:'',conOut:''},
+   custom_fields:[{label:'Inputs',value:String(alive(dv.ins).length)},
+                  {label:'Outputs',value:String(alive(dv.outs).length)}]};
  try{
-  await sbFetch('signalflow_equipment',{method:'POST',body:JSON.stringify(body)});
-  archCache=null;
-  setSync('gemt i arkivet');
+  await sbFetch('equipment',{method:'POST',body:JSON.stringify(row)});
+  lagerRows=null; setSync('lagt på lageret');
  }catch(e){alert(e.message)}
 }
-function archToDevice(a){
- const d={id:id(),type:a.name,name:a.name,place:a.place||'',mt:Date.now(),
-   ins:(a.ins||[]).map(p=>({id:id(),n:String(p.n||''),label:p.label||'',by:'',at:0})),
-   outs:(a.outs||[]).map(p=>({id:id(),n:String(p.n||''),label:p.label||'',by:'',at:0}))};
- return d;
+/* lav et kanalplan-kort ud af et stykke udstyr fra lageret */
+function lagerToDevice(e){
+ const t=techOf(e);
+ const mk=arr=>arr.map(p=>({id:id(),n:String(p.n||''),label:p.label||'',by:'',at:0}));
+ return {id:id(),type:e.name,name:e.name,place:'',mt:Date.now(),
+   ins:mk(t.ins), outs:mk(t.outs)};
 }
-
 function openArchive(mode){
- /* mode: 'plan' = indsæt som udstyr i kanalplanen, 'block' = indsæt på blokdiagrammet,
-    tom = bare se og redigere arkivet. Det er det SAMME arkiv begge steder. */
+ /* mode: 'plan' = ind i kanalplanen, 'block' = ind på blokdiagrammet.
+    Udstyret kommer fra lageret – det samme lager som lagerprogrammet bruger. */
  const forPlan=mode==='plan', forBlock=mode==='block';
- openModal('Udstyrsarkiv',
-   forPlan?'Vælg hvad der skal i kanalplanen':forBlock?'Vælg hvad der skal på blokdiagrammet':'Fælles for alle projekter og faner', `
-  <div class="mf"><input type="text" name="q" placeholder="Søg i arkivet …"></div>
-  <div id="archList" class="chklist" style="max-height:300px">Henter …</div>
+ openModal('Lager',
+   forPlan?'Vælg hvad der skal i kanalplanen':forBlock?'Vælg hvad der skal på blokdiagrammet':'Jeres fælles udstyr', `
+  <div class="mf"><input type="text" name="q" placeholder="Søg i lageret …"></div>
+  <div id="archList" class="chklist" style="max-height:280px">Henter …</div>
+  ${forPlan?`
+   <div class="msec">Standardudstyr</div>
+   <div class="picks std">
+    ${DEVICES[planDom].map((t,i)=>`<button class="pick" data-std="${i}" title="${t.i} inputs og ${t.o} outputs">
+       <b>${esc(t.t)}</b><span>${t.i} ind / ${t.o} ud</span></button>`).join('')}
+    <button class="pick" data-std="custom" title="Skriv selv navn og antal"><b>Andet udstyr</b><span>skriv selv antal</span></button>
+   </div>`:''}
   ${forBlock?`
    <div class="msec">Indbyggede billeder og symboler</div>
    <div class="picks">
@@ -3464,76 +3634,50 @@ function openArchive(mode){
     ${Object.keys(SYMLIB).map(k=>`<button class="pick" data-sym="${k}">
        <span class="bsym">${SYMLIB[k]}</span><span>${k}</span></button>`).join('')}
    </div>`:''}
-  <div class="msec">Læg nyt i arkivet</div>
-  <div class="mf">
-    <input type="file" id="imgUp" accept="image/*">
-    <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;margin-top:6px">
-      Billedet skaleres ned og gemmes i arkivet, så alle kan bruge det – både her og i kanalplanen.
-      Udstyr med kanaler lægges i arkivet med ⤓ på et kort i kanalplanen.
-    </div>
-  </div>
   <div class="mrow">
     ${(forPlan||forBlock)?`<button class="btn go" data-ains="1">Indsæt valgte</button>`:''}
+    <button class="btn" data-lager="1">Åbn lageret</button>
     <button class="btn" data-cancel="1">Luk</button>
   </div>`,root=>{
    const box=root.querySelector('#archList');
    let rows=[];
    const render=()=>{
     const q=(val(root,'q')||'').toLowerCase();
-    const vis2=rows.filter(r=>!q||(r.name+' '+(r.place||'')+' '+(r.domain||'')).toLowerCase().includes(q));
-    if(!vis2.length){box.innerHTML='<div class="msub" style="padding:10px;text-transform:none;letter-spacing:0">Arkivet er tomt endnu.</div>';return}
-    box.innerHTML=vis2.map(r=>`<div class="arow" data-aid="${r.id}">
+    const vis2=rows.filter(r=>!q||((r.name||'')+' '+(r.category||'')).toLowerCase().includes(q));
+    if(!vis2.length){box.innerHTML='<div class="msub" style="padding:10px;text-transform:none;letter-spacing:0">'
+      +(rows.length?'Ingen match.':'Lageret er tomt.')+'</div>';return}
+    box.innerHTML=vis2.map(r=>{
+     const t=techOf(r);
+     return `<div class="arow" data-aid="${r.id}">
       <input type="checkbox" class="asel" data-asel="${r.id}">
-      <span class="apic">${r.img?`<img src="${r.img}">`:'<span class="anoimg">—</span>'}</span>
-      <span class="amain"><b>${esc(r.name)}</b>
-        <em>${esc(PLANDOMS[r.domain]||r.domain||'udstyr')}${r.place?' · '+esc(r.place):''}${
-          ((r.ins||[]).length||(r.outs||[]).length)?' · '+(r.ins||[]).length+' ind / '+(r.outs||[]).length+' ud':''}</em></span>
-      <span class="aacts">
-        <button class="mini" data-aimg="${r.id}" title="Sæt eller skift billede">🖼</button>
-        <button class="mini" data-aren="${r.id}" title="Omdøb">✎</button>
-        <button class="mini" data-adel="${r.id}" title="Fjern fra arkivet">✕</button>
-      </span></div>`).join('');
-    box.querySelectorAll('[data-adel]').forEach(b=>b.onclick=async()=>{
-      const r=rows.find(x=>x.id===b.dataset.adel);
-      if(!confirm('Fjern "'+r.name+'" fra arkivet?'))return;
-      await sbFetch('signalflow_equipment?id=eq.'+r.id,{method:'DELETE'});
-      rows=await archiveList(true); render();
-    });
-    box.querySelectorAll('[data-aren]').forEach(b=>b.onclick=async()=>{
-      const r=rows.find(x=>x.id===b.dataset.aren);
-      const nm=prompt('Navn:',r.name); if(nm===null)return;
-      await sbFetch('signalflow_equipment?id=eq.'+r.id,{method:'PATCH',body:JSON.stringify({name:nm})});
-      rows=await archiveList(true); render();
-    });
-    box.querySelectorAll('[data-aimg]').forEach(b=>b.onclick=()=>
-      pickImageFile(async src=>{
-        await sbFetch('signalflow_equipment?id=eq.'+b.dataset.aimg,
-          {method:'PATCH',body:JSON.stringify({img:src})});
-        rows=await archiveList(true); render();
-      }));
+      <span class="apic">${r.image_url?`<img src="${r.image_url}">`:'<span class="anoimg">—</span>'}</span>
+      <span class="amain"><b>${esc(r.name||'')}</b>
+        <em>${esc(r.category||'')}${r.qty?' · '+r.qty+' stk':''}${
+          (t.ins.length||t.outs.length)?' · '+t.ins.length+' ind / '+t.outs.length+' ud':' · ingen kanaler'}</em></span>
+     </div>`}).join('');
    };
-   archiveList(true).then(r=>{rows=r||[];render()})
+   lagerList(true).then(r=>{rows=r||[];render()})
      .catch(e=>{box.innerHTML='<div class="msub" style="padding:10px;color:var(--video)">'+esc(e.message)+'</div>'});
    root.querySelector('[name="q"]').oninput=render;
    root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-lager]').onclick=()=>{closeModal();setView('arch')};
 
+   /* standardudstyr – kun i kanalplanen */
+   root.querySelectorAll('[data-std]').forEach(b=>b.onclick=()=>{
+     const v=b.dataset.std;
+     if(v==='custom'){
+      const t=prompt('Hvad hedder udstyret?','Nyt udstyr'); if(t===null)return;
+      const i=parseInt(prompt('Hvor mange inputs?','8'),10); if(isNaN(i))return;
+      const o=parseInt(prompt('Hvor mange outputs?','4'),10); if(isNaN(o))return;
+      addDevice({t:t||'Nyt udstyr',i:Math.max(0,i),o:Math.max(0,o)});
+     }else addDevice(DEVICES[planDom][+v]);
+     closeModal();
+   });
    /* indbyggede billeder og symboler – kun på blokdiagrammet */
    root.querySelectorAll('[data-img]').forEach(b=>b.onclick=()=>{
      addItem('img',b.dataset.img,IMGLIB[b.dataset.img].n); closeModal()});
    root.querySelectorAll('[data-sym]').forEach(b=>b.onclick=()=>{
      addItem('sym',b.dataset.sym,b.dataset.sym); closeModal()});
-
-   /* nyt billede direkte i arkivet */
-   root.querySelector('#imgUp').onchange=e=>{
-     const f=e.target.files[0]; if(!f)return;
-     readImage(f, async src=>{
-      const nm=prompt('Navn i arkivet:',(f.name||'Billede').replace(/\.[^.]+$/,''));
-      if(nm===null)return;
-      await sbFetch('signalflow_equipment',{method:'POST',body:JSON.stringify(
-        {name:nm||'Billede',domain:forBlock?'blok':planDom,img:src,ins:[],outs:[],updated_by:meName()})});
-      rows=await archiveList(true); render();
-     });
-   };
 
    const ins=root.querySelector('[data-ains]');
    if(ins)ins.onclick=()=>{
@@ -3541,13 +3685,13 @@ function openArchive(mode){
     if(!picked.length)return closeModal();
     snap();
     if(forPlan){
-     picked.forEach(a=>dom().devices.push(archToDevice(a)));
+     picked.forEach(e=>dom().devices.push(lagerToDevice(e)));
      closeModal(); drawPlan();
     }else{
-     picked.forEach(a=>{
+     picked.forEach(e=>{
       const s0=freeSpot(130,120);
-      const n={id:id(),t:'item',x:s0.x,y:s0.y,w:120,label:a.name};
-      if(a.img)n.src=a.img; else n.sym='rack';
+      const n={id:id(),t:'item',x:s0.x,y:s0.y,w:120,label:e.name};
+      if(e.image_url)n.src=e.image_url; else n.sym='rack';
       if(lastBox){n.parent=lastBox;n.x=18;n.y=46+bp().nodes.filter(x=>x.parent===lastBox).length*126}
       bp().nodes.push(n);
      });
@@ -3556,7 +3700,6 @@ function openArchive(mode){
    };
  });
 }
-
 /* fælles billedhåndtering: skalér ned og giv en data-URL tilbage */
 function readImage(f,cb){
  const rd=new FileReader();
