@@ -140,6 +140,19 @@ body:not(.unlocked) #app{filter:blur(7px);pointer-events:none;user-select:none}
 
 
 
+
+/* hjælpelinjer og gitter */
+.guide{position:absolute;background:var(--lyd);z-index:80;pointer-events:none;opacity:.9}
+.guide.v{top:0;bottom:0;width:1px;box-shadow:0 0 5px var(--lyd)}
+.guide.h{left:0;right:0;height:1px;box-shadow:0 0 5px var(--lyd)}
+.devcanvas.snap{background-image:
+ radial-gradient(circle at 1px 1px, rgba(255,255,255,.055) 1px, transparent 0);
+ background-size:20px 20px}
+.sharebtn.on{background:rgba(63,217,156,.14);border-color:var(--intercom);color:var(--intercom)}
+.bcanvas.snap{background-image:
+ radial-gradient(circle at 1px 1px, rgba(255,255,255,.07) 1px, transparent 0);
+ background-size:20px 20px}
+
 /* symbolvinduet */
 .dropzone{display:flex;align-items:center;gap:14px;padding:16px 18px;border:2px dashed var(--line);
  border-radius:11px;cursor:pointer;background:var(--bg);transition:.12s}
@@ -431,8 +444,8 @@ body.guest .gastmark{display:inline-flex}
 .arow:hover .aacts{opacity:1}
 .sharebtn.save{border-color:var(--intercom);color:var(--intercom)}
 @media (max-width:820px){
- .devcanvas{width:auto;height:auto}
- .dev{position:relative!important;left:auto!important;top:auto!important;width:auto!important;margin-bottom:12px}
+ .devcanvas{width:auto!important;height:auto!important;min-height:0!important}
+ .dev{position:relative!important;left:auto!important;top:auto!important;width:auto!important;max-width:100%;margin:0 0 12px}
  .plabel{font-size:16px}
  .dev .rs,.draghandle{display:none}
 }
@@ -472,6 +485,20 @@ body.guest .gastmark{display:inline-flex}
 /* ---- iPhone og andre små skærme ---- */
 @media (max-width:820px){
  #app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}
+ /* værktøjslinjen på planen pakkes sammen, så intet falder ud over kanten */
+ .planbar{gap:7px}
+ .planbar .sharebtn{flex:1 1 auto;min-width:0;padding:9px 8px;font-size:12px}
+ .planadd{width:100%;margin-left:0}
+ .planadd .sharebtn{width:100%}
+ .domtabs{width:100%;justify-content:space-between}
+ .domtab{flex:1;text-align:center;padding:9px 6px}
+ .whotag,.whobox{flex:0 0 auto}
+ .newsbadge{width:100%;text-align:center}
+ .ports{grid-template-columns:1fr!important}
+ .devhead{flex-wrap:wrap;gap:7px}
+ .devnames{flex:1 1 100%;order:1}
+ .devmeta{order:2}
+ .devacts{order:3;margin-left:auto}
  #side{display:none}
  header{flex-wrap:wrap;height:auto;padding:8px 10px;gap:8px}
  .logo{font-size:17px}
@@ -636,7 +663,10 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 .planprint .ppcol{padding:6px 9px 8px}
 .planprint .ppcol:first-child{border-right:1px solid #e0e0e0}
 .planprint .ppt{font-family:var(--fd);font-weight:600;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#777;padding-bottom:3px}
-.planprint .ppr{display:flex;gap:8px;font-size:11px;line-height:1.55;border-bottom:1px dotted #e2e2e2}
+.planprint .ppr{display:flex;align-items:center;gap:8px;font-size:11px;line-height:1.7;border-bottom:1px dotted #e2e2e2}
+.planprint .ppl{flex:1}
+.planprint .ppb{width:14px;text-align:center;color:#555;font-size:10px}
+.planprint .ppk{float:right;letter-spacing:.28em;color:#999}
 .planprint .ppn{font-family:var(--fm);font-size:10px;color:#888;min-width:22px}
 .planprint .ppl{color:#111}
 .pfoot{font-family:var(--fm);font-size:8.5px;color:#999;text-align:center;padding-top:6px;border-top:1px solid #e2e2e2;margin-top:10px}
@@ -1183,8 +1213,8 @@ function openModal(title,sub,body,onMount){
  if(onMount)onMount(mEl);
  const first=mEl.querySelector('input,select');if(first)first.focus();
 }
-mEl.addEventListener('click',ev=>{if(ev.target===mEl)closeModal()});
-document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&mEl.classList.contains('on')){closeModal()}},true);
+mEl.addEventListener('click',ev=>{if(ev.target===mEl&&mEl.dataset.locked!=='1')closeModal()});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&mEl.classList.contains('on')&&mEl.dataset.locked!=='1'){closeModal()}},true);
 
 const PALETTE=['#c62828','#e65100','#9a6500','#2e7d32','#1e7a55','#1e56b0','#4527a0','#37474f','#111111','#7a7a7a'];
 const BOXPAL=['#e9c440','#6d8764','#c9a227','#8fa9c9','#c98f8f','#9c8fc9','#a8b5a0','#d8d2c4','#3c4a5a','#2f2f2f'];
@@ -1462,6 +1492,10 @@ function copySection(secId){
    plus frie tekster og overskrifter. Tænkt til at forklare et setup for en
    kollega der ikke kender opsætningen – derfor billeder og tydelige numre. */
 let blocks=null, blockPage=0, linkFrom=null, blockTool=null;
+/* Gitter og hjælpelinjer, så kasser og symboler kan stilles lige op. */
+let snapOn=true;
+const GRID=10;
+const snapTo=v=>snapOn?Math.round(v/GRID)*GRID:Math.round(v);
 
 /* indbygget billedbibliotek – flere kan lægges til undervejs */
 const IMGLIB={
@@ -1751,8 +1785,9 @@ function drawBlocks(){
  const p=bp();
  let h=`<div class="blockbar">
    <div class="btabs">${ensureBlocks().pages.map((pg,i)=>
-     `<button class="btab ${i===blockPage?'on':''}" data-bpage="${i}" title="Skift til siden ${esc(pg.title)}">${esc(pg.title)}</button>`).join('')}
-     <button class="btabadd" data-bpadd="1" title="Ny side i blokdiagrammet, fx strømplan">+</button></div>
+     `<button class="btab ${i===blockPage?'on':''}" data-bpage="${i}" title="${i===blockPage?'Klik igen for at omdøbe siden':'Skift til siden '+esc(pg.title)}">${esc(pg.title)}</button>`).join('')}
+     <button class="btabadd" data-bpadd="1" title="Ny side i blokdiagrammet, fx strømplan">+</button>
+     <button class="btabadd" data-bpdel="1" title="Slet den åbne side">✕</button></div>
    <button class="btool left" data-badd="import" title="Hent udstyr der allerede er brugt i kanalplanen">⤒ Importér</button>
    <div class="btools">
      <button class="btool" data-badd="box" title="Ny kasse, fx Studie eller TV Compound. Udstyr kan lægges indeni">▭ Kasse</button>
@@ -1761,11 +1796,12 @@ function drawBlocks(){
      <button class="btool" data-badd="text" title="Frit tekstfelt">T Tekst</button>
      <button class="btool" data-badd="head" title="Stor overskrift til diagrammet">H Overskrift</button>
      <button class="btool ${blockTool==='link'?'on':''}" data-badd="link" title="Tegn en streg: klik først afsender, så modtager">⟋ Forbind</button>
+     <button class="btool ${snapOn?'on':''}" data-badd="snap" title="Lås til gitter: tingene falder på plads i lige rækker, og der vises hjælpelinjer når de flugter">⊞ Ret op</button>
      <button class="btool" data-bexp="1" title="Gem diagrammet som PDF i A3">↧ PDF</button>
    </div>
  </div>
  ${blockTool==='link'?`<div class="linkhint">Klik på det der sender, og derefter på det der modtager. <button class="add" data-bcancel="1" title="Stop med at tegne forbindelser">afbryd</button></div>`:''}
- <div class="canvaswrap"><div id="bcanvas" class="bcanvas">
+ <div class="canvaswrap"><div id="bcanvas" class="bcanvas ${snapOn?'snap':''}">
    <svg class="blinks" id="blinks"></svg>`;
 
  const kids=id2=>p.nodes.filter(n=>n.parent===id2);
@@ -1851,12 +1887,66 @@ function drawLinks(){
 }
 
 
+
+/* ---- hjælpelinjer: vis når det man trækker flugter med noget andet ---- */
+function showGuides(card,canvas,vaelg){
+ clearGuides(canvas);
+ const r=card.getBoundingClientRect(), wr=canvas.getBoundingClientRect();
+ const me={l:r.left-wr.left, r:r.right-wr.left, cx:r.left-wr.left+r.width/2,
+           t:r.top-wr.top, b:r.bottom-wr.top, cy:r.top-wr.top+r.height/2};
+ const T=8;                                   // hvor tæt på det skal være
+ let snapX=null, snapY=null;
+ canvas.querySelectorAll(vaelg||'.bnode').forEach(o=>{
+  if(o===card||card.contains(o))return;
+  const q=o.getBoundingClientRect();
+  const it={l:q.left-wr.left, r:q.right-wr.left, cx:q.left-wr.left+q.width/2,
+            t:q.top-wr.top, b:q.bottom-wr.top, cy:q.top-wr.top+q.height/2};
+  [['l','l'],['l','r'],['r','l'],['r','r'],['cx','cx']].forEach(([a,b])=>{
+   if(Math.abs(me[a]-it[b])<=T){ guide(canvas,'v',it[b]); if(snapX===null)snapX=it[b]-(me[a]-me.l) }
+  });
+  [['t','t'],['t','b'],['b','t'],['b','b'],['cy','cy']].forEach(([a,b])=>{
+   if(Math.abs(me[a]-it[b])<=T){ guide(canvas,'h',it[b]); if(snapY===null)snapY=it[b]-(me[a]-me.t) }
+  });
+ });
+ return {x:snapX,y:snapY};
+}
+function guide(canvas,retning,pos){
+ const d=document.createElement('div');
+ d.className='guide '+retning;
+ if(retning==='v')d.style.left=pos+'px'; else d.style.top=pos+'px';
+ canvas.appendChild(d);
+}
+function clearGuides(canvas){ canvas.querySelectorAll('.guide').forEach(g=>g.remove()) }
+
 /* ---- klik, træk og forbind ---- */
 function bindBlocks(){
  const el2=document.getElementById('blocks');
  const canvas=el2.querySelector('#bcanvas');
 
- el2.querySelectorAll('[data-bpage]').forEach(b=>b.onclick=()=>{blockPage=+b.dataset.bpage;linkFrom=null;drawBlocks()});
+ el2.querySelectorAll('[data-bpage]').forEach(b=>b.onclick=()=>{
+   const i=+b.dataset.bpage;
+   if(i===blockPage){                       // klik på den åbne fane omdøber den
+    const inp=document.createElement('input');
+    inp.className='tabedit'; inp.value=bp().title;
+    b.replaceWith(inp); inp.focus(); inp.select();
+    let slut=false;
+    const done=gem=>{if(slut)return;slut=true;
+      if(gem&&inp.value.trim()){snap();ensureBlocks().pages[i].title=inp.value.trim()}
+      drawBlocks()};
+    inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();done(true)}
+                      if(e.key==='Escape'){e.preventDefault();done(false)}e.stopPropagation()};
+    inp.onblur=()=>done(true);
+    return;
+   }
+   blockPage=i;linkFrom=null;drawBlocks();
+ });
+ const bd=el2.querySelector('[data-bpdel]');
+ if(bd)bd.onclick=()=>{
+   if(ensureBlocks().pages.length<2){alert('Der skal være mindst én side.');return}
+   if(!confirm('Slet siden "'+bp().title+'"?'))return;
+   snap(); ensureBlocks().pages.splice(blockPage,1);
+   blockPage=Math.max(0,blockPage-1); drawBlocks();
+ };
  const pa=el2.querySelector('[data-bpadd]');
  if(pa)pa.onclick=()=>{const t=prompt('Navn på siden:','Ny side');if(t===null)return;
    snap();ensureBlocks().pages.push({id:id(),title:t||'Ny side',nodes:[],links:[]});
@@ -1869,6 +1959,7 @@ function bindBlocks(){
   else if(k==='head')addBlockText('h');
   else if(k==='item')openArchive('block');
   else if(k==='sym')openSymbols();
+  else if(k==='snap'){snapOn=!snapOn;drawBlocks()}
   else if(k==='import')importItems();
   else if(k==='link'){blockTool=blockTool==='link'?null:'link';linkFrom=null;drawBlocks()}
  });
@@ -1948,12 +2039,19 @@ document.addEventListener('mousemove',e=>{
   const wrap=document.getElementById('bcanvas');
   const host=bdrag.n.parent?wrap.querySelector('[data-bn="'+CSS.escape(bdrag.n.parent)+'"]'):wrap;
   const hr=host.getBoundingClientRect();
-  bdrag.el.style.left=Math.max(0,e.clientX-bdrag.gx-hr.left)+'px';
-  bdrag.el.style.top =Math.max(0,e.clientY-bdrag.gy-hr.top)+'px';
+  const rx=Math.max(0,e.clientX-bdrag.gx-hr.left), ry=Math.max(0,e.clientY-bdrag.gy-hr.top);
+  bdrag.el.style.left=rx+'px'; bdrag.el.style.top=ry+'px';
+  /* flugter den med noget? så vis en linje – en flugt vinder over gitteret */
+  const s2=snapOn?showGuides(bdrag.el,wrap):{x:null,y:null};
+  if(snapOn){
+   bdrag.el.style.left=Math.max(0,Math.round(s2.x!==null?s2.x:Math.round(rx/GRID)*GRID))+'px';
+   bdrag.el.style.top =Math.max(0,Math.round(s2.y!==null?s2.y:Math.round(ry/GRID)*GRID))+'px';
+  }
   drawLinks();
  } else if(bresize){
-  bresize.el.style.width=Math.max(120,bresize.w0+(e.clientX-bresize.x0))+'px';
-  bresize.el.style.height=Math.max(90,bresize.h0+(e.clientY-bresize.y0))+'px';
+  bresize.el.style.width=Math.max(120,snapTo(bresize.w0+(e.clientX-bresize.x0)))+'px';
+  bresize.el.style.height=Math.max(90,snapTo(bresize.h0+(e.clientY-bresize.y0)))+'px';
+  showGuides(bresize.el,document.getElementById('bcanvas'));
   drawLinks();
  }
 });
@@ -1961,6 +2059,7 @@ document.addEventListener('mouseup',e=>{
  if(bdrag){
   const n=bdrag.n, el3=bdrag.el;
   el3.classList.remove('bdragging');
+  clearGuides(document.getElementById('bcanvas'));
   n.x=parseFloat(el3.style.left)||0; n.y=parseFloat(el3.style.top)||0;
   /* slippes udstyret oven i en kasse, hører det til den kasse */
   if(n.t!=='box'){
@@ -1983,6 +2082,7 @@ document.addEventListener('mouseup',e=>{
   }
   bdrag=null; document.body.style.userSelect=''; drawBlocks();
  } else if(bresize){
+  clearGuides(document.getElementById('bcanvas'));
   bresize.n.w=parseFloat(bresize.el.style.width)||bresize.n.w;
   bresize.n.h=parseFloat(bresize.el.style.height)||bresize.n.h;
   bresize=null; document.body.style.userSelect=''; drawBlocks();
@@ -2311,6 +2411,8 @@ function printBlocks(){
 
 /* ---- tegn kanalplanen ---- */
 const CARDW=760;
+/* Ret op: gitter og hjælpelinjer, så kortene kan stilles lige op. */
+let planSnap=true;
 const labelled=(dv,side)=>ports(dv,side).filter(p=>p.label);
 const devDone=dv=>{
  const all=labelled(dv,'ins').concat(labelled(dv,'outs'));
@@ -2333,6 +2435,9 @@ function drawPlan(){
    <button class="sharebtn save" data-save="1" title="Gem i databasen nu, så kollegerne kan se det">Gem</button>
    <button class="sharebtn" data-refresh="1" title="Hent kollegernes ændringer nu">↻ Opdatér</button>
    <button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan">Del link</button>
+   <button class="sharebtn" data-ppdf="1" title="Print ${PLANDOMS[planDom]}-planen eller gem den som PDF">↧ PDF</button>
+   <button class="sharebtn" data-pcsv="1" title="Hent ${PLANDOMS[planDom]}-planen som regneark til Excel">↧ CSV</button>
+   <button class="sharebtn ${planSnap?'on':''}" data-psnap="1" title="Lås til gitter: kortene falder på plads i lige rækker, og der vises hjælpelinjer når de flugter">⊞ Ret op</button>
    ${guestToken?'':`
      <div class="planadd">
        <button class="sharebtn save" data-arch="1" title="Hent udstyr fra lageret">+ Udstyr</button>
@@ -2359,7 +2464,7 @@ function drawPlan(){
   let c=0; for(let i=1;i<3;i++)if(colY[i]<colY[c])c=i;
   d.x=20+c*(CARDW+40); d.y=colY[c]; colY[c]+=estH(d)+24;
  });
- h+=`<div class="devcanvas" id="devcanvas">`;
+ h+=`<div class="devcanvas ${planSnap?'snap':''}" id="devcanvas">`;
  list.forEach(dv=>{
   const lab=labelled(dv,'ins').concat(labelled(dv,'outs'));
   const np=lab.filter(p=>p.patched).length, nc=lab.filter(p=>p.checked).length;
@@ -2468,6 +2573,12 @@ function bindPlan(){
    (guestToken?guestPull():pull()).then(()=>{btn.textContent='↻ Opdatér'})
      .catch(()=>{btn.textContent='↻ Opdatér'});
  };
+ const ps=el2.querySelector('[data-psnap]');
+ if(ps)ps.onclick=()=>{planSnap=!planSnap;drawPlan()};
+ const pp=el2.querySelector('[data-ppdf]');
+ if(pp)pp.onclick=()=>exportPlanPDF({paper:'A4',orient:'portrait',margin:10,kun:planDom});
+ const pc=el2.querySelector('[data-pcsv]');
+ if(pc)pc.onclick=()=>exportPlanCSV(planDom);
  const ar=el2.querySelector('[data-arch]'); if(ar)ar.onclick=()=>openArchive('plan');
  const ip=el2.querySelector('[data-imp]'); if(ip)ip.onclick=()=>importItems('plan');
  const sh2=el2.querySelector('[data-share]');
@@ -2580,13 +2691,20 @@ function bindDevDrag(el2){
    card.classList.add('moving');
    snap();
    const move=ev=>{
-    card.style.left=Math.max(0,ev.clientX-gx-wr.left)+'px';
-    card.style.top =Math.max(0,ev.clientY-gy-wr.top)+'px';
+    /* først den rå position, så vi kan se om den flugter med noget */
+    const rx=Math.max(0,ev.clientX-gx-wr.left), ry=Math.max(0,ev.clientY-gy-wr.top);
+    card.style.left=rx+'px'; card.style.top=ry+'px';
+    const g=planSnap?showGuides(card,canvas,'.dev'):{x:null,y:null};
+    if(!planSnap)return;
+    /* en flugt vinder over gitteret */
+    card.style.left=Math.max(0,Math.round(g.x!==null?g.x:Math.round(rx/GRID)*GRID))+'px';
+    card.style.top =Math.max(0,Math.round(g.y!==null?g.y:Math.round(ry/GRID)*GRID))+'px';
    };
    const up=()=>{
     document.removeEventListener('mousemove',move);
     document.removeEventListener('mouseup',up);
     card.classList.remove('moving');
+    clearGuides(canvas);
     dv.x=Math.round(parseFloat(card.style.left)||0);
     dv.y=Math.round(parseFloat(card.style.top)||0);
     dv.mt=Date.now(); autosave();
@@ -2602,9 +2720,14 @@ function bindDevDrag(el2){
   const card=hn.closest('.dev');
   const x0=e.clientX, w0=card.getBoundingClientRect().width;
   snap();
-  const move=ev=>{card.style.width=Math.max(340,w0+(ev.clientX-x0))+'px'};
+  const move=ev=>{
+   const w=planSnap?Math.round((w0+(ev.clientX-x0))/GRID)*GRID:(w0+(ev.clientX-x0));
+   card.style.width=Math.max(340,w)+'px';
+   showGuides(card,el2.querySelector('#devcanvas'),'.dev');
+  };
   const up=()=>{document.removeEventListener('mousemove',move);
     document.removeEventListener('mouseup',up);
+    clearGuides(el2.querySelector('#devcanvas'));
     dv.w=Math.round(parseFloat(card.style.width)||CARDW); dv.mt=Date.now(); autosave()};
   document.addEventListener('mousemove',move);
   document.addEventListener('mouseup',up);
@@ -2957,11 +3080,45 @@ function setView(v){
 
 
 
+
+/* ---- gæsten skal sige hvem han er, før han kan rette ----
+   Han er ikke logget ind, så uden navn kan ingen se hvem der har sat hvad. */
+function askGuestName(){
+ const c=cfg();
+ return new Promise(res=>{
+  openModal('Hvem er du?','Dit navn vises ud for de linjer du retter',`
+   <div class="mf"><label>Navn eller initialer</label>
+     <input type="text" name="who" value="${esc(c.who||'')}" placeholder="fx Bjarke eller BSAN"
+            autocomplete="name" autocapitalize="words"></div>
+   <div id="whoMsg" class="msub" style="text-transform:none;letter-spacing:0;color:var(--video);min-height:15px"></div>
+   <div class="mrow"><button class="btn go" data-ok="1" style="width:100%">Fortsæt</button></div>
+   <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;margin-top:12px;line-height:1.6">
+     Du åbner en delt kanalplan. Alt hvad du skriver, kan dine kolleger se med det samme.
+   </div>`,root=>{
+    const inp=root.querySelector('[name="who"]'), msg=root.querySelector('#whoMsg');
+    const go=()=>{
+     const v=inp.value.trim();
+     if(v.length<2){msg.textContent='Skriv lige dit navn først.';inp.focus();return}
+     const c2=cfg(); setCfg({url:c2.url,key:c2.key,who:v});
+     closeModal(); res(v);
+    };
+    root.querySelector('[data-ok]').onclick=go;
+    inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go()}};
+    setTimeout(()=>inp.focus(),120);
+  });
+  /* vinduet må ikke kunne lukkes udenom */
+  mEl.dataset.locked='1';
+ });
+}
+
 /* ================= gæsteadgang til kanalplanen =================
    Et delelink bærer en nøgle. Med den kan man se og rette kanalplanen for
    ét projekt – men intet andet. Hverken tegninger, blokdiagrammer eller
    de øvrige projekter kan nås med nøglen. */
 let guestToken=null, guestPush=null, guestSync=null;
+/* Gæsten må først gemme, når planen er hentet. Ellers kunne et delelink nå at
+   skrive en tom plan op i databasen, inden data var kommet ned. */
+let guestReady=false;
 
 async function rpc(fn,body){
  const c=cfg();
@@ -2984,6 +3141,7 @@ async function guestPull(){
  catch(e){ setSync(e.message,true); return }
  if(!rows||!rows.length){setSync('linket virker ikke længere',true);return}
  const row=rows[0];
+ guestReady=true;
  projectName=row.name||'Kanalplan';
  if(row.updated_at===lastSync&&plan)return;
  const foc=focusedRef();
@@ -3000,6 +3158,7 @@ async function guestPull(){
  if(document.getElementById('plan').innerHTML)syncPlanDOM(); else drawPlan();
 }
 function guestSave(){
+ if(!guestReady)return;          // planen er ikke hentet endnu
  clearTimeout(guestPush);
  guestPush=setTimeout(async()=>{
   try{
@@ -3015,9 +3174,12 @@ function startGuest(tok){
  document.body.classList.add('unlocked','onlyplan','guest');
  view='plan'; document.body.classList.add('planview');
  ensurePlan(); ensureBlocks();
+ askGuestName().then(()=>{mEl.dataset.locked='';drawPlan()});
+ setSync('henter …');
  guestPull().then(()=>{
-  if(!plan||!planDevices(plan,planDom).length)drawPlan();
- });
+  guestReady=true;
+  if(!document.getElementById('plan').innerHTML)drawPlan();
+ }).catch(e=>setSync(e.message,true));
  clearInterval(guestSync);
  guestSync=setInterval(guestPull,6000);
 }
@@ -4058,32 +4220,35 @@ function itemH(it){
  return 34+(it.rows||[]).length*15+(it.showTotal!==false?20:0);
 }
 
-function planRows(){
- const rows=[['Domæne','Udstyr','Placering','Side','Nr','Signal','Sat af','Tidspunkt']];
- Object.keys(PLANDOMS).forEach(k=>(ensurePlan()[k].devices||[]).forEach(d=>{
+function planRows(kun){
+ const rows=[['Domæne','Udstyr','Placering','Side','Nr','Signal','Patchet','Tjekket','Sat af','Tidspunkt']];
+ Object.keys(PLANDOMS).filter(k=>!kun||k===kun).forEach(k=>alive((ensurePlan()[k].devices||[])).forEach(d=>{
   [['ins','Input'],['outs','Output']].forEach(([side,txt])=>{
-   d[side].forEach(p=>rows.push([PLANDOMS[k],d.name,d.place||'',txt,p.n,p.label||'',p.by||'',
+   alive(d[side]).forEach(p=>rows.push([PLANDOMS[k],d.name,d.place||'',txt,p.n,p.label||'',
+     p.patched?'ja':'', p.checked?'ja':'', p.by||'',
      p.at?new Date(p.at).toLocaleString('da-DK'):'']));
   });
  }));
  return rows;
 }
-function exportPlanCSV(){
+function exportPlanCSV(kun){
  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
- dl('\ufeff'+planRows().map(r=>r.map(q).join(';')).join('\r\n'),
-    fileName('csv').replace(/\.csv$/,'_kanalplan.csv'),'text/csv;charset=utf-8');
+ const navn=fileName('csv').replace(/\.csv$/, '_kanalplan'+(kun?'_'+kun:'')+'.csv');
+ dl('\ufeff'+planRows(kun).map(r=>r.map(q).join(';')).join('\r\n'),navn,'text/csv;charset=utf-8');
  closeModal();
 }
-function planPrintHTML(){
- let h=`<div class="sheettitle">${esc(projectName)} · Kanalplan</div>`;
- Object.keys(PLANDOMS).forEach(k=>{
-  const ds=ensurePlan()[k].devices||[];
+function planPrintHTML(kun){
+ let h=`<div class="sheettitle">${esc(projectName)} · Kanalplan${kun?' · '+PLANDOMS[kun]:''}</div>`;
+ Object.keys(PLANDOMS).filter(k=>!kun||k===kun).forEach(k=>{
+  const ds=alive(ensurePlan()[k].devices||[]);
   if(!ds.length)return;
   h+=`<h2 class="pph">${PLANDOMS[k]}</h2>`;
   ds.forEach(d=>{
-   const col=(arr,t)=>`<div class="ppcol"><div class="ppt">${t}</div>`
-     +arr.map(p=>`<div class="ppr"><span class="ppn">${esc(p.n)}</span>
-        <span class="ppl">${esc(p.label||'')}</span></div>`).join('')+`</div>`;
+   const col=(arr,t)=>`<div class="ppcol"><div class="ppt">${t}<span class="ppk">P T</span></div>`
+     +alive(arr).map(p=>`<div class="ppr"><span class="ppn">${esc(p.n)}</span>
+        <span class="ppl">${esc(p.label||'')}</span>
+        <span class="ppb">${p.label?(p.patched?'✓':'☐'):''}</span>
+        <span class="ppb">${p.label?(p.checked?'✓':'☐'):''}</span></div>`).join('')+`</div>`;
    h+=`<div class="ppdev"><div class="ppname">${esc(d.name)}${d.place?' · '+esc(d.place):''}</div>
      <div class="ppcols">${col(d.ins,'Input')}${col(d.outs,'Output')}</div></div>`;
   });
@@ -4091,7 +4256,7 @@ function planPrintHTML(){
  return h;
 }
 function exportPlanPDF(o){
- document.getElementById('printroot').innerHTML=`<div class="psheet planprint">${planPrintHTML()}</div>`;
+ document.getElementById('printroot').innerHTML=`<div class="psheet planprint">${planPrintHTML(o.kun)}</div>`;
  const padPx=o.margin*96/25.4;
  document.getElementById('pagestyle').textContent=
    `@page{size:${o.paper} ${o.orient};margin:0}
@@ -4188,7 +4353,7 @@ function openExport(){
      if(fmt.value==='pdf')exportPDF(o);
      else if(fmt.value==='csv')exportCSV(o);
      else if(fmt.value==='drawio')exportDrawio(o);
-     else if(fmt.value==='plancsv')exportPlanCSV();
+     else if(fmt.value==='plancsv')exportPlanCSV(null);
      else if(fmt.value==='planpdf')exportPlanPDF(o);
      else if(fmt.value==='html')exportHTML(o);
      else exportJSON();
