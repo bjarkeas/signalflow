@@ -571,10 +571,15 @@ body.mobile .section{display:block!important;margin-bottom:14px}
 body.mobile .srcbox,body.mobile .dstbox{width:auto!important;margin:0 0 8px!important;min-height:0!important}
 body.mobile .rows{padding:2px 0!important;margin:0!important}
 body.mobile .dstbox{margin-top:8px!important}
-body.mobile .feed{flex-wrap:wrap;gap:7px;align-items:center;padding:6px 2px}
-body.mobile .feed .tools{margin-left:auto;order:2}
+/* gruppehovedet på mobil: ▾ 4W [INTERNET] ↔ ⋯  og navnet på linjen under */
+body.mobile .feed{flex-wrap:wrap;gap:8px;align-items:center;padding:8px 2px 6px}
+body.mobile .feed .caret{order:0}
 body.mobile .feed .lbl[data-e="feed"]{order:1;font-size:15px}
-body.mobile .chcount{order:3;flex:1 1 100%;font-size:11px}
+body.mobile .feed .cloudtag{display:inline-flex;order:2;font-size:11px;padding:3px 10px}
+body.mobile .feed .dirmark{order:3}
+body.mobile .feed .tools{order:4;margin-left:auto}
+body.mobile .feed .lbl[data-e="glabel"]{order:5;flex:1 1 100%;font-size:15px;margin-top:2px}
+body.mobile .chcount{order:6;flex:1 1 100%;font-size:11px}
 body.mobile .feed .wire,body.mobile .cloudtag{display:none}
 body.mobile .feed .lbl[data-e="glabel"]{flex:1 1 100%;font-size:14px}
 body.mobile .ch{padding:11px 4px;border-bottom:1px solid var(--line);gap:10px;align-items:center}
@@ -617,6 +622,15 @@ body.mobile .canvaswrap{overflow:auto;-webkit-overflow-scrolling:touch}
 body.mobile .btools{width:100%;gap:5px}
 body.mobile .btool{flex:1 1 30%;text-align:center;padding:10px 4px;font-size:12px}
 body.mobile .btabs{width:100%;overflow-x:auto}
+
+
+/* retningspil – erstatter stregen, når der ikke er plads til den */
+.dirmark{display:none;font-size:15px;line-height:1;color:var(--dim);flex:none;width:20px;text-align:center}
+body.mobile .dirmark{display:inline-block}
+body.mobile .ch .dirmark{color:#555}
+body.mobile .feed .dirmark{color:inherit;font-size:17px}
+/* symbolforklaringer hører til på papiret – på en telefon ligger de i vejen */
+body.mobile .fitem,body.mobile .flegend{display:none!important}
 
 /* forklaringsboble */
 #tipbox{position:fixed;display:none;z-index:10000;pointer-events:none;max-width:290px;
@@ -1522,6 +1536,7 @@ function draw(keepSide){
        <span class="cloud" data-e="transport" data-id="${g.id}">${esc(g.transport||'—')}</span>
        <span class="wire ${wcls}"></span>
        <span class="endtag ${g.rx?'':'ghost'}" data-e="rx" data-id="${g.id}">${esc(g.rx||'RX')}</span>
+       <span class="dirmark" title="Retning">${g.dir==='rtl'?'←':g.dir==='both'?'↔':'→'}</span>
        <span class="lbl" data-e="glabel" data-id="${g.id}" style="font-weight:600;color:${labC};font-size:${px(gs.labelSize,11.5)}px">${esc(g.label)}</span>
        <span class="chcount">${g.collapsed?g.channels.length+' kanaler':''}</span>
        <span class="tools">
@@ -1550,6 +1565,7 @@ function draw(keepSide){
       <span class="lbl" data-e="chlabel" data-id="${g.id}|${ch.id}" style="font-size:${chS}px">${esc(ch.label||'…')}</span>
       <span class="endtag sm ${ch.tx?'':'ghost'}" data-e="chtx" data-id="${g.id}|${ch.id}">${esc(ch.tx||'TX')}</span>
       <span class="wire ${cw}"></span>
+      <span class="dirmark ${cw}" title="Retning">${dirIcon}</span>
       <span class="endtag sm ${ch.rx?'':'ghost'}" data-e="chrx" data-id="${g.id}|${ch.id}">${esc(ch.rx||'RX')}</span>
       <span class="tools">
         <button class="mini dirbtn" data-cdir="${g.id}|${ch.id}" title="Retning: ${cdir==='ltr'?'mod modtager':cdir==='rtl'?'retur':'begge veje'} – klik for ${dirNext}">${dirIcon}</button>
