@@ -99,6 +99,350 @@ header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 14px;b
 
 
 
+
+/* ================= mobiludgave =================
+   På en telefon er der ikke plads til rækker af små knapper. I stedet får
+   hver linje én ⋯-knap, der åbner et ark nedefra med de samme muligheder. */
+let mobil=false;
+const LS_MODE='signalflow:mode';
+
+/* Hvilken slags skærm sidder vi ved?
+   Bredden alene er ikke nok: et lille browservindue på en Mac er stadig en
+   computer, og en iPad i landskab er stadig en berøringsskærm. Derfor kigger
+   vi på både pegeredskab, berøring og bredde. */
+function skaermType(){
+ let grov=false, kanHover=true;
+ try{
+  grov = matchMedia('(pointer:coarse)').matches;
+  kanHover = matchMedia('(hover:hover)').matches;
+ }catch(e){}
+ const beroering = grov || (navigator.maxTouchPoints||0)>1;
+ const b=innerWidth;
+ if(beroering&&!kanHover&&b<=920)return 'telefon';   // telefon eller tablet i hånden
+ if(b<=620)return 'telefon';                          // meget smalt vindue
+ return 'computer';
+}
+/* Et fingeraftryk af skærmen. Skifter det – fx fordi projektet åbnes på en
+   anden maskine – gælder et tidligere valg ikke længere, og vi vælger selv. */
+function skaermAftryk(){
+ const b=innerWidth;
+ const trin = b<=620?'s' : b<=1024?'m' : 'l';
+ return skaermType()+':'+trin;
+}
+
+function setMode(m,gem){
+ mobil=m;
+ document.body.classList.toggle('mobile',m);
+ if(gem)try{localStorage.setItem(LS_MODE,JSON.stringify({aftryk:skaermAftryk(),valg:m?'mobil':'desktop'}))}catch(e){}
+ const b=document.getElementById('bMode');
+ if(b){b.textContent=m?'🖥':'📱';
+   b.title=(m?'Skift til skrivebordsudgaven':'Skift til mobiludgaven')
+     +' · programmet har selv valgt '+(skaermType()==='telefon'?'mobil':'skrivebord')
+     +' ud fra skærmen'}
+ document.querySelectorAll('#mnav button').forEach(n=>
+   n.classList.toggle('on',n.dataset.view===view));
+ mobilTitel();
+ if(view==='plan')drawPlan(); else if(view==='blocks')drawBlocks();
+ else if(view==='arch')drawArchive(); else draw();
+}
+function gemtValg(){
+ try{
+  const r=localStorage.getItem(LS_MODE);
+  if(!r)return null;
+  if(r==='mobil'||r==='desktop')return null;        // gammelt format uden aftryk
+  const o=JSON.parse(r);
+  return o&&o.aftryk===skaermAftryk() ? o.valg : null;
+ }catch(e){return null}
+}
+function vaelgUdgave(){
+ aftrykNu=skaermAftryk();
+ const g=gemtValg();
+ setMode(g ? g==='mobil' : skaermType()==='telefon', false);
+}
+/* Skifter skærmen karakter – vindue trukket smalt, telefon drejet – så vurderes
+   det forfra, medmindre man selv har valgt noget for netop den skærm. */
+let aftrykNu=null, sizeTimer=null;
+addEventListener('resize',()=>{
+ clearTimeout(sizeTimer);
+ sizeTimer=setTimeout(()=>{
+  const nyt=skaermAftryk();
+  if(nyt===aftrykNu)return;
+  aftrykNu=nyt;
+  const g=gemtValg();
+  const skal = g ? g==='mobil' : skaermType()==='telefon';
+  if(skal!==mobil)setMode(skal,false);
+ },250);
+});
+
+function mobilTitel(){
+ const t=document.getElementById('mTitle');
+ if(!t)return;
+ const side = view==='flow' ? (pages[activePage]||{}).title
+   : view==='plan' ? PLANDOMS[planDom]
+   : view==='blocks' ? (bp()||{}).title : 'Alt udstyr';
+ t.innerHTML='<b>'+esc(projectName)+'</b><span>'+esc(side||'')+' ▾</span>';
+}
+
+/* ---- ark der glider op nedefra ---- */
+function openSheet(titel, punkter){
+ const wrap=document.getElementById('sheetwrap');
+ const box=document.getElementById('sheetbox');
+ box.innerHTML='<div class="shandle"></div>'+
+  (titel?'<div class="shead">'+esc(titel)+'</div>':'')+
+  punkter.map((p,i)=>p.skil?'<div class="ssplit"></div>':
+    `<button class="sitem ${p.fare?'fare':''} ${p.aktiv?'aktiv':''}" data-s="${i}">
+       <span class="sico">${p.ikon||''}</span>
+       <span class="stxt">${esc(p.tekst)}${p.under?'<em>'+esc(p.under)+'</em>':''}</span>
+       ${p.vaerdi?'<span class="sval">'+esc(p.vaerdi)+'</span>':''}
+     </button>`).join('')+
+  '<button class="sitem luk" data-luk="1"><span class="sico">✕</span><span class="stxt">Luk</span></button>';
+ wrap.classList.add('on');
+ box.querySelectorAll('[data-s]').forEach(n=>n.onclick=()=>{
+   const p=punkter[+n.dataset.s];
+   closeSheet();
+   if(p&&p.gør)setTimeout(p.gør,60);
+ });
+ box.querySelector('[data-luk]').onclick=closeSheet;
+ wrap.onclick=e=>{if(e.target===wrap)closeSheet()};
+}
+function closeSheet(){document.getElementById('sheetwrap').classList.remove('on')}
+
+/* ---- menuerne ---- */
+function sheetApp(){
+ const ekstra=[];
+ if(view==='plan'){
+  ekstra.push({ikon:'↻',tekst:'Hent kollegernes ændringer',gør:()=>pull()});
+  ekstra.push({ikon:'🔗',tekst:'Del link til kanalplanen',gør:()=>{
+    if(!cloudId)return alert('Gem projektet i databasen først.');
+    shareToken().then(t=>copyLink(planLink(t),{textContent:''})).then(()=>alert('Linket er kopieret.'))
+      .catch(e=>alert(e.message))}});
+  ekstra.push({ikon:'↧',tekst:'Print kanalplanen',under:PLANDOMS[planDom],
+    gør:()=>exportPlanPDF({paper:'A4',orient:'portrait',margin:10,kun:planDom})});
+  ekstra.push({ikon:'↧',tekst:'Kanalplan som regneark',gør:()=>exportPlanCSV(planDom)});
+  ekstra.push({ikon:'⤒',tekst:'Importér udstyr',gør:()=>importItems('plan')});
+  ekstra.push({skil:1});
+ }
+ if(view==='blocks'){
+  ekstra.push({ikon:'▭',tekst:'Ny kasse',gør:()=>addBox()});
+  ekstra.push({ikon:'⌸',tekst:'Hent udstyr',gør:()=>openArchive('block')});
+  ekstra.push({ikon:'◇',tekst:'Symboler',gør:()=>openSymbols()});
+  ekstra.push({ikon:'T',tekst:'Tekst',gør:()=>addBlockText('t')});
+  ekstra.push({ikon:'↧',tekst:'Print diagrammet',gør:()=>printBlocks()});
+  ekstra.push({skil:1});
+ }
+ if(view==='flow'){
+  ekstra.push({ikon:'◍',tekst:'Vis og skjul signaltyper',gør:()=>sheetLag()});
+  ekstra.push({ikon:'+',tekst:'Tilføj sektion',gør:()=>{
+    const b=document.querySelector('[data-addsec]'); if(b)b.click()}});
+  ekstra.push({skil:1});
+ }
+ openSheet('Menu',ekstra.concat([
+  {ikon:'☁',tekst:'Projekter',under:'åbn, gem version, del',gør:()=>openProjects()},
+  {ikon:'⤓',tekst:'Gem projekt som fil',gør:()=>document.getElementById('bSave').click()},
+  {ikon:'↥',tekst:'Åbn fil',gør:()=>document.getElementById('bOpen').click()},
+  {ikon:'↧',tekst:'Eksportér',under:'PDF, CSV, draw.io',gør:()=>openExport()},
+  {skil:1},
+  {ikon:'↩',tekst:'Fortryd',gør:()=>undo()},
+  {ikon:'⊞',tekst:'Nyt projekt',gør:()=>document.getElementById('bNew').click()},
+  {skil:1},
+  {ikon:'🖥',tekst:'Skift til skrivebordsudgave',gør:()=>setMode(false,true)},
+  {ikon:'⎋',tekst:'Log ud',fare:1,gør:()=>signOut()}
+ ]));
+}
+function sheetSider(){
+ if(view==='plan'){
+  return openSheet('Vælg område',Object.keys(PLANDOMS).map(k=>({
+    ikon:k===planDom?'●':'○',tekst:PLANDOMS[k],aktiv:k===planDom,
+    gør:()=>{planDom=k;drawPlan();mobilTitel()}})));
+ }
+ if(view==='blocks'){
+  const p=[...ensureBlocks().pages.map((pg,i)=>({ikon:i===blockPage?'●':'○',tekst:pg.title,
+    aktiv:i===blockPage,gør:()=>{blockPage=i;drawBlocks();mobilTitel()}}))];
+  p.push({skil:1});
+  p.push({ikon:'+',tekst:'Ny side',gør:()=>{const t=prompt('Navn på siden:','Ny side');
+    if(t===null)return;snap();ensureBlocks().pages.push({id:id(),title:t||'Ny side',nodes:[],links:[]});
+    blockPage=ensureBlocks().pages.length-1;drawBlocks();mobilTitel()}});
+  p.push({ikon:'✎',tekst:'Omdøb denne side',gør:()=>{const t=prompt('Navn:',bp().title);
+    if(t===null)return;snap();bp().title=t||bp().title;drawBlocks();mobilTitel()}});
+  return openSheet('Sider i blokdiagrammet',p);
+ }
+ if(view==='flow'){
+  const p=[...pages.map((pg,i)=>({ikon:i===activePage?'●':'○',tekst:pg.title,aktiv:i===activePage,
+    gør:()=>{switchPage(i);mobilTitel()}}))];
+  p.push({skil:1});
+  p.push({ikon:'+',tekst:'Ny side',gør:()=>{addPage();mobilTitel()}});
+  p.push({ikon:'✎',tekst:'Omdøb denne side',gør:()=>{const t=prompt('Navn:',pages[activePage].title);
+    if(t===null)return;snap();pages[activePage].title=t||pages[activePage].title;draw();mobilTitel()}});
+  p.push({ikon:'◍',tekst:'Vis og skjul signaltyper',gør:()=>sheetLag()});
+  return openSheet('Sider',p);
+ }
+ openSheet('Lager',[{ikon:'＋',tekst:'Nyt udstyr',gør:()=>document.getElementById('archnew').click()}]);
+}
+function sheetLag(){
+ openSheet('Signaltyper',Object.keys(LAYERS).concat('backup').map(k=>{
+  const til = k==='backup' ? backupOn : on.has(k);
+  return {ikon:til?'◉':'○',tekst:k==='backup'?'Backup':LAYERS[k],aktiv:til,
+    gør:()=>{
+      if(k==='backup')backupOn=!backupOn;
+      else{if(on.has(k))on.delete(k);else on.add(k)}
+      document.querySelectorAll('.busbtn').forEach(b=>{
+        const l=b.dataset.l;
+        b.classList.toggle('on', l==='backup'?backupOn:on.has(l));
+      });
+      draw(); sheetLag();
+    }};
+ }));
+}
+
+/* ---- linjemenuen på tegningen ---- */
+function sheetKanal(gid,cid){
+ const [g]=findGrp(gid);
+ const ch=g&&g.channels.find(c=>c.id===cid);
+ if(!ch)return;
+ const i=g.channels.indexOf(ch);
+ const rolle=ch.role||g.role, ret=ch.dir||g.dir||'ltr';
+ const retNavn={ltr:'Mod modtager →',rtl:'Retur ←',both:'Begge veje ↔'};
+ openSheet((ch.nr||'Kanal')+'  ·  '+(ch.label||'uden tekst'),[
+  {ikon:'✎',tekst:'Ret teksten',gør:()=>{
+    const el3=document.querySelector('[data-e="chlabel"][data-id="'+gid+'|'+cid+'"]');
+    if(el3)startEdit(el3)}},
+  {ikon:'●',tekst:'Signaltype',vaerdi:LAYERS[ch.layer],gør:()=>{
+    openSheet('Signaltype',Object.keys(LAYERS).map(k=>({ikon:ch.layer===k?'◉':'○',
+      tekst:LAYERS[k],aktiv:ch.layer===k,gør:()=>{snap();ch.layer=k;draw()}})))}},
+  {ikon:'→',tekst:'Retning',vaerdi:retNavn[ret],gør:()=>{
+    openSheet('Retning',[['ltr','Mod modtager →'],['rtl','Retur ←'],['both','Begge veje ↔']].map(([k,t])=>
+      ({ikon:ret===k?'◉':'○',tekst:t,aktiv:ret===k,gør:()=>{snap();ch.dir=k;draw()}})))}},
+  {ikon:'⇒',tekst:'Rolle',vaerdi:rolle==='backup'?'Backup':'Primær',gør:()=>{
+    snap();ch.role=rolle==='backup'?'primary':'backup';draw()}},
+  {skil:1},
+  {ikon:'⤒',tekst:'Indsæt kanal ovenover',gør:()=>{
+    snap();
+    const ny=newCh(i+1); ny.nr=nyttNr(g.channels,i); ny.layer=ch.layer;
+    if(ch.dir)ny.dir=ch.dir; if(ch.role)ny.role=ch.role;
+    skubNumre(g.channels,i,1); g.channels.splice(i,0,ny); draw();
+    setTimeout(()=>{const el3=document.querySelector('[data-e="chlabel"][data-id="'+gid+'|'+ny.id+'"]');
+      if(el3)startEdit(el3)},60)}},
+  {ikon:'▲',tekst:'Flyt op',gør:()=>flytKanal(g,i,-1)},
+  {ikon:'▼',tekst:'Flyt ned',gør:()=>flytKanal(g,i,1)},
+  {skil:1},
+  {ikon:'✕',tekst:'Slet kanalen',fare:1,gør:()=>{
+    snap(); g.channels.splice(i,1); skubNumre(g.channels,i,-1); draw()}}
+ ]);
+}
+function flytKanal(g,i,ret){
+ const j=i+ret;
+ if(j<0||j>=g.channels.length)return;
+ snap();
+ const numre=g.channels.map(c=>c.nr);
+ const [f]=g.channels.splice(i,1);
+ g.channels.splice(j,0,f);
+ g.channels.forEach((c,k)=>{c.nr=numre[k]});
+ draw();
+}
+
+/* ---- gruppemenu ---- */
+function sheetGruppe(gid){
+ const [g,sc]=findGrp(gid);
+ if(!g)return;
+ openSheet(g.feed||g.label||'Gruppe',[
+  {ikon:'✎',tekst:'Rediger gruppen',under:'navn, farver, retning',gør:()=>openGroupEditor(g,sc)},
+  {ikon:'+',tekst:'Tilføj kanal',gør:()=>{snap();
+    const sidste=g.channels[g.channels.length-1];
+    const m=sidste&&String(sidste.nr||'').match(NRM);
+    const ny=newCh(g.channels.length+1);
+    if(m)ny.nr=m[1]+(parseInt(m[2],10)+1)+m[3];
+    g.channels.push(ny);draw()}},
+  {ikon:g.collapsed?'▾':'▸',tekst:g.collapsed?'Fold ud':'Fold sammen',gør:()=>{
+    snap();g.collapsed=!g.collapsed;draw()}},
+  {ikon:'⊞',tekst:'Åbn underark',gør:()=>drill(g.id)},
+  {skil:1},
+  {ikon:'⧉',tekst:'Kopiér gruppen',gør:()=>{snap();
+    const c=JSON.parse(JSON.stringify(g));c.id=id();c.channels.forEach(x=>x.id=id());
+    sc.groups.splice(sc.groups.indexOf(g)+1,0,c);draw()}},
+  {ikon:'✕',tekst:'Slet gruppen',fare:1,gør:()=>{
+    if(!confirm('Slet gruppen med alle kanaler?'))return;
+    snap();sc.groups=sc.groups.filter(x=>x.id!==g.id);draw()}}
+ ]);
+}
+
+/* ---- linjemenu i kanalplanen ---- */
+function sheetPort(ref){
+ const [did,side,pid]=ref.split('|');
+ const dv=dom().devices.find(x=>x.id===did);
+ const p=dv&&dv[side].find(x=>x.id===pid);
+ if(!p)return;
+ const synlige=ports(dv,side), j=synlige.indexOf(p);
+ openSheet((p.n||'')+'  ·  '+(p.label||'tom linje'),[
+  {ikon:'✎',tekst:'Ret signalet',gør:()=>{
+    const f=document.querySelector('[data-plabel="'+CSS.escape(ref)+'"]');
+    if(f){f.focus();f.select()}}},
+  {ikon:p.patched?'☑':'☐',tekst:'Patchet',vaerdi:p.pby||'',gør:()=>{
+    snap();p.patched=!p.patched;p.pby=p.patched?meName():'';touch(p);drawPlan()}},
+  {ikon:p.checked?'☑':'☐',tekst:'Tjekket',vaerdi:p.cby||'',gør:()=>{
+    snap();p.checked=!p.checked;p.cby=p.checked?meName():'';touch(p);drawPlan()}},
+  {skil:1},
+  {ikon:'⤒',tekst:'Indsæt linje ovenover',gør:()=>{
+    snap();
+    const ny={id:id(),n:nyttNr(synlige,j,'n'),label:'',by:'',at:0};
+    skubNumre(synlige,j,1,'n');
+    dv[side].splice(dv[side].indexOf(p),0,ny);drawPlan()}},
+  {ikon:'▲',tekst:'Flyt op',gør:()=>flytPort(dv,side,j,-1)},
+  {ikon:'▼',tekst:'Flyt ned',gør:()=>flytPort(dv,side,j,1)},
+  {skil:1},
+  {ikon:'✕',tekst:'Fjern linjen',fare:1,gør:()=>{
+    snap();p.del=Date.now();p.by=meName();
+    skubNumre(ports(dv,side),j+1,-1,'n');drawPlan()}}
+ ]);
+}
+function flytPort(dv,side,i,ret){
+ const synlige=ports(dv,side);
+ const j=i+ret;
+ if(j<0||j>=synlige.length)return;
+ snap();
+ const numre=synlige.map(p=>p.n);
+ const a=synlige[i], b2=synlige[j];
+ const ia=dv[side].indexOf(a);
+ dv[side].splice(ia,1);
+ dv[side].splice(dv[side].indexOf(b2)+(ret>0?1:0),0,a);
+ ports(dv,side).forEach((p,k)=>{p.n=numre[k]});
+ drawPlan();
+}
+
+/* ---- kortmenu i kanalplanen ---- */
+function sheetKort(did){
+ const dv=dom().devices.find(x=>x.id===did);
+ if(!dv)return;
+ const lab=labelled(dv,'ins').concat(labelled(dv,'outs'));
+ openSheet(dv.name,[
+  {ikon:'✎',tekst:'Ret navn og placering',gør:()=>{
+    const n=prompt('Navn:',dv.name); if(n===null)return;
+    const pl=prompt('Placering:',dv.place||''); if(pl===null)return;
+    snap();dv.name=n;dv.place=pl;dv.mt=Date.now();drawPlan()}},
+  {ikon:'P',tekst:'Sæt patchet på alle',vaerdi:lab.filter(p=>p.patched).length+'/'+lab.length,gør:()=>{
+    snap();const alle=lab.length&&lab.every(p=>p.patched);
+    lab.forEach(p=>{p.patched=!alle;p.pby=!alle?meName():'';touch(p)});drawPlan()}},
+  {ikon:'T',tekst:'Sæt tjekket på alle',vaerdi:lab.filter(p=>p.checked).length+'/'+lab.length,gør:()=>{
+    snap();const alle=lab.length&&lab.every(p=>p.checked);
+    lab.forEach(p=>{p.checked=!alle;p.cby=!alle?meName():'';touch(p)});drawPlan()}},
+  {skil:1},
+  {ikon:'+',tekst:'Tilføj input',gør:()=>{snap();
+    const arr=ports(dv,'ins'),sidste=arr[arr.length-1];
+    const m=sidste&&String(sidste.n||'').match(NRM);
+    dv.ins.push({id:id(),n:m?m[1]+(parseInt(m[2],10)+1)+m[3]:String(arr.length+1),label:'',by:'',at:0});
+    drawPlan()}},
+  {ikon:'+',tekst:'Tilføj output',gør:()=>{snap();
+    const arr=ports(dv,'outs'),sidste=arr[arr.length-1];
+    const m=sidste&&String(sidste.n||'').match(NRM);
+    dv.outs.push({id:id(),n:m?m[1]+(parseInt(m[2],10)+1)+m[3]:String(arr.length+1),label:'',by:'',at:0});
+    drawPlan()}},
+  {ikon:'⤓',tekst:'Gem i lageret',gør:()=>archiveSave&&archiveSave(dv)},
+  {skil:1},
+  {ikon:'✕',tekst:'Slet kortet',fare:1,gør:()=>{
+    if(!confirm('Slet "'+dv.name+'" med alle linjer?'))return;
+    snap();dv.del=Date.now();dv.mt=Date.now();drawPlan()}}
+ ]);
+}
+
 /* ---- skift mellem tegning og kanalplan ---- */
 .viewsw{display:flex;gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:2px}
 .vbtn{background:none;border:none;color:var(--dim);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12.5px;white-space:nowrap}
@@ -141,6 +485,138 @@ body:not(.unlocked) #app{filter:blur(7px);pointer-events:none;user-select:none}
  box-shadow:0 0 6px var(--intercom);pointer-events:none}
 .port [data-pgrip]{display:none;position:absolute;right:102px;top:50%;transform:translateY(-50%);z-index:2}
 .port:hover [data-pgrip]{display:block}
+
+
+/* flytning af faner */
+.tabmark{width:2px;align-self:stretch;background:var(--intercom);border-radius:2px;margin:6px 1px;
+ box-shadow:0 0 6px var(--intercom);pointer-events:none;flex:none}
+.tabmoving{opacity:.45}
+.tab,.btab{cursor:grab}
+.tab:active,.btab:active{cursor:grabbing}
+
+
+/* ================= mobiludgaven ================= */
+#mbar,#mnav,#sheetwrap{display:none}
+.modeswitch{font-size:15px;padding:6px 10px}
+
+body.mobile #app{grid-template-columns:1fr;grid-template-rows:auto 1fr;padding-top:52px;padding-bottom:62px}
+body.mobile header,body.mobile #side,body.mobile #tabbar,body.mobile .viewsw,
+body.mobile .bus,body.mobile #crumbs{display:none}
+body.mobile #stage{grid-column:1/-1;padding:10px 10px 16px}
+
+/* topbjælke */
+body.mobile #mbar{display:flex;position:fixed;top:0;left:0;right:0;height:52px;z-index:900;
+ align-items:center;gap:8px;padding:0 10px;background:var(--panel);border-bottom:1px solid var(--line)}
+.mbtn{background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:9px;
+ padding:9px 12px;font-size:15px;cursor:pointer;flex:none}
+.mtitle{flex:1;min-width:0;background:none;border:none;color:var(--text);text-align:left;
+ display:flex;flex-direction:column;gap:1px;cursor:pointer;padding:2px 0}
+.mtitle b{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtitle span{font-family:var(--fm);font-size:10.5px;color:var(--intercom);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mSave{border-color:var(--intercom);color:var(--intercom);font-size:13px}
+#mMode{font-size:15px;padding:9px 10px}
+
+/* bundnavigation */
+body.mobile #mnav{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;bottom:0;left:0;right:0;
+ z-index:900;background:var(--panel);border-top:1px solid var(--line);
+ padding-bottom:env(safe-area-inset-bottom,0)}
+#mnav button{background:none;border:none;color:var(--faint);padding:9px 4px 10px;cursor:pointer;
+ display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-family:var(--fm)}
+#mnav button span{font-size:17px;line-height:1}
+#mnav button.on{color:var(--intercom)}
+
+/* ark nedefra */
+#sheetwrap{position:fixed;top:0;right:0;bottom:0;left:0;z-index:1200;background:rgba(0,0,0,.55);
+ align-items:flex-end;justify-content:center}
+#sheetwrap.on{display:flex}
+#sheetbox{width:100%;max-width:520px;max-height:82vh;overflow-y:auto;background:var(--panel);
+ border-radius:16px 16px 0 0;border:1px solid var(--line);border-bottom:none;padding:8px 10px 14px;
+ animation:opad .16s ease-out}
+@keyframes opad{from{transform:translateY(22px);opacity:.4}to{transform:none;opacity:1}}
+.shandle{width:38px;height:4px;border-radius:3px;background:var(--line);margin:4px auto 10px}
+.shead{font-family:var(--fd);font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;
+ color:var(--dim);padding:2px 8px 10px}
+.sitem{display:flex;align-items:center;gap:12px;width:100%;background:none;border:none;color:var(--text);
+ padding:13px 10px;border-radius:10px;cursor:pointer;text-align:left;font-size:15px}
+.sitem:active{background:var(--panel2)}
+.sitem.aktiv{color:var(--intercom)}
+.sitem.fare{color:var(--video)}
+.sitem.luk{color:var(--dim);justify-content:center;margin-top:4px}
+.sico{width:22px;text-align:center;font-size:15px;flex:none;opacity:.85}
+.stxt{flex:1;min-width:0;display:flex;flex-direction:column}
+.stxt em{font-style:normal;font-family:var(--fm);font-size:10.5px;color:var(--faint);margin-top:2px}
+.sval{font-family:var(--fm);font-size:11px;color:var(--faint);white-space:nowrap}
+.ssplit{height:1px;background:var(--line);margin:6px 10px}
+
+/* ⋯-knapperne findes kun på mobil */
+.rowmenu{display:none!important}
+body.mobile .rowmenu{display:inline-block!important;position:static!important;opacity:1!important;
+ font-size:17px;padding:6px 10px;line-height:1}
+/* på mobil er der kun ⋯ – resten ligger i arket */
+body.mobile .tools .mini:not(.rowmenu),
+body.mobile .port [data-pdel],body.mobile .port [data-pins],body.mobile .port [data-pgrip],
+body.mobile .port .pby,body.mobile .fitools,
+body.mobile .dev .devacts .mini:not(.rowmenu),body.mobile .draghandle,
+body.mobile .dev .rs,body.mobile .endtag,body.mobile .rs,
+body.mobile .boxadd,body.mobile .secmini{display:none!important}
+
+/* arket fylder skærmens bredde */
+body.mobile #sheet,body.mobile .sheet{width:auto!important;min-width:0!important;zoom:1!important;
+ transform:none!important;overflow:visible}
+body.mobile #stage{overflow-x:hidden}
+
+/* tegningen på mobil: en sektion pr. kort, stablet */
+body.mobile .sheet,body.mobile .psheet{padding:12px 10px;border-radius:12px}
+body.mobile .section{display:block!important;margin-bottom:14px}
+body.mobile .srcbox,body.mobile .dstbox{width:auto!important;margin:0 0 8px!important;min-height:0!important}
+body.mobile .rows{padding:2px 0!important;margin:0!important}
+body.mobile .dstbox{margin-top:8px!important}
+body.mobile .feed{flex-wrap:wrap;gap:7px;align-items:center;padding:6px 2px}
+body.mobile .feed .tools{margin-left:auto;order:2}
+body.mobile .feed .lbl[data-e="feed"]{order:1;font-size:15px}
+body.mobile .chcount{order:3;flex:1 1 100%;font-size:11px}
+body.mobile .feed .wire,body.mobile .cloudtag{display:none}
+body.mobile .feed .lbl[data-e="glabel"]{flex:1 1 100%;font-size:14px}
+body.mobile .ch{padding:11px 4px;border-bottom:1px solid var(--line);gap:10px;align-items:center}
+body.mobile .ch .tools{margin-left:auto}
+body.mobile .add{padding:11px 8px;font-size:13px}
+body.mobile .ch .wire{display:none}
+body.mobile .ch .chb{font-size:12px;min-width:44px}
+body.mobile .ch .lbl{font-size:15px;flex:1}
+body.mobile .grp{margin-bottom:12px}
+body.mobile .sheettitle{font-size:19px}
+
+/* kanalplan og lager på mobil */
+body.mobile .devcanvas{width:auto!important;height:auto!important}
+body.mobile .dev{position:relative!important;left:auto!important;top:auto!important;
+ width:auto!important;margin:0 0 12px}
+body.mobile .ports{grid-template-columns:1fr!important}
+body.mobile .plabel{font-size:16px;padding:10px 9px}
+body.mobile .pnum{font-size:13px;padding:10px 3px;width:42px}
+body.mobile .tick input{width:22px;height:22px}
+body.mobile .planbar{gap:7px}
+body.mobile .planbar .sharebtn{flex:1 1 auto;padding:10px 8px;font-size:12.5px}
+/* på mobil ligger disse i ☰-menuen i stedet */
+body.mobile .planbar [data-save],body.mobile .planbar [data-imp],
+body.mobile .planbar [data-share],body.mobile .planbar [data-ppdf],
+body.mobile .planbar [data-pcsv],body.mobile .planbar .whotag,
+body.mobile .planbar .whobox{display:none}
+body.mobile .planadd{width:100%;margin-left:0}
+body.mobile .planadd .sharebtn{width:100%;padding:12px}
+body.mobile .btools .btool:not([data-badd="link"]):not([data-badd="snap"]){display:none}
+body.mobile .btools{gap:6px}
+body.mobile .btool{flex:1;padding:11px 6px}
+body.mobile .domtabs{width:100%}
+body.mobile .domtab{flex:1;padding:10px 4px}
+body.mobile .archwrap{grid-template-columns:1fr}
+body.mobile .aeports,body.mobile .aegrid{grid-template-columns:1fr}
+body.mobile .architems{max-height:320px}
+
+/* blokdiagram på mobil: hele fladen skaleres ned så den kan ses */
+body.mobile .canvaswrap{overflow:auto;-webkit-overflow-scrolling:touch}
+body.mobile .btools{width:100%;gap:5px}
+body.mobile .btool{flex:1 1 30%;text-align:center;padding:10px 4px;font-size:12px}
+body.mobile .btabs{width:100%;overflow-x:auto}
 
 /* forklaringsboble */
 #tipbox{position:fixed;display:none;z-index:10000;pointer-events:none;max-width:290px;
@@ -714,6 +1190,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <button class="vbtn" data-view="blocks" title="Kasser, udstyr og forbindelser – til at forklare et setup">Blokdiagram</button>
       <button class="vbtn" data-view="arch" title="Jeres fælles lager – det samme som i lagerprogrammet">Lager</button>
     </div>
+    <button class="hbtn modeswitch" id="bMode" title="Skift mellem mobil- og skrivebordsudgave">📱</button>
     <div id="crumbs"></div>
     <div class="bus">
       <button class="busbtn on" data-l="video" title="Vis eller skjul alle videosignaler">Video</button>
@@ -754,6 +1231,19 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="gatefoot">Adgang gives af den ansvarlige for opsætningen.</div>
   </div>
 </div>
+<div id="mbar">
+  <button class="mbtn" id="mMenu" title="Menu">☰</button>
+  <button class="mtitle" id="mTitle"><b>Projekt</b><span>side</span></button>
+  <button class="mbtn" id="mMode" title="Skift til skrivebordsudgaven">🖥</button>
+  <button class="mbtn" id="mSave" title="Gem">Gem</button>
+</div>
+<nav id="mnav">
+  <button data-view="flow"><span>▤</span>Tegning</button>
+  <button data-view="plan"><span>☰</span>Kanalplan</button>
+  <button data-view="blocks"><span>▦</span>Blok</button>
+  <button data-view="arch"><span>⌸</span>Lager</button>
+</nav>
+<div id="sheetwrap"><div id="sheetbox"></div></div>
 <div id="modal"></div>
 <div id="printroot"></div>
 <style id="pagestyle"></style>
@@ -1035,6 +1525,7 @@ function draw(keepSide){
        <span class="lbl" data-e="glabel" data-id="${g.id}" style="font-weight:600;color:${labC};font-size:${px(gs.labelSize,11.5)}px">${esc(g.label)}</span>
        <span class="chcount">${g.collapsed?g.channels.length+' kanaler':''}</span>
        <span class="tools">
+         <button class="mini rowmenu" data-grpmenu="${g.id}" title="Muligheder for gruppen">⋯</button>
          <button class="mini" data-gedit="${g.id}" title="Navn, transport, signaltype, retning og farver">✎</button>
          <button class="mini" data-gcopy="${g.id}" title="Kopiér gruppen eller udvalgte kanaler et andet sted hen">⧉</button>
          <button class="mini" data-gfocus="${g.id}" title="Skjul alt andet og arbejd kun med denne gruppe">⤢</button>
@@ -1063,6 +1554,7 @@ function draw(keepSide){
       <span class="tools">
         <button class="mini dirbtn" data-cdir="${g.id}|${ch.id}" title="Retning: ${cdir==='ltr'?'mod modtager':cdir==='rtl'?'retur':'begge veje'} – klik for ${dirNext}">${dirIcon}</button>
         <button class="mini" data-crole="${g.id}|${ch.id}" title="${crole==='backup'?'Backup – klik for primær':'Primær – klik for backup'}">${crole==='backup'?'⇢':'⇒'}</button>
+        <button class="mini rowmenu" data-chmenu="${g.id}|${ch.id}" title="Muligheder for denne kanal">⋯</button>
         <button class="mini grip" data-gripc="${g.id}|${ch.id}" title="Træk for at flytte kanalen op eller ned">⠿</button>
         <button class="mini" data-insc="${g.id}|${ch.id}" title="Indsæt en ny kanal lige over denne – numrene rykker automatisk">⤒</button>
         <button class="mini" data-delc="${g.id}|${ch.id}" title="Slet kanal">✕</button>
@@ -1102,6 +1594,7 @@ function draw(keepSide){
  el.innerHTML=h;
  fitBoxes();
  crumbs(); if(!keepSide) side(); renderTabs();
+ if(typeof mobilTitel==='function')mobilTitel();
  if(typeof autosave==='function')autosave();
 }
 
@@ -1119,19 +1612,74 @@ function fitBoxes(){
  });
 }
 
+
+/* ---- flyt faner ved at trække i dem ----
+   Man skal kunne klikke på en fane uden at flytte den, derfor går den først
+   i træk-tilstand, når musen har bevæget sig et stykke. */
+let faneFlyttet=false;
+function dragTab(e, tab, tabSel, listeAf, aktivIndex, saetAktiv, efter){
+ if(e.button!==0)return;
+ const holder=tab.parentElement;
+ const start=e.clientX;
+ let aktiv=false, til=-1, mark=null;
+ const faner=()=>[...holder.querySelectorAll(tabSel)];
+ const vis=x=>{
+  const f=faner().filter(t=>t!==tab);
+  til=f.length;
+  for(let i=0;i<f.length;i++){
+   const r=f[i].getBoundingClientRect();
+   if(x < r.left+r.width/2){til=i;break}
+  }
+  if(!mark){mark=document.createElement('div');mark.className='tabmark'}
+  if(til<f.length)holder.insertBefore(mark,f[til]); else holder.insertBefore(mark,tab.nextSibling);
+ };
+ const move=ev=>{
+  if(!aktiv){
+   if(Math.abs(ev.clientX-start)<5)return;        // stadig et klik
+   aktiv=true; faneFlyttet=true; tab.classList.add('tabmoving');
+  }
+  ev.preventDefault(); vis(ev.clientX);
+ };
+ const up=ev=>{
+  document.removeEventListener('mousemove',move);
+  document.removeEventListener('mouseup',up);
+  if(mark)mark.remove();
+  tab.classList.remove('tabmoving');
+  if(!aktiv){faneFlyttet=false;return}
+  const liste=listeAf();
+  const fra=[...holder.querySelectorAll(tabSel)].indexOf(tab);
+  if(fra<0||til<0||til===fra){faneFlyttet=false;efter();return}
+  snap();
+  const aktivSide=liste[aktivIndex()];            // husk hvilken side der er åben
+  const [flyt]=liste.splice(fra,1);
+  liste.splice(til,0,flyt);
+  saetAktiv(Math.max(0,liste.indexOf(aktivSide)));
+  efter();
+  setTimeout(()=>{faneFlyttet=false},50);
+ };
+ document.addEventListener('mousemove',move);
+ document.addEventListener('mouseup',up);
+}
+
 function renderTabs(){
  const tb=document.getElementById('tabbar');
  let h=pages.map((p,i)=>`<div class="tab ${i===activePage?'on':''}" data-tab="${i}">
-   <span class="tname" data-tabname="${i}" title="Klik for at skifte side. Klik igen på den åbne side for at omdøbe">${esc(p.title)}</span>
+   <span class="tname" data-tabname="${i}" title="Klik for at skifte side · klik igen for at omdøbe · træk for at flytte fanen">${esc(p.title)}</span>
    ${pages.length>1?`<button class="tx" data-tabdel="${i}" title="Slet side">✕</button>`:''}
  </div>`).join('');
  h+=`<button class="tabadd" data-tabadd="1" title="Tilføj en ny side til tegningen">+</button>`;
  tb.innerHTML=h;
  tb.querySelector('[data-tabadd]').onclick=addPage;
+ tb.querySelectorAll('[data-tab]').forEach(t=>t.addEventListener('mousedown',ev=>{
+   if(ev.target.closest('[data-tabdel]'))return;
+   dragTab(ev,t,'[data-tab]',()=>pages,()=>activePage,i=>{activePage=i;doc=pages[i]},
+     ()=>{path=[];sel=null;focus=null;draw()});
+ }));
 }
 
 /* tab bar event delegation */
 document.getElementById('tabbar').addEventListener('click',ev=>{
+ if(faneFlyttet){faneFlyttet=false;return}
  const tab=ev.target.closest('[data-tab]');
  const del=ev.target.closest('[data-tabdel]');
  const nm=ev.target.closest('[data-tabname]');
@@ -1868,7 +2416,7 @@ function drawBlocks(){
  const p=bp();
  let h=`<div class="blockbar">
    <div class="btabs">${ensureBlocks().pages.map((pg,i)=>
-     `<button class="btab ${i===blockPage?'on':''}" data-bpage="${i}" title="${i===blockPage?'Klik igen for at omdøbe siden':'Skift til siden '+esc(pg.title)}">${esc(pg.title)}</button>`).join('')}
+     `<button class="btab ${i===blockPage?'on':''}" data-bpage="${i}" title="${i===blockPage?'Klik igen for at omdøbe · træk for at flytte fanen':'Skift til siden '+esc(pg.title)+' · træk for at flytte fanen'}">${esc(pg.title)}</button>`).join('')}
      <button class="btabadd" data-bpadd="1" title="Ny side i blokdiagrammet, fx strømplan">+</button>
      <button class="btabadd" data-bpdel="1" title="Slet den åbne side">✕</button></div>
    <button class="btool left" data-badd="import" title="Hent udstyr der allerede er brugt i kanalplanen">⤒ Importér</button>
@@ -1915,6 +2463,7 @@ function drawBlocks(){
  el2.innerHTML=h;
  drawLinks();
  bindBlocks();
+ if(typeof mobilTitel==='function')mobilTitel();
  if(typeof autosave==='function')autosave();
 }
 function nodeTools(n){
@@ -2006,7 +2555,12 @@ function bindBlocks(){
  const el2=document.getElementById('blocks');
  const canvas=el2.querySelector('#bcanvas');
 
+ el2.querySelectorAll('[data-bpage]').forEach(b=>b.addEventListener('mousedown',ev=>{
+   dragTab(ev,b,'[data-bpage]',()=>ensureBlocks().pages,()=>blockPage,i=>{blockPage=i},
+     ()=>{linkFrom=null;drawBlocks()});
+ }));
  el2.querySelectorAll('[data-bpage]').forEach(b=>b.onclick=()=>{
+   if(faneFlyttet){faneFlyttet=false;return}
    const i=+b.dataset.bpage;
    if(i===blockPage){                       // klik på den åbne fane omdøber den
     const inp=document.createElement('input');
@@ -2585,6 +3139,7 @@ function drawPlan(){
 
  el2.innerHTML=h;
  bindPlan();
+ if(typeof mobilTitel==='function')mobilTitel();
  if(typeof autosave==='function')autosave();
 }
 
@@ -2609,6 +3164,7 @@ function portList(dv,side,title){
           <input type="checkbox" data-tick="${dv.id}|${side}|${p.id}|checked" ${p.checked?'checked':''}></label>`
         :`<span class="tickgap"></span><span class="tickgap"></span>`}
        <span class="pby" title="${p.by?esc(p.by)+' · '+new Date(p.at).toLocaleString('da-DK'):''}">${p.by?esc(p.by):''}</span>
+       <button class="mini rowmenu" data-pmenu="${dv.id}|${side}|${p.id}" title="Muligheder for denne linje">⋯</button>
        <button class="mini grip" data-pgrip="${dv.id}|${side}|${p.id}" title="Træk for at flytte linjen op eller ned">⠿</button>
        <button class="mini" data-pins="${dv.id}|${side}|${p.id}" title="Indsæt en ny linje lige over denne – numrene rykker automatisk">⤒</button>
        <button class="mini" data-pdel="${dv.id}|${side}|${p.id}" title="Fjern denne linje fra kortet">✕</button>
@@ -2758,6 +3314,8 @@ function bindPlan(){
   skubNumre(synlige,j+1,-1,'n');
   drawPlan();
  });
+ el2.querySelectorAll('[data-pmenu]').forEach(b=>b.onclick=()=>sheetPort(b.dataset.pmenu));
+ el2.querySelectorAll('[data-kortmenu]').forEach(b=>b.onclick=()=>sheetKort(b.dataset.kortmenu));
  el2.querySelectorAll('[data-pgrip]').forEach(b=>b.addEventListener('mousedown',e=>{
    const [did,side,pid]=b.dataset.pgrip.split('|');
    const dv=dom().devices.find(x=>x.id===did);
@@ -3171,6 +3729,350 @@ function bindArchive(){
    setView('blocks');
  };
 }
+
+/* ================= mobiludgave =================
+   På en telefon er der ikke plads til rækker af små knapper. I stedet får
+   hver linje én ⋯-knap, der åbner et ark nedefra med de samme muligheder. */
+let mobil=false;
+const LS_MODE='signalflow:mode';
+
+/* Hvilken slags skærm sidder vi ved?
+   Bredden alene er ikke nok: et lille browservindue på en Mac er stadig en
+   computer, og en iPad i landskab er stadig en berøringsskærm. Derfor kigger
+   vi på både pegeredskab, berøring og bredde. */
+function skaermType(){
+ let grov=false, kanHover=true;
+ try{
+  grov = matchMedia('(pointer:coarse)').matches;
+  kanHover = matchMedia('(hover:hover)').matches;
+ }catch(e){}
+ const beroering = grov || (navigator.maxTouchPoints||0)>1;
+ const b=innerWidth;
+ if(beroering&&!kanHover&&b<=920)return 'telefon';   // telefon eller tablet i hånden
+ if(b<=620)return 'telefon';                          // meget smalt vindue
+ return 'computer';
+}
+/* Et fingeraftryk af skærmen. Skifter det – fx fordi projektet åbnes på en
+   anden maskine – gælder et tidligere valg ikke længere, og vi vælger selv. */
+function skaermAftryk(){
+ const b=innerWidth;
+ const trin = b<=620?'s' : b<=1024?'m' : 'l';
+ return skaermType()+':'+trin;
+}
+
+function setMode(m,gem){
+ mobil=m;
+ document.body.classList.toggle('mobile',m);
+ if(gem)try{localStorage.setItem(LS_MODE,JSON.stringify({aftryk:skaermAftryk(),valg:m?'mobil':'desktop'}))}catch(e){}
+ const b=document.getElementById('bMode');
+ if(b){b.textContent=m?'🖥':'📱';
+   b.title=(m?'Skift til skrivebordsudgaven':'Skift til mobiludgaven')
+     +' · programmet har selv valgt '+(skaermType()==='telefon'?'mobil':'skrivebord')
+     +' ud fra skærmen'}
+ document.querySelectorAll('#mnav button').forEach(n=>
+   n.classList.toggle('on',n.dataset.view===view));
+ mobilTitel();
+ if(view==='plan')drawPlan(); else if(view==='blocks')drawBlocks();
+ else if(view==='arch')drawArchive(); else draw();
+}
+function gemtValg(){
+ try{
+  const r=localStorage.getItem(LS_MODE);
+  if(!r)return null;
+  if(r==='mobil'||r==='desktop')return null;        // gammelt format uden aftryk
+  const o=JSON.parse(r);
+  return o&&o.aftryk===skaermAftryk() ? o.valg : null;
+ }catch(e){return null}
+}
+function vaelgUdgave(){
+ aftrykNu=skaermAftryk();
+ const g=gemtValg();
+ setMode(g ? g==='mobil' : skaermType()==='telefon', false);
+}
+/* Skifter skærmen karakter – vindue trukket smalt, telefon drejet – så vurderes
+   det forfra, medmindre man selv har valgt noget for netop den skærm. */
+let aftrykNu=null, sizeTimer=null;
+addEventListener('resize',()=>{
+ clearTimeout(sizeTimer);
+ sizeTimer=setTimeout(()=>{
+  const nyt=skaermAftryk();
+  if(nyt===aftrykNu)return;
+  aftrykNu=nyt;
+  const g=gemtValg();
+  const skal = g ? g==='mobil' : skaermType()==='telefon';
+  if(skal!==mobil)setMode(skal,false);
+ },250);
+});
+
+function mobilTitel(){
+ const t=document.getElementById('mTitle');
+ if(!t)return;
+ const side = view==='flow' ? (pages[activePage]||{}).title
+   : view==='plan' ? PLANDOMS[planDom]
+   : view==='blocks' ? (bp()||{}).title : 'Alt udstyr';
+ t.innerHTML='<b>'+esc(projectName)+'</b><span>'+esc(side||'')+' ▾</span>';
+}
+
+/* ---- ark der glider op nedefra ---- */
+function openSheet(titel, punkter){
+ const wrap=document.getElementById('sheetwrap');
+ const box=document.getElementById('sheetbox');
+ box.innerHTML='<div class="shandle"></div>'+
+  (titel?'<div class="shead">'+esc(titel)+'</div>':'')+
+  punkter.map((p,i)=>p.skil?'<div class="ssplit"></div>':
+    `<button class="sitem ${p.fare?'fare':''} ${p.aktiv?'aktiv':''}" data-s="${i}">
+       <span class="sico">${p.ikon||''}</span>
+       <span class="stxt">${esc(p.tekst)}${p.under?'<em>'+esc(p.under)+'</em>':''}</span>
+       ${p.vaerdi?'<span class="sval">'+esc(p.vaerdi)+'</span>':''}
+     </button>`).join('')+
+  '<button class="sitem luk" data-luk="1"><span class="sico">✕</span><span class="stxt">Luk</span></button>';
+ wrap.classList.add('on');
+ box.querySelectorAll('[data-s]').forEach(n=>n.onclick=()=>{
+   const p=punkter[+n.dataset.s];
+   closeSheet();
+   if(p&&p.gør)setTimeout(p.gør,60);
+ });
+ box.querySelector('[data-luk]').onclick=closeSheet;
+ wrap.onclick=e=>{if(e.target===wrap)closeSheet()};
+}
+function closeSheet(){document.getElementById('sheetwrap').classList.remove('on')}
+
+/* ---- menuerne ---- */
+function sheetApp(){
+ const ekstra=[];
+ if(view==='plan'){
+  ekstra.push({ikon:'↻',tekst:'Hent kollegernes ændringer',gør:()=>pull()});
+  ekstra.push({ikon:'🔗',tekst:'Del link til kanalplanen',gør:()=>{
+    if(!cloudId)return alert('Gem projektet i databasen først.');
+    shareToken().then(t=>copyLink(planLink(t),{textContent:''})).then(()=>alert('Linket er kopieret.'))
+      .catch(e=>alert(e.message))}});
+  ekstra.push({ikon:'↧',tekst:'Print kanalplanen',under:PLANDOMS[planDom],
+    gør:()=>exportPlanPDF({paper:'A4',orient:'portrait',margin:10,kun:planDom})});
+  ekstra.push({ikon:'↧',tekst:'Kanalplan som regneark',gør:()=>exportPlanCSV(planDom)});
+  ekstra.push({ikon:'⤒',tekst:'Importér udstyr',gør:()=>importItems('plan')});
+  ekstra.push({skil:1});
+ }
+ if(view==='blocks'){
+  ekstra.push({ikon:'▭',tekst:'Ny kasse',gør:()=>addBox()});
+  ekstra.push({ikon:'⌸',tekst:'Hent udstyr',gør:()=>openArchive('block')});
+  ekstra.push({ikon:'◇',tekst:'Symboler',gør:()=>openSymbols()});
+  ekstra.push({ikon:'T',tekst:'Tekst',gør:()=>addBlockText('t')});
+  ekstra.push({ikon:'↧',tekst:'Print diagrammet',gør:()=>printBlocks()});
+  ekstra.push({skil:1});
+ }
+ if(view==='flow'){
+  ekstra.push({ikon:'◍',tekst:'Vis og skjul signaltyper',gør:()=>sheetLag()});
+  ekstra.push({ikon:'+',tekst:'Tilføj sektion',gør:()=>{
+    const b=document.querySelector('[data-addsec]'); if(b)b.click()}});
+  ekstra.push({skil:1});
+ }
+ openSheet('Menu',ekstra.concat([
+  {ikon:'☁',tekst:'Projekter',under:'åbn, gem version, del',gør:()=>openProjects()},
+  {ikon:'⤓',tekst:'Gem projekt som fil',gør:()=>document.getElementById('bSave').click()},
+  {ikon:'↥',tekst:'Åbn fil',gør:()=>document.getElementById('bOpen').click()},
+  {ikon:'↧',tekst:'Eksportér',under:'PDF, CSV, draw.io',gør:()=>openExport()},
+  {skil:1},
+  {ikon:'↩',tekst:'Fortryd',gør:()=>undo()},
+  {ikon:'⊞',tekst:'Nyt projekt',gør:()=>document.getElementById('bNew').click()},
+  {skil:1},
+  {ikon:'🖥',tekst:'Skift til skrivebordsudgave',gør:()=>setMode(false,true)},
+  {ikon:'⎋',tekst:'Log ud',fare:1,gør:()=>signOut()}
+ ]));
+}
+function sheetSider(){
+ if(view==='plan'){
+  return openSheet('Vælg område',Object.keys(PLANDOMS).map(k=>({
+    ikon:k===planDom?'●':'○',tekst:PLANDOMS[k],aktiv:k===planDom,
+    gør:()=>{planDom=k;drawPlan();mobilTitel()}})));
+ }
+ if(view==='blocks'){
+  const p=[...ensureBlocks().pages.map((pg,i)=>({ikon:i===blockPage?'●':'○',tekst:pg.title,
+    aktiv:i===blockPage,gør:()=>{blockPage=i;drawBlocks();mobilTitel()}}))];
+  p.push({skil:1});
+  p.push({ikon:'+',tekst:'Ny side',gør:()=>{const t=prompt('Navn på siden:','Ny side');
+    if(t===null)return;snap();ensureBlocks().pages.push({id:id(),title:t||'Ny side',nodes:[],links:[]});
+    blockPage=ensureBlocks().pages.length-1;drawBlocks();mobilTitel()}});
+  p.push({ikon:'✎',tekst:'Omdøb denne side',gør:()=>{const t=prompt('Navn:',bp().title);
+    if(t===null)return;snap();bp().title=t||bp().title;drawBlocks();mobilTitel()}});
+  return openSheet('Sider i blokdiagrammet',p);
+ }
+ if(view==='flow'){
+  const p=[...pages.map((pg,i)=>({ikon:i===activePage?'●':'○',tekst:pg.title,aktiv:i===activePage,
+    gør:()=>{switchPage(i);mobilTitel()}}))];
+  p.push({skil:1});
+  p.push({ikon:'+',tekst:'Ny side',gør:()=>{addPage();mobilTitel()}});
+  p.push({ikon:'✎',tekst:'Omdøb denne side',gør:()=>{const t=prompt('Navn:',pages[activePage].title);
+    if(t===null)return;snap();pages[activePage].title=t||pages[activePage].title;draw();mobilTitel()}});
+  p.push({ikon:'◍',tekst:'Vis og skjul signaltyper',gør:()=>sheetLag()});
+  return openSheet('Sider',p);
+ }
+ openSheet('Lager',[{ikon:'＋',tekst:'Nyt udstyr',gør:()=>document.getElementById('archnew').click()}]);
+}
+function sheetLag(){
+ openSheet('Signaltyper',Object.keys(LAYERS).concat('backup').map(k=>{
+  const til = k==='backup' ? backupOn : on.has(k);
+  return {ikon:til?'◉':'○',tekst:k==='backup'?'Backup':LAYERS[k],aktiv:til,
+    gør:()=>{
+      if(k==='backup')backupOn=!backupOn;
+      else{if(on.has(k))on.delete(k);else on.add(k)}
+      document.querySelectorAll('.busbtn').forEach(b=>{
+        const l=b.dataset.l;
+        b.classList.toggle('on', l==='backup'?backupOn:on.has(l));
+      });
+      draw(); sheetLag();
+    }};
+ }));
+}
+
+/* ---- linjemenuen på tegningen ---- */
+function sheetKanal(gid,cid){
+ const [g]=findGrp(gid);
+ const ch=g&&g.channels.find(c=>c.id===cid);
+ if(!ch)return;
+ const i=g.channels.indexOf(ch);
+ const rolle=ch.role||g.role, ret=ch.dir||g.dir||'ltr';
+ const retNavn={ltr:'Mod modtager →',rtl:'Retur ←',both:'Begge veje ↔'};
+ openSheet((ch.nr||'Kanal')+'  ·  '+(ch.label||'uden tekst'),[
+  {ikon:'✎',tekst:'Ret teksten',gør:()=>{
+    const el3=document.querySelector('[data-e="chlabel"][data-id="'+gid+'|'+cid+'"]');
+    if(el3)startEdit(el3)}},
+  {ikon:'●',tekst:'Signaltype',vaerdi:LAYERS[ch.layer],gør:()=>{
+    openSheet('Signaltype',Object.keys(LAYERS).map(k=>({ikon:ch.layer===k?'◉':'○',
+      tekst:LAYERS[k],aktiv:ch.layer===k,gør:()=>{snap();ch.layer=k;draw()}})))}},
+  {ikon:'→',tekst:'Retning',vaerdi:retNavn[ret],gør:()=>{
+    openSheet('Retning',[['ltr','Mod modtager →'],['rtl','Retur ←'],['both','Begge veje ↔']].map(([k,t])=>
+      ({ikon:ret===k?'◉':'○',tekst:t,aktiv:ret===k,gør:()=>{snap();ch.dir=k;draw()}})))}},
+  {ikon:'⇒',tekst:'Rolle',vaerdi:rolle==='backup'?'Backup':'Primær',gør:()=>{
+    snap();ch.role=rolle==='backup'?'primary':'backup';draw()}},
+  {skil:1},
+  {ikon:'⤒',tekst:'Indsæt kanal ovenover',gør:()=>{
+    snap();
+    const ny=newCh(i+1); ny.nr=nyttNr(g.channels,i); ny.layer=ch.layer;
+    if(ch.dir)ny.dir=ch.dir; if(ch.role)ny.role=ch.role;
+    skubNumre(g.channels,i,1); g.channels.splice(i,0,ny); draw();
+    setTimeout(()=>{const el3=document.querySelector('[data-e="chlabel"][data-id="'+gid+'|'+ny.id+'"]');
+      if(el3)startEdit(el3)},60)}},
+  {ikon:'▲',tekst:'Flyt op',gør:()=>flytKanal(g,i,-1)},
+  {ikon:'▼',tekst:'Flyt ned',gør:()=>flytKanal(g,i,1)},
+  {skil:1},
+  {ikon:'✕',tekst:'Slet kanalen',fare:1,gør:()=>{
+    snap(); g.channels.splice(i,1); skubNumre(g.channels,i,-1); draw()}}
+ ]);
+}
+function flytKanal(g,i,ret){
+ const j=i+ret;
+ if(j<0||j>=g.channels.length)return;
+ snap();
+ const numre=g.channels.map(c=>c.nr);
+ const [f]=g.channels.splice(i,1);
+ g.channels.splice(j,0,f);
+ g.channels.forEach((c,k)=>{c.nr=numre[k]});
+ draw();
+}
+
+/* ---- gruppemenu ---- */
+function sheetGruppe(gid){
+ const [g,sc]=findGrp(gid);
+ if(!g)return;
+ openSheet(g.feed||g.label||'Gruppe',[
+  {ikon:'✎',tekst:'Rediger gruppen',under:'navn, farver, retning',gør:()=>openGroupEditor(g,sc)},
+  {ikon:'+',tekst:'Tilføj kanal',gør:()=>{snap();
+    const sidste=g.channels[g.channels.length-1];
+    const m=sidste&&String(sidste.nr||'').match(NRM);
+    const ny=newCh(g.channels.length+1);
+    if(m)ny.nr=m[1]+(parseInt(m[2],10)+1)+m[3];
+    g.channels.push(ny);draw()}},
+  {ikon:g.collapsed?'▾':'▸',tekst:g.collapsed?'Fold ud':'Fold sammen',gør:()=>{
+    snap();g.collapsed=!g.collapsed;draw()}},
+  {ikon:'⊞',tekst:'Åbn underark',gør:()=>drill(g.id)},
+  {skil:1},
+  {ikon:'⧉',tekst:'Kopiér gruppen',gør:()=>{snap();
+    const c=JSON.parse(JSON.stringify(g));c.id=id();c.channels.forEach(x=>x.id=id());
+    sc.groups.splice(sc.groups.indexOf(g)+1,0,c);draw()}},
+  {ikon:'✕',tekst:'Slet gruppen',fare:1,gør:()=>{
+    if(!confirm('Slet gruppen med alle kanaler?'))return;
+    snap();sc.groups=sc.groups.filter(x=>x.id!==g.id);draw()}}
+ ]);
+}
+
+/* ---- linjemenu i kanalplanen ---- */
+function sheetPort(ref){
+ const [did,side,pid]=ref.split('|');
+ const dv=dom().devices.find(x=>x.id===did);
+ const p=dv&&dv[side].find(x=>x.id===pid);
+ if(!p)return;
+ const synlige=ports(dv,side), j=synlige.indexOf(p);
+ openSheet((p.n||'')+'  ·  '+(p.label||'tom linje'),[
+  {ikon:'✎',tekst:'Ret signalet',gør:()=>{
+    const f=document.querySelector('[data-plabel="'+CSS.escape(ref)+'"]');
+    if(f){f.focus();f.select()}}},
+  {ikon:p.patched?'☑':'☐',tekst:'Patchet',vaerdi:p.pby||'',gør:()=>{
+    snap();p.patched=!p.patched;p.pby=p.patched?meName():'';touch(p);drawPlan()}},
+  {ikon:p.checked?'☑':'☐',tekst:'Tjekket',vaerdi:p.cby||'',gør:()=>{
+    snap();p.checked=!p.checked;p.cby=p.checked?meName():'';touch(p);drawPlan()}},
+  {skil:1},
+  {ikon:'⤒',tekst:'Indsæt linje ovenover',gør:()=>{
+    snap();
+    const ny={id:id(),n:nyttNr(synlige,j,'n'),label:'',by:'',at:0};
+    skubNumre(synlige,j,1,'n');
+    dv[side].splice(dv[side].indexOf(p),0,ny);drawPlan()}},
+  {ikon:'▲',tekst:'Flyt op',gør:()=>flytPort(dv,side,j,-1)},
+  {ikon:'▼',tekst:'Flyt ned',gør:()=>flytPort(dv,side,j,1)},
+  {skil:1},
+  {ikon:'✕',tekst:'Fjern linjen',fare:1,gør:()=>{
+    snap();p.del=Date.now();p.by=meName();
+    skubNumre(ports(dv,side),j+1,-1,'n');drawPlan()}}
+ ]);
+}
+function flytPort(dv,side,i,ret){
+ const synlige=ports(dv,side);
+ const j=i+ret;
+ if(j<0||j>=synlige.length)return;
+ snap();
+ const numre=synlige.map(p=>p.n);
+ const a=synlige[i], b2=synlige[j];
+ const ia=dv[side].indexOf(a);
+ dv[side].splice(ia,1);
+ dv[side].splice(dv[side].indexOf(b2)+(ret>0?1:0),0,a);
+ ports(dv,side).forEach((p,k)=>{p.n=numre[k]});
+ drawPlan();
+}
+
+/* ---- kortmenu i kanalplanen ---- */
+function sheetKort(did){
+ const dv=dom().devices.find(x=>x.id===did);
+ if(!dv)return;
+ const lab=labelled(dv,'ins').concat(labelled(dv,'outs'));
+ openSheet(dv.name,[
+  {ikon:'✎',tekst:'Ret navn og placering',gør:()=>{
+    const n=prompt('Navn:',dv.name); if(n===null)return;
+    const pl=prompt('Placering:',dv.place||''); if(pl===null)return;
+    snap();dv.name=n;dv.place=pl;dv.mt=Date.now();drawPlan()}},
+  {ikon:'P',tekst:'Sæt patchet på alle',vaerdi:lab.filter(p=>p.patched).length+'/'+lab.length,gør:()=>{
+    snap();const alle=lab.length&&lab.every(p=>p.patched);
+    lab.forEach(p=>{p.patched=!alle;p.pby=!alle?meName():'';touch(p)});drawPlan()}},
+  {ikon:'T',tekst:'Sæt tjekket på alle',vaerdi:lab.filter(p=>p.checked).length+'/'+lab.length,gør:()=>{
+    snap();const alle=lab.length&&lab.every(p=>p.checked);
+    lab.forEach(p=>{p.checked=!alle;p.cby=!alle?meName():'';touch(p)});drawPlan()}},
+  {skil:1},
+  {ikon:'+',tekst:'Tilføj input',gør:()=>{snap();
+    const arr=ports(dv,'ins'),sidste=arr[arr.length-1];
+    const m=sidste&&String(sidste.n||'').match(NRM);
+    dv.ins.push({id:id(),n:m?m[1]+(parseInt(m[2],10)+1)+m[3]:String(arr.length+1),label:'',by:'',at:0});
+    drawPlan()}},
+  {ikon:'+',tekst:'Tilføj output',gør:()=>{snap();
+    const arr=ports(dv,'outs'),sidste=arr[arr.length-1];
+    const m=sidste&&String(sidste.n||'').match(NRM);
+    dv.outs.push({id:id(),n:m?m[1]+(parseInt(m[2],10)+1)+m[3]:String(arr.length+1),label:'',by:'',at:0});
+    drawPlan()}},
+  {ikon:'⤓',tekst:'Gem i lageret',gør:()=>archiveSave&&archiveSave(dv)},
+  {skil:1},
+  {ikon:'✕',tekst:'Slet kortet',fare:1,gør:()=>{
+    if(!confirm('Slet "'+dv.name+'" med alle linjer?'))return;
+    snap();dv.del=Date.now();dv.mt=Date.now();drawPlan()}}
+ ]);
+}
+
 /* ---- skift mellem tegning og kanalplan ---- */
 let view='flow';
 function setView(v){
@@ -3179,6 +4081,8 @@ function setView(v){
  document.body.classList.toggle('blockview',v==='blocks');
  document.body.classList.toggle('archview',v==='arch');
  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
+ document.querySelectorAll('#mnav button').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
+ if(typeof mobilTitel==='function')mobilTitel();
  if(v==='plan')drawPlan(); else if(v==='blocks')drawBlocks();
  else if(v==='arch'){
   drawArchive();
@@ -4867,6 +5771,8 @@ el.addEventListener('click',ev=>{
    const ny=newCh(g.channels.length+1);
    if(m)ny.nr=m[1]+(parseInt(m[2],10)+1)+m[3];
    g.channels.push(ny);draw();return}
+ if(n=d('data-chmenu')){sheetKanal(...n.dataset.chmenu.split('|'));return}
+ if(n=d('data-grpmenu')){sheetGruppe(n.dataset.grpmenu);return}
  if(n=d('data-gripc'))return;                 // håndtaget håndteres af mousedown
  if(n=d('data-insc')){snap();
    const[gid,cid]=n.dataset.insc.split('|'); const[g]=findGrp(gid);
@@ -4988,6 +5894,16 @@ document.getElementById('file').onchange=e=>{
 
 if(restoreAuto()){/* genoptaget fra autogem */}
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+document.getElementById('bMode').onclick=()=>setMode(!mobil,true);
+document.getElementById('mMenu').onclick=sheetApp;
+document.getElementById('mMode').onclick=()=>setMode(false,true);
+document.getElementById('mTitle').onclick=sheetSider;
+document.getElementById('mSave').onclick=function(){
+  const b=this; b.textContent='…';
+  saveNow().then(()=>{b.textContent='Gemt';setTimeout(()=>{b.textContent='Gem'},1500)})
+    .catch(e=>{b.textContent='Gem';alert(e.message)});
+};
+document.querySelectorAll('#mnav button').forEach(b=>b.onclick=()=>setView(b.dataset.view));
 
 /* ---- intet vises før der er logget ind ---- */
 function unlock(){
@@ -4996,6 +5912,9 @@ function unlock(){
  restoreAuto();
  draw();
  applyUrl();
+ /* Vælg udgave: et tidligere valg tæller kun, hvis skærmen er den samme slags.
+    Ellers finder programmet selv ud af det. */
+ vaelgUdgave(false);
  startSync();
  if(!cloudId&&!new URLSearchParams(location.search).get('p'))setTimeout(openProjects,400);
 }
