@@ -286,8 +286,13 @@ body.mobile .btabs{width:100%;overflow-x:auto}
 body.mobile .dirmark{display:inline-block}
 body.mobile .ch .dirmark{color:#555}
 body.mobile .feed .dirmark{color:inherit;font-size:17px}
-/* symbolforklaringer hører til på papiret – på en telefon ligger de i vejen */
-body.mobile .fitem,body.mobile .flegend{display:none!important}
+/* Symbolforklaringer ligger i vejen på en telefon – men intercom-paneler skal
+   med, for dem har man netop brug for at kunne slå op i, når man står ude. */
+body.mobile .fitem.flegend{display:none!important}
+body.mobile .fitem.ftext{display:none!important}
+body.mobile .fitem.fpanel{position:relative!important;left:auto!important;top:auto!important;
+ width:auto!important;max-width:100%;margin:10px 0}
+body.mobile .fpanel .pnet{gap:3px 10px}
 
 
 /* grafisk intercom-panel */
@@ -4095,8 +4100,14 @@ async function pullInner(){
    dirty=false;
    setSync('hentet fra serveren');
   }else{
+   /* Vores egen kopi er nyere – fx arbejde lavet lige inden fanen blev lukket.
+      Så flettes serverens ind, og VORES sendes op bagefter. Ellers ville
+      arbejdet blive liggende på maskinen og aldrig nå projektet. */
    plan=mergePlan(ensurePlan(),d0.plan);
-   setSync('opdateret');
+   const serverDoc=JSON.stringify({p:d0.pages||null,b:d0.blocks||null,pl:d0.plan||null});
+   const voresDoc=JSON.stringify({p:pages,b:ensureBlocks(),pl:plan});
+   if(serverDoc!==voresDoc){ dirty=true; setSync('sender dine ændringer op …'); push(); }
+   else setSync('opdateret');
   }
   autosave();
   if(view==='plan')drawPlan(); else if(view==='blocks')drawBlocks(); else draw();
