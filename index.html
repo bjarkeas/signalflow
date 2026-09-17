@@ -632,6 +632,56 @@ body.mobile .feed .dirmark{color:inherit;font-size:17px}
 /* symbolforklaringer hører til på papiret – på en telefon ligger de i vejen */
 body.mobile .fitem,body.mobile .flegend{display:none!important}
 
+
+/* grafisk intercom-panel */
+.fpanel{background:#1a1a1a;border:1px solid #3a3a3a;border-radius:7px;padding:0;
+ box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.fpanel .phead{display:flex;align-items:baseline;gap:9px;padding:8px 11px 7px;background:#242424;
+ border-bottom:1px solid #3a3a3a;border-radius:6px 6px 0 0}
+.fpanel .pname{font-family:var(--fd);font-weight:700;font-size:13px;letter-spacing:.06em;
+ text-transform:uppercase;color:#f2f2f2;cursor:move}
+.fpanel .paddr{margin-left:auto;font-family:var(--fm);font-size:10px;color:#9aa4b0;white-space:nowrap}
+.fpanel .pkeys{padding:8px;display:flex;flex-direction:column;gap:6px}
+.prow2{display:flex;gap:6px}
+.pkey{flex:1;min-width:0;background:var(--kc,#2e2e2e);border:1px solid #4a4a4a;border-radius:4px;
+ color:#fff;font:11px/1.2 var(--fb);padding:9px 3px 8px;cursor:pointer;height:42px;
+ display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden}
+.pkey span{display:block;max-height:100%;overflow:hidden;overflow-wrap:anywhere}
+.pkey:hover{border-color:#8fb7ff}
+.pkedit{width:100%;min-width:0;background:#fff;color:#111;border:1.5px solid #0a5bd3;border-radius:3px;
+ padding:2px 4px;font:11px var(--fb);text-align:center}
+.pkey.tom{background:#242424;border-style:dashed;border-color:#454545}
+.fpanel .pnote{padding:0 11px 9px;font-family:var(--fm);font-size:10px;color:#9aa4b0}
+/* redigering */
+.pkrow{display:flex;align-items:center;gap:7px;padding:3px 2px}
+.pknum{width:22px;text-align:center;font-family:var(--fm);font-size:10px;color:var(--faint)}
+.pktxt{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--text);
+ border-radius:6px;padding:7px 8px;font:12.5px var(--fb)}
+.pkcol{width:34px;height:30px;border:1px solid var(--line);border-radius:6px;background:var(--bg);
+ padding:2px;cursor:pointer}
+@media print{
+ .fpanel{background:#fff;border-color:#bbb;box-shadow:none}
+ .fpanel .phead{background:#f0f0f0;border-color:#ccc}
+ .fpanel .pname{color:#111}
+ .fpanel .paddr{color:#444}
+ .fpanel .pkey{color:#fff}
+ .fpanel .pkey.tom{background:#fafafa;border-color:#ccc}
+ .fpanel .pnote{color:#444}
+}
+
+
+.fpanel .palias{margin-left:auto;font-family:var(--fm);font-size:10px;color:#9aa4b0;white-space:nowrap}
+.fpanel .pnet{display:flex;flex-wrap:wrap;gap:4px 12px;padding:6px 11px 2px;
+ border-bottom:1px solid #303030;background:#1f1f1f}
+.pnf{font-family:var(--fm);font-size:9.5px;color:#cfd6de;white-space:nowrap}
+.pnf em{font-style:normal;color:#7e8996;margin-right:5px;text-transform:uppercase;letter-spacing:.05em}
+@media print{
+ .fpanel .pnet{background:#f7f7f7;border-color:#ddd}
+ .pnf{color:#222}
+ .pnf em{color:#777}
+ .fpanel .palias{color:#444}
+}
+
 /* forklaringsboble */
 #tipbox{position:fixed;display:none;z-index:10000;pointer-events:none;max-width:290px;
  background:#0d1219;color:var(--text);border:1px solid var(--line);border-radius:7px;
@@ -1598,10 +1648,13 @@ function draw(keepSide){
     </div>
   </div>`;
  });
- if(sh.sections.length&&!focus)h+=`<div style="text-align:center">
+ /* Knapperne skal også være der på et tomt ark – man kan sagtens ville lave
+    en side med kun paneler eller kun tekst. */
+ if(!focus)h+=`<div style="text-align:center">
    <button class="add" data-addsec="1" title="Ny sektion: en afsender, et spor med signaler og en modtager">+ sektion</button>
    <button class="add" data-addtext="1" title="Frit tekstfelt du kan placere hvor som helst på arket">+ tekstfelt</button>
    <button class="add" data-addlegend="1" title="Boks med symboler, positioner og antal – fx bemanding">+ symbolforklaring</button>
+   <button class="add" data-addpanel="1" title="Grafisk intercom-panel med taster og adresse – fx et Riedel- eller Clearcom-panel">+ intercom panel</button>
  </div>`;
 
  /* frit placerede elementer ovenpå arket (låste er tegnet inde i boksene) */
@@ -1767,6 +1820,38 @@ function itemHTML(it){
   return `<div class="fitem ftext fdrag ${selc}" data-item="${it.id}" style="${st}">
        ${esc(it.text||'Tekst').split('\n').join('<br>')}${tag}${tools}</div>`;
  }
+
+ if(it.type==='panel'){
+  const raekker=+it.prows||2, pr=+it.pcols||6;
+  const keys=it.keys||[];
+  const st=`${pos};--kc:${px(it.keyColor,'#2e2e2e')};`;
+  let k=0, gitter='';
+  for(let r=0;r<raekker;r++){
+   gitter+='<div class="prow2">';
+   for(let c=0;c<pr;c++){
+    const key=keys[k]||{};
+    gitter+=`<button class="pkey ${key.t?'':'tom'}" data-pkey="${it.id}|${k}"
+       style="${key.c?'background:'+key.c+';':''}" title="Klik for at skrive på tasten">
+       <span>${esc(key.t||'')}</span></button>`;
+    k++;
+   }
+   gitter+='</div>';
+  }
+  const n2=it.net||{};
+  const felter=[['IP',n2.ip],['GW',n2.gw],['Ext. IP',n2.ext],['Port',n2.port],
+                ['User ID',n2.user],['Kode',n2.pw]].filter(f=>f[1]);
+  return `<div class="fitem fpanel fdrag ${selc}" data-item="${it.id}" style="${st}">
+    <div class="phead">
+      <span class="pname">${esc(it.title||'Intercom panel')}</span>
+      <span class="palias">${esc(n2.alias||it.addr||'')}</span>
+    </div>
+    ${felter.length?`<div class="pnet">${felter.map(f=>
+      `<span class="pnf"><em>${esc(f[0])}</em>${esc(f[1])}</span>`).join('')}</div>`:''}
+    <div class="pkeys">${gitter}</div>
+    ${it.note?`<div class="pnote">${esc(it.note)}</div>`:''}
+    ${tag}${tools}</div>`;
+ }
+
  const total=(it.rows||[]).reduce((a2,r)=>a2+(+r.count||0),0);
  return `<div class="fitem flegend fdrag ${selc}" data-item="${it.id}" style="${pos}">
    <h4>${esc(it.title||'Forklaring')}</h4>
@@ -4222,6 +4307,9 @@ function startGuest(tok){
    nyeste rettelse vinder. Derfor kan to personer rette hver sin stagebox
    samtidig uden at slette for hinanden. */
 let lastSync=null;      // serverens tidsstempel vi sidst har set
+/* Vi må ALDRIG sende noget op, før vi har set hvad der står på serveren.
+   Ellers kan en telefon med en gammel kopi overskrive et delt projekt. */
+let hentetFoerst=false;
 let pushTimer=null, syncTimer=null, dirty=false;
 
 function planDevices(pl,k){return (pl&&pl[k]&&pl[k].devices)||[]}
@@ -4277,16 +4365,33 @@ async function pullInner(){
  /* Står tidsstemplet stille (fx hvis triggeren ikke er kørt), henter vi alligevel
     hele projektet en gang imellem og sammenligner indholdet. */
  const forced = (pollN%4===0);
- if(lastSync&&t===lastSync&&!forced){setSync('opdateret');return}
+ if(lastSync&&t===lastSync&&!forced){hentetFoerst=true;setSync('opdateret');return}
  const full=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=name,data,updated_at,updated_by');
  if(lastSync&&t===lastSync&&forced){
   const same=JSON.stringify((full[0].data||{}).plan||null)===JSON.stringify(ensurePlan());
   if(same){setSync('opdateret');return}
  }
- if(!lastSync){lastSync=t;setSync('opdateret');
+ if(!lastSync){
+  hentetFoerst=true;
+  /* Første gang vi taler med serveren: er serverens udgave nyere end den
+     kopi, telefonen lå med, så er det serverens der gælder. Ellers ville
+     gammelt arbejde fra en anden enhed blive flettet op i projektet. */
+  lastSync=t;
   const d0=full[0].data||{};
-  plan=mergePlan(ensurePlan(),d0.plan);
-  if(view==='plan')drawPlan();
+  const serverNyere = !lokalTs || (parseTS(t)&&parseTS(t).getTime()>lokalTs);
+  if(serverNyere){
+   if(d0.pages&&d0.pages.length){pages=d0.pages;activePage=0;doc=pages[0];path=[];sel=null;focus=null}
+   plan=d0.plan||blankPlan();
+   blocks=d0.blocks||blankBlocks();
+   if(d0.name)projectName=d0.name;
+   dirty=false;
+   setSync('hentet fra serveren');
+  }else{
+   plan=mergePlan(ensurePlan(),d0.plan);
+   setSync('opdateret');
+  }
+  autosave();
+  if(view==='plan')drawPlan(); else if(view==='blocks')drawBlocks(); else draw();
   return;}
  const d=full[0].data||{};
  const foc=focusedRef();
@@ -4310,6 +4415,7 @@ async function pullInner(){
 }
 
 function push(){
+ if(!lastSync)return;      // vi har ikke set serverens udgave endnu
  clearTimeout(pushTimer);
  pushTimer=setTimeout(async()=>{
   if(!cloudId||!session()||!dirty)return;
@@ -4380,11 +4486,17 @@ window.addEventListener('beforeunload',()=>{
 });
 
 /* Ved start: genoptag hvor du slap */
+let lokalTs=0;          // hvornår den lokale kopi sidst blev gemt
 function restoreAuto(){
+ /* Peger adressen på et bestemt projekt, skal vi hente DET – ikke det
+    man tilfældigvis lavede sidst på den her telefon. */
+ const q=new URLSearchParams(location.search);
+ if(q.get('p')||q.get('t'))return false;
  const raw=load(LS_DATA); if(!raw)return false;
  try{
   const d=JSON.parse(raw);
   if(!d.pages||!d.pages.length)return false;
+  lokalTs=+d.ts||0;
   pages=d.pages; plan=d.plan||blankPlan(); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName; cloudId=d.cloudId||null;
   activePage=0; doc=pages[0];
   const when=new Date(d.ts||Date.now());
@@ -4605,7 +4717,7 @@ async function cloudSave(asNew,note){
  /* hver gemning lægger sig som en version, så man altid kan gå tilbage */
  await sbFetch('signalflow_versions',{method:'POST',body:JSON.stringify(
    {project_id:cloudId,data:snapshot(),note:note||'',created_by:who})});
- dirty=false; lastSync=null; migrateSeen(); autosave(); startSync();
+ dirty=false; lastSync=null; hentetFoerst=true; migrateSeen(); autosave(); startSync();
 }
 async function cloudOpen(id){
  const r=await sbFetch('signalflow_projects?id=eq.'+id+'&select=id,name,folder,data');
@@ -4613,7 +4725,7 @@ async function cloudOpen(id){
  const d=r[0].data;
  pages=d.pages; plan=d.plan||blankPlan(); blocks=d.blocks||blankBlocks(); projectName=d.name||r[0].name; cloudId=r[0].id; currentFolder=r[0].folder||'';
  activePage=0; doc=pages[0]; path=[]; sel=null; focus=null; undoStack=[];
- draw(); autosave(); lastSync=null; dirty=false; migrateSeen(); startSync();
+ draw(); autosave(); lastSync=null; dirty=false; hentetFoerst=false; migrateSeen(); startSync();
 }
 async function cloudVersions(pid){
  return await sbFetch('signalflow_versions?project_id=eq.'+pid
@@ -5432,6 +5544,14 @@ function addText(){
    color:'#1d1d1d',bg:'none',align:'left',bold:false,border:false});
  draw();
 }
+function addPanel(){
+ snap();
+ const s0=dropSpot();
+ items().push({id:id(),type:'panel',x:s0.x,y:s0.y,w:430,
+   title:'Intercom panel',addr:'',prows:2,pcols:6,keyColor:'#2e2e2e',
+   keys:Array.from({length:12},()=>({t:'',c:''}))});
+ draw();
+}
 function addLegend(){
  snap();
  const s0=dropSpot();
@@ -5491,6 +5611,183 @@ function editText(iid){
      it.bg=root.querySelector('[name="nobg"]').checked?'none':val(root,'bg');
      it.border=root.querySelector('[name="border"]').checked;
      closeModal(); draw();
+   };
+ });
+}
+
+
+
+/* ---- paneler i lageret: gem og hent igen ----
+   Panelet lægges som udstyr i den fælles tabel under kategorien INTERCOM PANEL,
+   så det kan bruges i alle projekter og af alle. */
+const PANELKAT='INTERCOM PANEL';
+function panelData(it){
+ return {prows:+it.prows||2,pcols:+it.pcols||6,keyColor:it.keyColor||'#2e2e2e',
+   note:it.note||'',net:it.net||{},keys:(it.keys||[]).map(k=>({t:k.t||'',c:k.c||''}))};
+}
+async function panelGem(it){
+ const nm=prompt('Navn i lageret:',it.title||'Intercom panel');
+ if(nm===null)return;
+ try{
+  await sbFetch('equipment',{method:'POST',body:JSON.stringify(
+    {name:nm||'Intercom panel',category:PANELKAT,qty:1,
+     tech:{panel:panelData(it)},
+     custom_fields:[{label:'Type',value:'Intercom panel'},
+                    {label:'Alias',value:(it.net||{}).alias||''},
+                    {label:'IP',value:(it.net||{}).ip||''},
+                    {label:'User ID',value:(it.net||{}).user||''}]})});
+  if(typeof lagerList==='function')lagerList(true);
+  setSync('gemt i lageret');
+ }catch(e){alert(e.message)}
+}
+async function panelListe(){
+ const r=await sbFetch('equipment?select=id,name,category,tech&order=name.asc');
+ return (r||[]).filter(x=>x.tech&&x.tech.panel);
+}
+function nytPanel(data,titel){
+ snap();
+ const s0=dropSpot();
+ const d=data||{};
+ items().push({id:id(),type:'panel',x:s0.x,y:s0.y,w:430,
+   title:titel||'Intercom panel',
+   prows:d.prows||2,pcols:d.pcols||6,keyColor:d.keyColor||'#2e2e2e',
+   note:d.note||'',net:Object.assign({},d.net||{}),
+   keys:(d.keys&&d.keys.length?d.keys.map(k=>({t:k.t||'',c:k.c||''}))
+        :Array.from({length:(d.prows||2)*(d.pcols||6)},()=>({t:'',c:''})))});
+ draw();
+}
+/* vinduet man møder, når man trykker + intercom panel */
+function openPanelValg(){
+ openModal('Intercom panel','Nyt panel eller et du har gemt',`
+  <div class="mgrid">
+    <div class="mf"><label>Rækker</label><input type="number" name="prows" min="1" max="6" value="2"></div>
+    <div class="mf"><label>Taster pr. række</label><input type="number" name="pcols" min="1" max="12" value="6"></div>
+  </div>
+  <div class="mrow"><button class="btn go" data-nyt="1">Indsæt tomt panel</button></div>
+  <div class="msec">Gemte paneler</div>
+  <div id="panelliste" class="chklist" style="max-height:240px">Henter …</div>
+  <div class="mrow"><button class="btn" data-cancel="1">Luk</button></div>`,root=>{
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-nyt]').onclick=()=>{
+     const r=Math.max(1,+val(root,'prows')||2), c=Math.max(1,+val(root,'pcols')||6);
+     closeModal(); nytPanel({prows:r,pcols:c});
+   };
+   const box=root.querySelector('#panelliste');
+   panelListe().then(rows=>{
+    if(!rows.length){box.innerHTML='<div class="msub" style="padding:10px;text-transform:none;letter-spacing:0">Ingen gemte paneler endnu. Gem et med ✎ → Gem i lageret.</div>';return}
+    box.innerHTML=rows.map(r=>{
+      const p=r.tech.panel||{}, n2=p.net||{};
+      return `<div class="arow" data-pl="${r.id}">
+       <span class="amain"><b>${esc(r.name)}</b>
+         <em>${(p.prows||2)}×${(p.pcols||6)} taster${n2.ip?' · '+esc(n2.ip):''}${n2.user?' · user '+esc(n2.user):''}</em></span>
+       <button class="mini" data-pldel="${r.id}" title="Fjern fra lageret">✕</button>
+      </div>`}).join('');
+    box.querySelectorAll('[data-pl]').forEach(n=>n.onclick=e=>{
+      if(e.target.dataset.pldel)return;
+      const r=rows.find(x=>x.id===n.dataset.pl);
+      closeModal(); nytPanel(r.tech.panel,r.name);
+    });
+    box.querySelectorAll('[data-pldel]').forEach(bn=>bn.onclick=async e=>{
+      e.stopPropagation();
+      if(!confirm('Fjern panelet fra lageret?'))return;
+      await sbFetch('equipment?id=eq.'+bn.dataset.pldel,{method:'DELETE'});
+      closeModal(); openPanelValg();
+    });
+   }).catch(e=>{box.innerHTML='<div class="msub" style="padding:10px;color:var(--video)">'+esc(e.message)+'</div>'});
+ });
+}
+
+/* ---- rediger et intercom-panel ---- */
+function editPanel(iid){
+ const it=findItem(iid); if(!it)return;
+ it.keys=it.keys||[];
+ const antal=(+it.prows||2)*(+it.pcols||6);
+ while(it.keys.length<antal)it.keys.push({t:'',c:''});
+ openModal('Intercom panel', esc(it.title||''), `
+  <div class="mgrid">
+    <div class="mf"><label>Panelets navn</label>
+      <input type="text" name="title" value="${esc(it.title||'')}" placeholder="fx Remote 2 · Lyd"></div>
+    <div class="mf"><label>Alias</label>
+      <input type="text" name="alias" value="${esc((it.net||{}).alias||it.addr||'')}" placeholder="fx R2-LYD"></div>
+  </div>
+  <div class="msec">Adresse</div>
+  <div class="mgrid">
+    <div class="mf"><label>IP-adresse</label>
+      <input type="text" name="ip" value="${esc((it.net||{}).ip||'')}" placeholder="10.0.12.40"></div>
+    <div class="mf"><label>Gateway</label>
+      <input type="text" name="gw" value="${esc((it.net||{}).gw||'')}" placeholder="10.0.12.1"></div>
+  </div>
+  <div class="mgrid">
+    <div class="mf"><label>Ekstern IP</label>
+      <input type="text" name="ext" value="${esc((it.net||{}).ext||'')}" placeholder="fx 80.62.x.x"></div>
+    <div class="mf"><label>Port</label>
+      <input type="text" name="port" value="${esc((it.net||{}).port||'')}" placeholder="5060"></div>
+  </div>
+  <div class="mgrid">
+    <div class="mf"><label>User ID</label>
+      <input type="text" name="user" value="${esc((it.net||{}).user||'')}" placeholder="254"></div>
+    <div class="mf"><label>Adgangskode</label>
+      <input type="text" name="pw" value="${esc((it.net||{}).pw||'')}" placeholder="valgfri"></div>
+  </div>
+  <div class="msec">Panelet</div>
+  <div class="mgrid">
+    <div class="mf"><label>Rækker</label>
+      <input type="number" name="prows" min="1" max="6" value="${+it.prows||2}"></div>
+    <div class="mf"><label>Taster pr. række</label>
+      <input type="number" name="pcols" min="1" max="12" value="${+it.pcols||6}"></div>
+  </div>
+  <div class="mf"><label>Bemærkning under panelet</label>
+    <input type="text" name="note" value="${esc(it.note||'')}" placeholder="valgfri – fx hvem der sidder ved panelet"></div>
+  ${colorField('Tastefarve','keyColor',it.keyColor||'#2e2e2e',
+    ['#2e2e2e','#1e3a5f','#1e7a55','#8a5a00','#7a1f2b','#4a2d7a','#444'])}
+  <div class="msec">Taster</div>
+  <div id="pkeylist" class="chklist" style="max-height:260px"></div>
+  <div class="mrow">
+    <button class="btn go" data-ok="1">Gem</button>
+    <button class="btn" data-arch="1">Gem i lageret</button>
+    <button class="btn" data-cancel="1">Annullér</button>
+    <button class="btn del" data-rm="1">Fjern panelet</button>
+  </div>`,root=>{
+   mountSwatches(root);
+   const liste=root.querySelector('#pkeylist');
+   const tegn=()=>{
+    const n=(+val(root,'prows')||2)*(+val(root,'pcols')||6);
+    while(it.keys.length<n)it.keys.push({t:'',c:''});
+    liste.innerHTML=it.keys.slice(0,n).map((k,i)=>`<div class="pkrow">
+      <span class="pknum">${i+1}</span>
+      <input type="text" class="pktxt" data-kt="${i}" value="${esc(k.t||'')}" placeholder="tekst på tasten">
+      <input type="color" class="pkcol" data-kc="${i}" value="${k.c||it.keyColor||'#2e2e2e'}"
+        title="Farve på denne taste">
+      <button class="mini" data-kclr="${i}" title="Brug panelets farve">↺</button>
+    </div>`).join('');
+    liste.querySelectorAll('[data-kt]').forEach(inp=>inp.oninput=()=>{it.keys[+inp.dataset.kt].t=inp.value});
+    liste.querySelectorAll('[data-kc]').forEach(inp=>inp.oninput=()=>{it.keys[+inp.dataset.kc].c=inp.value});
+    liste.querySelectorAll('[data-kclr]').forEach(b=>b.onclick=()=>{it.keys[+b.dataset.kclr].c='';tegn()});
+   };
+   tegn();
+   root.querySelector('[name="prows"]').oninput=tegn;
+   root.querySelector('[name="pcols"]').oninput=tegn;
+   root.querySelector('[data-cancel]').onclick=()=>{closeModal();draw()};
+   root.querySelector('[data-arch]').onclick=()=>{
+     it.title=val(root,'title');
+     it.net={alias:val(root,'alias'),ip:val(root,'ip'),gw:val(root,'gw'),ext:val(root,'ext'),
+             port:val(root,'port'),user:val(root,'user'),pw:val(root,'pw')};
+     it.prows=Math.max(1,+val(root,'prows')||2); it.pcols=Math.max(1,+val(root,'pcols')||6);
+     it.keyColor=val(root,'keyColor'); it.note=val(root,'note');
+     panelGem(it).then(()=>{closeModal();draw()});
+   };
+   root.querySelector('[data-rm]').onclick=()=>{snap();
+     sheet().items=(sheet().items||[]).filter(x=>x.id!==iid);closeModal();draw()};
+   root.querySelector('[data-ok]').onclick=()=>{
+    snap();
+    it.title=val(root,'title'); it.note=val(root,'note');
+    it.net={alias:val(root,'alias'),ip:val(root,'ip'),gw:val(root,'gw'),ext:val(root,'ext'),
+            port:val(root,'port'),user:val(root,'user'),pw:val(root,'pw')};
+    delete it.addr;
+    it.prows=Math.max(1,+val(root,'prows')||2);
+    it.pcols=Math.max(1,+val(root,'pcols')||6);
+    it.keyColor=val(root,'keyColor');
+    closeModal(); draw();
    };
  });
 }
@@ -5559,6 +5856,38 @@ function editLegend(iid){
 /* ---- træk og skalér ---- */
 let dragState=null;
 document.getElementById('sheet').addEventListener('mousedown',ev=>{
+ /* en taste på et intercom-panel: skriv direkte i den */
+ const pk=ev.target.closest('[data-pkey]');
+ if(pk){
+  ev.preventDefault(); ev.stopPropagation();
+  const [iid,k]=pk.dataset.pkey.split('|');
+  const it=findItem(iid); if(!it)return;
+  it.keys=it.keys||[];
+  const key=it.keys[+k]||(it.keys[+k]={t:'',c:''});
+  const sp=pk.querySelector('span');
+  const inp=document.createElement('input');
+  inp.className='pkedit'; inp.value=key.t||'';
+  sp.replaceWith(inp); inp.focus(); inp.select();
+  /* museklikket slipper først bagefter – ellers mister feltet fokus med det samme */
+  let klar=false; setTimeout(()=>{klar=true},200);
+  let slut=false;
+  const done=gem=>{
+   if(slut)return; slut=true;
+   if(gem&&inp.value!==key.t){snap();key.t=inp.value}
+   draw();
+  };
+  inp.onkeydown=e=>{
+   e.stopPropagation();
+   if(e.key==='Enter'){e.preventDefault();done(true)}
+   if(e.key==='Escape'){e.preventDefault();done(false)}
+   if(e.key==='Tab'){e.preventDefault();done(true);
+     setTimeout(()=>{const nx=document.querySelector('[data-pkey="'+iid+'|'+(+k+1)+'"]');
+       if(nx)nx.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}))},50)}
+  };
+  inp.onblur=()=>{ if(!klar){setTimeout(()=>inp.focus(),0);return} done(true) };
+  inp.onmousedown=e=>e.stopPropagation();
+  return;
+ }
  /* gribehåndtaget på en kanallinje: flyt linjen op eller ned */
  const gp=ev.target.closest('[data-gripc]');
  if(gp){
@@ -5776,6 +6105,8 @@ function setVal(k,r,v){
 /* klik på arket */
 el.addEventListener('click',ev=>{
  const t=ev.target;
+ /* en taste på et panel redigeres på musetrykket – lad klikket gå forbi */
+ if(t.closest('[data-pkey]')||t.closest('.pkedit'))return;
  if(editing&&t!==editing.inp)commitEdit(true);   // gem det åbne felt før alt andet
  const d=k=>t.closest('['+k+']');
  let n;
@@ -5834,7 +6165,10 @@ el.addEventListener('click',ev=>{
  if(n=d('data-unfocus')){focus=null;draw();return}
  if(n=d('data-addtext')){addText();return}
  if(n=d('data-addlegend')){addLegend();return}
- if(n=d('data-iedit')){const it=findItem(n.dataset.iedit);it&&(it.type==='text'?editText(it.id):editLegend(it.id));return}
+ if(n=d('data-addpanel')){openPanelValg();return}
+
+ if(n=d('data-iedit')){const it=findItem(n.dataset.iedit);
+   it&&(it.type==='text'?editText(it.id):it.type==='panel'?editPanel(it.id):editLegend(it.id));return}
  if(n=d('data-idel')){snap();sheet().items=items().filter(i=>i.id!==n.dataset.idel);sel=null;draw();return}
  if(n=d('data-idup')){snap();const o=findItem(n.dataset.idup);const c=JSON.parse(JSON.stringify(o));c.id=id();c.x+=24;c.y+=24;items().push(c);draw();return}
  if(n=d('data-boxadd')){const[sid,side]=n.dataset.boxadd.split('|');snap();
@@ -5908,7 +6242,9 @@ document.getElementById('file').onchange=e=>{
  r.readAsText(f); e.target.value='';
 };
 
-if(restoreAuto()){/* genoptaget fra autogem */}
+/* Genoptagelse sker i unlock(), når man er logget ind – ikke her.
+   Den gamle linje kørte også for gæster og lagde deres tidligere arbejde
+   ind i det delte projekt. */
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
 document.getElementById('bMode').onclick=()=>setMode(!mobil,true);
 document.getElementById('mMenu').onclick=sheetApp;
