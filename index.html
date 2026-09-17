@@ -364,6 +364,19 @@ body.mobile .fpanel .pnet{gap:3px 10px}
 .fpanel.mini3 .pkey{border-radius:3px}
 .fpanel.mini3 .pkey span{line-height:1.05}
 
+
+/* oplysninger skjult på skærmen, men med på papiret */
+.pnet.kunprint{display:none}
+@media print{
+ .fpanel .pnet.kunprint{display:flex!important}
+ /* hvad der kommer med, vælges på det enkelte panel */
+ .fpanel.pr-info .pkeys{display:none!important}
+ .fpanel.pr-taster .pnet{display:none!important}
+ .fpanel.pr-navn .pkeys,.fpanel.pr-navn .pnote{display:none!important}
+ .fpanel.pr-navn .pnet{border-bottom:none}
+ .fpanel.pr-skjul{display:none!important}
+}
+
 /* forklaringsboble */
 #tipbox{position:fixed;display:none;z-index:10000;pointer-events:none;max-width:290px;
  background:#0d1219;color:var(--text);border:1px solid var(--line);border-radius:7px;
@@ -1527,12 +1540,12 @@ function itemHTML(it){
                 ['IP',n2.ip],['GW',n2.gw],['Ext. IP',n2.ext],['Port',n2.port],
                 ['User ID',n2.user],['Kode',n2.pw],['Tilsluttet',n2.til]].filter(f=>f[1]);
   const skala=+it.scale||1;
-  return `<div class="fitem fpanel fdrag ${selc} ${skala<=0.75?'mini3':skala<=0.9?'lille':''}" data-item="${it.id}" style="${st}">
+  return `<div class="fitem fpanel fdrag ${selc} ${skala<=0.75?'mini3':skala<=0.9?'lille':''} pr-${it.pmode||'alt'}" data-item="${it.id}" style="${st}">
     <div class="phead">
       <span class="pname">${esc(it.title||'Intercom panel')}</span>
       <span class="palias">${esc(n2.alias||it.addr||'')}</span>
     </div>
-    ${(felter.length&&it.visnet!==false)?`<div class="pnet">${felter.map(f=>
+    ${felter.length?`<div class="pnet ${it.visnet===false?'kunprint':''}">${felter.map(f=>
       `<span class="pnf"><em>${esc(f[0])}</em>${esc(f[1])}</span>`).join('')}</div>`:''}
     <div class="pkeys">${gitter}</div>
     ${it.note?`<div class="pnote">${esc(it.note)}</div>`:''}
@@ -5552,10 +5565,20 @@ function editPanel(iid){
         <option value="0.7" ${(+it.scale||1)==0.7?'selected':''}>Meget lille</option>
         <option value="0.55" ${(+it.scale||1)==0.55?'selected':''}>Mindst</option>
       </select></div>
-    <div class="mf"><label>Vis oplysninger</label>
+    <div class="mf"><label>Vis oplysninger på skærmen</label>
       <select name="visnet">
-        <option value="1" ${it.visnet===false?'':'selected'}>Ja – vis dem på panelet</option>
+        <option value="1" ${it.visnet===false?'':'selected'}>Ja</option>
         <option value="0" ${it.visnet===false?'selected':''}>Nej – kun navn og taster</option>
+      </select></div>
+  </div>
+  <div class="mgrid one">
+    <div class="mf"><label>På print og eksport</label>
+      <select name="pmode">
+        <option value="alt"    ${(it.pmode||'alt')==='alt'?'selected':''}>Tag det hele med</option>
+        <option value="info"   ${it.pmode==='info'?'selected':''}>Kun oplysninger – uden taster</option>
+        <option value="taster" ${it.pmode==='taster'?'selected':''}>Kun taster – uden oplysninger</option>
+        <option value="navn"   ${it.pmode==='navn'?'selected':''}>Kun navn og adresse i én linje</option>
+        <option value="skjul"  ${it.pmode==='skjul'?'selected':''}>Tag det slet ikke med</option>
       </select></div>
   </div>
   <div class="mf"><label>Bemærkning under panelet</label>
@@ -5614,6 +5637,7 @@ function editPanel(iid){
     it.pcols=Math.max(1,+val(root,'pcols')||6);
     it.scale=+val(root,'scale')||1;
     it.visnet=val(root,'visnet')!=='0';
+    it.pmode=val(root,'pmode')||'alt';
     it.keyColor=val(root,'keyColor');
     closeModal(); draw();
    };
