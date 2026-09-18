@@ -625,7 +625,6 @@ body.guest .gastmark{display:inline-flex}
  letter-spacing:.04em;padding:2px 4px;border-radius:5px;width:100%}
 .devplace{background:none;border:none;color:var(--dim);font-family:var(--fm);font-size:10px;padding:1px 4px;border-radius:5px;width:100%}
 .devname:hover,.devplace:hover,.devname:focus,.devplace:focus{background:var(--bg);outline:none}
-.devmeta{font-family:var(--fm);font-size:10px;color:var(--faint);white-space:nowrap}
 .devacts{display:flex;gap:3px}
 .devacts .mini{opacity:.5}
 .dev:hover .devacts .mini{opacity:1}
@@ -660,7 +659,6 @@ body.guest .gastmark{display:inline-flex}
 .dev.moving{opacity:.5}
 .draghandle{cursor:grab;color:var(--faint);font-size:14px;user-select:none;padding:0 2px}
 .draghandle:active{cursor:grabbing}
-.devmeta{display:flex;gap:8px}
 .porthead{display:flex;align-items:center;gap:4px;padding:1px 0 4px;font-family:var(--fm);
  font-size:8.5px;color:var(--faint);letter-spacing:.06em}
 .ph-n{width:30px;text-align:center}
@@ -706,7 +704,7 @@ body.guest .gastmark{display:inline-flex}
 .dev .rs{right:-5px;bottom:-5px;opacity:0}
 .dev:hover .rs{opacity:.8}
 /* P- og T-mærker der lyser når alt er sat */
-.devmeta{display:flex;gap:6px;align-items:center}
+.devmeta{display:flex;gap:6px;align-items:center;font-family:var(--fm);font-size:10px;color:var(--faint);white-space:nowrap}
 .pt{display:flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--line);
  color:var(--faint);border-radius:7px;padding:4px 9px;cursor:pointer;font:600 12px var(--fb);line-height:1}
 .pt em{font-style:normal;font-family:var(--fm);font-size:9px;opacity:.8}
@@ -1209,7 +1207,6 @@ function delPage(i){
  if(activePage>=pages.length)activePage=pages.length-1;
  doc=pages[activePage];path=[];sel=null;draw();
 }
-function movePage(i,d){const j=i+d;if(j<0||j>=pages.length)return;snap();const[p]=pages.splice(i,1);pages.splice(j,0,p);activePage=j;draw()}
 
 /* ================= tegn ================= */
 const el=document.getElementById('sheet');
@@ -1218,6 +1215,26 @@ const vis=(layer,role)=> on.has(layer)&&(backupOn||role!=='backup');
 
 /* stil-hjælpere: alt er valgfrit, tomt = standardudseende */
 const SS=sc=>sc.style||(sc.style={});
+
+/* Luften mellem boks og signaler kommer af, at man har trukket i boksens
+   inderkant. En smule luft kan være tilsigtet – men et stort spring er
+   næsten altid et fejlgreb. Derfor rydder programmet selv op i det. */
+const MAXLUFT=120;
+function ryddLuft(sider){
+ let rettet=0;
+ (sider||pages||[]).forEach(sh=>{
+  const gennemgå=ark=>{
+   (ark.sections||[]).forEach(sc=>{
+    const st=sc.style; if(!st)return;
+    if(+st.srcDX>MAXLUFT){st.srcDX=0;rettet++}
+    if(+st.dstDX>MAXLUFT){st.dstDX=0;rettet++}
+    (sc.groups||[]).forEach(g=>{ if(g.sub)gennemgå(g.sub) });   // også underark
+   });
+  };
+  gennemgå(sh);
+ });
+ return rettet;
+}
 const GS=g=>g.style||(g.style={});
 const px=(v,d)=>(v==null||v==='')?d:v;
 
@@ -1656,7 +1673,19 @@ function openModal(title,sub,body,onMount){
  if(onMount)onMount(mEl);
  const first=mEl.querySelector('input,select');if(first)first.focus();
 }
-mEl.addEventListener('click',ev=>{if(ev.target===mEl&&mEl.dataset.locked!=='1')closeModal()});
+/* Vinduet må KUN lukke, når man både trykker og slipper på den mørke baggrund.
+   Ellers lukker det, når man markerer tekst i et felt og kommer til at slippe
+   musen uden for vinduet – og så var arbejdet tabt. */
+let trykStartedeUdenfor=false;
+/* Hvor startede museklikket? Bruges til at kende forskel på et rigtigt klik
+   og et træk, der bare endte et andet sted – fx når man markerer tekst. */
+let trykStart=null;
+document.addEventListener('mousedown',e=>{trykStart=e.target},true);
+mEl.addEventListener('mousedown',ev=>{trykStartedeUdenfor = ev.target===mEl});
+mEl.addEventListener('click',ev=>{
+ if(ev.target===mEl && trykStartedeUdenfor && mEl.dataset.locked!=='1')closeModal();
+ trykStartedeUdenfor=false;
+});
 document.addEventListener('keydown',ev=>{if(ev.key==='Escape'&&mEl.classList.contains('on')&&mEl.dataset.locked!=='1'){closeModal()}},true);
 
 const PALETTE=['#c62828','#e65100','#9a6500','#2e7d32','#1e7a55','#1e56b0','#4527a0','#37474f','#111111','#7a7a7a'];
@@ -1690,6 +1719,22 @@ function editSection(secId){
     ${colorField('Afsender · tekst','srcFg',px(st.srcFg,'#2b2417'),PALETTE)}
     ${colorField('Modtager · tekst','dstFg',px(st.dstFg,'#f3f7f1'),PALETTE)}
   </div>
+  <div class="msec">Bredde og afstand</div>
+  <div class="mgrid">
+    <div class="mf"><label>Afsenderboksens bredde</label>
+      <input type="number" name="srcW" min="80" max="900" value="${px(st.srcW,190)}"></div>
+    <div class="mf"><label>Modtagerboksens bredde</label>
+      <input type="number" name="dstW" min="80" max="900" value="${px(st.dstW,210)}"></div>
+  </div>
+  <div class="mgrid">
+    <div class="mf"><label>Luft efter afsenderboksen (0–${MAXLUFT})</label>
+      <input type="number" name="srcDX" min="0" max="${MAXLUFT}" value="${px(st.srcDX,0)}"></div>
+    <div class="mf"><label>Luft før modtagerboksen (0–${MAXLUFT})</label>
+      <input type="number" name="dstDX" min="0" max="${MAXLUFT}" value="${px(st.dstDX,0)}"></div>
+  </div>
+  <div class="mrow" style="margin:-4px 0 6px">
+    <button class="btn" data-nulstil="1" style="width:100%">Fjern luften – læg boksene tæt op ad signalerne</button>
+  </div>
   <div class="msec">Tekst</div>
   <div class="mgrid">
     <div class="mf"><label>Boksnavnets størrelse (px)</label><input type="number" name="boxSize" min="9" max="34" value="${px(st.boxSize,16)}"></div>
@@ -1708,10 +1753,20 @@ function editSection(secId){
    if(un)un.onclick=()=>{snap();unanchor(it);closeModal();draw()};
    root.querySelector('[data-cancel]').onclick=closeModal;
    root.querySelector('[data-reset]').onclick=()=>{snap();delete sc.style;closeModal();draw()};
+   /* Luften mellem boks og signaler opstår, hvis man kommer til at trække i
+      boksens inderkant. Den kan nulstilles her. */
+   root.querySelector('[data-nulstil]').onclick=()=>{
+     root.querySelector('[name="srcDX"]').value=0;
+     root.querySelector('[name="dstDX"]').value=0;
+   };
    root.querySelector('[data-ok]').onclick=()=>{
      snap();
      sc.src=val(root,'src'); sc.dst=val(root,'dst');
      const s2=SS(sc);
+     s2.srcW=Math.max(80,+val(root,'srcW')||190);
+     s2.dstW=Math.max(80,+val(root,'dstW')||210);
+     s2.srcDX=Math.min(MAXLUFT,Math.max(0,+val(root,'srcDX')||0));
+     s2.dstDX=Math.min(MAXLUFT,Math.max(0,+val(root,'dstDX')||0));
      s2.srcBg=val(root,'srcBg'); s2.dstBg=val(root,'dstBg');
      s2.srcFg=val(root,'srcFg'); s2.dstFg=val(root,'dstFg');
      s2.boxSize=+val(root,'boxSize')||16;
@@ -2960,6 +3015,7 @@ function drawPlan(){
           title="Tjekket – ${nc} af ${lab.length}. Klik for at sætte alle">T<em>${nc}/${lab.length}</em></button>
       </div>
       <div class="devacts">
+        <button class="mini rowmenu" data-kortmenu="${dv.id}" title="Muligheder for kortet">⋯</button>
         ${guestToken?'':`<button class="mini" data-darch="${dv.id}" title="Læg dette udstyr på lageret">⤓</button>`}
         <button class="mini" data-ddup="${dv.id}" title="Lav en kopi af hele kortet">⧉</button>
         <button class="mini" data-ddel="${dv.id}" title="Slet kortet og alle dets linjer">✕</button>
@@ -3294,11 +3350,6 @@ function applyUrl(){
 /* ---- sidst brugt ---- */
 const LS_RECENT='signalflow:recent';
 function recentList(){try{return JSON.parse(load(LS_RECENT)||'[]')}catch(e){return []}}
-function noteRecent(navn){
- if(!navn)return;
- const r=recentList().filter(x=>x!==navn);
- r.unshift(navn); store(LS_RECENT,JSON.stringify(r.slice(0,8)));
-}
 
 
 
@@ -3671,7 +3722,11 @@ function openSheet(titel, punkter){
    if(p&&p.gør)setTimeout(p.gør,60);
  });
  box.querySelector('[data-luk]').onclick=closeSheet;
- wrap.onclick=e=>{if(e.target===wrap)closeSheet()};
+ /* samme regel for arket nedefra */
+ let startUdenfor=false;
+ wrap.onmousedown=e=>{startUdenfor = e.target===wrap};
+ wrap.ontouchstart=e=>{startUdenfor = e.target===wrap};
+ wrap.onclick=e=>{ if(e.target===wrap && startUdenfor)closeSheet(); startUdenfor=false };
 }
 function closeSheet(){document.getElementById('sheetwrap').classList.remove('on')}
 
@@ -3813,7 +3868,7 @@ function sheetGruppe(gid){
  const [g,sc]=findGrp(gid);
  if(!g)return;
  openSheet(g.feed||g.label||'Gruppe',[
-  {ikon:'✎',tekst:'Rediger gruppen',under:'navn, farver, retning',gør:()=>openGroupEditor(g,sc)},
+  {ikon:'✎',tekst:'Rediger gruppen',under:'navn, farver, retning',gør:()=>editGroup(g.id)},
   {ikon:'+',tekst:'Tilføj kanal',gør:()=>{snap();
     const sidste=g.channels[g.channels.length-1];
     const m=sidste&&String(sidste.nr||'').match(NRM);
@@ -3903,7 +3958,7 @@ function sheetKort(did){
     const m=sidste&&String(sidste.n||'').match(NRM);
     dv.outs.push({id:id(),n:m?m[1]+(parseInt(m[2],10)+1)+m[3]:String(arr.length+1),label:'',by:'',at:0});
     drawPlan()}},
-  {ikon:'⤓',tekst:'Gem i lageret',gør:()=>archiveSave&&archiveSave(dv)},
+  {ikon:'⤓',tekst:'Gem i lageret',gør:()=>lagerSaveFromDevice(dv)},
   {skil:1},
   {ikon:'✕',tekst:'Slet kortet',fare:1,gør:()=>{
     if(!confirm('Slet "'+dv.name+'" med alle linjer?'))return;
@@ -4180,6 +4235,7 @@ async function pullInner(){
 /* tegningen flettes side for side – ikke alt eller intet */
  const aktivId=(pages[activePage]||{}).id;
  if(d.pages){const flettet=mergePages(pages,d.pages); if(flettet.length)pages=flettet}
+ ryddLuft(pages);
  const nyIdx=pages.findIndex(p=>p.id===aktivId);
  if(nyIdx>=0)activePage=nyIdx;
  if(!dirty&&d.name)projectName=d.name;
@@ -4255,7 +4311,9 @@ function autosave(){
  if(guestToken){if(typeof markDirty==='function')markDirty();return}
  clearTimeout(autoTimer);
  autoTimer=setTimeout(()=>{
-  const ok=store(LS_DATA, JSON.stringify({name:projectName,pages,plan:plan,blocks:blocks,ts:Date.now(),cloudId:cloudId}));
+  const nu=Date.now();
+  const ok=store(LS_DATA, JSON.stringify({name:projectName,pages,plan:plan,blocks:blocks,ts:nu,cloudId:cloudId}));
+  lokalTs=nu;                       // vores kopi er fra nu
   lastSaved=Date.now();
   setAuto(ok?'gemt '+new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'})
             :'kan ikke gemme lokalt', !ok);
@@ -4279,7 +4337,7 @@ function restoreAuto(){
   const d=JSON.parse(raw);
   if(!d.pages||!d.pages.length)return false;
   lokalTs=+d.ts||0;
-  pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName; cloudId=d.cloudId||null;
+  pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); ryddLuft(pages); ryddLuft(pages); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName; cloudId=d.cloudId||null;
   activePage=0; doc=pages[0];
   const when=new Date(d.ts||Date.now());
   setAuto('genoptaget '+when.toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}));
@@ -4488,26 +4546,33 @@ async function cloudList(){
 async function cloudSave(asNew,note){
  const who=cfg().who||userName().split('@')[0]||'';
  const body={name:projectName,data:snapshot(),updated_by:who,updated_at:new Date().toISOString()};
+ let svar=null;
  if(cloudId&&!asNew){
-  const r=await sbFetch('signalflow_projects?id=eq.'+cloudId,{method:'PATCH',body:JSON.stringify(body)});
-  if(!r||!r.length)throw new Error('Projektet findes ikke længere i databasen.');
+  svar=await sbFetch('signalflow_projects?id=eq.'+cloudId,{method:'PATCH',body:JSON.stringify(body)});
+  if(!svar||!svar.length)throw new Error('Projektet findes ikke længere i databasen.');
  }else{
   body.folder=currentFolder||null;
-  const r=await sbFetch('signalflow_projects',{method:'POST',body:JSON.stringify(body)});
-  cloudId=r[0].id;
+  svar=await sbFetch('signalflow_projects',{method:'POST',body:JSON.stringify(body)});
+  cloudId=svar[0].id;
  }
  /* hver gemning lægger sig som en version, så man altid kan gå tilbage */
  await sbFetch('signalflow_versions',{method:'POST',body:JSON.stringify(
    {project_id:cloudId,data:snapshot(),note:note||'',created_by:who})});
- dirty=false; lastSync=null; hentetFoerst=true; migrateSeen(); autosave(); startSync();
+ /* Husk hvad serveren svarede. Nulstillede vi tidsstemplet, ville næste
+    synkronisering tro at serveren var nyere – og kassere alt vi har lavet
+    siden. Det var derfor et nyt panel kunne forsvinde igen. */
+ lastSync=(svar&&svar[0]&&svar[0].updated_at)||new Date().toISOString();
+ lokalTs=Date.now();
+ dirty=false; hentetFoerst=true; migrateSeen(); autosave(); startSync();
 }
 async function cloudOpen(id){
  const r=await sbFetch('signalflow_projects?id=eq.'+id+'&select=id,name,folder,data');
  if(!r||!r.length)throw new Error('Kunne ikke hente projektet.');
  const d=r[0].data;
- pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); blocks=d.blocks||blankBlocks(); projectName=d.name||r[0].name; cloudId=r[0].id; currentFolder=r[0].folder||'';
+ pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); ryddLuft(pages); blocks=d.blocks||blankBlocks(); projectName=d.name||r[0].name; cloudId=r[0].id; currentFolder=r[0].folder||'';
  activePage=0; doc=pages[0]; path=[]; sel=null; focus=null; undoStack=[];
- draw(); autosave(); lastSync=null; dirty=false; hentetFoerst=false; migrateSeen(); startSync();
+ draw(); autosave();
+ lastSync=null; lokalTs=Date.now(); dirty=false; hentetFoerst=false; migrateSeen(); startSync();
 }
 async function cloudVersions(pid){
  return await sbFetch('signalflow_versions?project_id=eq.'+pid
@@ -4517,7 +4582,7 @@ async function cloudRestore(vid){
  const r=await sbFetch('signalflow_versions?id=eq.'+vid+'&select=data,project_id');
  if(!r||!r.length)throw new Error('Kunne ikke hente versionen.');
  const d=r[0].data;
- pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName; cloudId=r[0].project_id;
+ pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); ryddLuft(pages); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName; cloudId=r[0].project_id;
  activePage=0; doc=pages[0]; path=[]; sel=null; focus=null; undoStack=[];
  draw(); autosave();
 }
@@ -5398,14 +5463,6 @@ function addText(){
    color:'#1d1d1d',bg:'none',align:'left',bold:false,border:false});
  draw();
 }
-function addPanel(){
- snap();
- const s0=dropSpot();
- items().push({id:id(),type:'panel',x:s0.x,y:s0.y,w:430,
-   title:'Intercom panel',addr:'',prows:2,pcols:6,keyColor:'#2e2e2e',
-   keys:Array.from({length:12},()=>({t:'',c:''}))});
- draw();
-}
 function addLegend(){
  snap();
  const s0=dropSpot();
@@ -5553,83 +5610,83 @@ function openPanelValg(){
 
 /* ---- rediger et intercom-panel ---- */
 function editPanel(iid){
- const it=findItem(iid); if(!it)return;
- it.keys=it.keys||[];
- const antal=(+it.prows||2)*(+it.pcols||6);
- while(it.keys.length<antal)it.keys.push({t:'',c:''});
- openModal('Intercom panel', esc(it.title||''), `
+ const start=findItem(iid); if(!start)return;
+
+ /* Vi arbejder på en KOPI. Først når man trykker Gem, skrives den tilbage.
+    Så kan Annullér fortryde alt – også tekst på tasterne. */
+ const f={
+  title:start.title||'',
+  note:start.note||'',
+  prows:+start.prows||2,
+  pcols:+start.pcols||6,
+  scale:+start.scale||1,
+  visnet:start.visnet!==false,
+  pmode:start.pmode||'alt',
+  keyColor:start.keyColor||'#2e2e2e',
+  net:Object.assign({alias:'',model:'',sted:'',ejer:'',til:'',ip:'',gw:'',ext:'',port:'',user:'',pw:''},
+                    start.net||{alias:start.addr||''}),
+  keys:(start.keys||[]).map(k=>({t:k.t||'',c:k.c||''}))
+ };
+ const felt=(navn,label,ph,v)=>`<div class="mf"><label>${label}</label>
+   <input type="text" name="${navn}" value="${esc(v||'')}" placeholder="${esc(ph||'')}" autocomplete="off"></div>`;
+
+ openModal('Intercom panel', esc(f.title||'uden navn'), `
   <div class="mgrid">
-    <div class="mf"><label>Panelets navn</label>
-      <input type="text" name="title" value="${esc(it.title||'')}" placeholder="fx Remote 2 · Lyd"></div>
-    <div class="mf"><label>Alias</label>
-      <input type="text" name="alias" value="${esc((it.net||{}).alias||it.addr||'')}" placeholder="fx R2-LYD"></div>
+    ${felt('title','Panelets navn','fx Remote 2 · Lyd',f.title)}
+    ${felt('alias','Alias','fx R2-LYD',f.net.alias)}
   </div>
   <div class="msec">Om panelet</div>
   <div class="mgrid">
-    <div class="mf"><label>Model</label>
-      <input type="text" name="model" value="${esc((it.net||{}).model||'')}" placeholder="fx Riedel SmartPanel 1200"></div>
-    <div class="mf"><label>Placering</label>
-      <input type="text" name="sted" value="${esc((it.net||{}).sted||'')}" placeholder="fx Remote 2 · lydbord"></div>
+    ${felt('model','Model','fx Riedel SmartPanel 1200',f.net.model)}
+    ${felt('sted','Placering','fx Remote 2 · lydbord',f.net.sted)}
   </div>
   <div class="mgrid">
-    <div class="mf"><label>Bruger</label>
-      <input type="text" name="ejer" value="${esc((it.net||{}).ejer||'')}" placeholder="fx Lydassistent"></div>
-    <div class="mf"><label>Tilsluttet</label>
-      <input type="text" name="til" value="${esc((it.net||{}).til||'')}" placeholder="fx IVC-32 port 12"></div>
+    ${felt('ejer','Bruger','fx Lydassistent',f.net.ejer)}
+    ${felt('til','Tilsluttet','fx IVC-32 port 12',f.net.til)}
   </div>
   <div class="msec">Adresse</div>
   <div class="mgrid">
-    <div class="mf"><label>IP-adresse</label>
-      <input type="text" name="ip" value="${esc((it.net||{}).ip||'')}" placeholder="10.0.12.40"></div>
-    <div class="mf"><label>Gateway</label>
-      <input type="text" name="gw" value="${esc((it.net||{}).gw||'')}" placeholder="10.0.12.1"></div>
+    ${felt('ip','IP-adresse','10.0.12.40',f.net.ip)}
+    ${felt('gw','Gateway','10.0.12.1',f.net.gw)}
   </div>
   <div class="mgrid">
-    <div class="mf"><label>Ekstern IP</label>
-      <input type="text" name="ext" value="${esc((it.net||{}).ext||'')}" placeholder="fx 80.62.x.x"></div>
-    <div class="mf"><label>Port</label>
-      <input type="text" name="port" value="${esc((it.net||{}).port||'')}" placeholder="5060"></div>
+    ${felt('ext','Ekstern IP','fx 80.62.x.x',f.net.ext)}
+    ${felt('port','Port','5060',f.net.port)}
   </div>
   <div class="mgrid">
-    <div class="mf"><label>User ID</label>
-      <input type="text" name="user" value="${esc((it.net||{}).user||'')}" placeholder="254"></div>
-    <div class="mf"><label>Adgangskode</label>
-      <input type="text" name="pw" value="${esc((it.net||{}).pw||'')}" placeholder="valgfri"></div>
+    ${felt('user','User ID','254',f.net.user)}
+    ${felt('pw','Adgangskode','valgfri',f.net.pw)}
   </div>
   <div class="msec">Panelet</div>
   <div class="mgrid">
     <div class="mf"><label>Rækker</label>
-      <input type="number" name="prows" min="1" max="8" value="${+it.prows||2}"></div>
+      <input type="number" name="prows" min="1" max="8" value="${f.prows}"></div>
     <div class="mf"><label>Taster pr. række</label>
-      <input type="number" name="pcols" min="1" max="16" value="${+it.pcols||6}"></div>
+      <input type="number" name="pcols" min="1" max="16" value="${f.pcols}"></div>
   </div>
   <div class="mgrid">
     <div class="mf"><label>Størrelse</label>
       <select name="scale">
-        <option value="1" ${(+it.scale||1)===1?'selected':''}>Normal</option>
-        <option value="0.85" ${(+it.scale||1)==0.85?'selected':''}>Lille</option>
-        <option value="0.7" ${(+it.scale||1)==0.7?'selected':''}>Meget lille</option>
-        <option value="0.55" ${(+it.scale||1)==0.55?'selected':''}>Mindst</option>
+        ${[[1,'Normal'],[0.85,'Lille'],[0.7,'Meget lille'],[0.55,'Mindst']].map(([v,t])=>
+          `<option value="${v}" ${f.scale==v?'selected':''}>${t}</option>`).join('')}
       </select></div>
     <div class="mf"><label>Vis oplysninger på skærmen</label>
       <select name="visnet">
-        <option value="1" ${it.visnet===false?'':'selected'}>Ja</option>
-        <option value="0" ${it.visnet===false?'selected':''}>Nej – kun navn og taster</option>
+        <option value="1" ${f.visnet?'selected':''}>Ja</option>
+        <option value="0" ${f.visnet?'':'selected'}>Nej – kun navn og taster</option>
       </select></div>
   </div>
   <div class="mgrid one">
     <div class="mf"><label>På print og eksport</label>
       <select name="pmode">
-        <option value="alt"    ${(it.pmode||'alt')==='alt'?'selected':''}>Tag det hele med</option>
-        <option value="info"   ${it.pmode==='info'?'selected':''}>Kun oplysninger – uden taster</option>
-        <option value="taster" ${it.pmode==='taster'?'selected':''}>Kun taster – uden oplysninger</option>
-        <option value="navn"   ${it.pmode==='navn'?'selected':''}>Kun navn og adresse i én linje</option>
-        <option value="skjul"  ${it.pmode==='skjul'?'selected':''}>Tag det slet ikke med</option>
+        ${[['alt','Tag det hele med'],['info','Kun oplysninger – uden taster'],
+           ['taster','Kun taster – uden oplysninger'],['navn','Kun navn og adresse i én linje'],
+           ['skjul','Tag det slet ikke med']].map(([v,t])=>
+          `<option value="${v}" ${f.pmode===v?'selected':''}>${t}</option>`).join('')}
       </select></div>
   </div>
-  <div class="mf"><label>Bemærkning under panelet</label>
-    <input type="text" name="note" value="${esc(it.note||'')}" placeholder="valgfri – fx hvem der sidder ved panelet"></div>
-  ${colorField('Tastefarve','keyColor',it.keyColor||'#2e2e2e',
+  ${felt('note','Bemærkning under panelet','valgfri – fx hvem der sidder ved panelet',f.note)}
+  ${colorField('Tastefarve','keyColor',f.keyColor,
     ['#2e2e2e','#1e3a5f','#1e7a55','#8a5a00','#7a1f2b','#4a2d7a','#444'])}
   <div class="msec">Taster</div>
   <div id="pkeylist" class="chklist" style="max-height:260px"></div>
@@ -5641,57 +5698,82 @@ function editPanel(iid){
   </div>`,root=>{
    mountSwatches(root);
    const liste=root.querySelector('#pkeylist');
-   const tegn=()=>{
-    const n=(+val(root,'prows')||2)*(+val(root,'pcols')||6);
-    while(it.keys.length<n)it.keys.push({t:'',c:''});
-    liste.innerHTML=it.keys.slice(0,n).map((k,i)=>`<div class="pkrow">
+
+   /* tegn tastelisten ud fra kopien */
+   const tegnTaster=()=>{
+    const n=Math.max(1,+val(root,'prows')||2)*Math.max(1,+val(root,'pcols')||6);
+    while(f.keys.length<n)f.keys.push({t:'',c:''});
+    liste.innerHTML=f.keys.slice(0,n).map((k,i)=>`<div class="pkrow">
       <span class="pknum">${i+1}</span>
-      <input type="text" class="pktxt" data-kt="${i}" value="${esc(k.t||'')}" placeholder="tekst på tasten">
-      <input type="color" class="pkcol" data-kc="${i}" value="${k.c||it.keyColor||'#2e2e2e'}"
-        title="Farve på denne taste">
+      <input type="text" class="pktxt" data-kt="${i}" value="${esc(k.t||'')}"
+             placeholder="tekst på tasten" autocomplete="off">
+      <input type="color" class="pkcol" data-kc="${i}" value="${k.c||f.keyColor}" title="Farve på denne taste">
       <button class="mini" data-kclr="${i}" title="Brug panelets farve">↺</button>
     </div>`).join('');
-    liste.querySelectorAll('[data-kt]').forEach(inp=>inp.oninput=()=>{it.keys[+inp.dataset.kt].t=inp.value});
-    liste.querySelectorAll('[data-kc]').forEach(inp=>inp.oninput=()=>{it.keys[+inp.dataset.kc].c=inp.value});
-    liste.querySelectorAll('[data-kclr]').forEach(b=>b.onclick=()=>{it.keys[+b.dataset.kclr].c='';tegn()});
+    liste.querySelectorAll('[data-kt]').forEach(inp=>{
+      inp.oninput=()=>{f.keys[+inp.dataset.kt].t=inp.value};
+      inp.onkeydown=e=>{ if(e.key==='Enter'){e.preventDefault(); gem()} };
+    });
+    liste.querySelectorAll('[data-kc]').forEach(inp=>inp.oninput=()=>{f.keys[+inp.dataset.kc].c=inp.value});
+    liste.querySelectorAll('[data-kclr]').forEach(b=>b.onclick=()=>{f.keys[+b.dataset.kclr].c='';tegnTaster()});
    };
-   tegn();
-   root.querySelector('[name="prows"]').oninput=tegn;
-   root.querySelector('[name="pcols"]').oninput=tegn;
-   root.querySelector('[data-cancel]').onclick=()=>{closeModal();draw()};
-   root.querySelector('[data-arch]').onclick=()=>{
-     it.title=val(root,'title');
-     it.net={alias:val(root,'alias'),model:val(root,'model'),sted:val(root,'sted'),
-             ejer:val(root,'ejer'),til:val(root,'til'),
-             ip:val(root,'ip'),gw:val(root,'gw'),ext:val(root,'ext'),
-             port:val(root,'port'),user:val(root,'user'),pw:val(root,'pw')};
-     it.prows=Math.max(1,+val(root,'prows')||2); it.pcols=Math.max(1,+val(root,'pcols')||6);
-     it.keyColor=val(root,'keyColor'); it.note=val(root,'note');
-     panelGem(it).then(()=>{closeModal();draw()});
+   tegnTaster();
+   root.querySelector('[name="prows"]').oninput=tegnTaster;
+   root.querySelector('[name="pcols"]').oninput=tegnTaster;
+
+   /* saml alt fra felterne – læses ALTID direkte fra vinduet */
+   const laes=()=>{
+    liste.querySelectorAll('[data-kt]').forEach(inp=>{f.keys[+inp.dataset.kt].t=inp.value});
+    liste.querySelectorAll('[data-kc]').forEach(inp=>{f.keys[+inp.dataset.kc].c=inp.value});
+    return {
+     title:val(root,'title'),
+     note:val(root,'note'),
+     prows:Math.max(1,+val(root,'prows')||2),
+     pcols:Math.max(1,+val(root,'pcols')||6),
+     scale:+val(root,'scale')||1,
+     visnet:val(root,'visnet')!=='0',
+     pmode:val(root,'pmode')||'alt',
+     keyColor:val(root,'keyColor')||'#2e2e2e',
+     net:{alias:val(root,'alias'),model:val(root,'model'),sted:val(root,'sted'),
+          ejer:val(root,'ejer'),til:val(root,'til'),ip:val(root,'ip'),gw:val(root,'gw'),
+          ext:val(root,'ext'),port:val(root,'port'),user:val(root,'user'),pw:val(root,'pw')},
+     keys:f.keys.map(k=>({t:k.t||'',c:k.c||''}))
+    };
    };
-   root.querySelector('[data-rm]').onclick=()=>{snap();
-     sheet().items=(sheet().items||[]).filter(x=>x.id!==iid);closeModal();draw()};
-   root.querySelector('[data-ok]').onclick=()=>{
+
+   const gem=()=>{
+    const v=laes();
+    /* find boksen forfra – den kan være skiftet ud imens */
+    const maal=findItem(iid);
+    if(!maal){alert('Panelet findes ikke længere på arket.');closeModal();return}
     snap();
-    /* Find boksen forfra – den kan være skiftet ud, mens vinduet stod åbent,
-       fx hvis en kollega har gemt imens. Ellers ville vi skrive i en kopi
-       der ikke længere er en del af arket. */
-    const maal=findItem(iid)||it;
-    if(maal!==it){ maal.keys=it.keys; maal.prows=it.prows; maal.pcols=it.pcols }
-    maal.title=val(root,'title'); maal.note=val(root,'note');
-    maal.net={alias:val(root,'alias'),model:val(root,'model'),sted:val(root,'sted'),
-            ejer:val(root,'ejer'),til:val(root,'til'),
-            ip:val(root,'ip'),gw:val(root,'gw'),ext:val(root,'ext'),
-            port:val(root,'port'),user:val(root,'user'),pw:val(root,'pw')};
+    maal.title=v.title; maal.note=v.note;
+    maal.prows=v.prows; maal.pcols=v.pcols; maal.scale=v.scale;
+    maal.visnet=v.visnet; maal.pmode=v.pmode; maal.keyColor=v.keyColor;
+    maal.net=v.net; maal.keys=v.keys;
     delete maal.addr;
-    maal.prows=Math.max(1,+val(root,'prows')||2);
-    maal.pcols=Math.max(1,+val(root,'pcols')||6);
-    maal.scale=+val(root,'scale')||1;
-    maal.visnet=val(root,'visnet')!=='0';
-    maal.pmode=val(root,'pmode')||'alt';
-    maal.keyColor=val(root,'keyColor');
-    closeModal(); draw();
+    closeModal();
+    draw();
+    /* send op med det samme, så det ikke kun står her på maskinen */
+    if(cloudId&&session()){ dirty=true; push() }
    };
+
+   root.querySelector('[data-ok]').onclick=gem;
+   root.querySelector('[data-cancel]').onclick=closeModal;   // kopien kasseres
+   root.querySelector('[data-rm]').onclick=()=>{
+     if(!confirm('Fjern panelet fra arket?'))return;
+     snap(); sheet().items=(sheet().items||[]).filter(x=>x.id!==iid);
+     closeModal(); draw();
+     if(cloudId&&session()){ dirty=true; push() }
+   };
+   root.querySelector('[data-arch]').onclick=()=>{
+     const v=laes();
+     panelGem(Object.assign({},v,{id:iid}));
+   };
+   /* Enter i et hvilket som helst tekstfelt gemmer */
+   root.querySelectorAll('input[type="text"],input[type="number"]').forEach(inp=>{
+     inp.onkeydown=e=>{ if(e.key==='Enter'){e.preventDefault(); gem()} };
+   });
  });
 }
 
@@ -5787,7 +5869,12 @@ document.getElementById('sheet').addEventListener('mousedown',ev=>{
      setTimeout(()=>{const nx=document.querySelector('[data-pkey="'+iid+'|'+(+k+1)+'"]');
        if(nx)nx.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}))},50)}
   };
-  inp.onblur=()=>{ if(!klar){setTimeout(()=>inp.focus(),0);return} done(true) };
+  inp.onblur=()=>{
+   if(!klar){setTimeout(()=>inp.focus(),0);return}
+   /* slap man musen uden for feltet midt i en markering, så behold feltet */
+   if(trykStart===inp){setTimeout(()=>inp.focus(),0);return}
+   done(true);
+  };
   inp.onmousedown=e=>e.stopPropagation();
   return;
  }
@@ -5802,6 +5889,14 @@ document.getElementById('sheet').addEventListener('mousedown',ev=>{
  const rs=ev.target.closest('[data-rs]');
  if(rs){
   ev.preventDefault();
+  /* to klik i træk på inderkanten fjerner luften mellem boks og signaler */
+  if(ev.detail===2){
+   const [k2,ref2]=rs.dataset.rs.split('|');
+   if(k2==='srcin'||k2==='dstin'){
+    const sc2=sheet().sections.find(s=>s.id===ref2);
+    if(sc2){snap(); if(k2==='srcin')SS(sc2).srcDX=0; else SS(sc2).dstDX=0; draw(); return}
+   }
+  }
   const [kind,ref]=rs.dataset.rs.split('|');
   const sc=sheet().sections.find(s=>s.id===ref);
   const it=kind==='item'?findItem(ref):null;
@@ -5905,9 +6000,9 @@ document.addEventListener('mouseup',()=>{
   }
   d.it.w=Math.max(90,w);
  } else if(d.kind==='srcin'){
-  SS(d.sc).srcDX=parseFloat(d.el.style.marginRight)||0;
+  SS(d.sc).srcDX=Math.min(MAXLUFT,parseFloat(d.el.style.marginRight)||0);
  } else if(d.kind==='dstin'){
-  SS(d.sc).dstDX=parseFloat(d.el.style.marginLeft)||0;
+  SS(d.sc).dstDX=Math.min(MAXLUFT,parseFloat(d.el.style.marginLeft)||0);
  } else {
   const st=SS(d.sc);
   if(d.kind==='src'){st.srcW=d.wNow;st.srcH=d.hNow}else{st.dstW=d.wNow;st.dstH=d.hNow}
@@ -6011,6 +6106,9 @@ el.addEventListener('click',ev=>{
  const t=ev.target;
  /* en taste på et panel redigeres på musetrykket – lad klikket gå forbi */
  if(t.closest('[data-pkey]')||t.closest('.pkedit'))return;
+ /* markerede man tekst i feltet og slap musen ude på arket, er det ikke et
+    klik ved siden af – lad feltet være åbent */
+ if(editing&&trykStart===editing.inp)return;
  if(editing&&t!==editing.inp)commitEdit(true);   // gem det åbne felt før alt andet
  const d=k=>t.closest('['+k+']');
  let n;
@@ -6140,7 +6238,7 @@ document.getElementById('file').onchange=e=>{
  r.onload=()=>{
    try{
      const data=JSON.parse(r.result);
-     pages = sikrePageIds(Array.isArray(data.pages)&&data.pages.length ? data.pages : [data]);
+     pages = sikrePageIds(Array.isArray(data.pages)&&data.pages.length ? data.pages : [data]); ryddLuft(pages);
      plan = data.plan||blankPlan();
      blocks = data.blocks||blankBlocks();  // ældre filer var ét ark uden 'pages'
      projectName = data.name || (f.name||'').replace(/\.json$/i,'').replace(/_/g,' ') || 'Projekt';
@@ -6173,6 +6271,7 @@ function unlock(){
  ensurePlan(); ensureBlocks();
  restoreAuto();
  draw();
+ ryddLuft(pages);
  applyUrl();
  /* Vælg udgave: et tidligere valg tæller kun, hvis skærmen er den samme slags.
     Ellers finder programmet selv ud af det. */
