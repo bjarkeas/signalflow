@@ -377,6 +377,24 @@ body.mobile .fpanel .pnet{gap:3px 10px}
  .fpanel.pr-skjul{display:none!important}
 }
 
+
+/* hvem er inde i projektet */
+#whoson{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden;
+ max-width:330px;flex:0 0 auto;margin-left:auto}
+#whoson:empty{display:none}
+.whoicon{color:var(--intercom);font-size:9px;line-height:1;animation:puls 2.4s infinite}
+@keyframes puls{0%,100%{opacity:.35}50%{opacity:1}}
+.whochip{display:flex;flex-direction:column;gap:0;background:var(--panel2);border:1px solid var(--line);
+ border-radius:7px;padding:3px 9px;line-height:1.2;max-width:150px;flex:0 0 auto}
+.whomore{font-family:var(--fm);font-size:10px;color:var(--faint);flex:0 0 auto}
+.whochip b{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.whochip em{font-style:normal;font-family:var(--fm);font-size:9px;color:var(--faint);
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.mobile #whoson{position:fixed;top:54px;left:0;right:0;z-index:850;background:var(--panel);
+ border-bottom:1px solid var(--line);padding:5px 10px;max-width:none;overflow-x:auto}
+body.mobile #whoson:empty{display:none}
+@media print{#whoson{display:none}}
+
 /* forklaringsboble */
 #tipbox{position:fixed;display:none;z-index:10000;pointer-events:none;max-width:290px;
  background:#0d1219;color:var(--text);border:1px solid var(--line);border-radius:7px;
@@ -964,6 +982,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <button class="hbtn" id="bFoldAll" title="Fold alle grupper sammen eller ud – giver overblik på store ark">⇕</button>
     <button class="hbtn" id="bNew" title="Start forfra med et tomt projekt">Nyt</button>
     <span class="gastmark" title="Du er inde via et delelink og ser kun kanalplanen">delt kanalplan</span>
+    <div id="whoson"></div>
     <span id="autoStatus" title="Autogem i browseren"></span>
     <button class="hbtn" id="bCloud" title="Projekter, mapper og versionshistorik">☁ Projekter</button>
     <button class="hbtn" id="bSave" title="Gem hele projektet – alle sider – som fil på maskinen">Gem fil</button>
@@ -1184,8 +1203,8 @@ const sheet=()=> path.length? path[path.length-1].sub : doc;
 const sheetTitle=()=> path.length? path[path.length-1].label : doc.title;
 function setSheetTitle(v){ if(path.length) path[path.length-1].label=v; else doc.title=v; }
 
-let sidenRettet=null;
-function snap(){sidenRettet=activePage;undoStack.push(JSON.stringify({pages,plan:plan,blocks:blocks,activePage,path:path.map(p=>p.id)}));if(undoStack.length>60)undoStack.shift();document.getElementById('bUndo').disabled=false}
+let sidenRettet=null, blokRettet=null;
+function snap(){sidenRettet=activePage; blokRettet=(view==='blocks')?blockPage:null; undoStack.push(JSON.stringify({pages,plan:plan,blocks:blocks,activePage,path:path.map(p=>p.id)}));if(undoStack.length>60)undoStack.shift();document.getElementById('bUndo').disabled=false}
 function undo(){
  if(!undoStack.length)return;
  const st=JSON.parse(undoStack.pop());
@@ -2041,6 +2060,13 @@ function seedBlocks(){
 }
 
 function blankBlocks(){return {pages:[{id:id(),title:'Fiberplan',nodes:[],links:[]}]}}
+function mergeBlocks(mine,theirs){
+ if(!theirs||!theirs.pages||!theirs.pages.length)return mine;
+ if(!mine||!mine.pages||!mine.pages.length)return theirs;
+ const flettet=mergePages(sikrePageIds(mine.pages),sikrePageIds(theirs.pages));
+ const imgs=Object.assign({},theirs.imgs||{},mine.imgs||{});   // symboler lægges sammen
+ return {pages:flettet.length?flettet:mine.pages, imgs:imgs};
+}
 function ensureBlocks(){
  if(!blocks||!blocks.pages||!blocks.pages.length)blocks=seedBlocks();
  if(blockPage>=blocks.pages.length)blockPage=0;
@@ -2327,6 +2353,8 @@ function drawBlocks(){
  };
  p.nodes.filter(n=>!n.parent).forEach(n=>{h+=nodeHTML(n)});
  h+=`</div></div>`;
+ /* tidsstempel på siden, så to maskiner kan flette hver sin blokside */
+ if(blokRettet!==null){const bs=ensureBlocks().pages[blokRettet]; if(bs)bs.mt=Date.now(); blokRettet=null}
  el2.innerHTML=h;
  drawLinks();
  bindBlocks();
@@ -4091,6 +4119,7 @@ function startGuest(tok){
  }).catch(e=>setSync(e.message,true));
  clearInterval(guestSync);
  guestSync=setInterval(guestPull,6000);
+ if(typeof startPres==='function')startPres();   // gæsten melder også sig selv
 }
 
 /* ================= samtidig redigering =================
@@ -4211,6 +4240,7 @@ async function pullInner(){
       arbejdet blive liggende på maskinen og aldrig nå projektet. */
    plan=mergePlan(ensurePlan(),d0.plan);
    if(d0.pages){const flettet=mergePages(pages,d0.pages); if(flettet.length)pages=flettet}
+   if(d0.blocks)blocks=mergeBlocks(ensureBlocks(),d0.blocks);
    if(activePage>=pages.length)activePage=0;
    doc=pages[activePage];
    const serverDoc=JSON.stringify({p:d0.pages||null,b:d0.blocks||null,pl:d0.plan||null});
@@ -4235,6 +4265,7 @@ async function pullInner(){
 /* tegningen flettes side for side – ikke alt eller intet */
  const aktivId=(pages[activePage]||{}).id;
  if(d.pages){const flettet=mergePages(pages,d.pages); if(flettet.length)pages=flettet}
+ if(d.blocks)blocks=mergeBlocks(ensureBlocks(),d.blocks);
  ryddLuft(pages);
  const nyIdx=pages.findIndex(p=>p.id===aktivId);
  if(nyIdx>=0)activePage=nyIdx;
@@ -4281,7 +4312,64 @@ function setSync(txt,warn){
  n.title=cloudId?('Delt projekt · sidst gemt på serveren '+(d0?d0.toLocaleString('da-DK'):'—')) 
                 :'Gemt lokalt i denne browser';
 }
+
+/* ================= hvem er inde i projektet =================
+   Hver maskine melder sig selv hvert tiende sekund og henter de andres
+   meldinger. Linjer ældre end et minut regnes som gået igen. */
+let presTimer=null, presFolk=[];
+
+function presSted(){
+ if(view==='plan')return 'Kanalplan · '+(PLANDOMS[planDom]||'');
+ if(view==='blocks')return 'Blokdiagram · '+((bp()||{}).title||'');
+ if(view==='arch')return 'Lageret';
+ const sh=pages[activePage]||{};
+ return 'Tegning · '+(sh.title||'');
+}
+async function presMeld(){
+ if(!cloudId&&!guestToken)return;
+ const hvem=(meName()||'').trim();
+ if(!hvem||hvem==='?')return;      // meld først når vi ved hvem det er
+ try{
+  if(guestToken){
+   await rpc('sf_pres_set',{tok:guestToken,hvem:hvem,hvor:presSted()});
+   presFolk=(await rpc('sf_pres_get',{tok:guestToken}))||[];
+  }else{
+   if(!session())return;
+   await sbFetch('signalflow_presence?on_conflict=project_id,who',
+     {method:'POST',headers:{'Prefer':'resolution=merge-duplicates'},
+      body:JSON.stringify({project_id:cloudId,who:hvem,sted:presSted(),at:new Date().toISOString()})});
+   presFolk=(await sbFetch('signalflow_presence?project_id=eq.'+cloudId+'&select=who,sted,at'))||[];
+  }
+  tegnHvemErInde();
+ }catch(e){ /* tilstedeværelse må aldrig stå i vejen for arbejdet */ }
+}
+function startPres(){
+ clearInterval(presTimer);
+ presMeld();
+ presTimer=setInterval(presMeld,10000);
+}
+function tegnHvemErInde(){
+ const el3=document.getElementById('whoson');
+ if(!el3)return;
+ const mig=(meName()||'').toLowerCase();
+ const nu=Date.now();
+ const andre=(presFolk||[]).filter(p=>{
+  if(!p.who||p.who.toLowerCase()===mig)return false;
+  const t=parseTS(p.at); return t && (nu-t.getTime())<60000;
+ });
+ if(!andre.length){el3.innerHTML='';el3.title='';return}
+ const vis=andre.slice(0,3), flere=andre.length-vis.length;
+ el3.innerHTML='<span class="whoicon" title="'+andre.length+' andre er inde i projektet">●</span>'
+  +vis.map(p=>
+   `<span class="whochip" title="${esc(p.who)} arbejder i ${esc(p.sted||'projektet')}">
+      <b>${esc(p.who)}</b><em>${esc((p.sted||'').replace(/^(Tegning|Kanalplan|Blokdiagram) · /,''))}</em>
+    </span>`).join('')
+  +(flere>0?`<span class="whomore" title="${esc(andre.map(p=>p.who+' · '+(p.sted||'')).join('\n'))}">+${flere}</span>`:'');
+ el3.title=andre.map(p=>p.who+' · '+(p.sted||'')).join('\n');
+}
+
 function startSync(){
+ if(typeof startPres==='function')startPres();
  clearInterval(syncTimer);
  if(!cloudId||!session())return;
  pull();
@@ -4509,6 +4597,49 @@ create policy "eq_slet"  on equipment for delete using (true);
 alter table categories enable row level security;
 drop policy if exists "cat_laes" on categories;
 create policy "cat_laes" on categories for select using (true);
+
+-- ===== Hvem er inde i projektet lige nu =====
+-- Hver bruger skriver en linje om sig selv hvert tiende sekund. Linjer der er
+-- ældre end et minut regnes som "gået igen".
+create table if not exists signalflow_presence (
+  project_id uuid not null references signalflow_projects(id) on delete cascade,
+  who text not null,
+  sted text,
+  at timestamptz not null default now(),
+  primary key (project_id, who)
+);
+alter table signalflow_presence enable row level security;
+drop policy if exists "pres_laes" on signalflow_presence;
+drop policy if exists "pres_skriv" on signalflow_presence;
+drop policy if exists "pres_ret" on signalflow_presence;
+drop policy if exists "pres_slet" on signalflow_presence;
+create policy "pres_laes"  on signalflow_presence for select using (auth.uid() is not null);
+create policy "pres_skriv" on signalflow_presence for insert with check (auth.uid() is not null);
+create policy "pres_ret"   on signalflow_presence for update using (auth.uid() is not null);
+create policy "pres_slet"  on signalflow_presence for delete using (auth.uid() is not null);
+
+-- Gæster på et delelink har ikke login, så de går gennem disse to funktioner.
+create or replace function sf_pres_set(tok uuid, hvem text, hvor text)
+returns void language plpgsql security definer set search_path = public as $$
+declare pid uuid;
+begin
+  select id into pid from signalflow_projects where share_token = tok;
+  if pid is null then return; end if;
+  insert into signalflow_presence(project_id, who, sted, at)
+  values (pid, coalesce(nullif(hvem,''),'gæst'), hvor, now())
+  on conflict (project_id, who) do update set sted = excluded.sted, at = now();
+end $$;
+
+create or replace function sf_pres_get(tok uuid)
+returns table(who text, sted text, at timestamptz)
+language sql security definer set search_path = public as $$
+  select p.who, p.sted, p.at
+    from signalflow_presence p
+    join signalflow_projects pr on pr.id = p.project_id
+   where pr.share_token = tok and p.at > now() - interval '1 minute';
+$$;
+grant execute on function sf_pres_set(uuid, text, text) to anon, authenticated;
+grant execute on function sf_pres_get(uuid) to anon, authenticated;
 
 -- Delelink til kanalplanen: gæsten ser KUN planen, og kun for det ene projekt.
 alter table signalflow_projects add column if not exists share_token uuid;
