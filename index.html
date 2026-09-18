@@ -1072,7 +1072,15 @@ const DOT={video:'#ff5252',lyd:'#ffb648',intercom:'#3fd99c',net:'#5ea3ff'};
 const TRANSPORTS=['EPL','Internet','SAT','GC Fiber','Fiber','Trådløs','Kabel','—'];
 let seq=1; const id=()=>'x'+(seq++)+Date.now().toString(36).slice(-3);
 
-const newSheet=(title='Nyt ark')=>({title,sections:[]});
+const newSheet=(title='Nyt ark')=>({id:id(),title,sections:[]});
+
+/* Ældre projekter har sider uden id. Uden id kan to maskiner ikke se, at det
+   er den SAMME side – og så kan en rettelse gå tabt ved fletning. Vi giver dem
+   et fast id ud fra pladsen, så begge maskiner når frem til det samme. */
+function sikrePageIds(liste){
+ (liste||[]).forEach((p,i)=>{ if(p&&!p.id)p.id='side'+(i+1) });
+ return liste;
+}
 const newSection=(dst='Modtager',src='Afsender')=>({id:id(),src,dst,groups:[]});
 const newGroup=(label='Ny kilde')=>({id:id(),label,feed:'TX 1',layer:'video',transport:'EPL',role:'primær',channels:[],sub:null});
 
@@ -1178,7 +1186,8 @@ const sheet=()=> path.length? path[path.length-1].sub : doc;
 const sheetTitle=()=> path.length? path[path.length-1].label : doc.title;
 function setSheetTitle(v){ if(path.length) path[path.length-1].label=v; else doc.title=v; }
 
-function snap(){undoStack.push(JSON.stringify({pages,plan:plan,blocks:blocks,activePage,path:path.map(p=>p.id)}));if(undoStack.length>60)undoStack.shift();document.getElementById('bUndo').disabled=false}
+let sidenRettet=null;
+function snap(){sidenRettet=activePage;undoStack.push(JSON.stringify({pages,plan:plan,blocks:blocks,activePage,path:path.map(p=>p.id)}));if(undoStack.length>60)undoStack.shift();document.getElementById('bUndo').disabled=false}
 function undo(){
  if(!undoStack.length)return;
  const st=JSON.parse(undoStack.pop());
@@ -1359,6 +1368,8 @@ function draw(keepSide){
  (sh.items||[]).filter(i=>!i.anchor).forEach(it=>{ h+=itemHTML(it,false) });
 
  el.innerHTML=h;
+ /* markér hvilken side der blev rettet, så fletningen kan se hvem der er nyest */
+ if(sidenRettet!==null&&pages[sidenRettet]){pages[sidenRettet].mt=Date.now();sidenRettet=null}
  fitBoxes();
  crumbs(); if(!keepSide) side(); renderTabs();
  if(typeof mobilTitel==='function')mobilTitel();
@@ -4040,6 +4051,29 @@ let pushTimer=null, syncTimer=null, dirty=false;
 
 function planDevices(pl,k){return (pl&&pl[k]&&pl[k].devices)||[]}
 
+/* Tegningens sider flettes side for side: den nyeste udgave af HVER side
+   vinder. Så mister man ikke sit arbejde, fordi en kollega rettede på en
+   anden side og gemte lige efter. */
+function mergePages(mine,theirs){
+ sikrePageIds(mine); sikrePageIds(theirs);
+ if(!theirs||!theirs.length)return (mine&&mine.length)?mine:(theirs||[]);
+ if(!mine||!mine.length)return theirs;
+ const set={}, order=[], uden=[];
+ /* En side uden id kan vi ikke parre – den beholdes som den er, aldrig smides væk. */
+ mine.forEach(p=>{
+  if(!p)return;
+  if(!p.id){uden.push(p);return}
+  set[p.id]=p; order.push(p.id);
+ });
+ theirs.forEach(p=>{
+  if(!p||!p.id)return;
+  if(!set[p.id]){set[p.id]=p;order.push(p.id);return}
+  if((p.mt||0)>(set[p.id].mt||0))set[p.id]=p;     // deres udgave er nyere
+ });
+ const ud=uden.concat(order.map(i=>set[i]));
+ return ud.length?ud:(mine||theirs||[]);          // aldrig et tomt resultat
+}
+
 function mergePlan(mine,theirs){
  if(!theirs)return mine;
  if(!mine)return theirs;
@@ -4082,6 +4116,10 @@ async function pull(){
  try{ return await pullInner() } finally { applyingRemote=false }
 }
 async function pullInner(){
+ /* Står et redigeringsvindue åbent, arbejder brugeren i en bestemt boks.
+    Henter vi projektet om under fødderne på ham, skriver han bagefter i en
+    kopi der ikke længere findes – og rettelsen forsvinder. Vi venter. */
+ if(mEl&&mEl.classList.contains('on'))return;
  let r;
  try{ r=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=updated_at,updated_by'); }
  catch(e){ setSync('ingen forbindelse',true); return; }
@@ -4117,6 +4155,9 @@ async function pullInner(){
       Så flettes serverens ind, og VORES sendes op bagefter. Ellers ville
       arbejdet blive liggende på maskinen og aldrig nå projektet. */
    plan=mergePlan(ensurePlan(),d0.plan);
+   if(d0.pages){const flettet=mergePages(pages,d0.pages); if(flettet.length)pages=flettet}
+   if(activePage>=pages.length)activePage=0;
+   doc=pages[activePage];
    const serverDoc=JSON.stringify({p:d0.pages||null,b:d0.blocks||null,pl:d0.plan||null});
    const voresDoc=JSON.stringify({p:pages,b:ensureBlocks(),pl:plan});
    if(serverDoc!==voresDoc){ dirty=true; setSync('sender dine ændringer op …'); push(); }
@@ -4128,7 +4169,7 @@ async function pullInner(){
  const d=full[0].data||{};
  const foc=focusedRef();
  const keep=foc&&foc.dataset.plabel?{ref:foc.dataset.plabel,val:foc.value}:null;
- const serverPlan=JSON.stringify(d.plan||null);
+ const serverDoc=JSON.stringify({p:d.pages||null,pl:d.plan||null,b:d.blocks||null});
  plan=mergePlan(ensurePlan(),d.plan);
  if(keep){
   const [did,side,pid]=keep.ref.split('|');
@@ -4136,15 +4177,20 @@ async function pullInner(){
   const p=dv&&dv[side].find(x=>x.id===pid);
   if(p)p.label=keep.val;      // det man er i gang med at skrive, vinder
  }
- if(!dirty&&d.pages)pages=d.pages;          // tegningen tages kun hvis vi ikke selv har rettet
+/* tegningen flettes side for side – ikke alt eller intet */
+ const aktivId=(pages[activePage]||{}).id;
+ if(d.pages){const flettet=mergePages(pages,d.pages); if(flettet.length)pages=flettet}
+ const nyIdx=pages.findIndex(p=>p.id===aktivId);
+ if(nyIdx>=0)activePage=nyIdx;
  if(!dirty&&d.name)projectName=d.name;
  if(activePage>=pages.length)activePage=0;
  doc=pages[activePage];
  lastSync=full[0].updated_at;
  setSync('opdateret · '+(full[0].updated_by||''));
- /* Har vi noget efter fletningen, som serveren ikke har, skal det sendes op.
-    Ellers ville vores rettelse kun findes her på maskinen. */
- if(JSON.stringify(plan)!==serverPlan)dirty=true;
+ /* Har vi noget efter fletningen, som serveren ikke har – i tegningen, i
+    kanalplanen eller i blokdiagrammet – skal det sendes op. Ellers ville
+    vores rettelse kun findes her på maskinen. */
+ if(JSON.stringify({p:pages,pl:plan,b:blocks||null})!==serverDoc)dirty=true;
  autosave();
  if(view==='plan')syncPlanDOM(); else if(view==='blocks'){if(!bdrag&&!linkFrom)drawBlocks()} else draw();
  if(dirty)push();                            // send vores egne rettelser videre
@@ -4233,7 +4279,7 @@ function restoreAuto(){
   const d=JSON.parse(raw);
   if(!d.pages||!d.pages.length)return false;
   lokalTs=+d.ts||0;
-  pages=d.pages; plan=d.plan||blankPlan(); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName; cloudId=d.cloudId||null;
+  pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName; cloudId=d.cloudId||null;
   activePage=0; doc=pages[0];
   const when=new Date(d.ts||Date.now());
   setAuto('genoptaget '+when.toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}));
@@ -4459,7 +4505,7 @@ async function cloudOpen(id){
  const r=await sbFetch('signalflow_projects?id=eq.'+id+'&select=id,name,folder,data');
  if(!r||!r.length)throw new Error('Kunne ikke hente projektet.');
  const d=r[0].data;
- pages=d.pages; plan=d.plan||blankPlan(); blocks=d.blocks||blankBlocks(); projectName=d.name||r[0].name; cloudId=r[0].id; currentFolder=r[0].folder||'';
+ pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); blocks=d.blocks||blankBlocks(); projectName=d.name||r[0].name; cloudId=r[0].id; currentFolder=r[0].folder||'';
  activePage=0; doc=pages[0]; path=[]; sel=null; focus=null; undoStack=[];
  draw(); autosave(); lastSync=null; dirty=false; hentetFoerst=false; migrateSeen(); startSync();
 }
@@ -4471,7 +4517,7 @@ async function cloudRestore(vid){
  const r=await sbFetch('signalflow_versions?id=eq.'+vid+'&select=data,project_id');
  if(!r||!r.length)throw new Error('Kunne ikke hente versionen.');
  const d=r[0].data;
- pages=d.pages; plan=d.plan||blankPlan(); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName; cloudId=r[0].project_id;
+ pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName; cloudId=r[0].project_id;
  activePage=0; doc=pages[0]; path=[]; sel=null; focus=null; undoStack=[];
  draw(); autosave();
 }
@@ -5627,18 +5673,23 @@ function editPanel(iid){
      sheet().items=(sheet().items||[]).filter(x=>x.id!==iid);closeModal();draw()};
    root.querySelector('[data-ok]').onclick=()=>{
     snap();
-    it.title=val(root,'title'); it.note=val(root,'note');
-    it.net={alias:val(root,'alias'),model:val(root,'model'),sted:val(root,'sted'),
+    /* Find boksen forfra – den kan være skiftet ud, mens vinduet stod åbent,
+       fx hvis en kollega har gemt imens. Ellers ville vi skrive i en kopi
+       der ikke længere er en del af arket. */
+    const maal=findItem(iid)||it;
+    if(maal!==it){ maal.keys=it.keys; maal.prows=it.prows; maal.pcols=it.pcols }
+    maal.title=val(root,'title'); maal.note=val(root,'note');
+    maal.net={alias:val(root,'alias'),model:val(root,'model'),sted:val(root,'sted'),
             ejer:val(root,'ejer'),til:val(root,'til'),
             ip:val(root,'ip'),gw:val(root,'gw'),ext:val(root,'ext'),
             port:val(root,'port'),user:val(root,'user'),pw:val(root,'pw')};
-    delete it.addr;
-    it.prows=Math.max(1,+val(root,'prows')||2);
-    it.pcols=Math.max(1,+val(root,'pcols')||6);
-    it.scale=+val(root,'scale')||1;
-    it.visnet=val(root,'visnet')!=='0';
-    it.pmode=val(root,'pmode')||'alt';
-    it.keyColor=val(root,'keyColor');
+    delete maal.addr;
+    maal.prows=Math.max(1,+val(root,'prows')||2);
+    maal.pcols=Math.max(1,+val(root,'pcols')||6);
+    maal.scale=+val(root,'scale')||1;
+    maal.visnet=val(root,'visnet')!=='0';
+    maal.pmode=val(root,'pmode')||'alt';
+    maal.keyColor=val(root,'keyColor');
     closeModal(); draw();
    };
  });
@@ -6089,7 +6140,7 @@ document.getElementById('file').onchange=e=>{
  r.onload=()=>{
    try{
      const data=JSON.parse(r.result);
-     pages = Array.isArray(data.pages)&&data.pages.length ? data.pages : [data];
+     pages = sikrePageIds(Array.isArray(data.pages)&&data.pages.length ? data.pages : [data]);
      plan = data.plan||blankPlan();
      blocks = data.blocks||blankBlocks();  // ældre filer var ét ark uden 'pages'
      projectName = data.name || (f.name||'').replace(/\.json$/i,'').replace(/_/g,' ') || 'Projekt';
