@@ -1385,7 +1385,8 @@ function draw(keepSide){
 
    h+=`<div class="grpfoot">
       <button class="add" data-addch="${g.id}" title="Tilføj en kanal til denne gruppe">+ kanal</button>
-      <button class="drill" data-drill="${g.id}" title="Åbn et underark for denne gruppe – fx hvad der sidder i racket">⊞ åbn ${g.sub?'('+g.sub.sections.reduce((a,s)=>a+s.groups.length,0)+')':''}</button>
+${(g.sub&&g.sub.sections&&g.sub.sections.some(s=>(s.groups||[]).length))?
+      `<button class="drill" data-drill="${g.id}" title="Denne gruppe har et underark med ${g.sub.sections.reduce((a,s)=>a+s.groups.length,0)} grupper – klik for at åbne det">⊞ underark (${g.sub.sections.reduce((a,s)=>a+s.groups.length,0)})</button>`:''}
      </div></div>`;
   });
 
@@ -3430,8 +3431,6 @@ function applyUrl(){
 
 /* ---- grundudstyr og stik lægges i arkivet første gang ---- */
 /* ---- sidst brugt ---- */
-const LS_RECENT='signalflow:recent';
-function recentList(){try{return JSON.parse(load(LS_RECENT)||'[]')}catch(e){return []}}
 
 
 
