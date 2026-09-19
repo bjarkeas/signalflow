@@ -658,6 +658,10 @@ body.guest .gastmark{display:inline-flex}
 .dev:hover .devacts .mini{opacity:1}
 
 .ports{display:grid;grid-template-columns:1fr 1fr;gap:0}
+/* Har kortet kun input eller kun output, skal den tomme halvdel ikke fylde. */
+.ports.enkelt{grid-template-columns:1fr}
+.ingenlinjer{padding:16px 14px;font-family:var(--fm);font-size:11px;color:var(--faint);
+ display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .portcol{padding:9px 8px 11px;min-width:0}
 .portcol.ins{border-right:1px solid var(--line)}
 .portitle{font-family:var(--fd);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;
@@ -2247,6 +2251,18 @@ function focusedRef(){
  if(!a)return null;
  return a.dataset&&(a.dataset.plabel||a.dataset.pnum||a.dataset.dname||a.dataset.dplace)?a:null;
 }
+/* Hvad er brugeren lige nu i gang med at skrive?
+   Vi kan ikke bruge "hvilket felt har fokus", for en gentegning flytter fokus.
+   I stedet husker vi det sidste felt der blev TASTET i, og hvor længe siden. */
+let skriver={ref:null,val:'',ts:0};
+document.addEventListener('input',e=>{
+ const t=e.target;
+ if(t&&t.dataset&&t.dataset.plabel)skriver={ref:t.dataset.plabel,val:t.value,ts:Date.now()};
+},true);
+const SKRIVEVINDUE=12000;     // i 12 sekunder regner vi feltet for "i brug"
+function skriverSelv(ref){
+ return !!ref && skriver.ref===ref && (Date.now()-skriver.ts)<SKRIVEVINDUE;
+}
 
 function planStructure(){
  return (Object.keys(PLANDOMS).map(k=>
@@ -2968,18 +2984,35 @@ function printBlocks(){
  const c=document.getElementById('bcanvas');
  if(!c)return;
  const w=Math.max(c.scrollWidth,900), hgt=Math.max(c.scrollHeight,600);
- document.getElementById('printroot').innerHTML=
-  `<div class="psheet blockprint"><div class="sheettitle">${esc(projectName)} · ${esc(bp().title)}</div>
-   <div class="bcanvas printed" style="width:${w}px;height:${hgt}px">${c.innerHTML}</div></div>`;
  const padPx=8*96/25.4;
- const k=Math.min(1,(420*96/25.4)/(w+2*padPx));
+ const sideB=420*96/25.4, sideH=297*96/25.4;     // A3 liggende
+ /* Skalér så hele diagrammet er der – både i bredden og højden. Vi bruger
+    transform frem for zoom, fordi Safari ikke regner zoom med ved print. */
+ const k=Math.max(0.2,Math.min((sideB-2*padPx)/w,(sideH-2*padPx-26)/hgt,1.8));
+ const bredde=w*k, hoejde=hgt*k;
+ document.getElementById('printroot').innerHTML=
+  `<div class="psheet blockprint" style="width:${sideB}px;height:${(sideH-2).toFixed(0)}px">
+     <div class="sheettitle">${esc(projectName)} · ${esc(bp().title)}</div>
+     <div class="pfit" style="width:${bredde}px;height:${hoejde}px;overflow:hidden;
+          margin:0 auto">
+       <div class="pfitin" style="width:${w}px;height:${hgt}px;transform:scale(${k.toFixed(4)});transform-origin:top left">
+         <div class="bcanvas printed" style="width:${w}px;height:${hgt}px">${c.innerHTML}</div>
+       </div>
+     </div>
+   </div>`;
  document.getElementById('pagestyle').textContent=
   `@page{size:A3 landscape;margin:0}
-   @media print{#printroot{width:${w+2*padPx}px;zoom:${k.toFixed(4)}}
-                .psheet{margin:${padPx}px}}`;
+   @media print{
+     html,body{margin:0!important;padding:0!important}
+     #printroot{width:${sideB}px;margin:0}
+     .psheet{padding:${padPx}px;box-sizing:border-box;overflow:hidden;margin:0;
+             break-inside:avoid;page-break-inside:avoid;
+             break-before:page;page-break-before:always;
+             break-after:auto;page-break-after:auto}
+     .psheet:first-child{break-before:auto;page-break-before:auto}
+   }`;
  const navn=projectName+' – Blokdiagram – '+bp().title;
- setTimeout(()=>{printSom(navn,()=>window.print());
-   setTimeout(()=>{document.getElementById('printroot').innerHTML=''},600)},150);
+ setTimeout(()=>{printSom(navn,()=>window.print()); rydEfterPrint()},150);
 }
 
 /* ---- tegn kanalplanen ---- */
@@ -3062,9 +3095,14 @@ function drawPlan(){
         <button class="mini" data-ddel="${dv.id}" title="Slet kortet og alle dets linjer">✕</button>
       </div>
     </div>
-    <div class="ports">
-      ${portList(dv,'ins','Input')}
-      ${portList(dv,'outs','Output')}
+    <div class="ports ${(ports(dv,'ins').length&&ports(dv,'outs').length)?'':'enkelt'}">
+      ${ports(dv,'ins').length?portList(dv,'ins','Input'):''}
+      ${ports(dv,'outs').length?portList(dv,'outs','Output'):''}
+      ${(!ports(dv,'ins').length&&!ports(dv,'outs').length)?
+        `<div class="ingenlinjer">Ingen linjer endnu
+           <button class="add" data-padd="${dv.id}|ins">+ input</button>
+           <button class="add" data-padd="${dv.id}|outs">+ output</button>
+         </div>`:''}
     </div>
     <span class="rs" data-devrs="${dv.id}" title="Træk for at gøre kortet bredere eller smallere"></span>
   </div>`;
@@ -3550,7 +3588,7 @@ function bindArchive(){
  const nb=el2.querySelector('#archnew');
  if(nb)nb.onclick=async()=>{
    try{
-    const r=await sbFetch('equipment',{method:'POST',body:JSON.stringify(
+    const r=await sbFetch('equipment?select=id',{method:'POST',body:JSON.stringify(
       {name:'Nyt udstyr',category:lagCat||(lagerCats[0]&&lagerCats[0].name)||'Udstyr',qty:1,
        tech:{ins:[],outs:[],conIn:'',conOut:''},custom_fields:[]})});
     lagerRows=await lagerList(true); lagSel=r[0].id; lagDirty=false; drawArchive();
@@ -3622,7 +3660,7 @@ function bindArchive(){
    cfSet(cur,'Stik ind',t.conIn);
    cfSet(cur,'Stik ud',t.conOut);
    try{
-    await sbFetch('equipment?id=eq.'+cur.id,{method:'PATCH',body:JSON.stringify(
+    await sbFetch('equipment?id=eq.'+cur.id+'&select=id',{method:'PATCH',body:JSON.stringify(
       {name:cur.name,category:cur.category,qty:cur.qty,serial_number:cur.serial_number||null,
        image_url:cur.image_url||null,tech:cur.tech||null,
        custom_fields:(cur.custom_fields||[]).filter(f=>(f.label||'').trim()||(f.value||'').trim())})});
@@ -3632,7 +3670,7 @@ function bindArchive(){
  const du=el2.querySelector('#ae-dup');
  if(du)du.onclick=async()=>{
    try{
-    const r=await sbFetch('equipment',{method:'POST',body:JSON.stringify(
+    const r=await sbFetch('equipment?select=id',{method:'POST',body:JSON.stringify(
       {name:(cur.name||'Udstyr')+' (kopi)',category:cur.category,qty:cur.qty,
        image_url:cur.image_url||null,tech:cur.tech||null,custom_fields:cur.custom_fields||[]})});
     lagerRows=await lagerList(true); lagSel=r[0].id; drawArchive();
@@ -4084,8 +4122,19 @@ async function rpc(fn,body){
  return t?JSON.parse(t):null;
 }
 
+let guestTsVirker=true;
 async function guestPull(){
  if(!guestToken)return;
+ /* Spørg først om ét tidsstempel. Er der ikke sket noget, henter vi ikke
+    planen igen. Før hentede gæsten hele planen hvert sjette sekund – også
+    når intet var ændret. */
+ if(guestTsVirker&&lastSync&&plan){
+  try{
+   const t=await rpc('sf_plan_ts',{tok:guestToken});
+   const ts=Array.isArray(t)?(t[0]&&(t[0].ts||t[0].sf_plan_ts)):t;
+   if(ts&&ts===lastSync){guestReady=true;setSync('opdateret');return}
+  }catch(e){ guestTsVirker=false; }   // findes funktionen ikke, gør vi som før
+ }
  let rows;
  try{ rows=await rpc('sf_plan_get',{tok:guestToken}) }
  catch(e){ setSync(e.message,true); return }
@@ -4095,13 +4144,24 @@ async function guestPull(){
  projectName=row.name||'Kanalplan';
  if(row.updated_at===lastSync&&plan)return;
  const foc=focusedRef();
- const keep=foc&&foc.dataset.plabel?{ref:foc.dataset.plabel,val:foc.value}:null;
+ const aktivRef=(foc&&foc.dataset.plabel)||(skriverSelv(skriver.ref)?skriver.ref:null);
+ const keep=aktivRef?{ref:aktivRef,
+                      val:(foc&&foc.dataset.plabel===aktivRef)?foc.value:skriver.val,
+                      felt:document.querySelector('[data-plabel="'+CSS.escape(aktivRef)+'"]'),
+                      skriver:skriverSelv(aktivRef)}:null;
  plan=mergePlan(plan||blankPlan(), row.plan||blankPlan());
  if(keep){
   const [did,side,pid]=keep.ref.split('|');
   const dv=(planDevices(plan,planDom)||[]).find(x=>x.id===did);
   const p=dv&&dv[side].find(x=>x.id===pid);
-  if(p)p.label=keep.val;
+  if(p){
+   if(keep.skriver){
+    /* Vores egen igangværende tekst vinder – og den skal stemples som den
+       nyeste, ellers ville kollegaens ældre rettelse vinde ved næste gem. */
+    p.label=keep.val; p.at=Date.now(); p.by=meName();
+    dirty=true;
+   }else if(keep.felt&&keep.felt.value!==(p.label||''))keep.felt.value=p.label||'';
+  }
  }
  lastSync=row.updated_at;
  setSync('opdateret');
@@ -4223,9 +4283,13 @@ async function pullInner(){
  if(!r||!r.length)return;
  const t=r[0].updated_at;
  pollN++;
- /* Står tidsstemplet stille (fx hvis triggeren ikke er kørt), henter vi alligevel
-    hele projektet en gang imellem og sammenligner indholdet. */
- const forced = (pollN%4===0);
+ /* Står tidsstemplet stille, er der ikke sket noget – så henter vi ingenting.
+    Hvert eneste skriv sætter updated_at (både klienten og en trigger i basen),
+    så tidsstemplet er en pålidelig nøgle. Tidligere hentede vi hele projektet
+    hvert 24. sekund "for en sikkerheds skyld"; på et projekt med billeder
+    kostede det over 100 MB om dagen pr. bruger. Sikkerhedsnettet er i stedet
+    et fuldt tjek hvert tiende minut. */
+ const forced = (pollN%100===0);
  if(lastSync&&t===lastSync&&!forced){hentetFoerst=true;setSync('opdateret');return}
  const full=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=name,data,updated_at,updated_by');
  if(lastSync&&t===lastSync&&forced){
@@ -4266,14 +4330,25 @@ async function pullInner(){
   return;}
  const d=full[0].data||{};
  const foc=focusedRef();
- const keep=foc&&foc.dataset.plabel?{ref:foc.dataset.plabel,val:foc.value}:null;
+ const aktivRef=(foc&&foc.dataset.plabel)||(skriverSelv(skriver.ref)?skriver.ref:null);
+ const keep=aktivRef?{ref:aktivRef,
+                      val:(foc&&foc.dataset.plabel===aktivRef)?foc.value:skriver.val,
+                      felt:document.querySelector('[data-plabel="'+CSS.escape(aktivRef)+'"]'),
+                      skriver:skriverSelv(aktivRef)}:null;
  const serverDoc=JSON.stringify({p:d.pages||null,pl:d.plan||null,b:d.blocks||null});
  plan=mergePlan(ensurePlan(),d.plan);
  if(keep){
   const [did,side,pid]=keep.ref.split('|');
   const dv=(planDevices(plan,planDom)||[]).find(x=>x.id===did);
   const p=dv&&dv[side].find(x=>x.id===pid);
-  if(p)p.label=keep.val;      // det man er i gang med at skrive, vinder
+  if(p){
+   if(keep.skriver){
+    /* Vores egen igangværende tekst vinder – og den skal stemples som den
+       nyeste, ellers ville kollegaens ældre rettelse vinde ved næste gem. */
+    p.label=keep.val; p.at=Date.now(); p.by=meName();
+    dirty=true;
+   }else if(keep.felt&&keep.felt.value!==(p.label||''))keep.felt.value=p.label||'';
+  }
  }
 /* tegningen flettes side for side – ikke alt eller intet */
  const aktivId=(pages[activePage]||{}).id;
@@ -4302,6 +4377,12 @@ function push(){
  pushTimer=setTimeout(async()=>{
   if(!cloudId||!session()||!dirty)return;
   try{
+   /* Hent serverens udgave og flet ind FØR vi skriver. Hele dokumentet
+      skrives på én gang, så uden det ville vi slette de rettelser en
+      kollega eller en gæst har lavet i mellemtiden. */
+   setSync('henter først …');
+   try{ await pull() }catch(e){}
+   if(!dirty)return;
    setSync('gemmer …');
    await cloudSaveQuiet();
    dirty=false;
@@ -4311,7 +4392,10 @@ function push(){
 }
 async function cloudSaveQuiet(){
  const who=cfg().who||userName().split('@')[0]||'';
- const r=await sbFetch('signalflow_projects?id=eq.'+cloudId,
+ /* Uden select= sender serveren HELE projektet retur ved hver gemning – på et
+    projekt med billeder er det over 100 KB vi ikke bruger til noget. Vi beder
+    kun om tidsstemplet. */
+ const r=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=updated_at',
    {method:'PATCH',body:JSON.stringify({name:projectName,data:snapshot(),updated_by:who,updated_at:new Date().toISOString()})});
  if(r&&r.length&&r[0].updated_at)lastSync=r[0].updated_at;
 }
@@ -4348,7 +4432,7 @@ async function presMeld(){
    presFolk=(await rpc('sf_pres_get',{tok:guestToken}))||[];
   }else{
    if(!session())return;
-   await sbFetch('signalflow_presence?on_conflict=project_id,who',
+   await sbFetch('signalflow_presence?on_conflict=project_id,who&select=who',
      {method:'POST',headers:{'Prefer':'resolution=merge-duplicates'},
       body:JSON.stringify({project_id:cloudId,who:hvem,sted:presSted(),at:new Date().toISOString()})});
    presFolk=(await sbFetch('signalflow_presence?project_id=eq.'+cloudId+'&select=who,sted,at'))||[];
@@ -4611,6 +4695,13 @@ alter table categories enable row level security;
 drop policy if exists "cat_laes" on categories;
 create policy "cat_laes" on categories for select using (true);
 
+-- Gæsten spørger først om tidsstemplet, så planen kun hentes når den er ændret.
+create or replace function sf_plan_ts(tok uuid)
+returns timestamptz language sql security definer set search_path = public as $$
+  select p.updated_at from signalflow_projects p where p.share_token = tok
+$$;
+grant execute on function sf_plan_ts(uuid) to anon, authenticated;
+
 -- ===== Hvem er inde i projektet lige nu =====
 -- Hver bruger skriver en linje om sig selv hvert tiende sekund. Linjer der er
 -- ældre end et minut regnes som "gået igen".
@@ -4692,15 +4783,15 @@ async function cloudSave(asNew,note){
  const body={name:projectName,data:snapshot(),updated_by:who,updated_at:new Date().toISOString()};
  let svar=null;
  if(cloudId&&!asNew){
-  svar=await sbFetch('signalflow_projects?id=eq.'+cloudId,{method:'PATCH',body:JSON.stringify(body)});
+  svar=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=id,updated_at',{method:'PATCH',body:JSON.stringify(body)});
   if(!svar||!svar.length)throw new Error('Projektet findes ikke længere i databasen.');
  }else{
   body.folder=currentFolder||null;
-  svar=await sbFetch('signalflow_projects',{method:'POST',body:JSON.stringify(body)});
+  svar=await sbFetch('signalflow_projects?select=id,updated_at',{method:'POST',body:JSON.stringify(body)});
   cloudId=svar[0].id;
  }
  /* hver gemning lægger sig som en version, så man altid kan gå tilbage */
- await sbFetch('signalflow_versions',{method:'POST',body:JSON.stringify(
+ await sbFetch('signalflow_versions?select=id',{method:'POST',body:JSON.stringify(
    {project_id:cloudId,data:snapshot(),note:note||'',created_by:who})});
  /* Husk hvad serveren svarede. Nulstillede vi tidsstemplet, ville næste
     synkronisering tro at serveren var nyere – og kassere alt vi har lavet
@@ -5073,7 +5164,7 @@ async function lagerSaveFromDevice(dv){
    custom_fields:[{label:'Inputs',value:String(alive(dv.ins).length)},
                   {label:'Outputs',value:String(alive(dv.outs).length)}]};
  try{
-  await sbFetch('equipment',{method:'POST',body:JSON.stringify(row)});
+  await sbFetch('equipment?select=id',{method:'POST',body:JSON.stringify(row)});
   lagerRows=null; setSync('lagt på lageret');
  }catch(e){alert(e.message)}
 }
@@ -5193,6 +5284,29 @@ async function saveNow(){
 
 /* ================= eksport ================= */
 
+/* ---- ryd udskriften væk igen ----
+   På en computer står JavaScript stille, mens printvinduet er åbent, så en
+   timer på et halvt sekund var nok. På iPhone vender window.print() tilbage
+   med det samme, og PDF'en dannes bagefter – så nåede vi at slette indholdet,
+   og siden blev blank. Nu ryddes der først, når udskriften er færdig. */
+let printRydTimer=null;
+function rydEfterPrint(){
+ clearTimeout(printRydTimer);
+ const ryd=()=>{
+  clearTimeout(printRydTimer);
+  const r=document.getElementById('printroot');
+  if(r)r.innerHTML='';
+  window.removeEventListener('afterprint',ryd);
+  if(mq&&mq.removeEventListener)mq.removeEventListener('change',vedSkift);
+ };
+ const vedSkift=e=>{ if(!e.matches)ryd() };      // vi forlod print-visningen
+ const mq=window.matchMedia?window.matchMedia('print'):null;
+ window.addEventListener('afterprint',ryd);
+ if(mq&&mq.addEventListener)mq.addEventListener('change',vedSkift);
+ printRydTimer=setTimeout(ryd,120000);            // nødbremse efter to minutter
+}
+
+
 /* ---- navngivning af udskrifter og filer ----
    Browseren foreslår sidens titel som filnavn, når man gemmer som PDF.
    Derfor sætter vi titlen til det, udskriften faktisk er. */
@@ -5302,8 +5416,7 @@ function exportPDF(o){
  closeModal();
  const navn=projectName+' – Tegning'+(o.scope==='all'?'':' – '+pages[activePage].title);
  setTimeout(()=>{
-   printSom(navn,()=>window.print());
-   setTimeout(()=>{document.getElementById('printroot').innerHTML=''},600);
+   printSom(navn,()=>window.print()); rydEfterPrint();
  },120);
 }
 
@@ -5544,8 +5657,7 @@ function exportPlanPDF(o){
     @media print{.psheet{margin:${padPx}px}}`;
  closeModal();
  const navn=projectName+' – Kanalplan'+(o.kun?' – '+PLANDOMS[o.kun]:'');
- setTimeout(()=>{printSom(navn,()=>window.print());
-   setTimeout(()=>{document.getElementById('printroot').innerHTML=''},600)},120);
+ setTimeout(()=>{printSom(navn,()=>window.print()); rydEfterPrint()},120);
 }
 
 function exportJSON(){
@@ -5741,7 +5853,7 @@ async function panelGem(it){
  const nm=prompt('Navn i lageret:',it.title||'Intercom panel');
  if(nm===null)return;
  try{
-  await sbFetch('equipment',{method:'POST',body:JSON.stringify(
+  await sbFetch('equipment?select=id',{method:'POST',body:JSON.stringify(
     {name:nm||'Intercom panel',category:PANELKAT,qty:1,
      tech:{panel:panelData(it)},
      custom_fields:[{label:'Type',value:'Intercom panel'},
