@@ -662,6 +662,8 @@ body.guest .gastmark{display:inline-flex}
 .ports.enkelt{grid-template-columns:1fr}
 .ingenlinjer{padding:16px 14px;font-family:var(--fm);font-size:11px;color:var(--faint);
  display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.startside{padding:8px 14px 12px;border-top:1px solid var(--line)}
+.startside .add{opacity:.8}
 .portcol{padding:9px 8px 11px;min-width:0}
 .portcol.ins{border-right:1px solid var(--line)}
 .portitle{font-family:var(--fd);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;
@@ -987,13 +989,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     </div>
     <button class="hbtn modeswitch" id="bMode" title="Skift mellem mobil- og skrivebordsudgave">📱</button>
     <div id="crumbs"></div>
-    <div class="bus">
-      <button class="busbtn on" data-l="video" title="Vis eller skjul alle videosignaler">Video</button>
-      <button class="busbtn on" data-l="lyd" title="Vis eller skjul alle lydsignaler">Lyd</button>
-      <button class="busbtn on" data-l="intercom" title="Vis eller skjul alle intercomsignaler">Intercom</button>
-      <button class="busbtn on" data-l="net" title="Vis eller skjul alle netværkssignaler">Net</button>
-      <button class="busbtn on" data-l="backup" title="Vis eller skjul alt der er markeret som backup">Backup</button>
-    </div>
+
     <button class="hbtn" id="bUndo" title="Fortryd sidste ændring · Ctrl+Z">↩</button>
     <button class="hbtn" id="bExport" title="Gem som PDF, CSV, draw.io, HTML eller projektfil">Eksportér</button>
     <button class="hbtn" id="bFoldAll" title="Fold alle grupper sammen eller ud – giver overblik på store ark">⇕</button>
@@ -1002,8 +998,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div id="whoson"></div>
     <span id="autoStatus" title="Autogem i browseren"></span>
     <button class="hbtn" id="bCloud" title="Projekter, mapper og versionshistorik">☁ Projekter</button>
-    <button class="hbtn" id="bSave" title="Gem hele projektet – alle sider – som fil på maskinen">Gem fil</button>
-    <button class="hbtn" id="bOpen" title="Åbn en gemt projektfil">Åbn</button>
+    <button class="hbtn" id="bSave" title="Gem projektet i databasen og læg samtidig en sikkerhedskopi på din maskine">Gem</button>
     <input type="file" id="file" accept=".json" hidden>
   </header>
   <main id="stage">
@@ -3012,7 +3007,7 @@ function printBlocks(){
      .psheet:first-child{break-before:auto;page-break-before:auto}
    }`;
  const navn=projectName+' – Blokdiagram – '+bp().title;
- setTimeout(()=>{printSom(navn,()=>window.print()); rydEfterPrint()},150);
+ setTimeout(()=>udskriv(navn),150);
 }
 
 /* ---- tegn kanalplanen ---- */
@@ -3102,7 +3097,15 @@ function drawPlan(){
         `<div class="ingenlinjer">Ingen linjer endnu
            <button class="add" data-padd="${dv.id}|ins">+ input</button>
            <button class="add" data-padd="${dv.id}|outs">+ output</button>
-         </div>`:''}
+         </div>`
+       /* Mangler den ene side helt, skal der stadig være en vej til at
+          oprette den første linje – ellers sidder man fast. */
+       :(!ports(dv,'outs').length?
+        `<div class="startside"><button class="add" data-padd="${dv.id}|outs"
+            title="Giv kortet et output">+ output</button></div>`
+       :(!ports(dv,'ins').length?
+        `<div class="startside"><button class="add" data-padd="${dv.id}|ins"
+            title="Giv kortet et input">+ input</button></div>`:''))}
     </div>
     <span class="rs" data-devrs="${dv.id}" title="Træk for at gøre kortet bredere eller smallere"></span>
   </div>`;
@@ -3833,15 +3836,14 @@ function sheetApp(){
   ekstra.push({skil:1});
  }
  if(view==='flow'){
-  ekstra.push({ikon:'◍',tekst:'Vis og skjul signaltyper',gør:()=>sheetLag()});
   ekstra.push({ikon:'+',tekst:'Tilføj sektion',gør:()=>{
     const b=document.querySelector('[data-addsec]'); if(b)b.click()}});
   ekstra.push({skil:1});
  }
  openSheet('Menu',ekstra.concat([
   {ikon:'☁',tekst:'Projekter',under:'åbn, gem version, del',gør:()=>openProjects()},
-  {ikon:'⤓',tekst:'Gem projekt som fil',gør:()=>document.getElementById('bSave').click()},
-  {ikon:'↥',tekst:'Åbn fil',gør:()=>document.getElementById('bOpen').click()},
+  {ikon:'⤓',tekst:'Gem',under:'i projektet og som kopi på enheden',gør:()=>document.getElementById('bSave').click()},
+  {ikon:'↥',tekst:'Importér projekt fra fil',gør:()=>spoergGem('importere et projekt',()=>document.getElementById('file').click())},
   {ikon:'↧',tekst:'Eksportér',under:'PDF, CSV, draw.io',gør:()=>openExport()},
   {skil:1},
   {ikon:'↩',tekst:'Fortryd',gør:()=>undo()},
@@ -3875,7 +3877,6 @@ function sheetSider(){
   p.push({ikon:'+',tekst:'Ny side',gør:()=>{addPage();mobilTitel()}});
   p.push({ikon:'✎',tekst:'Omdøb denne side',gør:()=>{const t=prompt('Navn:',pages[activePage].title);
     if(t===null)return;snap();pages[activePage].title=t||pages[activePage].title;draw();mobilTitel()}});
-  p.push({ikon:'◍',tekst:'Vis og skjul signaltyper',gør:()=>sheetLag()});
   return openSheet('Sider',p);
  }
  openSheet('Lager',[{ikon:'＋',tekst:'Nyt udstyr',gør:()=>document.getElementById('archnew').click()}]);
@@ -4910,9 +4911,17 @@ function openProjects(){
   <div class="mrow">
     <button class="btn go" data-csave="1">${cloudId?'Gem ny version':'Gem som nyt projekt'}</button>
     ${cloudId?`<button class="btn" data-cnew="1">Gem som nyt projekt</button>`:''}
+    <button class="btn" data-hentfil="1" style="white-space:nowrap" title="Læs en sikkerhedskopi ind igen">Importér projekt</button>
     <button class="btn" data-logout="1" style="white-space:nowrap">Log ud</button>
   </div>`,root=>{
    root.querySelector('[data-logout]').onclick=()=>{closeModal();signOut()};
+   /* Læs en projektfil fra maskinen ind – fx en sikkerhedskopi fra Gem-knappen. */
+   root.querySelector('[data-hentfil]').onclick=()=>{
+     closeModal();
+     spoergGem('importere et projekt fra en fil',()=>{
+       document.getElementById('file').click();
+     });
+   };
    const listEl=root.querySelector('#plist');
    let rows=[];
 
@@ -5289,6 +5298,63 @@ async function saveNow(){
    timer på et halvt sekund var nok. På iPhone vender window.print() tilbage
    med det samme, og PDF'en dannes bagefter – så nåede vi at slette indholdet,
    og siden blev blank. Nu ryddes der først, når udskriften er færdig. */
+
+/* ---- udskrift på telefon ----
+   Safari på iPhone danner PDF'en efter at window.print() er vendt tilbage, og
+   den kan ikke holde på indholdet. Derfor bygger vi i stedet et selvstændigt
+   dokument og åbner det i en ny fane. Så trykker man på del-knappen og vælger
+   Print – og siden kan ikke nå at forsvinde. */
+function aabnUdskriftSomSide(titel){
+ const rod=document.getElementById('printroot');
+ if(!rod||!rod.innerHTML.trim())return false;
+ let css='';
+ document.querySelectorAll('style').forEach(st=>{css+=st.textContent+'\n'});
+ const doc='<!DOCTYPE html><html lang="da"><head><meta charset="utf-8">'
+  +'<meta name="viewport" content="width=device-width,initial-scale=1">'
+  +'<title>'+esc(rentNavn(titel)||'SignalFlow')+'</title><style>'+css
+  +'\n/* dokumentet ER udskriften, så den vises også på skærmen */\n'
+  +'body{margin:0;background:#555;-webkit-text-size-adjust:100%}\n'
+  +'#printroot{display:block!important;transform-origin:top left}\n'
+  +'.psheet{background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.35);margin:0 0 12px}\n'
+  +'#hjaelp{position:sticky;top:0;z-index:9;background:#111a24;color:#e8eef5;'
+  +'font:13px/1.5 -apple-system,system-ui,sans-serif;padding:10px 14px;text-align:center}\n'
+  +'#hjaelp b{color:#3fd99c}\n'
+  +'@media print{body{background:#fff}#hjaelp{display:none}'
+  +'#printroot{transform:none!important;width:auto!important}'
+  +'.psheet{box-shadow:none;margin:0}}\n'
+  +'</style></head><body>'
+  +'<div id="hjaelp">Tryk på <b>del-knappen</b> forneden og vælg <b>Udskriv</b> · '
+  +'vælg <b>A3</b> og <b>liggende</b>, og gem som PDF</div>'
+  +'<div id="printroot">'+rod.innerHTML+'</div>'
+  +'<script>(function(){var r=document.getElementById("printroot");'
+  +'function fit(){var a=r.firstElementChild;if(!a)return;'
+  +'var w=a.offsetWidth||a.getBoundingClientRect().width;if(!w)return;'
+  +'var k=Math.min(1,(window.innerWidth-12)/w);'
+  +'r.style.width=w+"px";r.style.transform="scale("+k+")";'
+  +'document.body.style.height=(r.scrollHeight*k+90)+"px"}'
+  +'window.addEventListener("resize",fit);setTimeout(fit,60);fit()})();<\/script>'
+  +'</body></html>';
+ try{
+  const blob=new Blob([doc],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const w=window.open(url,'_blank');
+  if(!w)return false;                       // blokeret – så gør vi som før
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  return true;
+ }catch(e){ return false }
+}
+/* Én vej ud for alle tre udskrifter. */
+function udskriv(navn){
+ if(mobil && aabnUdskriftSomSide(navn)){
+  setSync('udskriften er åbnet i en ny fane');
+  const r=document.getElementById('printroot');
+  setTimeout(()=>{if(r)r.innerHTML=''},1500);
+  return;
+ }
+ printSom(navn,()=>window.print());
+ rydEfterPrint();
+}
+
 let printRydTimer=null;
 function rydEfterPrint(){
  clearTimeout(printRydTimer);
@@ -5339,7 +5405,9 @@ function renderPageHTML(pi,allLayers){
 const PAPER={A4:{p:210,l:297},A3:{p:297,l:420},Letter:{p:215.9,l:279.4},Tabloid:{p:279.4,l:431.8}};
 function exportPDF(o){
  const idx = o.scope==='all' ? pages.map((_,i)=>i) : [activePage];
- const W = el.clientWidth || 1340;
+ /* Udskriften er et A3-ark, ikke en telefonskærm. Bruger vi telefonens
+    bredde, bliver arket bygget i mobil-opsætning og klippet. */
+ const W = Math.max(el.clientWidth||0, 1200);
  const mm = (PAPER[o.paper]||PAPER.A3)[o.orient==='landscape'?'l':'p'];
  const mmH = (PAPER[o.paper]||PAPER.A3)[o.orient==='landscape'?'p':'l'];
  const padPx = o.margin * 96/25.4;
@@ -5416,7 +5484,7 @@ function exportPDF(o){
  closeModal();
  const navn=projectName+' – Tegning'+(o.scope==='all'?'':' – '+pages[activePage].title);
  setTimeout(()=>{
-   printSom(navn,()=>window.print()); rydEfterPrint();
+   udskriv(navn);
  },120);
 }
 
@@ -5447,7 +5515,9 @@ function exportCSV(o){
 function exportHTML(o){
  const css=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
  const idx = o.scope==='all' ? pages.map((_,i)=>i) : [activePage];
- const W = el.clientWidth || 1340;
+ /* Udskriften er et A3-ark, ikke en telefonskærm. Bruger vi telefonens
+    bredde, bliver arket bygget i mobil-opsætning og klippet. */
+ const W = Math.max(el.clientWidth||0, 1200);
  const body=idx.map(i=>`<div class="psheet" style="position:relative;width:${W}px;margin:0 auto 28px;padding:26px 30px">
     ${renderPageHTML(i,o.allLayers)}</div>`).join('');
  const doc2=`<!DOCTYPE html><html lang="da"><head><meta charset="utf-8">
@@ -5657,7 +5727,7 @@ function exportPlanPDF(o){
     @media print{.psheet{margin:${padPx}px}}`;
  closeModal();
  const navn=projectName+' – Kanalplan'+(o.kun?' – '+PLANDOMS[o.kun]:'');
- setTimeout(()=>{printSom(navn,()=>window.print()); rydEfterPrint()},120);
+ setTimeout(()=>udskriv(navn),120);
 }
 
 function exportJSON(){
@@ -6538,13 +6608,32 @@ document.getElementById('bNew').onclick=()=>{spoergGem('starte et nyt tomt proje
    lastSync=null;dirty=false;hentetFoerst=false;
    ensureBlocks();draw();
  })};
-document.getElementById('bSave').onclick=()=>{
- const project=snapshot();
- const b=new Blob([JSON.stringify(project,null,1)],{type:'application/json'});
+/* Gem: først i databasen, så alle kan se det – og derefter en kopi på maskinen,
+   så man har noget at falde tilbage på, hvis nettet er nede. */
+function sikkerhedskopi(){
+ const b=new Blob([JSON.stringify(snapshot(),null,1)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(b);
- a.download=fileName('json');a.click();
+ a.download=fileName('json'); a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+document.getElementById('bSave').onclick=async function(){
+ if(!session()){ sikkerhedskopi(); return }
+ const knap=this, gammel=knap.textContent;
+ knap.textContent='Gemmer …';
+ try{
+  if(cloudId){ await cloudSaveQuiet(); dirty=false; }
+  else{ await cloudSave(false); }       // første gang: opret i databasen
+  sikkerhedskopi();
+  knap.textContent='Gemt ✓';
+  setSync('gemt i projektet · kopi hentet');
+  setTimeout(()=>{knap.textContent=gammel},2000);
+ }catch(e){
+  knap.textContent=gammel;
+  /* Kan vi ikke nå databasen, skal arbejdet i det mindste ned på maskinen. */
+  sikkerhedskopi();
+  alert('Kunne ikke gemme i databasen: '+e.message+'\n\nEn kopi er lagt på din maskine i stedet.');
+ }
 };
-document.getElementById('bOpen').onclick=()=>document.getElementById('file').click();
 document.getElementById('file').onchange=e=>{
  const f=e.target.files[0]; if(!f)return;
  const r=new FileReader();
