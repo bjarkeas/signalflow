@@ -20,7 +20,7 @@ body{background:var(--bg);color:var(--text);font:13px/1.45 var(--fb)}
 button{font:inherit}
 
 #app{display:grid;grid-template-rows:54px 42px 1fr;grid-template-columns:1fr 290px;height:100vh}
-header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 14px;background:var(--panel);border-bottom:1px solid var(--line);position:relative}
 .logo{font-family:var(--fd);font-weight:700;font-size:20px;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
 .logo em{font-style:normal;color:var(--lyd)}
 #crumbs{display:flex;align-items:center;gap:5px;font-family:var(--fm);font-size:12px;color:var(--dim);flex:1;min-width:0;overflow:hidden;white-space:nowrap}
@@ -379,14 +379,27 @@ body.mobile .fpanel .pnet{gap:3px 10px}
 
 
 /* hvem er inde i projektet */
-#whoson{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden;
- max-width:330px;flex:0 0 auto;margin-left:auto}
+/* Bjælken er delt i tre: venstre, midte og højre. Så ligger den midt på
+   skærmen uden at kunne lægge sig oven i projektnavnet. */
+.hvenstre,.hhoejre{display:flex;align-items:center;gap:14px;min-width:0;flex:1 1 0;overflow:hidden}
+/* et langt projektnavn skal forkortes, ikke skubbe sig ind over midten */
+#crumbs{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+/* også de enkelte dele, ellers stikker de ud af stien og ind over midten */
+#crumbs>*{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.hhoejre{justify-content:flex-end}
+#whoson{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;overflow:hidden;
+ max-width:min(420px,30vw);flex:0 0 auto}
+body.mobile .hvenstre,body.mobile .hhoejre{display:none}
 #whoson:empty{display:none}
 .whoicon{color:var(--intercom);font-size:9px;line-height:1;animation:puls 2.4s infinite}
 @keyframes puls{0%,100%{opacity:.35}50%{opacity:1}}
 .whochip{display:flex;flex-direction:column;gap:0;background:var(--panel2);border:1px solid var(--line);
  border-radius:7px;padding:3px 9px;line-height:1.2;max-width:150px;flex:0 0 auto}
 .whomore{font-family:var(--fm);font-size:10px;color:var(--faint);flex:0 0 auto}
+.whochip.alene{opacity:.75;background:transparent;border-style:dashed}
+.whochip.alene b{color:var(--dim);font-weight:500}
+.whochip.advarsel{border-color:var(--lyd)}
+.whochip.advarsel b{color:var(--lyd)}
 .whochip b{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .whochip em{font-style:normal;font-family:var(--fm);font-size:9px;color:var(--faint);
  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -404,6 +417,19 @@ body.mobile #whoson:empty{display:none}
 @media print{
  .psheet{overflow:hidden}
 }
+
+
+/* panelet kan skubbes ud af vejen */
+#sideknap{position:fixed;right:290px;top:104px;z-index:60;width:22px;height:46px;
+ background:var(--panel);border:1px solid var(--line);border-right:none;
+ border-radius:7px 0 0 7px;color:var(--dim);cursor:pointer;font-size:13px;line-height:1;
+ display:flex;align-items:center;justify-content:center;transition:right .18s ease}
+#sideknap:hover{color:var(--text);background:var(--panel2)}
+body.sideskjult #app{grid-template-columns:1fr 0}
+body.sideskjult #side{display:none}
+body.sideskjult #sideknap{right:0}
+body.mobile #sideknap{display:none}
+@media print{#sideknap{display:none}}
 
 /* forklaringsboble */
 #tipbox{position:fixed;display:none;z-index:10000;pointer-events:none;max-width:290px;
@@ -931,6 +957,13 @@ body.guest .gastmark{display:inline-flex}
 .row2 .btn{margin:0}
 .hint{color:var(--dim);font-size:12px;line-height:1.65}
 .hint kbd{font-family:var(--fm);background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:10.5px}
+/* Ét symbol pr. linje med god luft – så kan man overskue dem uden at læse. */
+.symliste{margin:8px 0 14px}
+.symliste>div{display:flex;align-items:flex-start;gap:10px;margin-bottom:9px}
+.symliste .ikon{flex:0 0 auto;width:26px;height:24px;display:flex;align-items:center;
+ justify-content:center;font-family:var(--fb);font-size:13px;line-height:1;
+ color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:5px}
+.symliste>div>span:last-child{padding-top:3px}
 hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 
 /* eksport-container: usynlig på skærmen, det eneste der printes */
@@ -980,6 +1013,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 <body>
 <div id="app">
   <header>
+   <div class="hvenstre">
     <div class="logo">Signal<em>Flow</em></div>
     <div class="viewsw">
       <button class="vbtn on" data-view="flow" title="Signalflow-tegningen med afsender, signaler og modtager">Tegning</button>
@@ -989,17 +1023,21 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     </div>
     <button class="hbtn modeswitch" id="bMode" title="Skift mellem mobil- og skrivebordsudgave">📱</button>
     <div id="crumbs"></div>
+   </div>
 
+   <div id="whoson"></div>
+
+   <div class="hhoejre">
     <button class="hbtn" id="bUndo" title="Fortryd sidste ændring · Ctrl+Z">↩</button>
     <button class="hbtn" id="bExport" title="Gem som PDF, CSV, draw.io, HTML eller projektfil">Eksportér</button>
     <button class="hbtn" id="bFoldAll" title="Fold alle grupper sammen eller ud – giver overblik på store ark">⇕</button>
     <button class="hbtn" id="bNew" title="Start forfra med et tomt projekt">Nyt</button>
     <span class="gastmark" title="Du er inde via et delelink og ser kun kanalplanen">delt kanalplan</span>
-    <div id="whoson"></div>
     <span id="autoStatus" title="Autogem i browseren"></span>
     <button class="hbtn" id="bCloud" title="Projekter, mapper og versionshistorik">☁ Projekter</button>
     <button class="hbtn" id="bSave" title="Gem projektet i databasen og læg samtidig en sikkerhedskopi på din maskine">Gem</button>
-    <input type="file" id="file" accept=".json" hidden>
+   </div>
+   <input type="file" id="file" accept=".json" hidden>
   </header>
   <main id="stage">
     <div id="tabbar"></div>
@@ -1008,6 +1046,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div id="blocks"></div>
     <div id="archive"></div>
   </main>
+  <button id="sideknap" title="Skjul eller vis panelet">›</button>
   <aside id="side"></aside>
 </div>
 <div id="gate">
@@ -1676,11 +1715,29 @@ function side(){
    <button class="btn" id="s-addsec">+ Tilføj sektion</button>
    <hr>
    <div class="hint">
-     <kbd>Klik</kbd> på en tekst for at rette den.<br>
-     <kbd>Enter</kbd> gemmer · <kbd>Esc</kbd> fortryder<br>
-     <kbd>Klik</kbd> på farveprikken skifter signaltype<br>
-     <kbd>Ctrl+Z</kbd> fortryder sidste ændring<br><br>
-     Knapperne øverst tænder og slukker for signaltyper, så du kan vise f.eks. kun lyd.
+     <b>Tekst</b><br>
+     <kbd>Klik</kbd> retter en tekst · <kbd>Enter</kbd> gemmer · <kbd>Esc</kbd> fortryder ·
+     <kbd>Tab</kbd> går videre · <kbd>Ctrl+Z</kbd> fortryder<br><br>
+
+     <b>Kanaler</b>
+     <div class="symliste">
+       <div><span class="ikon">●</span><span>farveprikken skifter signaltype</span></div>
+       <div><span class="ikon">→</span><span>pilen skifter retning</span></div>
+       <div><span class="ikon">⇒</span><span>gør kanalen til backup</span></div>
+       <div><span class="ikon">⤒</span><span>indsætter en kanal ovenover – numrene rykker med</span></div>
+       <div><span class="ikon">⠿</span><span>trækkes op og ned. Nummeret bliver på sin plads,
+            så det er signalet der flytter stik</span></div>
+     </div>
+
+     <b>Bokse</b><br>
+     Træk i kanterne for at ændre størrelse. Dobbeltklik på håndtaget ved
+     inderkanten fjerner luften mellem boks og signaler.<br>
+     Nederst på arket ligger tekstfelt, symbolforklaring og intercom panel.
+     Slip dem inde i en boks, så følger de med den.<br><br>
+
+     <b>Deling</b><br>
+     Alt gemmes løbende. Øverst til højre står hvem der ellers er inde i
+     projektet, og hvor de arbejder.
    </div>`;
   bindText(s.querySelector('#s-title'),v=>setSheetTitle(v));
   s.querySelector('#s-addsec').onclick=addSec;
@@ -4413,7 +4470,7 @@ function setSync(txt,warn){
 /* ================= hvem er inde i projektet =================
    Hver maskine melder sig selv hvert tiende sekund og henter de andres
    meldinger. Linjer ældre end et minut regnes som gået igen. */
-let presTimer=null, presFolk=[];
+let presTimer=null, presFolk=[], presFejl=null, presKlar=false;
 
 function presSted(){
  if(view==='plan')return 'Kanalplan · '+(PLANDOMS[planDom]||'');
@@ -4437,8 +4494,15 @@ async function presMeld(){
       body:JSON.stringify({project_id:cloudId,who:hvem,sted:presSted(),at:new Date().toISOString()})});
    presFolk=(await sbFetch('signalflow_presence?project_id=eq.'+cloudId+'&select=who,sted,at'))||[];
   }
+  presFejl=null; presKlar=true;
   tegnHvemErInde();
- }catch(e){ /* tilstedeværelse må aldrig stå i vejen for arbejdet */ }
+ }catch(e){
+  /* Tilstedeværelse må aldrig stå i vejen for arbejdet – men vi siger til,
+     så man ved hvorfor feltet er tomt i stedet for at tro det virker. */
+  presFejl=e.message||'kunne ikke hente';
+  presKlar=true;
+  tegnHvemErInde();
+ }
 }
 function startPres(){
  clearInterval(presTimer);
@@ -4454,7 +4518,20 @@ function tegnHvemErInde(){
   if(!p.who||p.who.toLowerCase()===mig)return false;
   const t=parseTS(p.at); return t && (nu-t.getTime())<60000;
  });
- if(!andre.length){el3.innerHTML='';el3.title='';return}
+ if(presFejl){
+  el3.innerHTML='<span class="whochip advarsel" title="Se hvem der er inde kræver, at SQL\'en for signalflow_presence er kørt i databasen.\n\n'+esc(presFejl)+'">'
+   +'<b>⚠ ikke slået til</b><em>hvem er inde</em></span>';
+  return;
+ }
+ if(!andre.length){
+  /* Vis at funktionen er i live, også når man er alene – ellers tror man,
+     at den ikke virker. */
+  el3.innerHTML=cloudId||guestToken
+   ? '<span class="whochip alene" title="Ingen andre er inde i projektet lige nu"><b>● kun dig</b><em>i projektet</em></span>'
+   : '';
+  el3.title='';
+  return;
+ }
  const vis=andre.slice(0,3), flere=andre.length-vis.length;
  el3.innerHTML='<span class="whoicon" title="'+andre.length+' andre er inde i projektet">●</span>'
   +vis.map(p=>
@@ -4609,10 +4686,15 @@ async function sbFetch(path,opts,retried){
  if(!s)throw new Error('Du er ikke logget ind.');
  let r;
  try{
-  r=await fetch(baseUrl(c.url)+'/rest/v1/'+path,Object.assign({
-    headers:{'apikey':c.key,'Authorization':'Bearer '+s.access_token,
-             'Content-Type':'application/json','Prefer':'return=representation'}
-  },opts||{}));
+  /* Object.assign erstatter hele headers-objektet, hvis kaldet selv har et.
+     Så røg apikey og login med – og svaret blev 401. Vi fletter dem i stedet. */
+  const o=opts||{};
+  const hoveder=Object.assign(
+    {'apikey':c.key,'Authorization':'Bearer '+s.access_token,
+     'Content-Type':'application/json','Prefer':'return=representation'},
+    o.headers||{});
+  r=await fetch(baseUrl(c.url)+'/rest/v1/'+path,
+    Object.assign({},o,{headers:hoveder}));
  }catch(e){
   throw new Error('Kunne ikke få forbindelse. Tjek projekt-URL og at du er på nettet.');
  }
@@ -6655,6 +6737,23 @@ document.getElementById('file').onchange=e=>{
    Den gamle linje kørte også for gæster og lagde deres tidligere arbejde
    ind i det delte projekt. */
 document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>setView(b.dataset.view));
+
+/* ---- panelet i højre side kan skubbes ud af vejen ---- */
+const LS_SIDE='signalflow:side';
+function sidePanel(vis,gem){
+ document.body.classList.toggle('sideskjult',!vis);
+ const k=document.getElementById('sideknap');
+ if(k){k.textContent=vis?'›':'‹'; k.title=vis?'Skjul panelet':'Vis panelet'}
+ if(gem)try{localStorage.setItem(LS_SIDE,vis?'vis':'skjul')}catch(e){}
+ if(view==='blocks')drawLinks();
+}
+document.getElementById('sideknap').onclick=()=>
+ sidePanel(document.body.classList.contains('sideskjult'),true);
+(function(){
+ let v=null; try{v=localStorage.getItem(LS_SIDE)}catch(e){}
+ sidePanel(v!=='skjul',false);
+})();
+
 document.getElementById('bMode').onclick=()=>setMode(!mobil,true);
 document.getElementById('mMenu').onclick=sheetApp;
 document.getElementById('mMode').onclick=()=>setMode(false,true);
