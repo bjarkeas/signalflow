@@ -431,6 +431,41 @@ body.sideskjult #sideknap{right:0}
 body.mobile #sideknap{display:none}
 @media print{#sideknap{display:none}}
 
+
+.dio-sider{margin:6px 0 4px}
+.dio-valg{display:flex;flex-direction:column;gap:8px;margin:6px 0 12px;font-size:13px}
+.dio-valg label{display:flex;align-items:center;gap:8px}
+.dio-valg select{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:5px 7px;max-width:260px}
+.dio-liste{border:1px solid var(--line);border-radius:8px;max-height:220px;overflow-y:auto}
+.dio-side{display:flex;flex-direction:column;gap:2px;padding:8px 11px;border-bottom:1px solid var(--line);font-size:12.5px}
+.dio-side:last-child{border-bottom:none}
+.dio-side span{font-family:var(--fm);font-size:11px;color:var(--dim)}
+.dio-side em{font-style:normal;color:var(--faint)}
+
+
+/* ── låst ark ── */
+.laasknap{margin-left:auto;background:transparent;border:1px solid var(--line);color:var(--dim);
+ border-radius:7px;padding:5px 11px;font-size:12px;cursor:pointer;white-space:nowrap;align-self:center}
+.laasknap:hover{color:var(--text);border-color:var(--dim)}
+.laasknap.laast{color:#f0b429;border-color:#8a6a1c;background:rgba(240,180,41,.08)}
+.tab .tlaas{font-size:10px;margin-right:4px;opacity:.85}
+#laasbanner{display:none}
+#laasbanner.on{display:block;background:rgba(240,180,41,.09);border-bottom:1px solid #6b5418;
+ color:#e8c46a;font-size:12px;padding:7px 14px;text-align:center}
+#laasbanner.on b{font-weight:600}
+#laasbanner.blink{animation:laasblink .9s ease}
+@keyframes laasblink{0%,100%{background:rgba(240,180,41,.09)}30%{background:rgba(240,180,41,.35)}}
+/* alt der kan ændre arket, skjules – kun foldeknapperne bliver */
+body.arklaast #sheet button:not([data-fold]),
+body.arklaast #sheet .rs, body.arklaast #sheet .rshandle, body.arklaast #sheet .grip,
+body.arklaast #sheet [data-gripc], body.arklaast #sheet .addbar, body.arklaast #sheet .add{display:none!important}
+body.arklaast #sheet [data-e]{cursor:default}
+body.arklaast #sheet [data-e]:hover{background:none!important;outline:none!important}
+body.arklaast #sheet .fitem{cursor:default}
+body.arklaast #side input, body.arklaast #side textarea, body.arklaast #side select,
+body.arklaast #side button{pointer-events:none;opacity:.45}
+@media print{#laasbanner,.laasknap,.tab .tlaas{display:none!important}}
+
 /* forklaringsboble */
 #tipbox{position:fixed;display:none;z-index:10000;pointer-events:none;max-width:290px;
  background:#0d1219;color:var(--text);border:1px solid var(--line);border-radius:7px;
@@ -1041,6 +1076,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   </header>
   <main id="stage">
     <div id="tabbar"></div>
+    <div id="laasbanner"></div>
     <div id="sheet"></div>
     <div id="plan"></div>
     <div id="blocks"></div>
@@ -1255,7 +1291,14 @@ const sheetTitle=()=> path.length? path[path.length-1].label : doc.title;
 function setSheetTitle(v){ if(path.length) path[path.length-1].label=v; else doc.title=v; }
 
 let sidenRettet=null, blokRettet=null;
-function snap(){sidenRettet=activePage; blokRettet=(view==='blocks')?blockPage:null; undoStack.push(JSON.stringify({pages,plan:plan,blocks:blocks,activePage,path:path.map(p=>p.id)}));if(undoStack.length>60)undoStack.shift();document.getElementById('bUndo').disabled=false}
+function snap(){
+ /* Sikkerhedsnet: alle ændringer af arket går gennem snap(). Er arket låst,
+    stopper vi handlingen her – også ad veje, låsen ellers ikke kender. */
+ if(!laasUndtagelse && view==='flow' && typeof arkLaast==='function' && arkLaast()){
+  if(typeof laasBesked==='function') laasBesked();
+  throw new Error('Arket er låst');
+ }
+ sidenRettet=activePage; blokRettet=(view==='blocks')?blockPage:null; undoStack.push(JSON.stringify({pages,plan:plan,blocks:blocks,activePage,path:path.map(p=>p.id)}));if(undoStack.length>60)undoStack.shift();document.getElementById('bUndo').disabled=false}
 function undo(){
  if(!undoStack.length)return;
  const st=JSON.parse(undoStack.pop());
@@ -1310,6 +1353,17 @@ const px=(v,d)=>(v==null||v==='')?d:v;
 
 function draw(keepSide){
  if(editing&&editing.inp&&!editing.inp.isConnected)editing=null;  // feltet blev fjernet ved sidste tegning
+ /* Et låst ark vises uden redigeringsknapper og med et banner øverst */
+ const laastNu = typeof arkLaast==='function' && arkLaast();
+ document.body.classList.toggle('arklaast', !!laastNu && view==='flow');
+ const lb=document.getElementById('laasbanner');
+ if(lb){
+  lb.innerHTML = laastNu
+   ? '🔒 <b>'+esc(laasTekst(pages[activePage]))+'</b> · arket kan ikke rettes. Klik på hængelåsen for at låse op.'
+   : '';
+  lb.classList.toggle('on', !!laastNu);
+ }
+ if(laastNu){ editing=null; }
  const sh=sheet(); const title=sheetTitle();
  let h=`<div class="sheettitle" data-e="title">${esc(title)}</div>
         <div class="sheetsub">${path.length?'Underark · '+path.map(p=>esc(p.label)).join(' › '):'Signalflow'}</div>`;
@@ -1530,12 +1584,18 @@ function dragTab(e, tab, tabSel, listeAf, aktivIndex, saetAktiv, efter){
 function renderTabs(){
  const tb=document.getElementById('tabbar');
  let h=pages.map((p,i)=>`<div class="tab ${i===activePage?'on':''}" data-tab="${i}">
-   <span class="tname" data-tabname="${i}" title="Klik for at skifte side · klik igen for at omdøbe · træk for at flytte fanen">${esc(p.title)}</span>
-   ${pages.length>1?`<button class="tx" data-tabdel="${i}" title="Slet side">✕</button>`:''}
+   ${p.laast?`<span class="tlaas" title="${esc(laasTekst(p))}">🔒</span>`:''}
+   <span class="tname" data-tabname="${i}" title="${p.laast?esc(laasTekst(p))+' · klik for at skifte side':'Klik for at skifte side · klik igen for at omdøbe · træk for at flytte fanen'}">${esc(p.title)}</span>
+   ${pages.length>1&&!p.laast?`<button class="tx" data-tabdel="${i}" title="Slet side">✕</button>`:''}
  </div>`).join('');
  h+=`<button class="tabadd" data-tabadd="1" title="Tilføj en ny side til tegningen">+</button>`;
+ const pa=pages[activePage]||{};
+ h+=`<button class="laasknap ${pa.laast?'laast':''}" data-laas="1"
+      title="${pa.laast?esc(laasTekst(pa))+' – klik for at låse op':'Lås arket, så det ikke kan rettes ved et uheld'}">
+      ${pa.laast?'🔒 Låst':'🔓 Lås arket'}</button>`;
  tb.innerHTML=h;
  tb.querySelector('[data-tabadd]').onclick=addPage;
+ tb.querySelector('[data-laas]').onclick=skiftLaas;
  tb.querySelectorAll('[data-tab]').forEach(t=>t.addEventListener('mousedown',ev=>{
    if(ev.target.closest('[data-tabdel]'))return;
    dragTab(ev,t,'[data-tab]',()=>pages,()=>activePage,i=>{activePage=i;doc=pages[i]},
@@ -1548,7 +1608,9 @@ document.getElementById('tabbar').addEventListener('click',ev=>{
  if(faneFlyttet){faneFlyttet=false;return}
  const tab=ev.target.closest('[data-tab]');
  const del=ev.target.closest('[data-tabdel]');
- const nm=ev.target.closest('[data-tabname]');
+ let nm=ev.target.closest('[data-tabname]');
+ /* et låst ark må ikke omdøbes – et klik skifter bare side */
+ if(nm && arkLaast(+nm.dataset.tabname)) nm=null;
  
  if(del){ev.preventDefault();delPage(+del.dataset.tabdel);return}
  // klik på tab-navn: rediger hvis active, ellers switch
@@ -3900,6 +3962,8 @@ function sheetApp(){
   {ikon:'☁',tekst:'Projekter',under:'åbn, gem version, del',gør:()=>openProjects()},
   {ikon:'⤓',tekst:'Gem',under:'i projektet og som kopi på enheden',gør:()=>document.getElementById('bSave').click()},
   {ikon:'↥',tekst:'Importér projekt fra fil',gør:()=>spoergGem('importere et projekt',()=>document.getElementById('file').click())},
+  {ikon:'⧉',tekst:'Importér fra draw.io',under:'læg sider ind i det åbne projekt',gør:()=>dioAaben()},
+  {ikon:arkLaast()?'🔓':'🔒',tekst:arkLaast()?'Lås arket op':'Lås arket',under:arkLaast()?laasTekst(pages[activePage]):'så det ikke kan rettes ved et uheld',gør:()=>skiftLaas()},
   {ikon:'↧',tekst:'Eksportér',under:'PDF, CSV, draw.io',gør:()=>openExport()},
   {skil:1},
   {ikon:'↩',tekst:'Fortryd',gør:()=>undo()},
@@ -4993,10 +5057,12 @@ function openProjects(){
     <button class="btn go" data-csave="1">${cloudId?'Gem ny version':'Gem som nyt projekt'}</button>
     ${cloudId?`<button class="btn" data-cnew="1">Gem som nyt projekt</button>`:''}
     <button class="btn" data-hentfil="1" style="white-space:nowrap" title="Læs en sikkerhedskopi ind igen">Importér projekt</button>
+    <button class="btn" data-dio="1" style="white-space:nowrap" title="Læg sider fra en draw.io-fil ind i det åbne projekt">Importér fra draw.io</button>
     <button class="btn" data-logout="1" style="white-space:nowrap">Log ud</button>
   </div>`,root=>{
    root.querySelector('[data-logout]').onclick=()=>{closeModal();signOut()};
    /* Læs en projektfil fra maskinen ind – fx en sikkerhedskopi fra Gem-knappen. */
+   root.querySelector('[data-dio]').onclick=()=>{ closeModal(); setTimeout(dioAaben,60); };
    root.querySelector('[data-hentfil]').onclick=()=>{
      closeModal();
      spoergGem('importere et projekt fra en fil',()=>{
@@ -5374,6 +5440,326 @@ async function saveNow(){
 
 /* ================= eksport ================= */
 
+
+/* ══════════════════════════════════════════════════════════════
+   IMPORTÉR FRA DRAW.IO
+   Læser en .drawio-fil og bygger ark ud fra den. Tre slags filer:
+   1) eksporteret fra SignalFlow med mærker (sf=kanal osv.) – genskabes præcist,
+      også efter man har rettet, flyttet eller kopieret figurer i draw.io
+   2) ældre SignalFlow-eksporter uden mærker – genkendes på deres stil
+   3) almindelige draw.io-tegninger – teksten lægges ind som frie tekstfelter
+   Sektioner, grupper og kanaler findes ud fra, hvor figurerne STÅR, ikke ud
+   fra en rækkefølge i filen. Så overlever det, at man flytter rundt i draw.io.
+   ══════════════════════════════════════════════════════════════ */
+
+/* draw.io gemmer ofte hver side pakket: base64 → deflate → URI-kodet */
+async function dioUdpak(tekst){
+  const t=(tekst||'').trim();
+  if(!t || t.startsWith('<')) return t;
+  if(typeof DecompressionStream==='undefined')
+    throw new Error('Din browser kan ikke pakke draw.io-filen ud. Gem den i draw.io med "Komprimeret" slået fra.');
+  const bin=Uint8Array.from(atob(t), c=>c.charCodeAt(0));
+  const strom=new Blob([bin]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  const ud=await new Response(strom).text();
+  try{ return decodeURIComponent(ud); }catch(e){ return ud; }
+}
+
+/* HTML-etiketter fra draw.io → ren tekst med linjeskift */
+function dioTekst(v){
+  if(!v) return '';
+  let t=String(v)
+    .replace(/<br\s*\/?>/gi,'\n').replace(/<\/(div|p|li)>/gi,'\n')
+    .replace(/<[^>]+>/g,'');
+  const d=document.createElement('textarea'); d.innerHTML=t; t=d.value;
+  return t.replace(/\u00a0/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+}
+
+function dioStil(s){
+  const o={};
+  String(s||'').split(';').forEach(p=>{
+    if(!p) return;
+    const i=p.indexOf('=');
+    if(i<0) o[p]=true; else o[p.slice(0,i)]=p.slice(i+1);
+  });
+  return o;
+}
+
+/* Læs hele filen og returnér siderne som lister af figurer */
+async function dioLaesFil(xmlTekst){
+  const doc=new DOMParser().parseFromString(xmlTekst,'text/xml');
+  if(doc.querySelector('parsererror')) throw new Error('Filen er ikke gyldig draw.io.');
+  let diagrammer=[...doc.getElementsByTagName('diagram')];
+  /* en fil kan også bare være én mxGraphModel uden <diagram> omkring */
+  if(!diagrammer.length && doc.getElementsByTagName('mxGraphModel').length)
+    diagrammer=[{getAttribute:()=> 'Side 1', _model:doc.getElementsByTagName('mxGraphModel')[0]}];
+  const sider=[];
+  for(const d of diagrammer){
+    let model=d._model || d.getElementsByTagName && d.getElementsByTagName('mxGraphModel')[0];
+    if(!model){
+      const indre=await dioUdpak(d.textContent);
+      const dd=new DOMParser().parseFromString(indre,'text/xml');
+      model=dd.getElementsByTagName('mxGraphModel')[0];
+    }
+    if(!model) continue;
+    const figurer=[];
+    /* celler kan ligge direkte eller pakket ind i <object>/<UserObject> med egne felter */
+    [...model.getElementsByTagName('mxCell')].forEach(c=>{
+      const omslag=c.parentNode && /^(object|UserObject)$/i.test(c.parentNode.nodeName) ? c.parentNode : null;
+      const stil=c.getAttribute('style')||'';
+      const vaerdi=omslag ? (omslag.getAttribute('label')||'') : (c.getAttribute('value')||'');
+      const g=c.getElementsByTagName('mxGeometry')[0];
+      if(c.getAttribute('vertex')!=='1' || !g) return;
+      figurer.push({
+        stil:dioStil(stil), raaStil:stil, tekst:dioTekst(vaerdi),
+        x:+(g.getAttribute('x')||0), y:+(g.getAttribute('y')||0),
+        w:+(g.getAttribute('width')||0), h:+(g.getAttribute('height')||0)
+      });
+    });
+    sider.push({navn:d.getAttribute('name')||('Side '+(sider.length+1)), figurer:figurer});
+  }
+  return sider;
+}
+
+/* Hvad er figuren? Mærket fra vores egen eksport vinder; ellers kigger vi på stilen */
+function dioType(f){
+  if(f.stil.sf) return f.stil.sf;
+  const s=f.stil, fs=+(s.fontSize||0);
+  if(s.text && fs>=20 && s.fontStyle==='1') return 'titel';
+  if(s.rounded && s.arcSize==='4' && s.verticalAlign==='top' && fs===14) return 'boks';
+  if(s.rounded && s.arcSize==='50' && fs===10) return 'transport';
+  if(s.ellipse) return 'prik';
+  if(s.text && fs===11 && s.fontStyle==='1') return 'grupperad';
+  if(s.text && fs===10 && /3a3a3a/i.test(s.fontColor||'')) return 'kanal';
+  if(s.text && fs===8) return 'txrx';
+  return 'andet';
+}
+
+/* Byg ét SignalFlow-ark ud fra en side med figurer */
+function dioByggArk(side){
+  const F=side.figurer.map(f=>Object.assign(f,{type:dioType(f)}));
+  const sh=newSheet(side.navn);
+  const titel=F.find(f=>f.type==='titel');
+  if(titel && titel.tekst) sh.title=titel.tekst;
+
+  /* Bokse: afsender til venstre, modtager til højre. Uden mærker afgør x. */
+  let bokse=F.filter(f=>f.type==='afsender'||f.type==='modtager'||f.type==='boks');
+  if(bokse.some(b=>b.type==='boks')){
+    const midt=bokse.reduce((a,b)=>a+b.x+b.w/2,0)/Math.max(1,bokse.length);
+    bokse.forEach(b=>{ if(b.type==='boks') b.type=(b.x+b.w/2<midt)?'afsender':'modtager'; });
+  }
+  const afs=bokse.filter(b=>b.type==='afsender').sort((a,b)=>a.y-b.y);
+  const mod=bokse.filter(b=>b.type==='modtager').sort((a,b)=>a.y-b.y);
+
+  const kendt=afs.length>0;
+  if(!kendt){
+    /* En almindelig draw.io-tegning: læg teksten ind som frie tekstfelter */
+    const minX=Math.min(...F.map(f=>f.x),0), minY=Math.min(...F.map(f=>f.y),0);
+    sh.items=F.filter(f=>f.tekst && f!==titel).map(f=>({
+      id:id(), type:'text', x:Math.round(f.x-minX)+20, y:Math.round(f.y-minY)+20,
+      w:Math.max(120,Math.min(420,Math.round(f.w)||200)), text:f.tekst
+    }));
+    sh.sections=[];
+    return {ark:sh, slags:'fritekst', antal:sh.items.length};
+  }
+
+  const delBoks=t=>{
+    const l=(t||'').split('\n');
+    return {navn:(l.shift()||'').trim(),
+            linjer:l.map(x=>x.trim()).filter(Boolean).map(x=>({id:id(),t:x}))};
+  };
+  let kanaler=0, grupper=0;
+  afs.forEach(function(A,i){
+    const top=A.y, bund=A.y+A.h;
+    const M=mod.find(m=>Math.abs(m.y-top)<40) || mod[i] || null;
+    const a=delBoks(A.tekst), m=M?delBoks(M.tekst):{navn:'',linjer:[]};
+    /* newSection tager modtageren først – vi sætter felterne direkte, så der
+       ikke kan ske en ombytning */
+    const sc=newSection();
+    sc.src=a.navn||'Afsender'; sc.dst=m.navn||'Modtager';
+    sc.srcLines=a.linjer; sc.dstLines=m.linjer;
+    SS(sc).srcW=Math.round(A.w)||190;
+    if(M) SS(sc).dstW=Math.round(M.w)||210;
+    const farve=(stil,felt)=>stil[felt]&&stil[felt]!=='none'?stil[felt]:null;
+    if(farve(A.stil,'fillColor')) SS(sc).srcBg=A.stil.fillColor;
+    if(farve(A.stil,'fontColor')) SS(sc).srcFg=A.stil.fontColor;
+    if(M && farve(M.stil,'fillColor')) SS(sc).dstBg=M.stil.fillColor;
+    if(M && farve(M.stil,'fontColor')) SS(sc).dstFg=M.stil.fontColor;
+
+    /* Alt der står mellem boksenes top og bund hører til sektionen */
+    const inde=F.filter(f=>f.y+f.h/2>=top-4 && f.y+f.h/2<=bund+4 && f!==A && f!==M);
+    /* Gruppens hovedlinje: gruppenavn (højre) og fødning (venstre) på samme højde */
+    const hoved=inde.filter(f=>f.type==='gruppe'||f.type==='feed'||f.type==='grupperad')
+      .sort((p,q)=>p.y-q.y);
+    const raekker=[];
+    hoved.forEach(f=>{
+      const cy=f.y+f.h/2;
+      let r=raekker.find(r=>Math.abs(r.cy-cy)<8);
+      if(!r){ r={cy:cy, del:[]}; raekker.push(r); }
+      r.del.push(f);
+    });
+    raekker.sort((p,q)=>p.cy-q.cy);
+    const kan=inde.filter(f=>f.type==='kanal').sort((p,q)=>p.y-q.y);
+    const tt=inde.filter(f=>f.type==='transport');
+
+    raekker.forEach(function(r,gi){
+      const naeste=raekker[gi+1] ? raekker[gi+1].cy : bund+10;
+      r.del.sort((p,q)=>p.x-q.x);
+      /* uden mærker: den venstre er fødningen, den højre er gruppenavnet */
+      let feed=r.del.find(f=>f.type==='feed'), navn=r.del.find(f=>f.type==='gruppe');
+      if(!feed && !navn){ feed=r.del.length>1?r.del[0]:null; navn=r.del[r.del.length-1]; }
+      const g=newGroup((navn&&navn.tekst)||'Gruppe');
+      if(feed){
+        g.feed=(feed.tekst||'').replace(/\s*·\s*BACKUP$/i,'').trim();
+        if(/BACKUP$/i.test(feed.tekst||'') || feed.stil.sfrolle==='backup') g.role='backup';
+        if(feed.stil.sflag) g.layer=feed.stil.sflag;
+        if(feed.stil.sfdir) g.dir=feed.stil.sfdir;
+      }
+      const t=tt.find(x=>Math.abs(x.y+x.h/2-r.cy)<10);
+      if(t && t.tekst && t.tekst!=='—') g.transport=t.tekst;
+      const tx=inde.find(f=>(f.type==='tx'||f.type==='txrx') && f.y+f.h/2<r.cy && r.cy-(f.y+f.h/2)<18 && f.x<(navn?navn.x:1e9)-200);
+      const rx=inde.find(f=>(f.type==='rx'||f.type==='txrx') && f!==tx && f.y+f.h/2<r.cy && r.cy-(f.y+f.h/2)<18);
+      if(tx) g.tx=tx.tekst; if(rx) g.rx=rx.tekst;
+
+      g.channels=kan.filter(k=>{ const cy=k.y+k.h/2; return cy>r.cy+4 && cy<naeste-2; }).map(function(k){
+        let tekst=k.tekst||'';
+        let rolle=k.stil.sfrolle||'';
+        if(/\[B\]\s*$/.test(tekst)){ rolle='backup'; tekst=tekst.replace(/\s*\[B\]\s*$/,''); }
+        /* "Ch. 1  Vært" – nummer og navn er adskilt af mindst to mellemrum */
+        const dele=tekst.split(/\s{2,}/);
+        const nr=dele.length>1?dele[0].trim():'';
+        const lbl=dele.length>1?dele.slice(1).join(' ').trim():tekst.trim();
+        const ch={id:id(), nr:nr, label:lbl, layer:k.stil.sflag||g.layer||'video'};
+        if(k.stil.sfdir) ch.dir=k.stil.sfdir;
+        if(rolle) ch.role=rolle;
+        return ch;
+      });
+      kanaler+=g.channels.length; grupper++;
+      sc.groups.push(g);
+    });
+    sh.sections.push(sc);
+  });
+  return {ark:sh, slags:F.some(f=>f.stil.sf)?'signalflow':'signalflow-gammel',
+          sektioner:sh.sections.length, grupper:grupper, kanaler:kanaler};
+}
+
+/* ── vinduet ───────────────────────────────────────────────── */
+let DIO={sider:[]};
+
+function dioAaben(){
+  const html=`
+   <div class="mf"><label>draw.io-fil</label>
+     <input type="file" id="dioFil" accept=".drawio,.xml,.dio"></div>
+   <div id="dioSider" class="dio-sider"></div>
+   <div class="mrow">
+     <button class="btn go" id="dioOk" disabled>Importér</button>
+     <button class="btn" data-cancel="1">Annullér</button>
+   </div>`;
+  openModal('Importér fra draw.io', 'nye sider lægges til i '+esc(projectName||'projektet'), html, root=>{
+    root.querySelector('[data-cancel]').onclick=closeModal;
+    const vis=root.querySelector('#dioSider');
+    root.querySelector('#dioFil').onchange=async function(){
+      const f=this.files&&this.files[0]; if(!f) return;
+      vis.innerHTML='<div class="hint">Læser filen …</div>';
+      try{
+        DIO.sider=await dioLaesFil(await f.text());
+        if(!DIO.sider.length) throw new Error('Der er ingen sider i filen.');
+        DIO.resultater=DIO.sider.map(dioByggArk);
+        vis.innerHTML=
+          `<div class="dio-valg">
+             <label><input type="radio" name="dioHvad" value="alle" checked> Alle ${DIO.sider.length} sider</label>
+             <label><input type="radio" name="dioHvad" value="en"> Kun én side:
+               <select id="dioEn">${DIO.sider.map((s,i)=>`<option value="${i}">${esc(s.navn)}</option>`).join('')}</select></label>
+           </div>
+           <div class="dio-liste">${DIO.resultater.map((r,i)=>`<div class="dio-side">
+              <b>${esc(DIO.sider[i].navn)}</b>
+              <span>${r.slags==='fritekst'
+                ? r.antal+' tekstfelter <em>(almindelig draw.io-tegning)</em>'
+                : r.sektioner+' sektioner · '+r.grupper+' grupper · '+r.kanaler+' kanaler'
+                  +(r.slags==='signalflow-gammel'?' <em>(ældre eksport – genkendt på stilen)</em>':'')}</span>
+            </div>`).join('')}</div>`;
+        root.querySelector('#dioOk').disabled=false;
+        root.querySelector('#dioEn').onchange=()=>{ root.querySelector('[name=dioHvad][value=en]').checked=true; };
+      }catch(e){
+        vis.innerHTML='<div class="hint" style="color:var(--video)">'+esc(e.message||String(e))+'</div>';
+        root.querySelector('#dioOk').disabled=true;
+      }
+    };
+    root.querySelector('#dioOk').onclick=function(){
+      const hvad=(root.querySelector('[name=dioHvad]:checked')||{}).value;
+      const valgte = hvad==='en'
+        ? [DIO.resultater[+root.querySelector('#dioEn').value]]
+        : DIO.resultater;
+      snap();
+      /* Står projektet med én urørt side, erstatter vi den i stedet for at
+         lægge importen ved siden af en tom skabelon. */
+      /* Sammenlign indhold – ikke id'er, der er tilfældige hver gang */
+      const indhold=sh=>JSON.stringify((sh.sections||[]).map(sc=>[sc.src,sc.dst,
+        (sc.groups||[]).map(g=>[g.label,g.feed,(g.channels||[]).map(c=>[c.nr,c.label])])]));
+      const urort = pages.length===1 && indhold(pages[0])===indhold(blank())
+                    && !(pages[0].items||[]).length;
+      const nye=valgte.map(r=>{ const a=r.ark; a.id=id(); a.mt=Date.now(); return a; });
+      if(urort) pages=nye; else pages=pages.concat(nye);
+      activePage = urort ? 0 : pages.length-nye.length;
+      doc=pages[activePage]; path=[]; sel=null;
+      closeModal(); draw();
+      setSync('importeret '+nye.length+' side'+(nye.length===1?'':'r')+' fra draw.io');
+    };
+  });
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   LÅS ARKET
+   Når en plan er sendt videre, skal den ikke laves om ved et uheld. Låsen er
+   en hængelås uden kode: den sidder på det enkelte ark, følger med når
+   projektet deles, og kan låses op med ét klik (og et "er du sikker?").
+   ══════════════════════════════════════════════════════════════ */
+let laasUndtagelse=false;           // sat mens selve låsen skiftes
+function arkLaast(i){
+  const p=pages[i==null?activePage:i];
+  return !!(p && p.laast);
+}
+function laasTekst(p){
+  if(!p||!p.laast) return '';
+  const d=new Date(p.laast.kl||0);
+  const kl=isNaN(d)?'':d.toLocaleString('da-DK',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  return 'Låst'+(p.laast.af?' af '+p.laast.af:'')+(kl?' · '+kl:'');
+}
+function skiftLaas(){
+  const p=pages[activePage]; if(!p) return;
+  if(p.laast){
+    if(!confirm('Lås "'+p.title+'" op, så arket kan rettes igen?\n\n'+laasTekst(p)))return;
+  }
+  laasUndtagelse=true;
+  try{
+    snap();
+    if(p.laast) delete p.laast;
+    else p.laast={af:meName()||'', kl:new Date().toISOString()};
+  }finally{ laasUndtagelse=false; }
+  sel=null; focus=null;
+  draw();
+  setSync(p.laast?'arket er låst':'arket er låst op');
+}
+/* Kort besked, når man prøver at rette et låst ark */
+let laasBeskedTimer=null;
+function laasBesked(){
+  const b=document.getElementById('laasbanner'); if(!b) return;
+  b.classList.remove('blink'); void b.offsetWidth; b.classList.add('blink');
+  clearTimeout(laasBeskedTimer);
+  laasBeskedTimer=setTimeout(()=>b.classList.remove('blink'),900);
+}
+/* Bliver man på et låst ark, må intet på arket kunne rettes – uanset hvor
+   klikket rammer. Kun det at folde grupper sammen og ud er lovligt. */
+['mousedown','click','dblclick','contextmenu'].forEach(function(typ){
+  document.getElementById('sheet').addEventListener(typ, function(ev){
+    if(view!=='flow' || !arkLaast()) return;
+    if(ev.target.closest('[data-fold]')) return;
+    if(ev.target.closest('a[href]')) return;
+    ev.stopPropagation(); ev.preventDefault();
+    if(typ==='click') laasBesked();
+  }, true);
+});
+
 /* ---- ryd udskriften væk igen ----
    På en computer står JavaScript stille, mens printvinduet er åbent, så en
    timer på et halvt sekund var nok. På iPhone vender window.print() tilbage
@@ -5640,7 +6026,7 @@ function exportDrawio(o){
    +`<mxPoint x="${Math.round(x2)}" y="${Math.round(y2)}" as="targetPoint"/></mxGeometry></mxCell>`)};
 
   let y=M;
-  V(sh.title,'text;html=1;fontSize=22;fontStyle=1;align=center;verticalAlign=middle;',
+  V(sh.title,'sf=titel;text;html=1;fontSize=22;fontStyle=1;align=center;verticalAlign=middle;',
     M,y,SHEETW-2*M,34);
   y+=54;
 
@@ -5668,17 +6054,17 @@ function exportDrawio(o){
     const feedTxt=(g.feed||'')+(g.role==='backup'?' · BACKUP':'');
     const feedW2=Math.min(feedW-6, Math.max(46, tw(feedTxt,11)+8));
     V(feedTxt,
-      `text;html=1;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;fontColor=${col};`,
+      `sf=feed;sflag=${g.layer||''};sfdir=${g.dir||'ltr'};sfrolle=${g.role||''};text;html=1;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;fontColor=${col};`,
       rowsX,ry-9,feedW2,18);
     E('',est,rowsX+feedW2+10,ry,cloudX,ry);
     V(g.transport||'—',
-      'rounded=1;arcSize=50;html=1;fontSize=10;fontStyle=1;fillColor=#ffffff;strokeColor=#b4b4b4;fontColor=#5c5c5c;',
+      'sf=transport;rounded=1;arcSize=50;html=1;fontSize=10;fontStyle=1;fillColor=#ffffff;strokeColor=#b4b4b4;fontColor=#5c5c5c;',
       cloudX,ry-11,cloudW,22);
     E('',est,cloudX+cloudW,ry,lineB,ry);
-    V(g.label,`text;html=1;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;fontColor=${col};`,
+    V(g.label,`sf=gruppe;text;html=1;fontSize=11;fontStyle=1;align=left;verticalAlign=middle;fontColor=${col};`,
       nameX,ry-9,nameW,18);
-    if(g.tx)V(g.tx,'text;html=1;fontSize=8;align=center;verticalAlign=middle;fontColor=#666666;',lineA+2,ry-16,54,12);
-    if(g.rx)V(g.rx,'text;html=1;fontSize=8;align=center;verticalAlign=middle;fontColor=#666666;',lineB-56,ry-16,54,12);
+    if(g.tx)V(g.tx,'sf=tx;text;html=1;fontSize=8;align=center;verticalAlign=middle;fontColor=#666666;',lineA+2,ry-16,54,12);
+    if(g.rx)V(g.rx,'sf=rx;text;html=1;fontSize=8;align=center;verticalAlign=middle;fontColor=#666666;',lineB-56,ry-16,54,12);
     ry+=20;
 
     g.channels.forEach(ch=>{
@@ -5688,7 +6074,7 @@ function exportDrawio(o){
      V('','ellipse;html=1;fillColor='+cdot+';strokeColor=none;',rowsX+16,ry-4,8,8);
      const chTxt=(ch.nr||'')+'  '+(ch.label||'')+(crole==='backup'?'   [B]':'');
      const chW=Math.min(300, Math.max(60, tw(chTxt,10)+10));
-     V(chTxt,'text;html=1;fontSize=10;align=left;verticalAlign=middle;fontColor=#3a3a3a;',
+     V(chTxt,`sf=kanal;sflag=${ch.layer||''};sfdir=${ch.dir||''};sfrolle=${ch.role||''};text;html=1;fontSize=10;align=left;verticalAlign=middle;fontColor=#3a3a3a;`,
        rowsX+30,ry-8,chW,16);
      const cd=ch.dir||g.dir||'ltr';
      E('',`html=1;${cdash}${cd==='rtl'||cd==='both'?'startArrow=classic;startFill=1;':'startArrow=none;'}`
@@ -5712,9 +6098,9 @@ function exportDrawio(o){
    const srcLines=(sc.srcLines||[]).map(l=>l.t).join('\n');
    const dstLines=(sc.dstLines||[]).map(l=>l.t).join('\n');
    V(sc.src+(srcLines?'\n\n'+srcLines:''),
-     boxS(st.srcBg||'#e9c440', st.srcBd||'#bd9a2c', st.srcFg||'#2b2417'), M,secTop,srcW,secH);
+     'sf=afsender;'+boxS(st.srcBg||'#e9c440', st.srcBd||'#bd9a2c', st.srcFg||'#2b2417'), M,secTop,srcW,secH);
    V(sc.dst+(dstLines?'\n\n'+dstLines:''),
-     boxS(st.dstBg||'#6d8764', st.dstBd||'#4c6245', st.dstFg||'#f3f7f1'), dstX,secTop,dstW,secH);
+     'sf=modtager;'+boxS(st.dstBg||'#6d8764', st.dstBd||'#4c6245', st.dstFg||'#f3f7f1'), dstX,secTop,dstW,secH);
 
    /* bokse der er låst fast i denne sektion – stables i den boks de hører til */
    ['src','dst'].forEach(side=>{
