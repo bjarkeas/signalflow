@@ -4393,11 +4393,31 @@ async function pull(){
  applyingRemote=true;
  try{ return await pullInner() } finally { applyingRemote=false }
 }
+
+/* ── Er brugeren midt i at skrive? ─────────────────────────────
+   Så må vi hverken hente nyt ned eller tegne arket om – det lukker feltet
+   midt i en sætning. Vi venter, til han er færdig (Enter, Tab eller klik
+   ved siden af), og henter så det, kollegerne har lavet imens. */
+let sidsteTast=0;
+document.addEventListener('input',()=>{sidsteTast=Date.now()},true);
+document.addEventListener('keydown',()=>{sidsteTast=Date.now()},true);
+function skriverNu(){
+  /* et åbent felt på arket, et felt i blokdiagrammet, eller et felt man
+     har tastet i inden for de sidste par sekunder */
+  if(typeof editing!=='undefined' && editing && editing.inp && editing.inp.isConnected) return true;
+  const a=document.activeElement;
+  const iFelt=a && (a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.isContentEditable)
+              && !a.closest('#modal') && !a.closest('#gate');
+  return !!(iFelt && Date.now()-sidsteTast<4000);
+}
+
 async function pullInner(){
  /* Står et redigeringsvindue åbent, arbejder brugeren i en bestemt boks.
     Henter vi projektet om under fødderne på ham, skriver han bagefter i en
     kopi der ikke længere findes – og rettelsen forsvinder. Vi venter. */
  if(mEl&&mEl.classList.contains('on'))return;
+ /* Samme regel, når man skriver direkte på arket: hent ikke midt i en sætning */
+ if(skriverNu()){ setSync('venter til du er færdig med at skrive'); return; }
  let r;
  try{ r=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=updated_at,updated_by'); }
  catch(e){ setSync('ingen forbindelse',true); return; }
@@ -4497,6 +4517,9 @@ function push(){
  clearTimeout(pushTimer);
  pushTimer=setTimeout(async()=>{
   if(!cloudId||!session()||!dirty)return;
+  /* Midt i en sætning? Prøv igen om lidt – vi må ikke hente og flette nu,
+     og uden fletning må vi heller ikke skrive. */
+  if(skriverNu()){ push(); return; }
   try{
    /* Hent serverens udgave og flet ind FØR vi skriver. Hele dokumentet
       skrives på én gang, så uden det ville vi slette de rettelser en
