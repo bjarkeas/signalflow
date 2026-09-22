@@ -1049,7 +1049,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 <div id="app">
   <header>
    <div class="hvenstre">
-    <div class="logo">Signal<em>Flow</em></div>
+    <div class="logo" title="SignalFlow · version 2026.09.22-b">Signal<em>Flow</em></div>
     <div class="viewsw">
       <button class="vbtn on" data-view="flow" title="Signalflow-tegningen med afsender, signaler og modtager">Tegning</button>
       <button class="vbtn" data-view="plan" title="Hvilke signaler der sidder i hvilke stik, med patch og tjek">Kanalplan</button>
@@ -5815,13 +5815,13 @@ let DIO={sider:[]};
 function dioAaben(){
   const html=`
    <div class="mf"><label>draw.io-fil</label>
-     <input type="file" id="dioFil" accept=".drawio,.xml,.dio"></div>
+     <input type="file" id="dioFil"></div>
    <div id="dioSider" class="dio-sider"></div>
    <div class="mrow">
      <button class="btn go" id="dioOk" disabled>Importér</button>
      <button class="btn" data-cancel="1">Annullér</button>
    </div>`;
-  openModal('Importér fra draw.io', 'nye sider lægges til i '+esc(projectName||'projektet'), html, root=>{
+  openModal('Importér fra draw.io', 'version 2026.09.22-b · nye sider lægges til i '+esc(projectName||'projektet'), html, root=>{
     root.querySelector('[data-cancel]').onclick=closeModal;
     const vis=root.querySelector('#dioSider');
     root.querySelector('#dioFil').onchange=async function(){
