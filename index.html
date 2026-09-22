@@ -450,9 +450,11 @@ body.mobile #sideknap{display:none}
 .laasknap.laast{color:#f0b429;border-color:#8a6a1c;background:rgba(240,180,41,.08)}
 .tab .tlaas{font-size:10px;margin-right:4px;opacity:.85}
 #laasbanner{display:none}
+body.planview #laasbanner, body.blockview #laasbanner, body.archview #laasbanner{display:none!important}
 #laasbanner.on{display:block;background:rgba(240,180,41,.09);border-bottom:1px solid #6b5418;
  color:#e8c46a;font-size:12px;padding:7px 14px;text-align:center}
 #laasbanner.on b{font-weight:600}
+#laasbanner.on.info{background:rgba(63,217,156,.08);border-bottom-color:#2c5f4a;color:#7fe0b8}
 #laasbanner.blink{animation:laasblink .9s ease}
 @keyframes laasblink{0%,100%{background:rgba(240,180,41,.09)}30%{background:rgba(240,180,41,.35)}}
 /* alt der kan ændre arket, skjules – kun foldeknapperne bliver */
@@ -1376,7 +1378,8 @@ function draw(keepSide){
        <button class="add" data-unfocus="1" title="Vis alle sektioner igen">vis hele arket</button></div>`;
  }
 
- if(!sh.sections.length){
+ /* Et ark med kun paneler eller tekstfelter er ikke tomt */
+ if(!sh.sections.length && !(sh.items||[]).length){
   h+=`<div class="empty">Tomt ark.<br><button class="add" data-addsec="1" title="Ny sektion: en afsender, et spor med signaler og en modtager">+ tilføj sektion</button></div>`;
  }
 
@@ -1499,7 +1502,7 @@ ${(g.sub&&g.sub.sections&&g.sub.sections.some(s=>(s.groups||[]).length))?
  });
  /* Knapperne skal også være der på et tomt ark – man kan sagtens ville lave
     en side med kun paneler eller kun tekst. */
- if(!focus)h+=`<div style="text-align:center">
+ if(!focus)h+=`<div id="addbarbund" style="text-align:center">
    <button class="add" data-addsec="1" title="Ny sektion: en afsender, et spor med signaler og en modtager">+ sektion</button>
    <button class="add" data-addtext="1" title="Frit tekstfelt du kan placere hvor som helst på arket">+ tekstfelt</button>
    <button class="add" data-addlegend="1" title="Boks med symboler, positioner og antal – fx bemanding">+ symbolforklaring</button>
@@ -1510,6 +1513,7 @@ ${(g.sub&&g.sub.sections&&g.sub.sections.some(s=>(s.groups||[]).length))?
  (sh.items||[]).filter(i=>!i.anchor).forEach(it=>{ h+=itemHTML(it,false) });
 
  el.innerHTML=h;
+ giPladsTilElementer();
  /* markér hvilken side der blev rettet, så fletningen kan se hvem der er nyest */
  if(sidenRettet!==null&&pages[sidenRettet]){pages[sidenRettet].mt=Date.now();sidenRettet=null}
  fitBoxes();
@@ -3963,6 +3967,7 @@ function sheetApp(){
   {ikon:'⤓',tekst:'Gem',under:'i projektet og som kopi på enheden',gør:()=>document.getElementById('bSave').click()},
   {ikon:'↥',tekst:'Importér projekt fra fil',gør:()=>spoergGem('importere et projekt',()=>document.getElementById('file').click())},
   {ikon:'⧉',tekst:'Importér fra draw.io',under:'læg sider ind i det åbne projekt',gør:()=>dioAaben()},
+  {ikon:'▦',tekst:'Importér intercom-paneler',under:'fra et Excel-ark',gør:()=>ipAaben()},
   {ikon:arkLaast()?'🔓':'🔒',tekst:arkLaast()?'Lås arket op':'Lås arket',under:arkLaast()?laasTekst(pages[activePage]):'så det ikke kan rettes ved et uheld',gør:()=>skiftLaas()},
   {ikon:'↧',tekst:'Eksportér',under:'PDF, CSV, draw.io',gør:()=>openExport()},
   {skil:1},
@@ -4170,6 +4175,9 @@ function sheetKort(did){
 let view='flow';
 function setView(v){
  view=v;
+ /* Låsen gælder kun tegningens ark. I kanalplan, blokdiagram og lager skal
+    hverken banneret eller den grå sidebar være der. */
+ document.body.classList.toggle('arklaast', v==='flow' && typeof arkLaast==='function' && arkLaast());
  document.body.classList.toggle('planview',v==='plan');
  document.body.classList.toggle('blockview',v==='blocks');
  document.body.classList.toggle('archview',v==='arch');
@@ -5929,6 +5937,332 @@ function laasBesked(){
   }, true);
 });
 
+
+/* ══════════════════════════════════════════════════════════════
+   IMPORTÉR INTERCOM-PANELER FRA EXCEL
+   Et panel i regnearket er et navn i én celle med tasterne i rækkerne under
+   (fx 4 × 6). Står der "2nd Panel" under, er det udvidelsespanelet. Noter
+   ved siden af et panel kommer med som bemærkning, og en tabel med ALIAS og
+   TYPE bruges til at farve tasterne (CONF / IFB).
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── lille xlsx-læser: en xlsx er en zip med xml indeni ── */
+async function xlsxLaes(buf){
+  const u8=new Uint8Array(buf), dv=new DataView(buf);
+  let eocd=-1;
+  for(let i=u8.length-22;i>=Math.max(0,u8.length-66000);i--){ if(dv.getUint32(i,true)===0x06054b50){eocd=i;break} }
+  if(eocd<0) throw new Error('Filen er ikke en xlsx-fil.');
+  const antal=dv.getUint16(eocd+10,true); let p=dv.getUint32(eocd+16,true);
+  const filer={};
+  const dek=new TextDecoder();
+  for(let n=0;n<antal;n++){
+    const metode=dv.getUint16(p+10,true), csize=dv.getUint32(p+20,true);
+    const nl=dv.getUint16(p+28,true), el=dv.getUint16(p+30,true), cl=dv.getUint16(p+32,true);
+    const lokal=dv.getUint32(p+42,true);
+    const navn=dek.decode(u8.subarray(p+46,p+46+nl));
+    filer[navn]={metode, csize, lokal};
+    p+=46+nl+el+cl;
+  }
+  const hent=async function(navn){
+    const f=filer[navn]; if(!f) return null;
+    const l=f.lokal, nl=dv.getUint16(l+26,true), el=dv.getUint16(l+28,true);
+    const data=u8.subarray(l+30+nl+el, l+30+nl+el+f.csize);
+    if(f.metode===0) return dek.decode(data);
+    if(typeof DecompressionStream==='undefined') throw new Error('Din browser kan ikke læse xlsx. Kopiér cellerne fra Excel og sæt dem ind i stedet.');
+    const s=new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return await new Response(s).text();
+  };
+  const xml=t=>new DOMParser().parseFromString(t,'text/xml');
+  /* delte tekster */
+  const delte=[];
+  const ss=await hent('xl/sharedStrings.xml');
+  if(ss) [...xml(ss).getElementsByTagName('si')].forEach(si=>{
+    delte.push([...si.getElementsByTagName('t')].map(t=>t.textContent).join(''));
+  });
+  /* første faneblad (eller det der hedder INTERCOM) */
+  let arkSti='xl/worksheets/sheet1.xml';
+  const wb=await hent('xl/workbook.xml'), rel=await hent('xl/_rels/workbook.xml.rels');
+  if(wb && rel){
+    const ark=[...xml(wb).getElementsByTagName('sheet')];
+    const valgt=ark.find(a=>/intercom/i.test(a.getAttribute('name')||'')) || ark[0];
+    const rid=valgt && (valgt.getAttribute('r:id')||valgt.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id'));
+    const r=[...xml(rel).getElementsByTagName('Relationship')].find(x=>x.getAttribute('Id')===rid);
+    if(r){ const t=r.getAttribute('Target'); arkSti=t.startsWith('/')?t.slice(1):'xl/'+t.replace(/^\.\//,''); }
+  }
+  const sh=await hent(arkSti);
+  if(!sh) throw new Error('Kunne ikke finde regnearket i filen.');
+  const gitter=[];
+  [...xml(sh).getElementsByTagName('c')].forEach(c=>{
+    const ref=c.getAttribute('r')||''; const m=ref.match(/^([A-Z]+)(\d+)$/); if(!m) return;
+    let col=0; for(const ch of m[1]) col=col*26+(ch.charCodeAt(0)-64);
+    const row=+m[2], t=c.getAttribute('t');
+    let v='';
+    if(t==='s'){ const vv=c.getElementsByTagName('v')[0]; v=vv?(delte[+vv.textContent]||''):''; }
+    else if(t==='inlineStr'){ v=[...c.getElementsByTagName('t')].map(x=>x.textContent).join(''); }
+    else { const vv=c.getElementsByTagName('v')[0]; v=vv?vv.textContent:''; }
+    v=String(v).trim(); if(!v) return;
+    (gitter[row-1]||(gitter[row-1]=[]))[col-1]=v;
+  });
+  return gitter;
+}
+
+/* indsat fra Excel: tabulator mellem kolonner, linjeskift mellem rækker */
+function ipTsvTilGitter(tekst){
+  return tekst.replace(/\r/g,'').split('\n').map(l=>l.split('\t').map(c=>renCelleIP(c)));
+}
+function renCelleIP(c){
+  c=(c==null?'':String(c)).trim();
+  if(c.length>=2 && c[0]==='"' && c[c.length-1]==='"') c=c.slice(1,-1).replace(/""/g,'"');
+  return c;
+}
+
+/* ── find paneler i gitteret ── */
+function ipFindPaneler(g){
+  const v=(r,c)=>((g[r]||[])[c]||'').trim();
+  /* tomme rækker er huller i listen – regn bredden ud række for række */
+  const rows=g.length;
+  let cols=0; for(let i=0;i<rows;i++) cols=Math.max(cols,(g[i]||[]).length);
+  const brugt=new Set(); const K=(r,c)=>r+':'+c;
+  const er2nd=t=>/^2(nd|\.)?\s*panel/i.test(t);
+  const tael=(r,c,w)=>{ let n=0; for(let i=0;i<w;i++) if(v(r,c+i)) n++; return n; };
+  /* Blokkenes bredde findes ud fra, hvor panelnavnene står. Står de i B og I,
+     er et panel 6 kolonner bredt med én tom kolonne imellem. En tom kolonne
+     INDE i et panel betyder bare, at de taster ikke er i brug. */
+  /* Et panelnavn: står alene (højst én note ved siden af), cellen til
+     venstre er tom, og tasterne begynder i samme kolonne lige under. */
+  const erNavn=function(r,c){
+    const t=v(r,c); if(!t||er2nd(t)) return false;
+    if(c>0 && v(r,c-1)) return false;
+    if(!v(r+1,c) || er2nd(v(r+1,c))) return false;
+    let under=0, ved=0;
+    for(let i=0;i<6;i++){ if(v(r+1,c+i)) under++; if(i>0&&v(r,c+i)) ved++; }
+    return under>=2 && ved<=1;
+  };
+  /* "2nd Panel" står altid i blokkens første kolonne – det er det sikreste
+     anker for, hvor panelerne begynder. Findes den ikke, bruger vi navnene. */
+  const navneKol=new Set();
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(er2nd(v(r,c))) navneKol.add(c);
+  const ankret=navneKol.size>0;
+  if(!ankret) for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) if(erNavn(r,c)) navneKol.add(c);
+  const ks=[...navneKol].sort((a,b)=>a-b), huller=[];
+  for(let i=1;i<ks.length;i++) if(ks[i]-ks[i-1]>=3) huller.push(ks[i]-ks[i-1]);
+  const W=huller.length ? Math.max(1,Math.min(16,Math.min(...huller)-1)) : 6;
+  const paneler=[], noter=[];
+  /* 1) alias-tabel: en række med ALIAS og TYPE */
+  const typer={}; let tabel=null;
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    if(/^alias$/i.test(v(r,c)) && /^type$/i.test(v(r,c+1))){
+      const hoved=[]; for(let i=0;i<8&&v(r,c+i);i++) hoved.push(v(r,c+i));
+      tabel={r,c,hoved,rk:[]};
+      /* læs rækkerne under – en enkelt tom række imellem er tilladt */
+      let rr=r+1, tomme=0;
+      while(rr<rows){
+        if(!v(rr,c)){ if(++tomme>1) break; rr++; continue; }
+        tomme=0;
+        const linje=hoved.map((_,i)=>v(rr,c+i)); tabel.rk.push(linje);
+        typer[ipNorm(linje[0])]=(linje[1]||'').toUpperCase();
+        for(let i=0;i<hoved.length;i++) brugt.add(K(rr,c+i));
+        rr++;
+      }
+      for(let i=0;i<hoved.length;i++) brugt.add(K(r,c+i));
+      /* tabellens overskrift står typisk lige over */
+      for(let op=1;op<=3;op++) if(v(r-op,c)&&tael(r-op,c,6)===1){ tabel.titel=v(r-op,c); brugt.add(K(r-op,c)); break; }
+    }
+  }
+  /* 2) læs et gitter af taster fra (r,c) og nedad */
+  const laesTaster=function(r0,c){
+    const rk=[];
+    let r=r0;
+    /* tæl kun celler i selve blokken, der ikke allerede er brugt */
+    const fri=(rr,cc,w)=>{ let n=0; for(let i=0;i<w;i++) if(v(rr,cc+i)&&!brugt.has(K(rr,cc+i))) n++; return n; };
+    while(r<rows && rk.length<8){
+      if(er2nd(v(r,c))) break;
+      if(fri(r,c,W)===0) break;
+      /* Et panel slutter ved en tom række eller "2nd Panel" – ikke ved en
+         række, der tilfældigvis ligner et navn (fx "A KEY GROUP 3" med én
+         tast ved siden af). */
+      rk.push(r); r++;
+    }
+    if(!rk.length) return null;
+    const bredde=W;             // hele blokken – så tasterne står på deres rigtige plads
+    const taster=[]; const note=[];
+    rk.forEach(rr=>{
+      for(let i=0;i<bredde;i++){ taster.push(v(rr,c+i)); brugt.add(K(rr,c+i)); }
+      /* tekst i skillekolonnen lige efter blokken er en note til panelet */
+      if(v(rr,c+bredde)&&!brugt.has(K(rr,c+bredde))&&!navneKol.has(c+bredde)){ note.push(v(rr,c+bredde)); brugt.add(K(rr,c+bredde)); }
+    });
+    return {raekker:rk.length, kolonner:bredde, taster, note, slut:r};
+  };
+  /* 3) paneler: en navnecelle med en fuld række taster under */
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const t=v(r,c);
+    if(!t||brugt.has(K(r,c))||er2nd(t)) continue;
+    if(!erNavn(r,c)) continue;
+    if(ankret && !navneKol.has(c)) continue;         // står ikke i en blokkolonne
+    const hoved=laesTaster(r+1,c); if(!hoved) continue;
+    brugt.add(K(r,c));
+    const note=[...hoved.note];
+    for(let i=1;i<W;i++) if(v(r,c+i)&&!brugt.has(K(r,c+i))){ note.push(v(r,c+i)); brugt.add(K(r,c+i)); }
+    const p={navn:t, r:r, c:c, hoved:hoved, note:note, ekstra:null};
+    if(er2nd(v(hoved.slut,c))){
+      brugt.add(K(hoved.slut,c));
+      const ek=laesTaster(hoved.slut+1,c);
+      if(ek){ p.ekstra=ek; p.note.push(...ek.note); }
+    }
+    paneler.push(p);
+  }
+  /* 4) alt andet er noter; en tekst med linjeskift øverst er typisk arkets titel */
+  /* Titlen er den tekst øverst i arket, der mest ligner en overskrift –
+     flest store bogstaver. En instruks med et enkelt ord i versaler er ikke titlen. */
+  let titel='', titelK='';
+  const store=t=>{ const b=(t.match(/[a-zæøåA-ZÆØÅ]/g)||[]).length; return b?(t.match(/[A-ZÆØÅ]/g)||[]).length/b:0; };
+  let bedst=0.6;
+  for(let r=0;r<Math.min(rows,6);r++) for(let c=0;c<cols;c++){
+    const t=v(r,c); if(!t||brugt.has(K(r,c))||t.length<10) continue;
+    if(store(t)>bedst){ bedst=store(t); titel=t; titelK=K(r,c); }
+  }
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const t=v(r,c); if(!t||brugt.has(K(r,c))||K(r,c)===titelK) continue;
+    noter.push({t:t, r:r, c:c});
+  }
+  return {paneler, noter, tabel, typer, titel};
+}
+
+function ipNorm(t){ return (t||'').toLowerCase().replace(/\b(ifb|conf|fonf|cf)\b/g,'').replace(/[^a-z0-9æøå]/g,''); }
+
+/* farve efter type: tabellen først, ellers endelsen på tasten */
+const IP_FARVE={CONF:'#1e3a5f', IFB:'#8a5a00'};
+function ipTypeFor(tekst, typer){
+  const n=ipNorm(tekst);
+  if(n && typer[n]) return typer[n];
+  if(/\bifb\b|\bfib\b/i.test(tekst)) return 'IFB';
+  if(/\bconf\b|\bfonf\b|\bcf\b/i.test(tekst)) return 'CONF';
+  return '';
+}
+
+function ipByggPanel(navn, g, typer, farv){
+  return {id:id(), type:'panel', x:0, y:0, w:Math.max(260, g.kolonner*56+40), title:navn,
+    prows:g.raekker, pcols:g.kolonner, scale:1, keyColor:'#2e2e2e',
+    net:{alias:''}, keys:g.taster.map(t=>{
+      const ty=farv?ipTypeFor(t,typer):'';
+      return {t:t, c:(ty&&IP_FARVE[ty])||''};
+    })};
+}
+
+/* ── vinduet ── */
+let IP={};
+function ipAaben(){
+  const html=`
+   <div class="mf"><label>Excel-fil (.xlsx) – eller sæt cellerne ind herunder</label>
+     <input type="file" id="ipFil"></div>
+   <div class="mf"><textarea id="ipTekst" rows="3" placeholder="…eller markér arket i Excel (Ctrl+A), kopiér og sæt ind her"></textarea></div>
+   <div id="ipVis" class="dio-sider"></div>
+   <div class="mrow">
+     <button class="btn go" id="ipOk" disabled>Importér</button>
+     <button class="btn" data-cancel="1">Annullér</button>
+   </div>`;
+  openModal('Importér intercom-paneler','fra et regneark',html,root=>{
+    root.querySelector('[data-cancel]').onclick=closeModal;
+    const vis=root.querySelector('#ipVis');
+    const brug=function(gitter){
+      IP=ipFindPaneler(gitter);
+      if(!IP.paneler.length){ vis.innerHTML='<div class="hint" style="color:var(--video)">Fandt ingen paneler. Et panel skal have et navn i én celle og tasterne i rækkerne lige under.</div>'; root.querySelector('#ipOk').disabled=true; return; }
+      const ekstra=IP.paneler.filter(p=>p.ekstra).length;
+      /* Står der allerede paneler på siden, lægger vi de nye ind under dem som
+         standard – så man ikke tror, de gamle er forsvundet. */
+      const aaben=sheet(), egne=(aaben.items||[]).filter(i=>i.type==='panel').length;
+      const her=egne>0;
+      vis.innerHTML=
+        `<div class="dio-valg">
+           <label><input type="radio" name="ipHvor" value="her" ${her?'checked':''}> Læg på den åbne side «${esc(aaben.title||'')}», under det der er${egne?' – dine '+egne+' paneler bliver liggende':''}</label>
+           <label><input type="radio" name="ipHvor" value="ny" ${her?'':'checked'}> Læg på en ny side${IP.titel?' («'+esc(IP.titel.split('\n')[0])+'»)':''}${egne?' – dine '+egne+' paneler bliver på «'+esc(aaben.title||'')+'»':''}</label>
+           <label><input type="checkbox" id="ipFarv" checked> Farv tasterne efter type – <span style="color:#6fa0d8">CONF</span> og <span style="color:#d9a441">IFB</span>${IP.tabel?' (fra tabellen i arket)':''}</label>
+         </div>
+         <div class="dio-liste">${IP.paneler.map(p=>`<div class="dio-side"><b>${esc(p.navn)}</b>
+           <span>${p.hoved.raekker} × ${p.hoved.kolonner} taster${p.ekstra?' · 2nd panel '+p.ekstra.raekker+' × '+p.ekstra.kolonner:''}${p.note.length?' · note: '+esc(p.note.join(' · ').slice(0,60)):''}</span></div>`).join('')}</div>
+         <div class="hint" style="margin-top:8px">${IP.paneler.length} paneler${ekstra?' og '+ekstra+' udvidelsespaneler':''}${IP.noter.length?' · '+IP.noter.length+' noter lægges ind som tekstfelter':''}${IP.tabel?' · tabellen "'+esc(IP.tabel.titel||'ALIAS')+'" lægges ind som tekstfelt':''}.</div>`;
+      root.querySelector('#ipOk').disabled=false;
+    };
+    root.querySelector('#ipFil').onchange=async function(){
+      const f=this.files&&this.files[0]; if(!f) return;
+      vis.innerHTML='<div class="hint">Læser filen …</div>';
+      try{
+        if(/\.(csv|txt|tsv)$/i.test(f.name)) brug(ipTsvTilGitter(await f.text()));
+        else brug(await xlsxLaes(await f.arrayBuffer()));
+      }catch(e){ vis.innerHTML='<div class="hint" style="color:var(--video)">'+esc(e.message||String(e))+'</div>'; }
+    };
+    root.querySelector('#ipTekst').addEventListener('input',function(){
+      if(this.value.trim().length>10) brug(ipTsvTilGitter(this.value));
+    });
+    root.querySelector('#ipOk').onclick=function(){
+      const nySide=(root.querySelector('[name=ipHvor]:checked')||{}).value!=='her';
+      const farv=root.querySelector('#ipFarv').checked;
+      snap();
+      let sh;
+      if(nySide){
+        sh=newSheet(IP.titel?IP.titel.split('\n')[0].slice(0,60):'Intercom paneler');
+        sh.id=id(); sh.sections=[]; sh.items=[];
+        pages.push(sh); activePage=pages.length-1; doc=sh; path=[];
+      }else sh=sheet();
+      sh.items=sh.items||[];
+      /* hvor langt nede står der allerede noget? */
+      let y0=nySide?40:Math.max(120, (nederstElement()||0)+40, el.scrollHeight-200);
+      const nye=[];
+      /* Første linje bliver sidens titel – resten (fx datoerne) som tekstfelt */
+      const titelRest=IP.titel?IP.titel.split('\n').slice(nySide?1:0).join('\n').trim():'';
+      if(titelRest) nye.push({id:id(),type:'text',x:20,y:y0,w:620,text:titelRest});
+      IP.noter.forEach(n=>nye.push({id:id(),type:'text',x:0,y:0,w:360,text:n.t,_note:true}));
+      if(IP.tabel){
+        const linjer=IP.tabel.rk.map(l=>l.filter(Boolean).join(' · '));
+        nye.push({id:id(),type:'text',x:0,y:0,w:420,text:(IP.tabel.titel?IP.tabel.titel+'\n':'')+linjer.join('\n'),_note:true});
+      }
+      const par=IP.paneler.map(p=>{
+        const hov=ipByggPanel(p.navn,p.hoved,IP.typer,farv);
+        if(p.note.length) hov.note=p.note.join(' · ');
+        const ek=p.ekstra?ipByggPanel(p.navn+' · 2nd panel',p.ekstra,IP.typer,farv):null;
+        return [hov,ek];
+      });
+      /* første udkast til placering; den rigtige højde måles efter tegning */
+      par.forEach(pp=>pp.forEach(x=>x&&nye.push(x)));
+      sh.items.push(...nye);
+      IP.layout={par, noter:nye.filter(x=>x._note), start:y0+(titelRest?50:0)};
+      const fraSide=nySide?(pages[pages.length-2]||{}).title:'';
+      closeModal(); draw();
+      ipLayout(); draw();
+      setSync('importeret '+IP.paneler.length+' paneler');
+      if(nySide && fraSide){
+        const lb=document.getElementById('laasbanner');
+        if(lb){ lb.innerHTML='✓ '+IP.paneler.length+' paneler lagt på en ny side. Dine egne paneler ligger stadig på fanen «'+esc(fraSide)+'».';
+          lb.classList.add('on','info'); setTimeout(()=>{ if(!arkLaast()){ lb.classList.remove('on','info'); lb.innerHTML=''; } },9000); }
+      }
+    };
+  });
+}
+
+/* Placer panelerne pænt: hovedpanel og 2nd panel side om side, to par pr.
+   række, og noterne til sidst. Højderne måles på de tegnede paneler. */
+function ipLayout(){
+  const L=IP.layout; if(!L) return;
+  const hoejde=it=>{ const n=el.querySelector('[data-item="'+it.id+'"]'); return n?n.offsetHeight:300; };
+  const breddeArk=el.clientWidth||1300;
+  let x=20, y=L.start, raekkeH=0;
+  L.par.forEach(function(pp){
+    const [h,e]=pp;
+    const parB=h.w+(e?e.w+16:0);
+    if(x>20 && x+parB>breddeArk-20){ x=20; y+=raekkeH+34; raekkeH=0; }
+    h.x=x; h.y=y;
+    if(e){ e.x=x+h.w+16; e.y=y; }
+    raekkeH=Math.max(raekkeH, hoejde(h), e?hoejde(e):0);
+    x+=parB+40;
+  });
+  y+=raekkeH+40; x=20;
+  L.noter.forEach(function(n){
+    n.x=x; n.y=y; delete n._note;
+    x+=n.w+30; if(x>breddeArk-380){ x=20; y+=160; }
+  });
+  IP.layout=null;
+}
+
 /* ---- ryd udskriften væk igen ----
    På en computer står JavaScript stille, mens printvinduet er åbent, så en
    timer på et halvt sekund var nok. På iPhone vender window.print() tilbage
@@ -6593,11 +6927,12 @@ function openPanelValg(){
     <div class="mf"><label>Rækker</label><input type="number" name="prows" min="1" max="6" value="2"></div>
     <div class="mf"><label>Taster pr. række</label><input type="number" name="pcols" min="1" max="12" value="6"></div>
   </div>
-  <div class="mrow"><button class="btn go" data-nyt="1">Indsæt tomt panel</button></div>
+  <div class="mrow"><button class="btn go" data-nyt="1">Indsæt tomt panel</button><button class="btn" data-ipimp="1" title="Hent mange paneler på én gang fra et Excel-ark">⤒ Importér fra Excel</button></div>
   <div class="msec">Gemte paneler</div>
   <div id="panelliste" class="chklist" style="max-height:240px">Henter …</div>
   <div class="mrow"><button class="btn" data-cancel="1">Luk</button></div>`,root=>{
    root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-ipimp]').onclick=()=>{ closeModal(); setTimeout(ipAaben,60); };
    root.querySelector('[data-nyt]').onclick=()=>{
      const r=Math.max(1,+val(root,'prows')||2), c=Math.max(1,+val(root,'pcols')||6);
      closeModal(); nytPanel({prows:r,pcols:c});
@@ -6948,6 +7283,35 @@ document.getElementById('sheet').addEventListener('mousedown',ev=>{
  }
 });
 
+
+/* ── Arket vokser med de frie elementer ────────────────────────
+   Paneler, tekstfelter og symbolforklaringer ligger oven på arket. Arket
+   voksede kun efter sektionerne, så en side med kun paneler var for kort, og
+   man måtte lægge en tom sektion ind for at få plads nedad. Nu måler vi det
+   nederste element og skubber knaprækken ned under det. */
+const LUFT_UNDER=160;          // plads til at trække et panel længere ned
+function nederstElement(){
+  let bund=0;
+  el.querySelectorAll('.fitem[data-item]').forEach(function(n){
+    if(n.closest('.srcbox,.dstbox')) return;            // låst i en boks – følger boksen
+    bund=Math.max(bund, n.offsetTop+n.offsetHeight);
+  });
+  return bund;
+}
+function giPladsTilElementer(){
+  el.style.minHeight='';                 // højden fra et træk nulstilles – nu måler vi forfra
+  const bar=document.getElementById('addbarbund');
+  const bund=nederstElement();
+  if(bar){
+    bar.style.marginTop='';
+    if(bund>0){
+      const mangler=bund+24-bar.offsetTop;
+      if(mangler>0) bar.style.marginTop=mangler+'px';
+    }
+  }
+  el.style.paddingBottom = bund>0 ? LUFT_UNDER+'px' : '';
+}
+
 /* find den boks der ligger under punktet – ellers arket selv */
 function dropTarget(x,y){
  const boxes=[];
@@ -6975,6 +7339,12 @@ document.addEventListener('mousemove',ev=>{
   d.el.style.left=(ev.clientX-d.gx)+'px';
   d.el.style.top =(ev.clientY-d.gy)+'px';
   highlightDrop(dropTarget(ev.clientX-d.gx+14, ev.clientY-d.gy+12));
+  /* Trækker man mod bunden af arket, giver vi mere plads med det samme */
+  const sr=el.getBoundingClientRect(), br=d.el.getBoundingClientRect();
+  if(br.bottom > sr.bottom-60){
+    const nu=parseFloat(el.style.minHeight)||sr.height;
+    el.style.minHeight=(nu+(br.bottom-(sr.bottom-60)))+'px';
+  }
  } else if(d.kind==='item'){
   const minB = d.el.classList&&d.el.classList.contains('fpanel') ? 120 : 90;
   d.el.style.width=Math.max(minB,d.w0+dx)+'px';
