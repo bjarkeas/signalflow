@@ -5494,7 +5494,9 @@ function dioTekst(v){
     .replace(/<br\s*\/?>/gi,'\n').replace(/<\/(div|p|li)>/gi,'\n')
     .replace(/<[^>]+>/g,'');
   const d=document.createElement('textarea'); d.innerHTML=t; t=d.value;
-  return t.replace(/\u00a0/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+  /* nogle etiketter har fået kopieret en hel draw.io-model med ind (%3CmxGraphModel…) */
+  t=t.replace(/%3CmxGraphModel[\s\S]*$/i,'').replace(/\/\s*$/,'');
+  return t.replace(/\u00a0/g,' ').replace(/[ \t]{2,}/g,'  ').replace(/\n{3,}/g,'\n\n').trim();
 }
 
 function dioStil(s){
@@ -5507,12 +5509,11 @@ function dioStil(s){
   return o;
 }
 
-/* Læs hele filen og returnér siderne som lister af figurer */
+/* Læs hele filen og returnér siderne som figurer og streger */
 async function dioLaesFil(xmlTekst){
   const doc=new DOMParser().parseFromString(xmlTekst,'text/xml');
   if(doc.querySelector('parsererror')) throw new Error('Filen er ikke gyldig draw.io.');
   let diagrammer=[...doc.getElementsByTagName('diagram')];
-  /* en fil kan også bare være én mxGraphModel uden <diagram> omkring */
   if(!diagrammer.length && doc.getElementsByTagName('mxGraphModel').length)
     diagrammer=[{getAttribute:()=> 'Side 1', _model:doc.getElementsByTagName('mxGraphModel')[0]}];
   const sider=[];
@@ -5520,25 +5521,55 @@ async function dioLaesFil(xmlTekst){
     let model=d._model || d.getElementsByTagName && d.getElementsByTagName('mxGraphModel')[0];
     if(!model){
       const indre=await dioUdpak(d.textContent);
-      const dd=new DOMParser().parseFromString(indre,'text/xml');
-      model=dd.getElementsByTagName('mxGraphModel')[0];
+      model=new DOMParser().parseFromString(indre,'text/xml').getElementsByTagName('mxGraphModel')[0];
     }
     if(!model) continue;
-    const figurer=[];
-    /* celler kan ligge direkte eller pakket ind i <object>/<UserObject> med egne felter */
+    const alle={};
     [...model.getElementsByTagName('mxCell')].forEach(c=>{
       const omslag=c.parentNode && /^(object|UserObject)$/i.test(c.parentNode.nodeName) ? c.parentNode : null;
-      const stil=c.getAttribute('style')||'';
-      const vaerdi=omslag ? (omslag.getAttribute('label')||'') : (c.getAttribute('value')||'');
-      const g=c.getElementsByTagName('mxGeometry')[0];
-      if(c.getAttribute('vertex')!=='1' || !g) return;
-      figurer.push({
-        stil:dioStil(stil), raaStil:stil, tekst:dioTekst(vaerdi),
-        x:+(g.getAttribute('x')||0), y:+(g.getAttribute('y')||0),
-        w:+(g.getAttribute('width')||0), h:+(g.getAttribute('height')||0)
-      });
+      const id=(omslag&&omslag.getAttribute('id'))||c.getAttribute('id');
+      alle[id]={c:c, id:id, parent:c.getAttribute('parent'),
+                vaerdi:omslag?(omslag.getAttribute('label')||''):(c.getAttribute('value')||'')};
     });
-    sider.push({navn:d.getAttribute('name')||('Side '+(sider.length+1)), figurer:figurer});
+    /* Figurer i en gruppe har koordinater i forhold til gruppen – læg dem sammen */
+    const abs=function(id){
+      let x=0,y=0,n=alle[id],vagt=0;
+      while(n && n.id!=='0' && n.id!=='1' && vagt++<30){
+        const g=n.c.getElementsByTagName('mxGeometry')[0];
+        if(g && g.getAttribute('relative')!=='1'){ x+=+(g.getAttribute('x')||0); y+=+(g.getAttribute('y')||0); }
+        n=alle[n.parent];
+      }
+      return {x:x,y:y};
+    };
+    const figurer=[], kanter=[];
+    Object.values(alle).forEach(n=>{
+      const c=n.c, stil=c.getAttribute('style')||'', g=c.getElementsByTagName('mxGeometry')[0];
+      if(c.getAttribute('vertex')==='1' && g){
+        /* etiketter på en streg hører til stregen, ikke som selvstændig figur */
+        if(/^edgeLabel/.test(stil) || (alle[n.parent] && alle[n.parent].c.getAttribute('edge')==='1')) return;
+        const p=abs(n.id);
+        figurer.push({id:n.id, stil:dioStil(stil), raaStil:stil, tekst:dioTekst(n.vaerdi),
+          x:p.x, y:p.y, w:+(g.getAttribute('width')||0), h:+(g.getAttribute('height')||0)});
+      }else if(c.getAttribute('edge')==='1'){
+        kanter.push({n:n, g:g});
+      }
+    });
+    /* Stregerne: endepunkter fra deres figurer, eller fra de frie punkter */
+    const midt=id=>{ const f=figurer.find(x=>x.id===id); return f?{x:f.x+f.w/2,y:f.y+f.h/2}:null; };
+    const streger=kanter.map(function(k){
+      const c=k.n.c, stil=dioStil(c.getAttribute('style')||'');
+      const pkt={};
+      if(k.g) [...k.g.getElementsByTagName('mxPoint')].forEach(p=>{
+        const as=p.getAttribute('as'); if(as) pkt[as]={x:+(p.getAttribute('x')||0), y:+(p.getAttribute('y')||0)};
+      });
+      const fra=midt(c.getAttribute('source'))||pkt.sourcePoint, til=midt(c.getAttribute('target'))||pkt.targetPoint;
+      if(!fra||!til) return null;
+      const etiketter=[dioTekst(k.n.vaerdi)].concat(Object.values(alle)
+        .filter(x=>x.parent===k.n.id).map(x=>dioTekst(x.vaerdi))).filter(Boolean);
+      return {fra:fra, til:til, y:(fra.y+til.y)/2, x0:Math.min(fra.x,til.x), x1:Math.max(fra.x,til.x),
+              tekst:etiketter.join(' ').trim(), stil:stil};
+    }).filter(Boolean);
+    sider.push({navn:(d.getAttribute('name')||('Side '+(sider.length+1))).trim(), figurer:figurer, streger:streger});
   }
   return sider;
 }
@@ -5555,6 +5586,115 @@ function dioType(f){
   if(s.text && fs===10 && /3a3a3a/i.test(s.fontColor||'')) return 'kanal';
   if(s.text && fs===8) return 'txrx';
   return 'andet';
+}
+
+
+/* ── En håndtegnet signalflow i draw.io ─────────────────────────
+   Mange har tegnet deres planer i draw.io, før SignalFlow fandtes. De er
+   bygget på samme måde: en tekst til venstre (fødningen), en klamme om en
+   bunke pile, en ellipse med transporten i midten, og en etiket på hver pil
+   ("Ch. 1 Vært"). Den første etiket uden kanalnummer er gruppens navn. */
+const DIO_KANAL=/^((?:ch\.?|kanal|kan\.?)\s*\d+|\d+\s*w\s*\d+|\d+)\b\s*[-:.]?\s*(.*)$/i;
+
+function dioByggTegning(side){
+  const F=side.figurer, S=side.streger.filter(x=>x.tekst);
+  const sh=newSheet(side.navn);
+  const brugt=new Set();
+  const midtY=f=>f.y+f.h/2;
+  const tekster=F.filter(f=>f.tekst && !f.stil.ellipse);
+
+  /* Hvor ligger pilene? Det giver os venstre og højre side af tegningen. */
+  const minX=Math.min(...S.map(x=>x.x0)), maxX=Math.max(...S.map(x=>x.x1));
+  const forsteY=Math.min(...S.map(x=>x.y));
+
+  /* Afsender og modtager: teksterne øverst til venstre og højre for pilene */
+  /* Øverst = over den første pil, eller højst lidt nede i den. Venstre og
+     højre afgøres i forhold til midten af tegningen, ikke pilenes ender –
+     boksene står tit et stykke inde. */
+  const midten=(minX+maxX)/2, kvart=(maxX-minX)/4;
+  const oeverst=tekster.filter(f=>midtY(f)<=forsteY+15);
+  const venstre=oeverst.filter(f=>f.x+f.w/2<midten-kvart).sort((a,b)=>a.y-b.y)[0];
+  const hoejre =oeverst.filter(f=>f.x+f.w/2>midten+kvart).sort((a,b)=>a.y-b.y)[0];
+  const overskrift=oeverst.filter(f=>f!==venstre && f!==hoejre)
+    .sort((a,b)=>(b.w)-(a.w))[0];
+  [venstre,hoejre,overskrift].forEach(f=>f&&brugt.add(f));
+
+  const sc=newSection();
+  sc.src=(venstre&&venstre.tekst)||'Afsender';
+  sc.dst=(hoejre&&hoejre.tekst)||'Modtager';
+  if(overskrift) sc.srcLines=[];          // overskriften lægges som tekstfelt nedenfor
+
+  /* Grupper: helst ud fra klammerne. Pile uden for en klamme samles efter
+     de lodrette mellemrum mellem dem. */
+  const klammer=F.filter(f=>/curly/i.test(f.raaStil||'')).sort((a,b)=>a.y-b.y);
+  const baand=klammer.map(k=>({top:k.y-6, bund:k.y+k.h+6, klamme:k, pile:[]}));
+  const loese=[];
+  S.slice().sort((a,b)=>a.y-b.y).forEach(function(p){
+    const b=baand.find(b=>p.y>=b.top && p.y<=b.bund);
+    if(b) b.pile.push(p); else loese.push(p);
+  });
+  /* løse pile: nyt bånd ved hvert spring på mere end 38 punkter */
+  let cur=null;
+  loese.forEach(function(p){
+    if(!cur || p.y-cur.sidste>38){ cur={top:p.y-6, bund:p.y+6, pile:[], sidste:p.y}; baand.push(cur); }
+    cur.pile.push(p); cur.bund=p.y+6; cur.sidste=p.y;
+  });
+  baand.sort((a,b)=>a.top-b.top);
+
+  const ellipser=F.filter(f=>f.stil.ellipse && f.tekst);
+  let kanaler=0;
+  baand.filter(b=>b.pile.length).forEach(function(b){
+    b.pile.sort((p,q)=>p.y-q.y);
+    /* Fødningen: teksten til venstre for pilene, inden for båndet */
+    const venstreGraense=b.klamme ? b.klamme.x+10 : Math.min(...b.pile.map(p=>p.x0))+10;
+    const feed=tekster.filter(f=>!brugt.has(f) && f.x+f.w<=venstreGraense+40
+        && midtY(f)>=b.top-20 && midtY(f)<=b.bund+20)
+      .sort((p,q)=>Math.abs(midtY(p)-(b.top+b.bund)/2)-Math.abs(midtY(q)-(b.top+b.bund)/2))[0];
+    if(feed) brugt.add(feed);
+    /* Transporten: den ellipse, der dækker mest af båndet */
+    const overlap=e=>Math.max(0,Math.min(e.y+e.h,b.bund)-Math.max(e.y,b.top));
+    const tr=ellipser.slice().sort((p,q)=>overlap(q)-overlap(p))[0];
+
+    /* Første etiket uden kanalnummer er gruppens navn */
+    let navn=null;
+    const forste=b.pile[0];
+    if(forste && !DIO_KANAL.test(forste.tekst)){ navn=forste.tekst; b.pile=b.pile.slice(1); }
+    const g=newGroup(navn || (feed&&feed.tekst) || 'Gruppe');
+    g.feed=feed?feed.tekst:'';
+    g.transport=(tr&&overlap(tr)>0)?tr.tekst:'';
+    g.layer=/intercom|4w|conf/i.test(b.pile.map(p=>p.tekst).join(' '))?'intercom'
+          :/ch\.?\s*\d/i.test(b.pile.map(p=>p.tekst).join(' '))?'lyd':'video';
+    g.dir='ltr';
+    g.channels=b.pile.map(function(p){
+      const m=p.tekst.match(DIO_KANAL);
+      const ch={id:id(), nr:m?m[1].replace(/\s+/g,' ').trim():'', label:m?m[2].trim():p.tekst, layer:g.layer};
+      /* retningen af pilen: pilespids i begge ender = begge veje */
+      const start=p.stil.startArrow && p.stil.startArrow!=='none';
+      const slut=p.stil.endArrow!=='none';
+      const venstreTilHoejre=p.fra.x<=p.til.x;
+      if(start && slut) ch.dir='both';
+      else if(start && !slut) ch.dir=venstreTilHoejre?'rtl':'ltr';
+      else ch.dir=venstreTilHoejre?'ltr':'rtl';
+      return ch;
+    });
+    kanaler+=g.channels.length;
+    sc.groups.push(g);
+  });
+  sh.sections=[sc];
+
+  /* Det, vi ikke kunne placere, kommer med som frie tekstfelter – så intet
+     går tabt. De skaleres ned, så hele tegningen passer på arket. */
+  const rest=tekster.filter(f=>!brugt.has(f)).concat(ellipser.filter(e=>!sc.groups.some(g=>g.transport===e.tekst)));
+  const alleX=F.map(f=>f.x+f.w), bredde=Math.max(...alleX,1)-Math.min(...F.map(f=>f.x),0);
+  const skala=Math.min(1, 1100/Math.max(bredde,1));
+  const x0=Math.min(...F.map(f=>f.x),0), y0=Math.min(...F.map(f=>f.y),0);
+  sh.items=rest.filter(f=>f.tekst).map(f=>({id:id(), type:'text',
+    x:Math.round((f.x-x0)*skala)+20, y:Math.round((f.y-y0)*skala)+20,
+    w:Math.max(120,Math.min(360,Math.round(f.w*skala)||160)), text:f.tekst}));
+  if(overskrift) sh.items.unshift({id:id(), type:'text', x:420, y:14, w:420, text:overskrift.tekst});
+
+  return {ark:sh, slags:'tegning', sektioner:1, grupper:sc.groups.length, kanaler:kanaler,
+          frie:sh.items.length};
 }
 
 /* Byg ét SignalFlow-ark ud fra en side med figurer */
@@ -5574,12 +5714,16 @@ function dioByggArk(side){
   const mod=bokse.filter(b=>b.type==='modtager').sort((a,b)=>a.y-b.y);
 
   const kendt=afs.length>0;
+  /* Ikke vores egen eksport – men er det en håndtegnet signalflow med pile? */
+  if(!kendt && (side.streger||[]).filter(x=>x.tekst).length>=3) return dioByggTegning(side);
   if(!kendt){
     /* En almindelig draw.io-tegning: læg teksten ind som frie tekstfelter */
     const minX=Math.min(...F.map(f=>f.x),0), minY=Math.min(...F.map(f=>f.y),0);
+    const maxX=Math.max(...F.map(f=>f.x+f.w),1);
+    const k=Math.min(1, 1100/Math.max(maxX-minX,1));
     sh.items=F.filter(f=>f.tekst && f!==titel).map(f=>({
-      id:id(), type:'text', x:Math.round(f.x-minX)+20, y:Math.round(f.y-minY)+20,
-      w:Math.max(120,Math.min(420,Math.round(f.w)||200)), text:f.tekst
+      id:id(), type:'text', x:Math.round((f.x-minX)*k)+20, y:Math.round((f.y-minY)*k)+20,
+      w:Math.max(120,Math.min(420,Math.round(f.w*k)||200)), text:f.tekst
     }));
     sh.sections=[];
     return {ark:sh, slags:'fritekst', antal:sh.items.length};
@@ -5695,7 +5839,9 @@ function dioAaben(){
            </div>
            <div class="dio-liste">${DIO.resultater.map((r,i)=>`<div class="dio-side">
               <b>${esc(DIO.sider[i].navn)}</b>
-              <span>${r.slags==='fritekst'
+              <span>${r.slags==='tegning'
+                ? r.grupper+' grupper · '+r.kanaler+' kanaler'+(r.frie?' · '+r.frie+' tekstfelter':'')+' <em>(tegnet i draw.io – tolket ud fra pile og tekst)</em>'
+                : r.slags==='fritekst'
                 ? r.antal+' tekstfelter <em>(almindelig draw.io-tegning)</em>'
                 : r.sektioner+' sektioner · '+r.grupper+' grupper · '+r.kanaler+' kanaler'
                   +(r.slags==='signalflow-gammel'?' <em>(ældre eksport – genkendt på stilen)</em>':'')}</span>
