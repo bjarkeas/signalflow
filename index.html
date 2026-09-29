@@ -106,8 +106,8 @@ header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 14px;b
 .vbtn.on{background:var(--panel2);color:var(--text)}
 #plan{display:none}
 body.planview #sheet,body.planview #tabbar{display:none}
-body.planview #side,body.planview .bus,body.planview #bFoldAll{display:none}
-body.planview #stage{grid-column:1/3}
+body.planview .bus,body.planview #bFoldAll{display:none}
+body.planview #stage{grid-column:1/2}
 body.planview #crumbs{flex:0 1 auto;max-width:230px}
 body.planview #plan{display:block}
 body.planview #stage{background:#0b0e13;padding:16px}
@@ -157,9 +157,28 @@ body:not(.unlocked) #app{filter:blur(7px);pointer-events:none;user-select:none}
 .modeswitch{font-size:15px;padding:6px 10px}
 
 body.mobile #app{grid-template-columns:1fr;grid-template-rows:auto 1fr;padding-top:52px;padding-bottom:62px}
-body.mobile header,body.mobile #side,body.mobile #tabbar,body.mobile .viewsw,
+body.mobile header,body.mobile #side,body.mobile .viewsw,
 body.mobile .bus,body.mobile #crumbs{display:none}
-body.mobile #stage{grid-column:1/-1;padding:10px 10px 16px}
+/* Fanebladene skal kunne ses – man skifter side hele tiden på en opsætning */
+body.mobile #tabbar{display:flex;position:fixed;top:52px;left:0;right:0;z-index:880;
+ gap:6px;padding:7px 10px;background:var(--panel);border-bottom:1px solid var(--line);
+ overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+body.mobile #tabbar::-webkit-scrollbar{display:none}
+body.mobile.planview #tabbar,body.mobile.blockview #tabbar,body.mobile.archview #tabbar{display:none}
+body.mobile #tabbar .tab{flex:0 0 auto;padding:9px 14px;font-size:14px;border-radius:9px;
+ background:var(--bg);border:1px solid var(--line);color:var(--dim);max-width:none}
+body.mobile #tabbar .tab.on{background:var(--panel2);color:var(--text);border-color:var(--dim);font-weight:600}
+body.mobile #tabbar .tab .tx{display:none}
+body.mobile #tabbar .tabadd{flex:0 0 auto;padding:9px 14px;font-size:16px}
+body.mobile #tabbar .laasknap{flex:0 0 auto;margin-left:0}
+/* arket begynder under fanebladene */
+body.mobile #app{padding-top:52px}
+body.mobile:not(.planview):not(.blockview):not(.archview) #app{padding-top:100px}
+body.mobile #laasbanner.on{position:fixed;top:100px;left:0;right:0;z-index:870}
+/* Arket ligger i tredje gitterrække på skrivebordet (under topbjælke og
+   faner). På mobilen findes de rækker ikke – uden det her får man et stort
+   tomt bånd øverst i kanalplan og blokdiagram. */
+body.mobile #stage{grid-column:1/-1;grid-row:1/-1;padding:10px 10px 16px}
 
 /* topbjælke */
 body.mobile #mbar{display:flex;position:fixed;top:0;left:0;right:0;height:52px;z-index:900;
@@ -258,11 +277,15 @@ body.mobile .pnum{font-size:13px;padding:10px 3px;width:42px}
 body.mobile .tick input{width:22px;height:22px}
 body.mobile .planbar{gap:7px}
 body.mobile .planbar .sharebtn{flex:1 1 auto;padding:10px 8px;font-size:12.5px}
-/* på mobil ligger disse i ☰-menuen i stedet */
+/* På mobil ligger de fleste i ☰-menuen – men "Del link" bruges hele tiden
+   ude på gulvet, så den skal være synlig. */
 body.mobile .planbar [data-save],body.mobile .planbar [data-imp],
-body.mobile .planbar [data-share],body.mobile .planbar [data-ppdf],
+body.mobile .planbar [data-ppdf],
 body.mobile .planbar [data-pcsv],body.mobile .planbar .whotag,
 body.mobile .planbar .whobox{display:none}
+body.mobile .planbar [data-share]{display:inline-flex;align-items:center;justify-content:center;
+ flex:0 0 auto;gap:5px;background:var(--panel2);border-color:var(--dim);color:var(--text);
+ font-size:13px;padding:10px 12px}
 body.mobile .planadd{width:100%;margin-left:0}
 body.mobile .planadd .sharebtn{width:100%;padding:12px}
 body.mobile .btools .btool:not([data-badd="link"]):not([data-badd="snap"]){display:none}
@@ -426,6 +449,7 @@ body.mobile #whoson:empty{display:none}
  display:flex;align-items:center;justify-content:center;transition:right .18s ease}
 #sideknap:hover{color:var(--text);background:var(--panel2)}
 body.sideskjult #app{grid-template-columns:1fr 0}
+body.sideskjult #stage{grid-column:1/-1!important}
 body.sideskjult #side{display:none}
 body.sideskjult #sideknap{right:0}
 body.mobile #sideknap{display:none}
@@ -468,6 +492,54 @@ body.arklaast #side input, body.arklaast #side textarea, body.arklaast #side sel
 body.arklaast #side button{pointer-events:none;opacity:.45}
 @media print{#laasbanner,.laasknap,.tab .tlaas{display:none!important}}
 
+
+
+/* frekvensplanen på print */
+.ppfreq{border:1px solid #d9d9d9;border-radius:5px;overflow:hidden}
+.ppfr{display:grid;grid-template-columns:46px 74px 1fr 90px 22px 22px;gap:6px;
+ padding:3px 7px;border-bottom:1px solid #ececec;font-size:11px}
+.ppfr:last-child{border-bottom:none}
+.ppfh{background:#f3f3f3;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:#666}
+.ppmhz{font-family:var(--fm);text-align:right}
+
+/* frekvensplanen */
+.freqcol .porthead.freqhead,.port.freq{grid-template-columns:52px 74px 1fr 92px 22px 22px 34px 22px 22px 22px 22px}
+.port.freq{display:grid;align-items:center;gap:4px}
+.freqcol .ph-f{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+.freqcol .ph-t{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+.pfreq{background:var(--bg);border:1px solid var(--line);color:var(--amber,#e0a33e);
+ border-radius:6px;padding:5px 6px;font-family:var(--fm);font-size:12px;text-align:right}
+.pfreq:focus{outline:none;border-color:var(--amber,#e0a33e)}
+.pfreqt{background:var(--bg);border:1px solid var(--line);color:var(--dim);
+ border-radius:6px;padding:5px 6px;font-family:var(--fm);font-size:11px}
+.freqadvarsel{margin:4px 8px 6px;padding:6px 9px;border-radius:7px;font-size:11.5px;
+ background:rgba(224,163,62,.12);border:1px solid #6b5418;color:#e8c46a}
+body.mobile .freqcol .porthead.freqhead,body.mobile .port.freq{
+ grid-template-columns:38px 62px 1fr 20px 20px 22px;gap:3px}
+body.mobile .port.freq .pfreqt,body.mobile .port.freq .pby,
+body.mobile .freqcol .ph-t,body.mobile .freqcol .ph-by,
+/* flyt, indsæt og slet ligger i ⋯-menuen på telefonen */
+body.mobile .port.freq .grip,body.mobile .port.freq [data-pins],
+body.mobile .port.freq [data-pdel]{display:none}
+
+
+/* sidepanelet i kanalplan, blokdiagram og lager */
+.sdliste{margin:10px 0 14px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.sdrow{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:8px 10px;
+ border-bottom:1px solid var(--line);font-size:12px;cursor:default}
+.sdrow[data-sdom]{cursor:pointer}
+.sdrow[data-sdom]:hover{background:var(--panel2)}
+.sdrow:last-child{border-bottom:none}
+.sdrow.on{background:var(--panel2)}
+.sdnavn{color:var(--text)}
+.sdtal{font-family:var(--fm);font-size:10.5px;color:var(--faint);text-align:right}
+.sdbar{grid-column:1/2;height:4px;border-radius:3px;background:var(--bg);overflow:hidden;margin-top:3px}
+.sdbar i{display:block;height:100%;background:var(--intercom)}
+.sdpct{font-family:var(--fm);font-size:10px;color:var(--dim);align-self:end}
+.sadvarsel{margin-bottom:12px;padding:8px 10px;border-radius:8px;font-size:11.5px;line-height:1.6;
+ background:rgba(224,163,62,.12);border:1px solid #6b5418;color:#e8c46a}
+.sadvarsel em{font-style:normal;color:var(--faint)}
+
 /* forklaringsboble */
 #tipbox{position:fixed;display:none;z-index:10000;pointer-events:none;max-width:290px;
  background:#0d1219;color:var(--text);border:1px solid var(--line);border-radius:7px;
@@ -506,9 +578,9 @@ body.arklaast #side button{pointer-events:none;opacity:.45}
 /* ---- arkivsiden ---- */
 #archive{display:none}
 body.archview #sheet,body.archview #tabbar,body.archview #plan,body.archview #blocks,
-body.archview #side,body.archview .bus,body.archview #bFoldAll{display:none}
+body.archview .bus,body.archview #bFoldAll{display:none}
 body.archview #archive{display:block}
-body.archview #stage{grid-column:1/3;background:#0b0e13;padding:16px}
+body.archview #stage{grid-column:1/2;background:#0b0e13;padding:16px}
 
 .archwrap{display:grid;grid-template-columns:330px 1fr;gap:16px;align-items:start}
 .archlist{background:var(--panel);border:1px solid var(--line);border-radius:11px;overflow:hidden}
@@ -605,10 +677,10 @@ body.archview #stage{grid-column:1/3;background:#0b0e13;padding:16px}
 
 /* ---- blokdiagram ---- */
 #blocks{display:none}
-body.blockview #sheet,body.blockview #tabbar,body.blockview #side,
+body.blockview #sheet,body.blockview #tabbar,
 body.blockview .bus,body.blockview #bFoldAll{display:none}
 body.blockview #blocks{display:block}
-body.blockview #stage{grid-column:1/3;background:#0b0e13;padding:14px}
+body.blockview #stage{grid-column:1/2;background:#0b0e13;padding:14px}
 
 .blockbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .btabs{display:flex;gap:3px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:3px}
@@ -1152,6 +1224,8 @@ window.onerror=function(m,src,line,col){
  };
  const hide=()=>{clearTimeout(timer); if(box)box.style.display='none'; cur=null};
  document.addEventListener('mouseover',e=>{
+  /* På en telefon er der ingen mus – så lægger boblen sig bare i vejen */
+  if(document.body.classList.contains('mobile')){hide();return}
   const el=e.target.closest('[title],[data-tip]');
   if(!el){hide();return}
   if(el.hasAttribute('title')){        // flyt teksten væk fra browseren
@@ -1748,6 +1822,96 @@ function crumbs(){
  };
 }
 
+
+/* ── Sidepanelet i de øvrige visninger ─────────────────────────
+   Panelet stod tomt i kanalplan, blokdiagram og lager – og fanen til at åbne
+   det hang der uden noget at åbne. Nu viser det, hvor langt man er, og de
+   få ting man ellers skal lede efter. */
+function sideAndet(){
+  const s=document.getElementById('side'); if(!s) return;
+  if(view==='plan'){
+    const p=ensurePlan();
+    const tal=k=>{
+      const ds=alive((p[k]||{devices:[]}).devices||[]);
+      let linjer=0, sat=0, tjek=0;
+      ds.forEach(d=>['ins','outs'].forEach(side2=>alive(d[side2]||[]).forEach(x=>{
+        if(!x.label) return; linjer++; if(x.patched)sat++; if(x.checked)tjek++;
+      })));
+      return {kort:ds.length, linjer, sat, tjek};
+    };
+    const raek=Object.keys(PLANDOMS).map(k=>{
+      const t=tal(k), pct=t.linjer?Math.round(t.tjek/t.linjer*100):0;
+      return `<div class="sdrow ${k===planDom?'on':''}" data-sdom="${k}" title="Skift til ${PLANDOMS[k]}">
+        <span class="sdnavn">${PLANDOMS[k]}</span>
+        <span class="sdtal">${t.kort} kort · ${t.linjer} linjer</span>
+        <span class="sdbar"><i style="width:${pct}%"></i></span>
+        <span class="sdpct">${t.linjer?pct+'%':'—'}</span></div>`;
+    }).join('');
+    /* frekvenser: advar hvis den samme står to steder */
+    let dub='';
+    if(planDom==='freq'){
+      const brugt={};
+      alive((p.freq||{devices:[]}).devices||[]).forEach(d=>alive(d.ins||[]).forEach(x=>{
+        const f=(x.freq||'').trim(); if(f)(brugt[f]=brugt[f]||[]).push(d.name);
+      }));
+      const d2=Object.keys(brugt).filter(f=>brugt[f].length>1);
+      if(d2.length) dub=`<div class="sadvarsel">⚠ Samme frekvens flere steder:<br>${
+        d2.map(f=>esc(f)+' <em>'+esc([...new Set(brugt[f])].join(', '))+'</em>').join('<br>')}</div>`;
+    }
+    s.innerHTML=`<h2>KANALPLAN</h2><div class="sub">${PLANDOMS[planDom]}</div>
+      <div class="sdliste">${raek}</div>${dub}
+      <div class="hint">
+        <b>Sådan arbejder man</b>
+        <div class="symliste">
+          <div><span class="ikon">✎</span><span>klik i et felt og skriv · <kbd>Enter</kbd> går til næste linje</span></div>
+          <div><span class="ikon">P</span><span>patchet · <b>T</b> tjekket – initialerne viser hvem der satte hakket</span></div>
+          <div><span class="ikon">⋯</span><span>muligheder for linjen</span></div>
+          <div><span class="ikon">⠿</span><span>træk linjen op eller ned</span></div>
+          <div><span class="ikon">🔗</span><span>Del link: modtageren kan rette i planen uden at logge ind</span></div>
+        </div>
+        ${planDom==='freq'?'Frekvensplanen advarer selv, hvis den samme MHz står to gange på samme system.':''}
+      </div>`;
+    s.querySelectorAll('[data-sdom]').forEach(r=>r.onclick=()=>{
+      planDom=r.dataset.sdom; drawPlan();   // samme som fanerne øverst
+    });
+    return;
+  }
+  if(view==='blocks'){
+    const b=ensureBlocks(), sider=b.pages||[], sid=bp()||{nodes:[],links:[]};
+    const tael=t=>(sid.nodes||[]).filter(n=>n.t===t).length;
+    s.innerHTML=`<h2>BLOKDIAGRAM</h2><div class="sub">${esc(sid.title||'')} · side ${sider.indexOf(sid)+1} af ${sider.length}</div>
+      <div class="sdliste">
+        <div class="sdrow"><span class="sdnavn">Kasser</span><span class="sdtal">${tael('box')}</span></div>
+        <div class="sdrow"><span class="sdnavn">Udstyr og symboler</span><span class="sdtal">${tael('item')}</span></div>
+        <div class="sdrow"><span class="sdnavn">Tekst</span><span class="sdtal">${tael('text')+tael('heading')}</span></div>
+        <div class="sdrow"><span class="sdnavn">Forbindelser</span><span class="sdtal">${(sid.links||[]).length}</span></div>
+      </div>
+      <div class="hint">
+        <b>Sådan arbejder man</b>
+        <div class="symliste">
+          <div><span class="ikon">▭</span><span>Ny kasse – træk i kanten for at ændre størrelse</span></div>
+          <div><span class="ikon">⌸</span><span>Hent udstyr fra lageret</span></div>
+          <div><span class="ikon">◇</span><span>Symboler: egne billeder, SMPTE-stik og tegnede symboler</span></div>
+          <div><span class="ikon">↔</span><span>træk fra en kasses kant til en anden for at forbinde</span></div>
+          <div><span class="ikon">⊞</span><span>Ret op: kasserne falder på plads i lige rækker</span></div>
+        </div>
+      </div>`;
+    return;
+  }
+  if(view==='arch'){
+    s.innerHTML=`<h2>LAGERET</h2><div class="sub">deles med East Production</div>
+      <div class="hint">
+        Lageret er det samme som i bookingsystemet. Retter du noget her, ser de det der.
+        <div class="symliste" style="margin-top:10px">
+          <div><span class="ikon">+</span><span>Nyt udstyr – navn, kategori, antal og billede</span></div>
+          <div><span class="ikon">⌕</span><span>søg på navn eller kategori</span></div>
+          <div><span class="ikon">⧉</span><span>kopiér et stykke udstyr med alle felter</span></div>
+        </div>
+      </div>`;
+    return;
+  }
+}
+
 /* ================= inspektor ================= */
 function side(){
  const s=document.getElementById('side');
@@ -2248,7 +2412,7 @@ let lastBox=null;
 /* ================= kanalplaner ================= */
 /* Én plan pr. domæne. Hvert stykke udstyr har inputs og outputs med hver sin
    tekst, og hver linje husker hvem der har rettet den og hvornår. */
-const PLANDOMS={lyd:'Lyd',video:'Video',net:'Netværk'};
+const PLANDOMS={lyd:'Lyd',video:'Video',net:'Netværk',freq:'Frekvenser'};
 /* almindelige stiktyper – kun forslag, man kan skrive hvad som helst */
 const CONNECTORS=['XLR han','XLR hun','XLR 3-pol','XLR 5-pol','Jack 6,3 mm','Minijack 3,5 mm',
  'BNC','SDI BNC','HDMI','RJ45','etherCON','SMPTE 311M','LC fiber','SC fiber','opticalCON',
@@ -2508,6 +2672,7 @@ function drawBlocks(){
  bindBlocks();
  if(typeof mobilTitel==='function')mobilTitel();
  if(typeof autosave==='function')autosave();
+ if(typeof sideAndet==='function')sideAndet();
 }
 function nodeTools(n){
  return `<span class="bntools">
@@ -3159,7 +3324,7 @@ function drawPlan(){
      `<span class="whotag" title="Dine initialer – klik for at rette">${esc(meName())}</span>`}
    <button class="sharebtn save" data-save="1" title="Gem i databasen nu, så kollegerne kan se det">Gem</button>
    <button class="sharebtn" data-refresh="1" title="Hent kollegernes ændringer nu">↻ Opdatér</button>
-   <button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan">Del link</button>
+   <button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan – modtageren skal ikke logge ind">🔗 Del link</button>
    <button class="sharebtn" data-ppdf="1" title="Print ${PLANDOMS[planDom]}-planen eller gem den som PDF">↧ PDF</button>
    <button class="sharebtn" data-pcsv="1" title="Hent ${PLANDOMS[planDom]}-planen som regneark til Excel">↧ CSV</button>
    <button class="sharebtn ${planSnap?'on':''}" data-psnap="1" title="Lås til gitter: kortene falder på plads i lige rækker, og der vises hjælpelinjer når de flugter">⊞ Ret op</button>
@@ -3214,6 +3379,7 @@ function drawPlan(){
         <button class="mini" data-ddel="${dv.id}" title="Slet kortet og alle dets linjer">✕</button>
       </div>
     </div>
+    ${planDom==='freq' ? `<div class="ports enkelt">${freqListe(dv)}</div>` : `
     <div class="ports ${(ports(dv,'ins').length&&ports(dv,'outs').length)?'':'enkelt'}">
       ${ports(dv,'ins').length?portList(dv,'ins','Input'):''}
       ${ports(dv,'outs').length?portList(dv,'outs','Output'):''}
@@ -3230,17 +3396,68 @@ function drawPlan(){
        :(!ports(dv,'ins').length?
         `<div class="startside"><button class="add" data-padd="${dv.id}|ins"
             title="Giv kortet et input">+ input</button></div>`:''))}
-    </div>
+    </div>`}
     <span class="rs" data-devrs="${dv.id}" title="Træk for at gøre kortet bredere eller smallere"></span>
   </div>`;
  });
  h+=`</div>
-  <datalist id="lbls">${labels.map(l=>`<option value="${esc(l)}">`).join('')}</datalist>`;
+  <datalist id="lbls">${labels.map(l=>`<option value="${esc(l)}">`).join('')}</datalist>
+  <datalist id="freqtyper">${FREQTYPER.map(t=>`<option value="${t}">`).join('')}</datalist>`;
 
  el2.innerHTML=h;
  bindPlan();
  if(typeof mobilTitel==='function')mobilTitel();
  if(typeof autosave==='function')autosave();
+ if(typeof sideAndet==='function')sideAndet();
+}
+
+
+/* ── Frekvensplan for trådløse mikrofoner ──────────────────────
+   Samme datamodel som resten af kanalplanen: et kort er et system (rack,
+   kuffert, sæt), og hver linje er en frekvens. Fordi linjerne ligger i det
+   samme felt som de øvrige planer, flettes de også automatisk, når to
+   retter samtidig. Linjen har blot nogle flere felter. */
+const FREQTYPER=['Håndholdt','Bodypack','IEM','Reserve','Talkback','Kamera'];
+function freqRad(dv,p,i){
+  const kl=[p.label?'set':'', fresh(p)?'fresh':'', (p.label&&p.patched&&p.checked)?'ok':''].join(' ');
+  return `<div class="port freq ${kl}" data-port="${dv.id}|ins|${p.id}">
+    <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|ins|${p.id}" title="Kanal eller nummer på senderen">
+    <input class="pfreq" value="${esc(p.freq||'')}" placeholder="MHz" inputmode="decimal"
+           data-pfreq="${dv.id}|ins|${p.id}" title="Frekvens i MHz">
+    <input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
+           title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">
+    <input class="pfreqt" value="${esc(p.ftype||'')}" list="freqtyper" placeholder="type"
+           data-pftype="${dv.id}|ins|${p.id}" title="Håndholdt, bodypack, IEM …">
+    ${p.label?`
+     <label class="tick" title="Sat op${p.pby?' · af '+esc(p.pby):''}">
+       <input type="checkbox" data-tick="${dv.id}|ins|${p.id}|patched" ${p.patched?'checked':''}></label>
+     <label class="tick t2" title="Afprøvet${p.cby?' · af '+esc(p.cby):''}">
+       <input type="checkbox" data-tick="${dv.id}|ins|${p.id}|checked" ${p.checked?'checked':''}></label>`
+     :`<span class="tickgap"></span><span class="tickgap"></span>`}
+    <span class="pby" title="${p.by?esc(p.by)+' · '+new Date(p.at).toLocaleString('da-DK'):''}">${p.by?esc(p.by):''}</span>
+    <button class="mini rowmenu" data-pmenu="${dv.id}|ins|${p.id}" title="Muligheder for denne linje">⋯</button>
+    <button class="mini grip" data-pgrip="${dv.id}|ins|${p.id}" title="Træk for at flytte linjen">⠿</button>
+    <button class="mini" data-pins="${dv.id}|ins|${p.id}" title="Indsæt en linje ovenover">⤒</button>
+    <button class="mini" data-pdel="${dv.id}|ins|${p.id}" title="Slet linjen">✕</button>
+  </div>`;
+}
+function freqListe(dv){
+  const arr=ports(dv,'ins');
+  const brugt=arr.filter(p=>p.freq).length;
+  /* to sendere på samme frekvens er en fejl, man skal opdage med det samme */
+  const tael={}; arr.forEach(p=>{ const f=(p.freq||'').trim(); if(f) tael[f]=(tael[f]||0)+1; });
+  const dubletter=Object.keys(tael).filter(f=>tael[f]>1);
+  return `<div class="portcol ins freqcol">
+    <div class="portitle">Frekvenser <span>${brugt}/${arr.length}</span></div>
+    ${dubletter.length?`<div class="freqadvarsel" title="Samme frekvens er brugt flere gange på dette system">
+       ⚠ ${dubletter.join(', ')} står mere end én gang</div>`:''}
+    <div class="porthead freqhead"><span class="ph-n">Nr</span><span class="ph-f">MHz</span>
+      <span class="ph-l">Bruger / position</span><span class="ph-t">Type</span>
+      <span class="ph-c" title="Sat op">S</span><span class="ph-c" title="Afprøvet">A</span>
+      <span class="ph-by"></span><span class="ph-x"></span></div>
+    ${arr.map((p,i)=>freqRad(dv,p,i)).join('')}
+    <button class="addrow" data-padd="${dv.id}|ins" title="Tilføj en frekvenslinje">+ frekvens</button>
+  </div>`;
 }
 
 function portList(dv,side,title){
@@ -3405,6 +3622,17 @@ function bindPlan(){
  el2.querySelectorAll('[data-pnum]').forEach(inp=>{
   inp.onchange=()=>{const [dv,p]=find(inp.dataset.pnum);
    if(p){snap();p.n=inp.value;touch(p);autosave()}};
+ });
+ /* frekvens og type – kun i frekvensplanen */
+ el2.querySelectorAll('[data-pfreq]').forEach(inp=>{
+  inp.onchange=()=>{const [dv,p]=find(inp.dataset.pfreq);
+   if(!p||p.freq===inp.value)return;
+   snap(); p.freq=inp.value.replace(',','.').trim(); touch(p); autosave(); drawPlan()};
+  inp.onkeydown=e=>{ if(e.key==='Enter'){e.preventDefault();inp.blur()} };
+ });
+ el2.querySelectorAll('[data-pftype]').forEach(inp=>{
+  inp.onchange=()=>{const [dv,p]=find(inp.dataset.pftype);
+   if(p&&p.ftype!==inp.value){snap();p.ftype=inp.value.trim();touch(p);autosave()}};
  });
  el2.querySelectorAll('[data-pdel]').forEach(b=>b.onclick=()=>{
   const [dv,p,side]=find(b.dataset.pdel);
@@ -3676,6 +3904,7 @@ function drawArchive(){
   </div>`;
 
  bindArchive();
+ if(typeof sideAndet==='function')sideAndet();
 }
 
 function lagPortCol(cur,side,title){
@@ -3958,8 +4187,13 @@ function sheetApp(){
   ekstra.push({skil:1});
  }
  if(view==='flow'){
-  ekstra.push({ikon:'+',tekst:'Tilføj sektion',gør:()=>{
-    const b=document.querySelector('[data-addsec]'); if(b)b.click()}});
+  const klik=sel2=>{const b=document.querySelector(sel2); if(b)b.click()};
+  ekstra.push({ikon:'+',tekst:'Tilføj sektion',gør:()=>klik('[data-addsec]')});
+  ekstra.push({ikon:'▦',tekst:'Tilføj intercom panel',under:'tomt panel eller et fra lageret',
+    gør:()=>openPanelValg()});
+  ekstra.push({ikon:'T',tekst:'Tilføj tekstfelt',gør:()=>klik('[data-addtext]')});
+  ekstra.push({ikon:'◇',tekst:'Tilføj symbolforklaring',gør:()=>klik('[data-addlegend]')});
+  ekstra.push({ikon:'⊞',tekst:'Ny side',gør:()=>addPage()});
   ekstra.push({skil:1});
  }
  openSheet('Menu',ekstra.concat([
@@ -6655,10 +6889,12 @@ function itemH(it){
 }
 
 function planRows(kun){
- const rows=[['Domæne','Udstyr','Placering','Side','Nr','Signal','Patchet','Tjekket','Sat af','Tidspunkt']];
+ const rows=[['Domæne','Udstyr','Placering','Side','Nr','Frekvens MHz','Signal / bruger','Type',
+   'Patchet / sat op','Tjekket / afprøvet','Sat af','Tidspunkt']];
  Object.keys(PLANDOMS).filter(k=>!kun||k===kun).forEach(k=>alive((ensurePlan()[k].devices||[])).forEach(d=>{
   [['ins','Input'],['outs','Output']].forEach(([side,txt])=>{
-   alive(d[side]).forEach(p=>rows.push([PLANDOMS[k],d.name,d.place||'',txt,p.n,p.label||'',
+   alive(d[side]).forEach(p=>rows.push([PLANDOMS[k],d.name,d.place||'',
+     k==='freq'?'':txt, p.n, p.freq||'', p.label||'', p.ftype||'',
      p.patched?'ja':'', p.checked?'ja':'', p.by||'',
      p.at?new Date(p.at).toLocaleString('da-DK'):'']));
   });
@@ -6683,6 +6919,20 @@ function planPrintHTML(kun){
         <span class="ppl">${esc(p.label||'')}</span>
         <span class="ppb">${p.label?(p.patched?'✓':'☐'):''}</span>
         <span class="ppb">${p.label?(p.checked?'✓':'☐'):''}</span></div>`).join('')+`</div>`;
+   if(k==='freq'){
+    /* frekvensplanen står bedre som én tabel med MHz og bruger */
+    h+=`<div class="ppdev"><div class="ppname">${esc(d.name)}${d.place?' · '+esc(d.place):''}</div>
+      <div class="ppfreq">
+        <div class="ppfr ppfh"><span>Nr</span><span>MHz</span><span>Bruger / position</span>
+          <span>Type</span><span>S</span><span>A</span></div>
+        ${alive(d.ins).map(p=>`<div class="ppfr"><span>${esc(p.n)}</span>
+          <span class="ppmhz">${esc(p.freq||'')}</span><span>${esc(p.label||'')}</span>
+          <span>${esc(p.ftype||'')}</span>
+          <span>${p.label?(p.patched?'✓':'☐'):''}</span>
+          <span>${p.label?(p.checked?'✓':'☐'):''}</span></div>`).join('')}
+      </div></div>`;
+    return;
+   }
    h+=`<div class="ppdev"><div class="ppname">${esc(d.name)}${d.place?' · '+esc(d.place):''}</div>
      <div class="ppcols">${col(d.ins,'Input')}${col(d.outs,'Output')}</div></div>`;
   });
