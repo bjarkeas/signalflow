@@ -279,7 +279,7 @@ body.mobile .planbar{gap:7px}
 body.mobile .planbar .sharebtn{flex:1 1 auto;padding:10px 8px;font-size:12.5px}
 /* På mobil ligger de fleste i ☰-menuen – men "Del link" bruges hele tiden
    ude på gulvet, så den skal være synlig. */
-body.mobile .planbar [data-save],body.mobile .planbar [data-imp],
+body.mobile .planbar [data-save],body.mobile .planbar [data-imp],body.mobile .planbar [data-kimp],
 body.mobile .planbar [data-ppdf],
 body.mobile .planbar [data-pcsv],body.mobile .planbar .whotag,
 body.mobile .planbar .whobox{display:none}
@@ -3329,7 +3329,8 @@ function drawPlan(){
  let h=`<div class="planbar">
    <div class="domtabs">${Object.keys(PLANDOMS).map(k=>
      `<button class="domtab ${k===planDom?'on':''}" data-dom="${k}" title="${PLANDOMS[k]}-planen – hvert område har sit eget udstyr">${PLANDOMS[k]}</button>`).join('')}</div>
-   ${guestToken?'':`<button class="sharebtn left" data-imp="1" title="Hent udstyr der allerede er brugt på blokdiagrammet">⤒ Importér</button>`}
+   ${guestToken?'':`<button class="sharebtn left" data-imp="1" title="Hent udstyr der allerede er brugt på blokdiagrammet">⤒ Fra blokdiagram</button>
+     <button class="sharebtn left" data-kimp="1" title="Importér en kanalplan fra csv, Excel eller indsat tekst">⤒ Importér fil</button>`}
    ${nyt?`<button class="newsbadge" data-seen="1">${nyt} ${nyt===1?'ny ændring':'nye ændringer'} siden sidst · markér som set</button>`:''}
    ${meName()==='?'?`<input class="whobox" id="whoBox" placeholder="Dine initialer" title="Vises ud for de linjer du retter">`:
      `<span class="whotag" title="Dine initialer – klik for at rette">${esc(meName())}</span>`}
@@ -3552,6 +3553,7 @@ function bindPlan(){
  if(pc)pc.onclick=()=>exportPlanCSV(planDom);
  const ar=el2.querySelector('[data-arch]'); if(ar)ar.onclick=()=>openArchive('plan');
  const ip=el2.querySelector('[data-imp]'); if(ip)ip.onclick=()=>importItems('plan');
+ const kp=el2.querySelector('[data-kimp]'); if(kp)kp.onclick=()=>kiAaben();
  const sh2=el2.querySelector('[data-share]');
  if(sh2)sh2.onclick=function(){
    if(guestToken){copyLink(location.href,this);return}
@@ -6515,6 +6517,175 @@ function ipLayout(){
     x+=n.w+30; if(x>breddeArk-380){ x=20; y+=160; }
   });
   IP.layout=null;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   IMPORTÉR KANALPLAN FRA FIL
+   Læser vores egen csv-eksport tilbage, et Excel-ark, eller en liste fra et
+   andet system. Kolonnerne genkendes på deres overskrifter – både danske og
+   engelske – og man ser altid, hvad der bliver oprettet, før det sker.
+   ══════════════════════════════════════════════════════════════ */
+
+let KI={rk:[], kol:{}, forhaand:[]};
+
+function kiDelTekst(tekst){
+  const linjer=tekst.replace(/\r/g,'').split('\n').filter(l=>l.trim().length);
+  if(!linjer.length) return [];
+  const tael=(l,c)=>l.split(c).length-1;
+  const h=linjer[0];
+  const sep = tael(h,'\t')>0 ? '\t' : (tael(h,';')>=tael(h,',') ? ';' : ',');
+  /* en celle kan indeholde skilletegnet, hvis den står i anførselstegn */
+  const del=function(l){
+    const ud=[]; let c='', inde=false;
+    for(let i=0;i<l.length;i++){
+      const t=l[i];
+      if(t==='"'){ if(inde&&l[i+1]==='"'){c+='"';i++} else inde=!inde; continue }
+      if(t===sep && !inde){ ud.push(c); c=''; continue }
+      c+=t;
+    }
+    ud.push(c);
+    return ud.map(x=>x.trim());
+  };
+  return linjer.map(del);
+}
+
+/* find kolonnerne ud fra overskrifterne */
+function kiKolonner(hoved){
+  const h=hoved.map(x=>(x||'').toLowerCase().replace(/\s+/g,' ').trim());
+  const find=(...ord)=>h.findIndex(c=>ord.some(o=>c===o||c.startsWith(o)));
+  return {
+    dom:   find('domæne','domaene','domain','område','omraade'),
+    udstyr:find('udstyr','device','equipment','enhed','rack','system'),
+    sted:  find('placering','sted','location','place','position i vogn'),
+    side:  find('side','retning','i/o','in/out','type i/o'),
+    nr:    find('nr','no','ch','kanal nr','kanal','channel','port'),
+    freq:  find('frekvens','mhz','frequency'),
+    label: find('signal / bruger','signal','bruger','label','navn på signal','beskrivelse','description','name'),
+    ftype: find('type'),
+    patch: find('patchet','patched','sat op'),
+    tjek:  find('tjekket','checked','afprøvet','afproevet'),
+    af:    find('sat af','af','by','initialer')
+  };
+}
+
+const KI_DOM={lyd:'lyd',audio:'lyd',video:'video',net:'net','netværk':'net',netvaerk:'net',network:'net',
+  data:'net',freq:'freq',frekvens:'freq',frekvenser:'freq',rf:'freq',frequency:'freq'};
+
+function kiLaes(gitter){
+  if(!gitter.length) return {fejl:'Filen er tom.'};
+  const kol=kiKolonner(gitter[0]);
+  if(kol.udstyr<0 && kol.nr<0 && kol.label<0)
+    return {fejl:'Kunne ikke genkende kolonnerne. Der skal mindst være en kolonne med udstyr, nummer eller signal.'};
+  const v=(r,i)=>(i>=0?(r[i]||'').trim():'');
+  const ja=t=>/^(ja|x|✓|yes|true|1)$/i.test((t||'').trim());
+  const kort={}; const raekkef=[];
+  for(let i=1;i<gitter.length;i++){
+    const r=gitter[i];
+    if(!r.join('').trim()) continue;
+    const navn=v(r,kol.udstyr) || v(r,kol.sted) || 'Uden navn';
+    let d=(v(r,kol.dom)||'').toLowerCase();
+    d=KI_DOM[d]|| (v(r,kol.freq)?'freq':planDom);
+    const n=v(r,kol.nr), lbl=v(r,kol.label), fq=v(r,kol.freq);
+    if(!n && !lbl && !fq) continue;                     // en tom linje
+    const key=d+'|'+navn;
+    if(!kort[key]){ kort[key]={dom:d, navn:navn, sted:v(r,kol.sted)===navn?'':v(r,kol.sted), ins:[], outs:[]}; raekkef.push(key); }
+    const ud=/^(out|ud|udgang|output)/i.test(v(r,kol.side)) && d!=='freq';
+    (ud?kort[key].outs:kort[key].ins).push({
+      n:n, label:lbl, freq:fq.replace(',','.'), ftype:v(r,kol.ftype),
+      patched:ja(v(r,kol.patch)), checked:ja(v(r,kol.tjek)), by:v(r,kol.af)
+    });
+  }
+  const liste=raekkef.map(k=>kort[k]);
+  if(!liste.length) return {fejl:'Fandt ingen linjer med indhold.'};
+  return {liste, kol};
+}
+
+function kiAaben(){
+  const html=`
+   <div class="imp-hjaelp" style="font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:10px">
+     Vælg en <b>csv</b>- eller <b>Excel</b>-fil, eller sæt rækkerne ind fra et regneark.
+     Kolonnerne genkendes på overskrifterne – fx <em>Udstyr, Nr, Signal, Frekvens MHz, Patchet</em>.
+     Programmets egen csv-eksport kan læses direkte tilbage.
+   </div>
+   <div class="mf"><label>Fil</label><input type="file" id="kiFil"></div>
+   <div class="mf"><label>… eller sæt ind fra Excel</label>
+     <textarea id="kiTekst" rows="3" placeholder="Sæt rækkerne ind her – første række skal være overskrifter"></textarea></div>
+   <div id="kiVis"></div>
+   <div class="mrow">
+     <button class="btn go" id="kiOk" disabled>Importér</button>
+     <button class="btn" data-cancel="1">Annullér</button>
+   </div>`;
+  openModal('Importér kanalplan','fra csv, Excel eller indsat tekst',html,root=>{
+    root.querySelector('[data-cancel]').onclick=closeModal;
+    const vis=root.querySelector('#kiVis');
+    const brug=function(gitter){
+      const r=kiLaes(gitter);
+      if(r.fejl){ vis.innerHTML='<div class="imp-tom">'+esc(r.fejl)+'</div>'; root.querySelector('#kiOk').disabled=true; return }
+      KI.forhaand=r.liste;
+      const findes=new Set();
+      Object.keys(PLANDOMS).forEach(k=>alive((ensurePlan()[k]||{devices:[]}).devices||[])
+        .forEach(d=>findes.add(k+'|'+(d.name||'').toLowerCase())));
+      const dub=KI.forhaand.filter(k=>findes.has(k.dom+'|'+k.navn.toLowerCase())).length;
+      const linjer=KI.forhaand.reduce((s,k)=>s+k.ins.length+k.outs.length,0);
+      vis.innerHTML=`<div class="imp-status"><b>${KI.forhaand.length}</b> kort · <b>${linjer}</b> linjer`
+        +(dub?` · <span class="imp-mangler">${dub} findes allerede – linjerne lægges til</span>`:'')+`</div>
+        <div class="dio-liste">${KI.forhaand.map(k=>`<div class="dio-side">
+          <b>${esc(k.navn)}${k.sted?' · '+esc(k.sted):''}</b>
+          <span>${PLANDOMS[k.dom]||k.dom} · ${k.ins.length} ${k.dom==='freq'?'frekvenser':'input'}${k.outs.length?' · '+k.outs.length+' output':''}
+          ${findes.has(k.dom+'|'+k.navn.toLowerCase())?' <em>(findes – lægges til)</em>':''}</span></div>`).join('')}</div>`;
+      root.querySelector('#kiOk').disabled=false;
+    };
+    root.querySelector('#kiFil').onchange=async function(){
+      const f=this.files&&this.files[0]; if(!f) return;
+      vis.innerHTML='<div class="hint">Læser filen …</div>';
+      try{
+        if(/\.xlsx?$/i.test(f.name)) brug(await xlsxLaes(await f.arrayBuffer()));
+        else if(/\.pdf$/i.test(f.name))
+          vis.innerHTML='<div class="imp-tom">En pdf kan ikke læses direkte. Åbn den, markér tabellen, '
+            +'kopiér og sæt ind i feltet nedenfor – eller gem den som csv fra det program, den kom fra.</div>';
+        else brug(kiDelTekst(await f.text()));
+      }catch(e){ vis.innerHTML='<div class="imp-tom">'+esc(e.message||String(e))+'</div>'; }
+    };
+    root.querySelector('#kiTekst').addEventListener('input',function(){
+      if(this.value.trim().length>10) brug(kiDelTekst(this.value));
+    });
+    root.querySelector('#kiOk').onclick=function(){
+      snap();
+      const p=ensurePlan();
+      let nye=0, lagt=0;
+      KI.forhaand.forEach(function(k){
+        const d0=p[k.dom]||(p[k.dom]={devices:[]});
+        let dv=alive(d0.devices||[]).find(x=>(x.name||'').toLowerCase()===k.navn.toLowerCase());
+        if(!dv){
+          dv={id:id(), name:k.navn, place:k.sted||'', mt:Date.now(),
+              x:20+(d0.devices.length%3)*(CARDW+30), y:20+Math.floor(d0.devices.length/3)*320,
+              ins:[], outs:[]};
+          d0.devices.push(dv); nye++;
+        }else if(k.sted && !dv.place) dv.place=k.sted;
+        ['ins','outs'].forEach(function(side){
+          k[side].forEach(function(l){
+            /* findes linjen i forvejen (samme nummer), rettes den i stedet */
+            let p2=alive(dv[side]).find(x=>x.n && l.n && x.n===l.n);
+            if(!p2){ p2={id:id(), n:l.n, label:'', by:'', at:0}; dv[side].push(p2); }
+            p2.label=l.label||p2.label;
+            if(l.freq) p2.freq=l.freq;
+            if(l.ftype) p2.ftype=l.ftype;
+            if(l.patched) p2.patched=true;
+            if(l.checked) p2.checked=true;
+            p2.by=l.by||meName(); p2.at=Date.now();
+            lagt++;
+          });
+        });
+        dv.mt=Date.now();
+      });
+      /* vis det område, der kom mest ind i */
+      const tael={}; KI.forhaand.forEach(k=>tael[k.dom]=(tael[k.dom]||0)+1);
+      planDom=Object.keys(tael).sort((a,b)=>tael[b]-tael[a])[0]||planDom;
+      closeModal(); markDirty(); drawPlan();
+      setSync('importeret '+lagt+' linjer'+(nye?' på '+nye+' nye kort':''));
+    };
+  });
 }
 
 /* ---- ryd udskriften væk igen ----
