@@ -283,7 +283,7 @@ body.mobile .planbar [data-save],body.mobile .planbar [data-imp],body.mobile .pl
 body.mobile .planbar [data-ppdf],
 body.mobile .planbar [data-pcsv],body.mobile .planbar .whotag,
 body.mobile .planbar .whobox{display:none}
-body.mobile .planbar [data-share]{display:inline-flex;align-items:center;justify-content:center;
+body.mobile .planbar [data-foldall],body.mobile .planbar [data-share]{display:inline-flex;align-items:center;justify-content:center;
  flex:0 0 auto;gap:5px;background:var(--panel2);border-color:var(--dim);color:var(--text);
  font-size:13px;padding:10px 12px}
 body.mobile .planadd{width:100%;margin-left:0}
@@ -507,6 +507,12 @@ body.arklaast #side button{pointer-events:none;opacity:.45}
  text-align:right;letter-spacing:.01em}
 .ppfh .ppmhz,.ppfh>span:nth-child(2){font-weight:600;color:#444;font-size:9.5px}
 
+
+
+.foldknap{color:var(--faint)}
+.foldknap.on{color:var(--amber,#e0a33e);border-color:#6b5418}
+.foldrest{opacity:.75;font-style:italic}
+.foldrest:hover{opacity:1}
 
 /* kameraets kanaler */
 .port.kam{display:grid;grid-template-columns:54px 62px 1fr 22px 22px 34px 22px 22px;gap:5px;align-items:center}
@@ -3367,6 +3373,7 @@ function drawPlan(){
    <button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan – modtageren skal ikke logge ind">🔗 Del link</button>
    <button class="sharebtn" data-ppdf="1" title="Print ${PLANDOMS[planDom]}-planen eller gem den som PDF">↧ PDF</button>
    <button class="sharebtn" data-pcsv="1" title="Hent ${PLANDOMS[planDom]}-planen som regneark til Excel">↧ CSV</button>
+   <button class="sharebtn" data-foldall="1" title="Fold alle kort sammen, så kun linjer med signal vises – tryk igen for at folde ud">⊟ Fold tomme</button>
    <button class="sharebtn ${planSnap?'on':''}" data-psnap="1" title="Lås til gitter: kortene falder på plads i lige rækker, og der vises hjælpelinjer når de flugter">⊞ Ret op</button>
    ${guestToken?'':`
      <div class="planadd">
@@ -3413,6 +3420,7 @@ function drawPlan(){
           title="Tjekket – ${nc} af ${lab.length}. Klik for at sætte alle">T<em>${nc}/${lab.length}</em></button>
       </div>
       <div class="devacts">
+        ${foldKnap(dv)}
         <button class="mini rowmenu" data-kortmenu="${dv.id}" title="Muligheder for kortet">⋯</button>
         ${guestToken?'':`<button class="mini" data-darch="${dv.id}" title="Læg dette udstyr på lageret">⤓</button>`}
         <button class="mini" data-ddup="${dv.id}" title="Lav en kopi af hele kortet">⧉</button>
@@ -3486,13 +3494,14 @@ function freqRad(dv,p,i){
   </div>`;
 }
 function freqListe(dv){
-  const arr=ports(dv,'ins');
-  const brugt=arr.filter(p=>p.freq).length;
+  const alle=ports(dv,'ins');
+  const {vis:arr, skjult}=synligePorte(dv,'ins');
+  const ibrug=alle.filter(p=>p.freq).length;
   /* to sendere på samme frekvens er en fejl, man skal opdage med det samme */
-  const tael={}; arr.forEach(p=>{ const f=(p.freq||'').trim(); if(f) tael[f]=(tael[f]||0)+1; });
+  const tael={}; alle.forEach(p=>{ const f=(p.freq||'').trim(); if(f) tael[f]=(tael[f]||0)+1; });
   const dubletter=Object.keys(tael).filter(f=>tael[f]>1);
   return `<div class="portcol ins freqcol">
-    <div class="portitle">Frekvenser <span>${brugt}/${arr.length}</span></div>
+    <div class="portitle">Frekvenser <span>${ibrug}/${alle.length}</span></div>
     ${dubletter.length?`<div class="freqadvarsel" title="Samme frekvens er brugt flere gange på dette system">
        ⚠ ${dubletter.join(', ')} står mere end én gang</div>`:''}
     <div class="porthead freqhead"><span class="ph-n">Nr</span><span class="ph-f">MHz</span>
@@ -3500,6 +3509,7 @@ function freqListe(dv){
       <span class="ph-c" title="Sat op">S</span><span class="ph-c" title="Afprøvet">A</span>
       <span class="ph-by"></span><span class="ph-x"></span></div>
     ${arr.map((p,i)=>freqRad(dv,p,i)).join('')}
+    ${foldRest(dv,skjult)}
     <button class="addrow" data-padd="${dv.id}|ins" title="Tilføj en frekvenslinje">+ frekvens</button>
   </div>`;
 }
@@ -3537,22 +3547,57 @@ function kamRad(dv,p,udgaaet){
   </div>`;
 }
 function kamListe(dv){
-  const arr=ports(dv,'ins');
+  const alle=ports(dv,'ins');
+  const {vis:arr, skjult}=synligePorte(dv,'ins');
   const aes=kamAesIBrug(dv);
-  const brugt=arr.filter(p=>p.label&&!(aes&&(p.n||'').trim()==='2')).length;
+  const ibrug=alle.filter(p=>p.label&&!(aes&&(p.n||'').trim()==='2')).length;
   return `<div class="portcol ins kamcol">
-    <div class="portitle">Lydkanaler <span>${brugt}/${aes?arr.length-1:arr.length}</span></div>
+    <div class="portitle">Lydkanaler <span>${ibrug}/${aes?alle.length-1:alle.length}</span></div>
     ${aes?`<div class="kamnote">AES er i brug på 3 og 4 – kanal 2 udgår</div>`:''}
     ${arr.map(p=>kamRad(dv,p,aes&&(p.n||'').trim()==='2')).join('')}
+    ${foldRest(dv,skjult)}
     <button class="addrow" data-padd="${dv.id}|ins" title="Tilføj en kanal">+ kanal</button>
   </div>`;
 }
 
+
+/* ── Fold tomme linjer væk ─────────────────────────────────────
+   Et kort med 19 kanaler, hvor fire er i brug, er svært at overskue. Foldes
+   kortet, vises kun de linjer der har et signal – resten er der stadig og
+   kan foldes ud igen. Valget gemmes lokalt, så det ikke ændrer noget for
+   kollegerne. */
+const LS_FOLD='signalflow:planfold';
+let planFold=new Set();
+try{ planFold=new Set(JSON.parse(load(LS_FOLD)||'[]')) }catch(e){}
+function gemFold(){ try{ store(LS_FOLD, JSON.stringify([...planFold])) }catch(e){} }
+function erFoldet(dv){ return planFold.has(dv.id) }
+function brugt(p){ return !!((p.label||'').trim() || (p.freq||'').trim()) }
+/* de linjer der skal vises på et foldet kort */
+function synligePorte(dv,side){
+  const arr=ports(dv,side);
+  if(!erFoldet(dv)) return {vis:arr, skjult:0};
+  const vis=arr.filter(brugt);
+  return {vis: vis.length?vis:arr.slice(0,1), skjult: arr.length-(vis.length||1)};
+}
+function foldKnap(dv){
+  const f=erFoldet(dv);
+  const tomme=['ins','outs'].reduce((s,side)=>s+ports(dv,side).filter(p=>!brugt(p)).length,0);
+  if(!f && tomme<3) return '';                 // ingen grund til at folde
+  return `<button class="mini foldknap ${f?'on':''}" data-dfold="${dv.id}"
+    title="${f?'Vis alle linjer igen':'Skjul de '+tomme+' tomme linjer'}">${f?'⊞':'⊟'}</button>`;
+}
+function foldRest(dv,skjult){
+  if(!skjult) return '';
+  return `<button class="addrow foldrest" data-dfold="${dv.id}"
+    title="Vis alle linjer">+ ${skjult} tomme linjer skjult</button>`;
+}
+
 function portList(dv,side,title){
- const arr=ports(dv,side);
- const n=arr.filter(p=>p.label).length;
+ const alle=ports(dv,side);
+ const {vis:arr, skjult}=synligePorte(dv,side);
+ const n=alle.filter(p=>p.label).length;
  return `<div class="portcol ${side}">
-   <div class="portitle">${title} <span>${n}/${arr.length}</span></div>
+   <div class="portitle">${title} <span>${n}/${alle.length}</span></div>
    <div class="porthead"><span class="ph-n">Nr</span><span class="ph-l">Signal</span>
      <span class="ph-c" title="Patchet">P</span><span class="ph-c" title="Tjekket">T</span>
      <span class="ph-by"></span><span class="ph-x"></span></div>
@@ -3574,6 +3619,7 @@ function portList(dv,side,title){
        <button class="mini" data-pins="${dv.id}|${side}|${p.id}" title="Indsæt en ny linje lige over denne – numrene rykker automatisk">⤒</button>
        <button class="mini" data-pdel="${dv.id}|${side}|${p.id}" title="Fjern denne linje fra kortet">✕</button>
      </div>`).join('')}
+   ${foldRest(dv,skjult)}
    <button class="add" data-padd="${dv.id}|${side}" title="Tilføj endnu en ${title.toLowerCase()}-linje">+ ${title.toLowerCase()}</button>
  </div>`;
 }
@@ -3630,6 +3676,21 @@ function bindPlan(){
  const ar=el2.querySelector('[data-arch]'); if(ar)ar.onclick=()=>openArchive('plan');
  const ip=el2.querySelector('[data-imp]'); if(ip)ip.onclick=()=>importItems('plan');
  const kp=el2.querySelector('[data-kimp]'); if(kp)kp.onclick=()=>kiAaben();
+ /* fold et enkelt kort */
+ el2.querySelectorAll('[data-dfold]').forEach(b=>b.onclick=ev=>{
+  ev.stopPropagation();
+  const id2=b.dataset.dfold;
+  if(planFold.has(id2))planFold.delete(id2); else planFold.add(id2);
+  gemFold(); drawPlan();
+ });
+ /* fold dem alle */
+ const fa=el2.querySelector('[data-foldall]');
+ if(fa)fa.onclick=()=>{
+  const ds=alive(dom().devices||[]);
+  const nogleAabne=ds.some(d=>!planFold.has(d.id));
+  ds.forEach(d=>{ if(nogleAabne)planFold.add(d.id); else planFold.delete(d.id) });
+  gemFold(); drawPlan();
+ };
  const sh2=el2.querySelector('[data-share]');
  if(sh2)sh2.onclick=function(){
    if(guestToken){copyLink(location.href,this);return}
@@ -4486,6 +4547,9 @@ function sheetKort(did){
     const m=sidste&&String(sidste.n||'').match(NRM);
     dv.outs.push({id:id(),n:m?m[1]+(parseInt(m[2],10)+1)+m[3]:String(arr.length+1),label:'',by:'',at:0});
     drawPlan()}},
+  {ikon:erFoldet(dv)?'⊞':'⊟',tekst:erFoldet(dv)?'Vis alle linjer':'Skjul tomme linjer',
+   under:erFoldet(dv)?'':'kun linjer med signal vises',
+   gør:()=>{ if(planFold.has(dv.id))planFold.delete(dv.id); else planFold.add(dv.id); gemFold(); drawPlan(); }},
   {ikon:'⤓',tekst:'Gem i lageret',gør:()=>lagerSaveFromDevice(dv)},
   {skil:1},
   {ikon:'✕',tekst:'Slet kortet',fare:1,gør:()=>{
@@ -6667,20 +6731,22 @@ function kiStilOp(navne){
   const d0=ensurePlan()[planDom]; if(!d0) return;
   const kort=alive(d0.devices||[]).filter(d=>navne.indexOf((d.name||'').toLowerCase())>=0);
   if(!kort.length) return;
-  const hoejde=d=>{
+  const maal=d=>{
     const n=document.querySelector('[data-dev="'+d.id+'"]');
-    return n?n.offsetHeight:260;
+    return n?{b:n.offsetWidth, h:n.offsetHeight}:{b:CARDW, h:260};
   };
+  const hoejde=d=>maal(d).h, bredde=d=>maal(d).b;
   const andre=alive(d0.devices||[]).filter(d=>kort.indexOf(d)<0);
   let y=20;
   andre.forEach(d=>{ y=Math.max(y,(d.y||0)+hoejde(d)+30); });   // under det der var i forvejen
   let x=20, raekkeH=0;
-  const maxB=3*(CARDW+40);
+  const maxB=3*(CARDW+60);
   kort.forEach(function(d){
-    if(x>20 && x+CARDW>maxB){ x=20; y+=raekkeH+34; raekkeH=0; }
+    const b=bredde(d);
+    if(x>20 && x+b>maxB){ x=20; y+=raekkeH+34; raekkeH=0; }
     d.x=x; d.y=y;
     raekkeH=Math.max(raekkeH, hoejde(d));
-    x+=CARDW+40;
+    x+=b+40;                       // den målte bredde, ikke et gæt
   });
 }
 
@@ -6915,13 +6981,18 @@ function kiAaben(){
         });
         dv.mt=Date.now();
       });
-      /* vis det område, der kom mest ind i */
       const tael={}; KI.forhaand.forEach(k=>tael[k.dom]=(tael[k.dom]||0)+1);
-      planDom=Object.keys(tael).sort((a,b)=>tael[b]-tael[a])[0]||planDom;
-      closeModal(); markDirty(); drawPlan();
-      /* Kortenes højde afhænger af antallet af linjer – den kender vi først,
-         når de er tegnet. Derfor stiller vi dem op bagefter. */
-      kiStilOp(KI.forhaand.map(k=>k.navn.toLowerCase()));
+      closeModal(); markDirty();
+      /* Kortenes højde og bredde kender vi først, når de er tegnet. Derfor
+         tegner vi hvert berørt område og stiller kortene op bagefter – ellers
+         ville kun det område, man ender i, blive stillet pænt op. */
+      const start=planDom;
+      Object.keys(tael).forEach(function(d){
+        planDom=d; drawPlan();
+        kiStilOp(KI.forhaand.filter(k=>k.dom===d).map(k=>k.navn.toLowerCase()));
+      });
+      /* vis det område, der kom mest ind i */
+      planDom=Object.keys(tael).sort((a,b)=>tael[b]-tael[a])[0]||start;
       drawPlan();
       setSync('importeret '+lagt+' linjer'+(nye?' på '+nye+' nye kort':''));
     };
