@@ -2446,6 +2446,17 @@ const DEVICES={
   {t:'Trunk / LAN',       i:8,  o:8},
   {t:'Unity Connect',     i:16, o:16},
   {t:'Clearcom IVC-32',   i:16, o:16}
+ ],
+ /* Frekvensplanen: "inputs" er antallet af frekvenslinjer, der oprettes */
+ freq:[
+  {t:'Wisycom rack (4)',   i:4,  o:0},
+  {t:'Wisycom rack (8)',   i:8,  o:0},
+  {t:'Shure rack (4)',     i:4,  o:0},
+  {t:'Sennheiser sæt (2)', i:2,  o:0},
+  {t:'IEM sæt (4)',        i:4,  o:0},
+  {t:'Håndholdte (6)',     i:6,  o:0},
+  {t:'Bodypacks (8)',      i:8,  o:0},
+  {t:'Talkback (2)',       i:2,  o:0}
  ]
 };
 
@@ -5605,11 +5616,13 @@ function openArchive(mode){
   <div class="mf"><input type="text" name="q" placeholder="Søg i lageret …"></div>
   <div id="archList" class="chklist" style="max-height:280px">Henter …</div>
   ${forPlan?`
-   <div class="msec">Standardudstyr</div>
+   <div class="msec">${planDom==='freq'?'Standardsystemer':'Standardudstyr'}</div>
    <div class="picks std">
-    ${DEVICES[planDom].map((t,i)=>`<button class="pick" data-std="${i}" title="${t.i} inputs og ${t.o} outputs">
+    ${(DEVICES[planDom]||[]).map((t,i)=>`<button class="pick" data-std="${i}" title="${t.i} inputs og ${t.o} outputs">
        <b>${esc(t.t)}</b><span>${t.i} ind / ${t.o} ud</span></button>`).join('')}
-    <button class="pick" data-std="custom" title="Skriv selv navn og antal"><b>Andet udstyr</b><span>skriv selv antal</span></button>
+    <button class="pick" data-std="custom" title="Skriv selv navn og antal">
+      <b>${planDom==='freq'?'Andet system':'Andet udstyr'}</b>
+      <span>${planDom==='freq'?'skriv selv antal frekvenser':'skriv selv antal'}</span></button>
    </div>`:''}
   <div class="mrow">
     ${(forPlan||forBlock)?`<button class="btn go" data-ains="1">Indsæt valgte</button>`:''}
@@ -5643,11 +5656,18 @@ function openArchive(mode){
    root.querySelectorAll('[data-std]').forEach(b=>b.onclick=()=>{
      const v=b.dataset.std;
      if(v==='custom'){
-      const t=prompt('Hvad hedder udstyret?','Nyt udstyr'); if(t===null)return;
-      const i=parseInt(prompt('Hvor mange inputs?','8'),10); if(isNaN(i))return;
-      const o=parseInt(prompt('Hvor mange outputs?','4'),10); if(isNaN(o))return;
-      addDevice({t:t||'Nyt udstyr',i:Math.max(0,i),o:Math.max(0,o)});
-     }else addDevice(DEVICES[planDom][+v]);
+      /* I frekvensplanen er der ingen ind- og udgange – kun frekvenslinjer */
+      if(planDom==='freq'){
+       const t=prompt('Hvad hedder systemet?','Nyt system'); if(t===null)return;
+       const n=parseInt(prompt('Hvor mange frekvenser?','4'),10); if(isNaN(n))return;
+       addDevice({t:t||'Nyt system',i:Math.max(1,n),o:0});
+      }else{
+       const t=prompt('Hvad hedder udstyret?','Nyt udstyr'); if(t===null)return;
+       const i=parseInt(prompt('Hvor mange inputs?','8'),10); if(isNaN(i))return;
+       const o=parseInt(prompt('Hvor mange outputs?','4'),10); if(isNaN(o))return;
+       addDevice({t:t||'Nyt udstyr',i:Math.max(0,i),o:Math.max(0,o)});
+      }
+     }else addDevice((DEVICES[planDom]||[])[+v]);
      closeModal();
    });
    /* indbyggede billeder og symboler – kun på blokdiagrammet */
