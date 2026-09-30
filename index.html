@@ -496,11 +496,30 @@ body.arklaast #side button{pointer-events:none;opacity:.45}
 
 /* frekvensplanen på print */
 .ppfreq{border:1px solid #d9d9d9;border-radius:5px;overflow:hidden}
-.ppfr{display:grid;grid-template-columns:46px 74px 1fr 90px 22px 22px;gap:6px;
- padding:3px 7px;border-bottom:1px solid #ececec;font-size:11px}
+.ppfr{display:grid;grid-template-columns:44px 86px 1fr 84px 22px 22px;gap:8px;
+ padding:4px 7px;border-bottom:1px solid #ececec;font-size:11.5px;color:#111}
 .ppfr:last-child{border-bottom:none}
 .ppfh{background:#f3f3f3;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:#666}
-.ppmhz{font-family:var(--fm);text-align:right}
+.ppfr>span:first-child{color:#555;font-family:var(--fm);font-size:10px}
+.ppfr>span:nth-child(4){color:#555;font-size:10px}
+/* Frekvensen er det, man leder efter på et print – den skal springe i øjnene */
+.ppmhz{font-family:var(--fm);font-size:13px;font-weight:700;color:#000;
+ text-align:right;letter-spacing:.01em}
+.ppfh .ppmhz,.ppfh>span:nth-child(2){font-weight:600;color:#444;font-size:9.5px}
+
+
+/* kameraets kanaler */
+.port.kam{display:grid;grid-template-columns:54px 62px 1fr 22px 22px 34px 22px 22px;gap:5px;align-items:center}
+.kamtype{font:9.5px var(--fm);color:var(--faint);text-transform:uppercase;letter-spacing:.06em;
+ border:1px solid var(--line);border-radius:5px;padding:4px 0;text-align:center}
+.kamtype.aes{color:var(--net);border-color:#2b4a63}
+.port.kam.udgaaet{opacity:.42}
+.port.kam.udgaaet .plabel{text-decoration:line-through;background:transparent;border-style:dashed;cursor:not-allowed}
+.port.kam.udgaaet .kamtype{text-decoration:line-through}
+.kamnote{margin:2px 8px 6px;padding:5px 9px;border-radius:7px;font-size:11px;
+ background:rgba(90,140,190,.12);border:1px solid #2b4a63;color:#9fc4e4}
+body.mobile .port.kam{grid-template-columns:44px 54px 1fr 22px 22px 22px}
+body.mobile .port.kam .pby,body.mobile .port.kam [data-pdel]{display:none}
 
 /* frekvensplanen */
 .freqcol .porthead.freqhead,.port.freq{grid-template-columns:52px 74px 1fr 92px 22px 22px 34px 22px 22px 22px 22px}
@@ -805,6 +824,8 @@ body.guest .gastmark{display:inline-flex}
  color:var(--dim);padding:2px 2px 7px;display:flex;justify-content:space-between}
 .portitle span{font-family:var(--fm);font-size:9.5px;color:var(--faint);letter-spacing:0}
 .port{display:flex;align-items:center;gap:4px;padding:2px 0;position:relative;min-width:0}
+/* "AES 1.1" skal kunne stå i nummerfeltet på kameraplanen */
+#plan.dom-kam .pnum{width:54px}
 .pnum{width:30px;flex:none;background:var(--bg);border:1px solid var(--line);color:var(--dim);
  border-radius:5px;padding:5px 2px;font:10.5px var(--fm);text-align:center}
 .plabel{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--text);
@@ -2412,7 +2433,7 @@ let lastBox=null;
 /* ================= kanalplaner ================= */
 /* Én plan pr. domæne. Hvert stykke udstyr har inputs og outputs med hver sin
    tekst, og hver linje husker hvem der har rettet den og hvornår. */
-const PLANDOMS={lyd:'Lyd',video:'Video',net:'Netværk',freq:'Frekvenser'};
+const PLANDOMS={lyd:'Lyd',video:'Video',kam:'Kameraer',net:'Netværk',freq:'Frekvenser'};
 /* almindelige stiktyper – kun forslag, man kan skrive hvad som helst */
 const CONNECTORS=['XLR han','XLR hun','XLR 3-pol','XLR 5-pol','Jack 6,3 mm','Minijack 3,5 mm',
  'BNC','SDI BNC','HDMI','RJ45','etherCON','SMPTE 311M','LC fiber','SC fiber','opticalCON',
@@ -2446,6 +2467,13 @@ const DEVICES={
   {t:'Trunk / LAN',       i:8,  o:8},
   {t:'Unity Connect',     i:16, o:16},
   {t:'Clearcom IVC-32',   i:16, o:16}
+ ],
+ kam:[
+  {t:'Kamera (4 kanaler)', i:4, o:1},
+  {t:'Kamera uden retur',  i:4, o:0},
+  {t:'EXT-kilde',          i:4, o:0},
+  {t:'Drone',              i:2, o:0},
+  {t:'Stedkamera / FR-7',  i:2, o:0}
  ],
  /* Frekvensplanen: "inputs" er antallet af frekvenslinjer, der oprettes */
  freq:[
@@ -3391,7 +3419,9 @@ function drawPlan(){
         <button class="mini" data-ddel="${dv.id}" title="Slet kortet og alle dets linjer">✕</button>
       </div>
     </div>
-    ${planDom==='freq' ? `<div class="ports enkelt">${freqListe(dv)}</div>` : `
+    ${planDom==='freq' ? `<div class="ports enkelt">${freqListe(dv)}</div>`
+     : planDom==='kam' ? `<div class="ports ${ports(dv,'outs').length?'':'enkelt'}">${kamListe(dv)}
+         ${ports(dv,'outs').length?portList(dv,'outs','Retur'):''}</div>` : `
     <div class="ports ${(ports(dv,'ins').length&&ports(dv,'outs').length)?'':'enkelt'}">
       ${ports(dv,'ins').length?portList(dv,'ins','Input'):''}
       ${ports(dv,'outs').length?portList(dv,'outs','Output'):''}
@@ -3416,6 +3446,8 @@ function drawPlan(){
   <datalist id="lbls">${labels.map(l=>`<option value="${esc(l)}">`).join('')}</datalist>
   <datalist id="freqtyper">${FREQTYPER.map(t=>`<option value="${t}">`).join('')}</datalist>`;
 
+ /* området med på beholderen, så fx kameraplanen kan have bredere nummerfelt */
+ el2.className=(el2.className||'').replace(/\s*dom-\w+/g,'')+' dom-'+planDom;
  el2.innerHTML=h;
  bindPlan();
  if(typeof mobilTitel==='function')mobilTitel();
@@ -3469,6 +3501,50 @@ function freqListe(dv){
       <span class="ph-by"></span><span class="ph-x"></span></div>
     ${arr.map((p,i)=>freqRad(dv,p,i)).join('')}
     <button class="addrow" data-padd="${dv.id}|ins" title="Tilføj en frekvenslinje">+ frekvens</button>
+  </div>`;
+}
+
+
+/* ── Kameraets fire kanaler ────────────────────────────────────
+   Et kamera har 1 og 2 som mic/line og 3 og 4 som AES. Bruges AES-parret,
+   optager det kredsløbet fra kanal 2 – så udgår 2, og man har kanal 1
+   mic/line plus 3 og 4 på AES. Planen viser det, så ingen booker en kanal,
+   der ikke findes. */
+const KAM_AES=n=>/^(3|4|aes)/i.test((n||'').toString().trim());
+function kamAesIBrug(dv){
+  return ports(dv,'ins').some(p=>KAM_AES(p.n) && (p.label||'').trim());
+}
+function kamRad(dv,p,udgaaet){
+  const aes=KAM_AES(p.n);
+  const kl=[p.label?'set':'', fresh(p)?'fresh':'', (p.label&&p.patched&&p.checked)?'ok':'',
+            udgaaet?'udgaaet':''].join(' ');
+  return `<div class="port kam ${kl}" data-port="${dv.id}|ins|${p.id}"
+      ${udgaaet?'title="Udgår, fordi AES-parret er i brug på kanal 3 og 4"':''}>
+    <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|ins|${p.id}" title="Kanalnummer">
+    <span class="kamtype ${aes?'aes':''}">${aes?'AES':'mic/line'}</span>
+    <input class="plabel" value="${esc(p.label)}" list="lbls"
+           placeholder="${udgaaet?'udgår – AES bruger kanal 2':'—'}"
+           ${udgaaet?'disabled':''} title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">
+    ${p.label&&!udgaaet?`
+     <label class="tick" title="Patchet${p.pby?' · af '+esc(p.pby):''}">
+       <input type="checkbox" data-tick="${dv.id}|ins|${p.id}|patched" ${p.patched?'checked':''}></label>
+     <label class="tick t2" title="Tjekket${p.cby?' · af '+esc(p.cby):''}">
+       <input type="checkbox" data-tick="${dv.id}|ins|${p.id}|checked" ${p.checked?'checked':''}></label>`
+     :`<span class="tickgap"></span><span class="tickgap"></span>`}
+    <span class="pby">${p.by?esc(p.by):''}</span>
+    <button class="mini rowmenu" data-pmenu="${dv.id}|ins|${p.id}" title="Muligheder for denne linje">⋯</button>
+    <button class="mini" data-pdel="${dv.id}|ins|${p.id}" title="Slet linjen">✕</button>
+  </div>`;
+}
+function kamListe(dv){
+  const arr=ports(dv,'ins');
+  const aes=kamAesIBrug(dv);
+  const brugt=arr.filter(p=>p.label&&!(aes&&(p.n||'').trim()==='2')).length;
+  return `<div class="portcol ins kamcol">
+    <div class="portitle">Lydkanaler <span>${brugt}/${aes?arr.length-1:arr.length}</span></div>
+    ${aes?`<div class="kamnote">AES er i brug på 3 og 4 – kanal 2 udgår</div>`:''}
+    ${arr.map(p=>kamRad(dv,p,aes&&(p.n||'').trim()==='2')).join('')}
+    <button class="addrow" data-padd="${dv.id}|ins" title="Tilføj en kanal">+ kanal</button>
   </div>`;
 }
 
@@ -6529,6 +6605,17 @@ function ipLayout(){
 
 let KI={rk:[], kol:{}, forhaand:[]};
 
+/* Excel gemmer ofte csv i windows-1252. Læser vi den som UTF-8, bliver æ, ø
+   og å til spørgsmålstegn – så prøver vi det andet tegnsæt. */
+async function kiFilTekst(f){
+  const buf=await f.arrayBuffer();
+  try{
+    const t=new TextDecoder('utf-8',{fatal:true}).decode(buf);
+    return t;
+  }catch(e){
+    return new TextDecoder('windows-1252').decode(buf);
+  }
+}
 function kiDelTekst(tekst){
   const linjer=tekst.replace(/\r/g,'').split('\n').filter(l=>l.trim().length);
   if(!linjer.length) return [];
@@ -6572,8 +6659,156 @@ function kiKolonner(hoved){
 const KI_DOM={lyd:'lyd',audio:'lyd',video:'video',net:'net','netværk':'net',netvaerk:'net',network:'net',
   data:'net',freq:'freq',frekvens:'freq',frekvenser:'freq',rf:'freq',frequency:'freq'};
 
+
+
+/* Stil de nyimporterede kort op i rækker uden overlap. Højden måles på de
+   tegnede kort, så et kort med 30 linjer ikke lægger sig oven på det næste. */
+function kiStilOp(navne){
+  const d0=ensurePlan()[planDom]; if(!d0) return;
+  const kort=alive(d0.devices||[]).filter(d=>navne.indexOf((d.name||'').toLowerCase())>=0);
+  if(!kort.length) return;
+  const hoejde=d=>{
+    const n=document.querySelector('[data-dev="'+d.id+'"]');
+    return n?n.offsetHeight:260;
+  };
+  const andre=alive(d0.devices||[]).filter(d=>kort.indexOf(d)<0);
+  let y=20;
+  andre.forEach(d=>{ y=Math.max(y,(d.y||0)+hoejde(d)+30); });   // under det der var i forvejen
+  let x=20, raekkeH=0;
+  const maxB=3*(CARDW+40);
+  kort.forEach(function(d){
+    if(x>20 && x+CARDW>maxB){ x=20; y+=raekkeH+34; raekkeH=0; }
+    d.x=x; d.y=y;
+    raekkeH=Math.max(raekkeH, hoejde(d));
+    x+=CARDW+40;
+  });
+}
+
+
+/* ── Kameraopsæt i et regneark ─────────────────────────────────
+   Én række pr. kamera: nummer, type, source, placering og fire lydkanaler.
+   Hvert kamera bliver et kort med fire kanaler, hvor de to sidste er AES –
+   samme navngivning som på stageboksene. */
+function kiFindKameraer(g){
+  const v=(r,c)=>((g[r]||[])[c]||'').toString().trim();
+  const rows=g.length; let cols=0; for(let i=0;i<rows;i++) cols=Math.max(cols,(g[i]||[]).length);
+  let hr=-1, c0=-1;
+  for(let r=0;r<rows && hr<0;r++) for(let c=0;c<cols;c++){
+    if(/^(camera|kamera)\s*(nr|no|nummer)?$/i.test(v(r,c))){ hr=r; c0=c; break; }
+  }
+  if(hr<0) return null;
+  /* kolonnerne: type, source, placering, og de nummererede lydkanaler */
+  const K={nr:c0, type:-1, source:-1, sted:-1, retur:-1, kanaler:[]};
+  for(let c=c0+1;c<Math.min(cols,c0+14);c++){
+    const t=v(hr,c).toLowerCase();
+    if(!t) continue;
+    if(/^type/.test(t) && K.type<0) K.type=c;
+    else if(/^(source|kilde|ccu)/.test(t) && K.source<0) K.source=c;
+    else if(/^(placering|position|sted|location)/.test(t) && K.sted<0) K.sted=c;
+    else if(/^(retur|return|tb|talkback)/.test(t)) K.retur=c;
+    else if(/^\d+$/.test(t)) K.kanaler.push(c);
+  }
+  if(!K.kanaler.length) return null;
+  const kort=[];
+  for(let r=hr+1;r<rows;r++){
+    const nr=v(r,K.nr);
+    if(!nr){ if(!v(r,K.type>=0?K.type:K.nr+1) && !v(r,K.sted>=0?K.sted:K.nr+2)) continue; }
+    const type=K.type>=0?v(r,K.type):'', src=K.source>=0?v(r,K.source):'', sted=K.sted>=0?v(r,K.sted):'';
+    if(!nr && !type && !sted) continue;
+    const navn=(/^\d+$/.test(nr)?'Kamera '+nr:(nr||'Kilde'))+(type?' · '+type:'');
+    /* 1 og 2 er mic/line, 3 og 4 er AES-parret. Står der noget på 3 eller 4,
+       er AES i brug, og så udgår kanal 2. */
+    const ins=K.kanaler.map(function(c,i){
+      return {n:String(i+1), label:v(r,c), freq:'', ftype:'', patched:false, checked:false, by:''};
+    });
+    while(ins.length<4) ins.push({n:String(ins.length+1), label:'', freq:'', ftype:'', patched:false, checked:false, by:''});
+    const outs=[];
+    if(K.retur>=0 && v(r,K.retur)) outs.push({n:'1', label:v(r,K.retur), freq:'', ftype:'', patched:false, checked:false, by:''});
+    kort.push({dom:'kam', navn:navn, sted:[sted,src].filter(Boolean).join(' · '), ins, outs});
+  }
+  return kort.length?kort:null;
+}
+
+/* ── Regneark med blokke ved siden af hinanden ─────────────────
+   Mange lydplaner er bygget som et stort ark: en stageboks pr. blok, hver
+   med sine egne kolonner (kanal · Navn · Source) og både Inputs og Outputs.
+   Vi finder blokkene ved at lede efter den samme kolonneoverskrift flere
+   gange i samme række. */
+const KI_NR=/^(kanal|kanal nr|nr\.?|no\.?|ch\.?|channel|port|nummer|input|in)$/i;
+const KI_NAVN=/^(navn|signal|name|beskrivelse|label|kilde|indhold|source|description)$/i;
+const KI_SIDE=/^(inputs?|outputs?|ind|ud|udgange|indgange)$/i;
+
+function kiFindBlokke(g){
+  const v=(r,c)=>((g[r]||[])[c]||'').toString().trim();
+  const rows=g.length; let cols=0; for(let i=0;i<rows;i++) cols=Math.max(cols,(g[i]||[]).length);
+  /* 1. rækker der er overskrifter for flere blokke */
+  const hoveder=[];
+  for(let r=0;r<rows;r++){
+    const start=[];
+    for(let c=0;c<cols;c++) if(KI_NR.test(v(r,c)) && KI_NAVN.test(v(r,c+1))) start.push(c);
+    if(start.length>=2) hoveder.push({r, start});
+  }
+  if(!hoveder.length) return null;
+  const bredde=(()=>{ const h=hoveder[0].start; return h.length>1 ? h[1]-h[0] : 4 })();
+  const blokke=[]; const titler={};
+  hoveder.forEach(function(h){
+    h.start.forEach(function(c){
+      /* 2. Hvilken side (Inputs/Outputs) står lige over overskriften.
+         Titlen står kun ved den ØVERSTE overskrift – den husker vi pr.
+         kolonne, så Outputs-delen får samme navn som Inputs-delen og ikke
+         kommer til at hedde det samme som den sidste datarække ovenfor. */
+      let side='ins';
+      for(let i=0;i<bredde;i++){
+        const t=v(h.r-1, c+i);
+        if(t && KI_SIDE.test(t)){ side=/out|ud/i.test(t)?'outs':'ins'; break; }
+      }
+      let navn=titler[c]||'';
+      if(!navn){
+        for(let op=1; op<=6 && h.r-op>=0; op++){
+          for(let i=0;i<bredde;i++){
+            const t=v(h.r-op, c+i);
+            if(!t || KI_SIDE.test(t) || KI_NR.test(t) || KI_NAVN.test(t)) continue;
+            navn=t; break;
+          }
+          if(navn) break;
+        }
+        if(navn) titler[c]=navn;
+      }
+      /* 3. linjerne under overskriften */
+      const linjer=[];
+      for(let r=h.r+1; r<rows; r++){
+        let tomme=0; for(let i=0;i<bredde;i++) if(!v(r,c+i)) tomme++;
+        if(tomme===bredde) break;
+        if(KI_SIDE.test(v(r,c))) break;                       // næste afsnit begynder
+        if(KI_NR.test(v(r,c)) && KI_NAVN.test(v(r,c+1))) break;
+        const nr=v(r,c), nv=v(r,c+1), kilde=bredde>2?v(r,c+2):'';
+        if(!nr && !nv && !kilde) continue;
+        linjer.push({n:nr, label:nv || kilde, kilde:(nv&&kilde)?kilde:''});
+      }
+      if(linjer.length) blokke.push({navn:navn||('Blok '+(blokke.length+1)), side, linjer});
+    });
+  });
+  if(!blokke.length) return null;
+  /* 4. saml Inputs og Outputs for samme navn i ét kort */
+  const kort={}, raekkef=[];
+  blokke.forEach(function(b){
+    const k=b.navn.toLowerCase();
+    if(!kort[k]){ kort[k]={dom:planDom==='freq'?'freq':planDom, navn:b.navn, sted:'', ins:[], outs:[]}; raekkef.push(k); }
+    b.linjer.forEach(l=>kort[k][b.side].push({
+      n:l.n, label:l.label+(l.kilde?' · '+l.kilde:''), freq:'', ftype:'',
+      patched:false, checked:false, by:''
+    }));
+  });
+  return raekkef.map(k=>kort[k]);
+}
+
 function kiLaes(gitter){
   if(!gitter.length) return {fejl:'Filen er tom.'};
+  /* Er arket bygget som blokke ved siden af hinanden, læser vi det sådan */
+  const blokke=kiFindBlokke(gitter);
+  const kam=kiFindKameraer(gitter);
+  if(blokke && blokke.length>=2) return {liste:blokke.concat(kam||[]), form:'blokke'};
+  if(kam) return {liste:kam, form:'kameraer'};
   const kol=kiKolonner(gitter[0]);
   if(kol.udstyr<0 && kol.nr<0 && kol.label<0)
     return {fejl:'Kunne ikke genkende kolonnerne. Der skal mindst være en kolonne med udstyr, nummer eller signal.'};
@@ -6629,6 +6864,7 @@ function kiAaben(){
       const dub=KI.forhaand.filter(k=>findes.has(k.dom+'|'+k.navn.toLowerCase())).length;
       const linjer=KI.forhaand.reduce((s,k)=>s+k.ins.length+k.outs.length,0);
       vis.innerHTML=`<div class="imp-status"><b>${KI.forhaand.length}</b> kort · <b>${linjer}</b> linjer`
+        +(r.form==='blokke'?' <em style="color:var(--faint)">(ark med blokke ved siden af hinanden)</em>':'')
         +(dub?` · <span class="imp-mangler">${dub} findes allerede – linjerne lægges til</span>`:'')+`</div>
         <div class="dio-liste">${KI.forhaand.map(k=>`<div class="dio-side">
           <b>${esc(k.navn)}${k.sted?' · '+esc(k.sted):''}</b>
@@ -6644,7 +6880,7 @@ function kiAaben(){
         else if(/\.pdf$/i.test(f.name))
           vis.innerHTML='<div class="imp-tom">En pdf kan ikke læses direkte. Åbn den, markér tabellen, '
             +'kopiér og sæt ind i feltet nedenfor – eller gem den som csv fra det program, den kom fra.</div>';
-        else brug(kiDelTekst(await f.text()));
+        else brug(kiDelTekst(await kiFilTekst(f)));
       }catch(e){ vis.innerHTML='<div class="imp-tom">'+esc(e.message||String(e))+'</div>'; }
     };
     root.querySelector('#kiTekst').addEventListener('input',function(){
@@ -6683,6 +6919,10 @@ function kiAaben(){
       const tael={}; KI.forhaand.forEach(k=>tael[k.dom]=(tael[k.dom]||0)+1);
       planDom=Object.keys(tael).sort((a,b)=>tael[b]-tael[a])[0]||planDom;
       closeModal(); markDirty(); drawPlan();
+      /* Kortenes højde afhænger af antallet af linjer – den kender vi først,
+         når de er tegnet. Derfor stiller vi dem op bagefter. */
+      kiStilOp(KI.forhaand.map(k=>k.navn.toLowerCase()));
+      drawPlan();
       setSync('importeret '+lagt+' linjer'+(nye?' på '+nye+' nye kort':''));
     };
   });
