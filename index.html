@@ -283,7 +283,8 @@ body.mobile .planbar [data-save],body.mobile .planbar [data-imp],body.mobile .pl
 body.mobile .planbar [data-ppdf],
 body.mobile .planbar [data-pcsv],body.mobile .planbar .whotag,
 body.mobile .planbar .whobox{display:none}
-body.mobile .planbar [data-foldall],body.mobile .planbar [data-share]{display:inline-flex;align-items:center;justify-content:center;
+body.mobile .planbar [data-kol3]{display:none}
+body.mobile .planbar [data-kol1],body.mobile .planbar [data-foldall],body.mobile .planbar [data-share]{display:inline-flex;align-items:center;justify-content:center;
  flex:0 0 auto;gap:5px;background:var(--panel2);border-color:var(--dim);color:var(--text);
  font-size:13px;padding:10px 12px}
 body.mobile .planadd{width:100%;margin-left:0}
@@ -528,7 +529,12 @@ body.mobile .port.kam{grid-template-columns:44px 54px 1fr 22px 22px 22px}
 body.mobile .port.kam .pby,body.mobile .port.kam [data-pdel]{display:none}
 
 /* frekvensplanen */
-.freqcol .porthead.freqhead,.port.freq{grid-template-columns:52px 74px 1fr 92px 22px 22px 34px 22px 22px 22px 22px}
+.freqcol .porthead.freqhead,.port.freq{grid-template-columns:52px 80px 1fr 76px 22px 22px 0 22px 22px 22px 22px}
+/* Klikker man i et felt, foldes det ud over naboerne, så hele teksten kan
+   læses – man skulle ellers holde musen stille og vente på en boble. */
+.port.freq .plabel:focus,.port.kam .plabel:focus,.port .plabel:focus{
+ position:relative;z-index:6;box-shadow:0 0 0 3px var(--panel),0 0 0 4px var(--intercom)}
+.port.freq .plabel{text-overflow:ellipsis}
 .port.freq{display:grid;align-items:center;gap:4px}
 .freqcol .ph-f{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
 .freqcol .ph-t{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
@@ -539,8 +545,18 @@ body.mobile .port.kam .pby,body.mobile .port.kam [data-pdel]{display:none}
  border-radius:6px;padding:5px 6px;font-family:var(--fm);font-size:11px}
 .freqadvarsel{margin:4px 8px 6px;padding:6px 9px;border-radius:7px;font-size:11.5px;
  background:rgba(224,163,62,.12);border:1px solid #6b5418;color:#e8c46a}
-body.mobile .freqcol .porthead.freqhead,body.mobile .port.freq{
- grid-template-columns:38px 62px 1fr 20px 20px 22px;gap:3px}
+/* På telefonen står nummer, MHz og hakkene øverst – og navnet på sin egen
+   linje nedenunder, så hele teksten kan ses. */
+body.mobile .port.freq{grid-template-columns:46px 78px 1fr 32px 32px 34px;gap:4px;
+ grid-template-areas:"nr mhz sp s a menu" "lbl lbl lbl lbl lbl lbl";padding:6px 0}
+body.mobile .port.freq .pnum{grid-area:nr}
+body.mobile .port.freq .pfreq{grid-area:mhz;font-size:13px}
+body.mobile .port.freq .plabel{grid-area:lbl;font-size:15px}
+body.mobile .port.freq .tick{grid-area:s}
+body.mobile .port.freq .tick.t2{grid-area:a}
+body.mobile .port.freq .rowmenu{grid-area:menu}
+body.mobile .freqcol .porthead.freqhead{grid-template-columns:46px 78px 1fr 32px 32px 34px;gap:4px}
+body.mobile .freqcol .ph-l{display:none}
 body.mobile .port.freq .pfreqt,body.mobile .port.freq .pby,
 body.mobile .freqcol .ph-t,body.mobile .freqcol .ph-by,
 /* flyt, indsæt og slet ligger i ⋯-menuen på telefonen */
@@ -845,6 +861,12 @@ body.guest .gastmark{display:inline-flex}
  font-family:var(--fm);font-size:8.5px;color:var(--dim);white-space:nowrap;max-width:52px;
  overflow:hidden;text-overflow:ellipsis;background:var(--panel);padding:2px 4px;border-radius:4px}
 .port:hover .pby{display:block}
+/* På en telefon "hænger" hover fast efter et tryk, så initialerne lagde sig
+   oven i afkrydsningen. Der står hvem der satte hakket i linjens ⋯-menu. */
+body.mobile .pby{display:none!important}
+/* og hakkene skal være store nok til en finger */
+body.mobile .tick{padding:4px;flex:none}
+body.mobile .tick input{width:26px;min-width:26px;height:26px;flex:none}
 .port .mini{opacity:0}
 .port:hover .mini{opacity:.7}
 .portcol .add{color:var(--dim);margin-top:5px}
@@ -3373,6 +3395,8 @@ function drawPlan(){
    <button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan – modtageren skal ikke logge ind">🔗 Del link</button>
    <button class="sharebtn" data-ppdf="1" title="Print ${PLANDOMS[planDom]}-planen eller gem den som PDF">↧ PDF</button>
    <button class="sharebtn" data-pcsv="1" title="Hent ${PLANDOMS[planDom]}-planen som regneark til Excel">↧ CSV</button>
+   <button class="sharebtn" data-kol1="1" title="Stil kortene i én lang kolonne, så du kun skal rulle nedad">↕ Én kolonne</button>
+   <button class="sharebtn" data-kol3="1" title="Stil kortene op i tre kolonner ved siden af hinanden">⫴ Tre kolonner</button>
    <button class="sharebtn" data-foldall="1" title="Fold alle kort sammen, så kun linjer med signal vises – tryk igen for at folde ud">⊟ Fold tomme</button>
    <button class="sharebtn ${planSnap?'on':''}" data-psnap="1" title="Lås til gitter: kortene falder på plads i lige rækker, og der vises hjælpelinjer når de flugter">⊞ Ret op</button>
    ${guestToken?'':`
@@ -3561,6 +3585,31 @@ function kamListe(dv){
 }
 
 
+
+/* ── Stil kortene op ───────────────────────────────────────────
+   Tre kolonner ved siden af hinanden betyder, at man skal rulle både ned og
+   til siden. Én kolonne giver overblik på en skærm og på en telefon. */
+function planStilOp(kolonner){
+  const ds=alive(dom().devices||[]);
+  if(!ds.length) return;
+  const maal=d=>{
+    const n=document.querySelector('[data-dev="'+d.id+'"]');
+    return n?{b:n.offsetWidth,h:n.offsetHeight}:{b:CARDW,h:260};
+  };
+  snap();
+  /* behold den rækkefølge kortene står i nu – øverst til venstre først */
+  const sorteret=ds.slice().sort((a,b)=>(a.y||0)-(b.y||0) || (a.x||0)-(b.x||0));
+  let x=20, y=20, raekkeH=0, i=0;
+  sorteret.forEach(function(d){
+    const m=maal(d);
+    if(kolonner===1){ d.x=20; d.y=y; y+=m.h+28; return; }
+    if(i && i%kolonner===0){ x=20; y+=raekkeH+28; raekkeH=0; }
+    d.x=x; d.y=y; x+=m.b+40; raekkeH=Math.max(raekkeH,m.h); i++;
+  });
+  markDirty(); drawPlan();
+  setSync(kolonner===1?'kortene står i én kolonne':'kortene står i '+kolonner+' kolonner');
+}
+
 /* ── Fold tomme linjer væk ─────────────────────────────────────
    Et kort med 19 kanaler, hvor fire er i brug, er svært at overskue. Foldes
    kortet, vises kun de linjer der har et signal – resten er der stadig og
@@ -3684,6 +3733,8 @@ function bindPlan(){
   gemFold(); drawPlan();
  });
  /* fold dem alle */
+ const k1=el2.querySelector('[data-kol1]'); if(k1)k1.onclick=()=>planStilOp(1);
+ const k3=el2.querySelector('[data-kol3]'); if(k3)k3.onclick=()=>planStilOp(3);
  const fa=el2.querySelector('[data-foldall]');
  if(fa)fa.onclick=()=>{
   const ds=alive(dom().devices||[]);
