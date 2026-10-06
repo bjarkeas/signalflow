@@ -515,6 +515,32 @@ body.arklaast #side button{pointer-events:none;opacity:.45}
 .foldrest{opacity:.75;font-style:italic}
 .foldrest:hover{opacity:1}
 
+
+
+body.mobile .plabel{resize:none;overflow:hidden;line-height:1.35;white-space:pre-wrap;
+ min-height:38px;font-family:inherit}
+
+/* ── Linjerne på en telefon ────────────────────────────────────
+   Skærmen er for smal til nummer, navn og hak på samme linje: navnet blev
+   klippet, og på en telefon findes der ingen mus at holde stille. Derfor får
+   navnet sin egen linje i alle områder – nummer, hak og menu står ovenover. */
+body.mobile .portcol .port{display:grid;gap:4px;padding:7px 0;align-items:center;
+ grid-template-columns:48px 1fr 32px 32px 34px;
+ grid-template-areas:"nr sp s a menu" "lbl lbl lbl lbl lbl"}
+body.mobile .portcol .port>.pnum{grid-area:nr}
+body.mobile .portcol .port>.plabel{grid-area:lbl;font-size:15px}
+body.mobile .portcol .port>.tick{grid-area:s}
+body.mobile .portcol .port>.tick.t2{grid-area:a}
+body.mobile .portcol .port>.rowmenu{grid-area:menu}
+body.mobile .portcol .port>.grip,body.mobile .portcol .port>[data-pins],
+body.mobile .portcol .port>[data-pdel],body.mobile .portcol .port>.tickgap{display:none}
+/* kameraet har også typen (mic/line eller AES) */
+body.mobile .port.kam{grid-template-columns:48px 62px 1fr 32px 32px 34px;
+ grid-template-areas:"nr typ sp s a menu" "lbl lbl lbl lbl lbl lbl"}
+body.mobile .port.kam>.kamtype{grid-area:typ}
+body.mobile .porthead{grid-template-columns:48px 1fr 32px 32px 34px}
+body.mobile .porthead .ph-l{display:none}
+
 /* kameraets kanaler */
 .port.kam{display:grid;grid-template-columns:54px 62px 1fr 22px 22px 34px 22px 22px;gap:5px;align-items:center}
 .kamtype{font:9.5px var(--fm);color:var(--faint);text-transform:uppercase;letter-spacing:.06em;
@@ -865,8 +891,14 @@ body.guest .gastmark{display:inline-flex}
    oven i afkrydsningen. Der står hvem der satte hakket i linjens ⋯-menu. */
 body.mobile .pby{display:none!important}
 /* og hakkene skal være store nok til en finger */
-body.mobile .tick{padding:4px;flex:none}
+/* hakket og dets ramme skal være lige store – og store nok til en finger */
+body.mobile .tick{padding:4px;flex:none;display:flex;align-items:center;justify-content:center;
+ min-width:34px;min-height:34px}
 body.mobile .tick input{width:26px;min-width:26px;height:26px;flex:none}
+/* små knapper på blokdiagrammet og i tegningen rammes dårligt på en telefon */
+body.mobile .mini{min-width:32px;min-height:32px;font-size:14px}
+body.mobile .bnode .mini,body.mobile .bn .mini{min-width:30px;min-height:30px}
+body.mobile .laasknap{min-height:34px}
 .port .mini{opacity:0}
 .port:hover .mini{opacity:.7}
 .portcol .add{color:var(--dim);margin-top:5px}
@@ -3500,8 +3532,9 @@ function freqRad(dv,p,i){
     <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|ins|${p.id}" title="Kanal eller nummer på senderen">
     <input class="pfreq" value="${esc(p.freq||'')}" placeholder="MHz" inputmode="decimal"
            data-pfreq="${dv.id}|ins|${p.id}" title="Frekvens i MHz">
-    <input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
-           title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">
+    ${mobil?`<textarea class="plabel" rows="1" list="lbls" placeholder="—"
+           title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">${esc(p.label)}</textarea>`:`<input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
+           title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">`}
     <input class="pfreqt" value="${esc(p.ftype||'')}" list="freqtyper" placeholder="type"
            data-pftype="${dv.id}|ins|${p.id}" title="Håndholdt, bodypack, IEM …">
     ${p.label?`
@@ -3556,9 +3589,11 @@ function kamRad(dv,p,udgaaet){
       ${udgaaet?'title="Udgår, fordi AES-parret er i brug på kanal 3 og 4"':''}>
     <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|ins|${p.id}" title="Kanalnummer">
     <span class="kamtype ${aes?'aes':''}">${aes?'AES':'mic/line'}</span>
-    <input class="plabel" value="${esc(p.label)}" list="lbls"
+    ${mobil?`<textarea class="plabel" rows="1" list="lbls"
            placeholder="${udgaaet?'udgår – AES bruger kanal 2':'—'}"
-           ${udgaaet?'disabled':''} title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">
+           ${udgaaet?'disabled':''} title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">${esc(p.label)}</textarea>`:`<input class="plabel" value="${esc(p.label)}" list="lbls"
+           placeholder="${udgaaet?'udgår – AES bruger kanal 2':'—'}"
+           ${udgaaet?'disabled':''} title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">`}
     ${p.label&&!udgaaet?`
      <label class="tick" title="Patchet${p.pby?' · af '+esc(p.pby):''}">
        <input type="checkbox" data-tick="${dv.id}|ins|${p.id}|patched" ${p.patched?'checked':''}></label>
@@ -3654,8 +3689,9 @@ function portList(dv,side,title){
      <div class="port ${p.label?'set':''} ${fresh(p)?'fresh':''} ${p.label&&p.patched&&p.checked?'ok':''}"
           data-port="${dv.id}|${side}|${p.id}">
        <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|${side}|${p.id}">
-       <input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
-              title="${esc(p.label)}" data-plabel="${dv.id}|${side}|${p.id}">
+       ${mobil?`<textarea class="plabel" rows="1" list="lbls" placeholder="—"
+              title="${esc(p.label)}" data-plabel="${dv.id}|${side}|${p.id}">${esc(p.label)}</textarea>`:`<input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
+              title="${esc(p.label)}" data-plabel="${dv.id}|${side}|${p.id}">`}
        ${p.label?`
         <label class="tick" title="Patchet${p.pby?' · sat af '+esc(p.pby):''}">
           <input type="checkbox" data-tick="${dv.id}|${side}|${p.id}|patched" ${p.patched?'checked':''}></label>
@@ -3808,6 +3844,12 @@ function bindPlan(){
    if(nxt)nxt.title=vaerdi;
   };
   inp.onchange=commit;
+  /* på telefonen er feltet et tekstfelt, der kan ombryde – det skal vokse
+     med teksten, så hele navnet kan ses uden at scrolle i feltet */
+  if(inp.tagName==='TEXTAREA'){
+   const voks=()=>{ inp.style.height='auto'; inp.style.height=(inp.scrollHeight+2)+'px' };
+   voks(); inp.addEventListener('input',voks);
+  }
   inp.onkeydown=e=>{
    if(e.key==='Enter'){
     e.preventDefault();
