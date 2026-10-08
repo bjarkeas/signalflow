@@ -174,7 +174,9 @@ body.mobile #tabbar .laasknap{flex:0 0 auto;margin-left:0}
 /* arket begynder under fanebladene */
 body.mobile #app{padding-top:52px}
 body.mobile:not(.planview):not(.blockview):not(.archview) #app{padding-top:100px}
-body.mobile #laasbanner.on{position:fixed;top:100px;left:0;right:0;z-index:870}
+/* På telefonen er der ikke plads til en bjælke – hængelåsen i topbjælken
+   siger det samme, og et tryk på den låser op. */
+body.mobile #laasbanner{display:none!important}
 /* Arket ligger i tredje gitterrække på skrivebordet (under topbjælke og
    faner). På mobilen findes de rækker ikke – uden det her får man et stort
    tomt bånd øverst i kanalplan og blokdiagram. */
@@ -519,6 +521,30 @@ body.arklaast #side button{pointer-events:none;opacity:.45}
 
 body.mobile .plabel{resize:none;overflow:hidden;line-height:1.35;white-space:pre-wrap;
  min-height:38px;font-family:inherit}
+
+
+#cubesked{position:fixed;left:8px;right:8px;bottom:70px;z-index:9600;
+ background:#2a2416;border:1px solid #6b5418;color:#e8c46a;border-radius:10px;
+ padding:11px 38px 11px 13px;font-size:13px;line-height:1.5;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+#cubesked b{color:#f3d58a}
+#cubesked button{position:absolute;top:6px;right:6px;background:transparent;border:none;
+ color:#e8c46a;font-size:16px;padding:6px 9px;cursor:pointer}
+@media print{#cubesked{display:none}}
+
+
+/* topbjælken på telefonen */
+/* låsen bor i topbjælken på telefonen – knappen i fanebåndet er overflødig */
+body.mobile #tabbar .laasknap{display:none}
+#mlaas{display:none;flex:none;cursor:pointer;gap:4px;align-items:center;
+ font-size:11.5px;font-family:var(--fm);color:#f0b429;background:rgba(240,180,41,.1);
+ border:1px solid #8a6a1c;border-radius:8px;padding:7px 9px;white-space:nowrap}
+#mlaas.vis{display:inline-flex}
+#mbar .mbtn.hvem{font-size:12px;padding:9px 9px;min-width:38px;font-family:var(--fm)}
+#mbar .mbtn.hvem.alene{color:var(--faint)}
+#mbar .mbtn.hvem.flere{color:var(--intercom);border-color:#2c5f4a}
+#mbar .mbtn.hvem.advarsel{color:var(--amber,#e0a33e);border-color:#6b5418}
+#mCloud{font-size:15px;padding:9px 10px}
+#mbar .mtitle{min-width:0}
 
 /* ── Linjerne på en telefon ────────────────────────────────────
    Skærmen er for smal til nummer, navn og hak på samme linje: navnet blev
@@ -1255,8 +1281,10 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 <div id="mbar">
   <button class="mbtn" id="mMenu" title="Menu">☰</button>
   <button class="mtitle" id="mTitle"><b>Projekt</b><span>side</span></button>
-  <button class="mbtn" id="mMode" title="Skift til skrivebordsudgaven">🖥</button>
-  <button class="mbtn" id="mSave" title="Gem">Gem</button>
+  <span id="mlaas" title="Arket er låst">🔒 Låst</span>
+  <button class="mbtn" id="mWho" title="Hvem er inde i projektet"><span id="mWhoTal"></span></button>
+  <button class="mbtn" id="mCloud" title="Skift projekt, mapper og versioner">☁</button>
+  <button class="mbtn gem" id="mSave" title="Gem">Gem</button>
 </div>
 <nav id="mnav">
   <button data-view="flow"><span>▤</span>Tegning</button>
@@ -1513,6 +1541,11 @@ function draw(keepSide){
  /* Et låst ark vises uden redigeringsknapper og med et banner øverst */
  const laastNu = typeof arkLaast==='function' && arkLaast();
  document.body.classList.toggle('arklaast', !!laastNu && view==='flow');
+ const ml=document.getElementById('mlaas');
+ if(ml){
+  ml.classList.toggle('vis', !!(laastNu&&view==='flow'));
+  ml.title=laastNu?laasTekst(pages[activePage])+' – tryk for at låse op':'';
+ }
  const lb=document.getElementById('laasbanner');
  if(lb){
   lb.innerHTML = laastNu
@@ -2280,15 +2313,36 @@ function cloneGroup(g){const c=JSON.parse(JSON.stringify(g));c.id=id();c.channel
 function cloneSection(sc){const c=JSON.parse(JSON.stringify(sc));c.id=id();c.groups=c.groups.map(g=>cloneGroup(g));return c}
 
 /* alle sektioner på tværs af sider, til målvælgeren */
+/* Et låst ark må heller ikke kunne modtage noget udefra – ellers kan man
+   kopiere ind i en plan, der er sendt videre. Og den side man står på er
+   næsten altid målet, så den kommer først. */
+function sideLaast(pi){ return !!(pages[pi]&&pages[pi].laast) }
+function sorterMaal(out){
+  return out.sort((a,b)=>(a.pi===activePage?0:1)-(b.pi===activePage?0:1));
+}
+function maalOption(t,i){
+  const l=sideLaast(t.pi);
+  return `<option value="${i}"${l?' disabled':''}${(!l&&t.pi===activePage&&!maalOption._valgt)?(maalOption._valgt=1,' selected'):''}>`
+    +esc(t.label)+(l?'  🔒 låst':'')+'</option>';
+}
 function allSectionTargets(){
  const out=[];
  pages.forEach((p,pi)=>p.sections.forEach(sc=>out.push({pi,sc,label:p.title+' › '+sc.src+' → '+sc.dst})));
- return out;
+ return sorterMaal(out);
 }
 function allGroupTargets(){
  const out=[];
  pages.forEach((p,pi)=>p.sections.forEach(sc=>sc.groups.forEach(g=>out.push({pi,sc,g,label:p.title+' › '+sc.dst+' › '+(g.feed||'')+' '+g.label}))));
- return out;
+ return sorterMaal(out);
+}
+
+
+/* Sikkerhedsnet for kopiering og flytning: uanset hvordan man er nået hertil,
+   skrives der aldrig i et låst ark. */
+function maalErLaast(pi){
+  if(!sideLaast(pi)) return false;
+  alert('"'+pages[pi].title+'" er låst.\n\nLås arket op, hvis der skal kopieres ind i det.');
+  return true;
 }
 
 /* kopiér gruppe, eller udvalgte kanaler fra den */
@@ -2305,7 +2359,7 @@ function copyGroup(gid){
   <div id="pGroup">
     <div class="msec">Placér gruppen i</div>
     <div class="mf"><select name="secTarget">
-      ${secs.map((t,i)=>`<option value="${i}">${esc(t.label)}</option>`).join('')}
+      ${(maalOption._valgt=0, secs.map(maalOption).join(''))}
     </select></div>
     <label class="chk"><input type="checkbox" name="move"> Flyt i stedet for at kopiere</label>
   </div>
@@ -2319,7 +2373,7 @@ function copyGroup(gid){
     </div>
     <div class="msec">Ind i gruppen</div>
     <div class="mf"><select name="grpTarget">
-      ${grps.map((t,i)=>`<option value="${i}">${esc(t.label)}</option>`).join('')||'<option value="">Ingen andre grupper</option>'}
+      ${(maalOption._valgt=0, grps.map(maalOption).join(''))||'<option value="">Ingen andre grupper</option>'}
     </select></div>
   </div>
 
@@ -2334,6 +2388,8 @@ function copyGroup(gid){
    };
    root.querySelector('[data-cancel]').onclick=closeModal;
    root.querySelector('[data-ok]').onclick=()=>{
+     const t0 = what.value==='group' ? secs[+val(root,'secTarget')] : grps[+val(root,'grpTarget')];
+     if(t0 && maalErLaast(t0.pi))return;
      snap();
      if(what.value==='group'){
        const t=secs[+val(root,'secTarget')]; if(!t)return closeModal();
@@ -2357,7 +2413,8 @@ function copySection(secId){
  openModal('Kopiér sektion',esc(sc.src)+' → '+esc(sc.dst),`
   <div class="mf"><label>Til side</label>
     <select name="page">
-      ${pages.map((p,i)=>`<option value="${i}" ${i===activePage?'':''}>${esc(p.title)}</option>`).join('')}
+      ${pages.map((p,i)=>`<option value="${i}"${p.laast?' disabled':''}${i===activePage&&!p.laast?' selected':''}>`
+        +esc(p.title)+(p.laast?'  🔒 låst':'')+(i===activePage?'  (denne side)':'')+'</option>').join('')}
     </select></div>
   <div class="mgrid one">
     <label class="chk"><input type="checkbox" name="move"> Flyt i stedet for at kopiere</label>
@@ -2369,8 +2426,9 @@ function copySection(secId){
   </div>`,root=>{
    root.querySelector('[data-cancel]').onclick=closeModal;
    root.querySelector('[data-ok]').onclick=()=>{
-     snap();
      const pi=+val(root,'page');
+     if(maalErLaast(pi))return;
+     snap();
      const copy=cloneSection(sc);
      if(root.querySelector('[name="empty"]').checked)copy.groups.forEach(g=>g.channels=[]);
      pages[pi].sections.push(copy);
@@ -4313,6 +4371,26 @@ function skaermType(){
  }catch(e){}
  const beroering = grov || (navigator.maxTouchPoints||0)>1;
  const b=innerWidth;
+
+ /* Slår man "Vis computerudgave" til i Safari, påstår telefonen at den er
+    980 pixels bred og har en mus. Skærmens fysiske mål ændrer sig derimod
+    ikke – og en iPhone er stadig en iPhone. Derfor spørger vi om apparatet
+    først og om vinduet bagefter. */
+ const ua=navigator.userAgent||'';
+ const haandholdt =
+   /iPhone|iPod/.test(ua) ||
+   /iPad/.test(ua) ||
+   (navigator.platform==='MacIntel' && (navigator.maxTouchPoints||0)>1) ||  // iPad der kalder sig Mac
+   /Android|Mobile|Windows Phone/i.test(ua);
+ let kortSide=9999;
+ try{
+  const sk=screen||{};
+  kortSide=Math.min(sk.width||9999, sk.height||9999);
+  /* nogle browsere angiver skærmen i punkter, andre i pixels */
+  if(devicePixelRatio>1 && kortSide>1400) kortSide=Math.round(kortSide/devicePixelRatio);
+ }catch(e){}
+ if(haandholdt && kortSide<=1100) return 'telefon';
+
  if(beroering&&!kanHover&&b<=920)return 'telefon';   // telefon eller tablet i hånden
  if(b<=620)return 'telefon';                          // meget smalt vindue
  return 'computer';
@@ -4323,6 +4401,29 @@ function skaermAftryk(){
  const b=innerWidth;
  const trin = b<=620?'s' : b<=1024?'m' : 'l';
  return skaermType()+':'+trin;
+}
+
+
+/* ── Besked om Safaris computerudgave ──────────────────────────
+   Er "Vis computerudgave" slået til, påstår telefonen at den er 980 pixels
+   bred. Vi viser mobiludgaven alligevel, men alt bliver skaleret lille –
+   derfor en linje om hvordan man slår det fra. Den kan lukkes for altid. */
+function tjekComputerudgave(){
+  try{
+    if(localStorage.getItem('signalflow:skjulcu')==='1') return;
+  }catch(e){}
+  if(skaermType()!=='telefon' || innerWidth<=700) return;
+  if(document.getElementById('cubesked')) return;
+  const d=document.createElement('div');
+  d.id='cubesked';
+  d.innerHTML='Safari viser siden i <b>computerudgave</b>, så alt bliver småt. '
+    +'Tryk på <b>aA</b> i adresselinjen → <b>Vis mobilwebsted</b>.'
+    +'<button id="culuk" title="Skjul denne besked">✕</button>';
+  document.body.appendChild(d);
+  d.querySelector('#culuk').onclick=()=>{
+    d.remove();
+    try{ localStorage.setItem('signalflow:skjulcu','1') }catch(e){}
+  };
 }
 
 function setMode(m,gem){
@@ -4353,6 +4454,7 @@ function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
  setMode(g ? g==='mobil' : skaermType()==='telefon', false);
+ setTimeout(tjekComputerudgave,400);
 }
 /* Skifter skærmen karakter – vindue trukket smalt, telefon drejet – så vurderes
    det forfra, medmindre man selv har valgt noget for netop den skærm. */
@@ -4658,6 +4760,8 @@ function setView(v){
  /* Låsen gælder kun tegningens ark. I kanalplan, blokdiagram og lager skal
     hverken banneret eller den grå sidebar være der. */
  document.body.classList.toggle('arklaast', v==='flow' && typeof arkLaast==='function' && arkLaast());
+ const ml0=document.getElementById('mlaas');
+ if(ml0) ml0.classList.toggle('vis', !!(v==='flow' && typeof arkLaast==='function' && arkLaast()));
  document.body.classList.toggle('planview',v==='plan');
  document.body.classList.toggle('blockview',v==='blocks');
  document.body.classList.toggle('archview',v==='arch');
@@ -5084,6 +5188,79 @@ function startPres(){
  presMeld();
  presTimer=setInterval(presMeld,10000);
 }
+
+
+/* ── Skift projekt på telefonen ────────────────────────────────
+   Projektvinduet er bygget til en mus med mapper, versioner og import. Ude
+   på gulvet skal man bare skifte til et andet projekt – derfor en liste
+   nedefra med de senest rettede øverst, og en vej videre til det fulde
+   vindue, hvis man skal mere. */
+async function mobilProjekter(){
+  openSheet('Henter projekter …',[{ikon:'…',tekst:'Et øjeblik',gør:()=>{}}]);
+  let liste=[];
+  try{ liste=await cloudList()||[] }
+  catch(e){
+    openSheet('Projekter',[{ikon:'⚠',tekst:'Kunne ikke hente listen',under:e.message||'',gør:()=>{}}]);
+    return;
+  }
+  const naar=t=>{
+    const d=new Date(t); if(isNaN(d))return '';
+    const m=Math.round((Date.now()-d.getTime())/60000);
+    if(m<1)return 'lige nu'; if(m<60)return m+' min siden';
+    if(m<1440)return Math.round(m/60)+' timer siden';
+    return d.toLocaleDateString('da-DK',{day:'2-digit',month:'2-digit'});
+  };
+  const rk=liste.slice(0,12).map(p=>({
+    ikon:p.id===cloudId?'●':'○',
+    tekst:p.name||'(uden navn)',
+    under:[p.folder||'', naar(p.updated_at), p.updated_by?'af '+p.updated_by:''].filter(Boolean).join(' · '),
+    aktiv:p.id===cloudId,
+    gør:()=>{
+      if(p.id===cloudId)return;
+      spoergGem('skifte projekt',async()=>{
+        try{ await cloudOpen(p.id); setSync('åbnede '+(p.name||'')); mobilTitel(); }
+        catch(e){ alert('Kunne ikke åbne projektet: '+(e.message||e)) }
+      });
+    }}));
+  rk.push({skil:1});
+  rk.push({ikon:'☁',tekst:'Alle projekter, mapper og versioner',under:'det fulde vindue',
+    gør:()=>document.getElementById('bCloud').click()});
+  rk.push({ikon:'＋',tekst:'Nyt projekt',gør:()=>document.getElementById('bNew').click()});
+  openSheet('Skift projekt',rk);
+}
+
+/* ── Hvem er inde – på telefonen ───────────────────────────────
+   På skrivebordet står navnene midt i hovedet. Der er ikke plads på en
+   telefon, så vi viser et tal i topbjælken og navnene i et ark nedefra. */
+function mobilHvem(){
+  const mig=(meName()||'').toLowerCase(), nu=Date.now();
+  return (presFolk||[]).filter(p=>{
+    if(!p.who||p.who.toLowerCase()===mig)return false;
+    const t=parseTS(p.at); return t && (nu-t.getTime())<60000;
+  });
+}
+function opdaterMobilHvem(){
+  const k=document.getElementById('mWho'), t=document.getElementById('mWhoTal');
+  if(!k||!t)return;
+  if(!cloudId&&!guestToken){ k.style.display='none'; return }
+  k.style.display='';
+  const andre=mobilHvem();
+  if(presFejl){ t.textContent='⚠'; k.className='mbtn hvem advarsel';
+    k.title='"Hvem er inde" kræver, at SQL\'en er kørt i databasen'; return }
+  if(!andre.length){ t.textContent='●'; k.className='mbtn hvem alene';
+    k.title='Ingen andre er inde i projektet lige nu'; return }
+  t.textContent='●'+andre.length; k.className='mbtn hvem flere';
+  k.title=andre.map(p=>p.who+' · '+(p.sted||'')).join('\n');
+}
+function visHvemMobil(){
+  const andre=mobilHvem();
+  if(presFejl){ alert('"Hvem er inde" virker ikke endnu:\n\n'+presFejl); return }
+  const rk=andre.length
+    ? andre.map(p=>({ikon:'●',tekst:p.who,under:(p.sted||'i projektet'),gør:()=>{}}))
+    : [{ikon:'●',tekst:'Kun dig i projektet',under:'ingen andre er inde lige nu',gør:()=>{}}];
+  openSheet('Hvem er inde', rk);
+}
+
 function tegnHvemErInde(){
  const el3=document.getElementById('whoson');
  if(!el3)return;
@@ -5098,6 +5275,7 @@ function tegnHvemErInde(){
    +'<b>⚠ ikke slået til</b><em>hvem er inde</em></span>';
   return;
  }
+ opdaterMobilHvem();
  if(!andre.length){
   /* Vis at funktionen er i live, også når man er alene – ellers tror man,
      at den ikke virker. */
@@ -5115,6 +5293,7 @@ function tegnHvemErInde(){
     </span>`).join('')
   +(flere>0?`<span class="whomore" title="${esc(andre.map(p=>p.who+' · '+(p.sted||'')).join('\n'))}">+${flere}</span>`:'');
  el3.title=andre.map(p=>p.who+' · '+(p.sted||'')).join('\n');
+ opdaterMobilHvem();
 }
 
 function startSync(){
@@ -8526,10 +8705,27 @@ document.getElementById('sideknap').onclick=()=>
 
 document.getElementById('bMode').onclick=()=>setMode(!mobil,true);
 document.getElementById('mMenu').onclick=sheetApp;
-document.getElementById('mMode').onclick=()=>setMode(false,true);
+/* skrivebordsudgaven ligger nu i ☰-menuen – topbjælken skal bruges til
+   det man gør hele tiden: skifte side, skifte projekt og gemme */
 document.getElementById('mTitle').onclick=sheetSider;
-document.getElementById('mSave').onclick=function(){
-  const b=this; b.textContent='…';
+document.getElementById('mCloud').onclick=mobilProjekter;
+document.getElementById('mWho').onclick=visHvemMobil;
+document.getElementById('mlaas').onclick=()=>{ if(view==='flow') skiftLaas(); };
+document.getElementById('mSave').onclick=async function(){
+  const b=this;
+  /* Er projektet aldrig gemt, åbner saveNow det store projektvindue. Det er
+     tungt på en telefon – her er det nok at spørge om navnet. */
+  if(!cloudId && !guestToken && session()){
+    const n=prompt('Navn på projektet:', projectName||'Nyt projekt');
+    if(n===null)return;
+    projectName=(n||'').trim()||projectName;
+    b.textContent='…';
+    try{ await cloudSave(true); dirty=false; setSync('gemt'); mobilTitel();
+         b.textContent='Gemt'; setTimeout(()=>{b.textContent='Gem'},1500); }
+    catch(e){ b.textContent='Gem'; alert(e.message||e); }
+    return;
+  }
+  b.textContent='…';
   saveNow().then(()=>{b.textContent='Gemt';setTimeout(()=>{b.textContent='Gem'},1500)})
     .catch(e=>{b.textContent='Gem';alert(e.message)});
 };
