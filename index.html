@@ -523,12 +523,15 @@ body.mobile .plabel{resize:none;overflow:hidden;line-height:1.35;white-space:pre
  min-height:38px;font-family:inherit}
 
 
-#cubesked{position:fixed;left:8px;right:8px;bottom:70px;z-index:9600;
+#fastbesked,#cubesked{position:fixed;left:8px;right:8px;bottom:70px;z-index:9600;
  background:#2a2416;border:1px solid #6b5418;color:#e8c46a;border-radius:10px;
  padding:11px 38px 11px 13px;font-size:13px;line-height:1.5;box-shadow:0 6px 20px rgba(0,0,0,.4)}
 #cubesked b{color:#f3d58a}
-#cubesked button{position:absolute;top:6px;right:6px;background:transparent;border:none;
- color:#e8c46a;font-size:16px;padding:6px 9px;cursor:pointer}
+#cubesked button,#fastbesked button.x{position:absolute;top:6px;right:6px;background:transparent;
+ border:none;color:#e8c46a;font-size:16px;padding:6px 9px;cursor:pointer}
+#fastbesked{padding:11px 38px 11px 13px}
+#fastbesked #fastskift{position:static;display:block;margin-top:8px;background:#3a2f12;
+ border:1px solid #8a6a1c;color:#f3d58a;border-radius:8px;padding:9px 12px;font-size:13px;cursor:pointer}
 @media print{#cubesked{display:none}}
 
 
@@ -4475,11 +4478,31 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
+const SF_VERSION='2026.10.08-c';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
  setMode(g ? g==='mobil' : skaermType()==='telefon', false);
  setTimeout(tjekComputerudgave,400);
+ setTimeout(tjekFastlaastUdgave,500);
+}
+/* Har man engang trykket "skift til skrivebordsudgaven" på denne skærm, bliver
+   valget husket – også når man egentlig gerne vil have mobiludgaven igen.
+   Derfor en linje man kan trykke på, når de to ting ikke passer sammen. */
+function tjekFastlaastUdgave(){
+  if(document.getElementById('fastbesked')) return;
+  if(mobil || skaermType()!=='telefon') return;
+  const d=document.createElement('div');
+  d.id='fastbesked'; d.className='cubar';
+  d.innerHTML='Du ser <b>skrivebordsudgaven</b> på en telefon. '
+    +'<button id="fastskift">Skift til mobiludgaven</button>'
+    +'<button id="fastluk" class="x" title="Luk">✕</button>';
+  document.body.appendChild(d);
+  d.querySelector('#fastskift').onclick=()=>{
+    try{ localStorage.removeItem(LS_MODE) }catch(e){}
+    d.remove(); setMode(true,true);
+  };
+  d.querySelector('#fastluk').onclick=()=>d.remove();
 }
 /* Skifter skærmen karakter – vindue trukket smalt, telefon drejet – så vurderes
    det forfra, medmindre man selv har valgt noget for netop den skærm. */
@@ -4579,7 +4602,18 @@ function sheetApp(){
   {ikon:'⊞',tekst:'Nyt projekt',gør:()=>document.getElementById('bNew').click()},
   {skil:1},
   {ikon:'🖥',tekst:'Skift til skrivebordsudgave',gør:()=>setMode(false,true)},
-  {ikon:'⎋',tekst:'Log ud',fare:1,gør:()=>signOut()}
+  {ikon:'⎋',tekst:'Log ud',fare:1,gør:()=>signOut()},
+  {skil:1},
+  /* Så man kan se hvilken udgave der faktisk kører, og hvad programmet mener
+     om skærmen – nyttigt når noget ser forkert ud på en telefon. */
+  {ikon:'ⓘ',tekst:'Version '+SF_VERSION,
+   under:skaermType()+' · vindue '+innerWidth+'px · skærm '+(screen.width||'?')+'×'+(screen.height||'?')
+     +(gemtValg()?' · gemt valg: '+gemtValg():'')+' · nu: '+(mobil?'mobil':'skrivebord'),
+   gør:()=>{
+     if(!confirm('Nulstil valget af udgave, så programmet selv vælger ud fra skærmen?'))return;
+     try{ localStorage.removeItem(LS_MODE) }catch(e){}
+     vaelgUdgave();
+   }}
  ]));
 }
 function sheetSider(){
