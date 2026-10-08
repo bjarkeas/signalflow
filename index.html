@@ -519,8 +519,10 @@ body.arklaast #side button{pointer-events:none;opacity:.45}
 
 
 
-body.mobile .plabel{resize:none;overflow:hidden;line-height:1.35;white-space:pre-wrap;
- min-height:38px;font-family:inherit}
+body.mobile .plabel{padding:6px 8px;line-height:1.3;white-space:nowrap;
+ text-overflow:ellipsis;font-family:inherit}
+body.mobile .pnum,body.mobile .pfreq{padding:5px 4px}
+body.mobile .portcol .port,body.mobile .port.freq,body.mobile .port.kam{padding:3px 0}
 
 
 #fastbesked,#cubesked{position:fixed;left:8px;right:8px;bottom:70px;z-index:9600;
@@ -553,34 +555,41 @@ body.mobile #tabbar .laasknap{display:none}
    Skærmen er for smal til nummer, navn og hak på samme linje: navnet blev
    klippet, og på en telefon findes der ingen mus at holde stille. Derfor får
    navnet sin egen linje i alle områder – nummer, hak og menu står ovenover. */
-body.mobile .portcol .port{display:grid;gap:4px;padding:7px 0;align-items:center;
- grid-template-columns:48px 1fr 32px 32px 34px;
- grid-template-areas:"nr sp s a menu" "lbl lbl lbl lbl lbl"}
-body.mobile .portcol .port>.pnum{grid-area:nr}
-body.mobile .portcol .port>.plabel{grid-area:lbl;font-size:15px}
-body.mobile .portcol .port>.tick{grid-area:s}
-body.mobile .portcol .port>.tick.t2{grid-area:a}
-body.mobile .portcol .port>.rowmenu{grid-area:menu}
+/* Alt står på én linje – navnefeltet er et felt der kan ombryde, så det kun
+   bliver to linjer højt, når teksten faktisk er for lang til én. */
+body.mobile .portcol .port{display:grid;gap:4px;padding:4px 0;align-items:center;
+ grid-template-columns:38px minmax(0,1fr) 34px 34px 32px}
+/* Kun navnefeltet må krympe. Får hakkene og ⋯ lov til det samme, skrumper de
+   til under en fingerbredde. */
+body.mobile .portcol .port>.plabel{min-width:0;font-size:14.5px}
+/* nummerfeltet er bredt på kameraplanen for computeren – på telefonen står
+   der kun 1-4, og pladsen er bedre brugt på navnet */
+body.mobile #plan.dom-kam .pnum{width:34px;min-width:0;padding:5px 2px}
+/* typemærket skal holde sig inde i sin egen søjle – ellers skubber det hele
+   linjen ud over kortets kant */
+body.mobile .port.kam>.kamtype{font-size:8.5px;padding:5px 1px;min-width:0;width:100%;
+ box-sizing:border-box;overflow:hidden;white-space:nowrap}
 body.mobile .portcol .port>.grip,body.mobile .portcol .port>[data-pins],
-body.mobile .portcol .port>[data-pdel],body.mobile .portcol .port>.tickgap{display:none}
-/* kameraet har også typen (mic/line eller AES) */
-body.mobile .port.kam{grid-template-columns:48px 62px 1fr 32px 32px 34px;
- grid-template-areas:"nr typ sp s a menu" "lbl lbl lbl lbl lbl lbl"}
-body.mobile .port.kam>.kamtype{grid-area:typ}
-body.mobile .porthead{grid-template-columns:48px 1fr 32px 32px 34px}
-body.mobile .porthead .ph-l{display:none}
+body.mobile .portcol .port>[data-pdel]{display:none}
+/* de tomme pladser bliver stående, så ⋯ står samme sted på alle linjer */
+body.mobile .portcol .port>.tickgap{display:block;min-width:0}
+body.mobile .porthead{grid-template-columns:38px minmax(0,1fr) 34px 34px 32px}
 
 /* kameraets kanaler */
 .port.kam{display:grid;grid-template-columns:54px 62px 1fr 22px 22px 34px 22px 22px;gap:5px;align-items:center}
 .kamtype{font:9.5px var(--fm);color:var(--faint);text-transform:uppercase;letter-spacing:.06em;
- border:1px solid var(--line);border-radius:5px;padding:4px 0;text-align:center}
+ background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:4px 0;
+ text-align:center;cursor:pointer;-webkit-appearance:none;appearance:none}
+.kamtype:hover{color:var(--text);border-color:var(--dim)}
 .kamtype.aes{color:var(--net);border-color:#2b4a63}
 .port.kam.udgaaet{opacity:.42}
 .port.kam.udgaaet .plabel{text-decoration:line-through;background:transparent;border-style:dashed;cursor:not-allowed}
 .port.kam.udgaaet .kamtype{text-decoration:line-through}
 .kamnote{margin:2px 8px 6px;padding:5px 9px;border-radius:7px;font-size:11px;
  background:rgba(90,140,190,.12);border:1px solid #2b4a63;color:#9fc4e4}
-body.mobile .port.kam{grid-template-columns:44px 54px 1fr 22px 22px 22px}
+/* kameraet har også typen (mic/line eller AES) ved siden af nummeret */
+body.mobile .port.kam{grid-template-columns:34px 48px minmax(0,1fr) 34px 34px 32px;gap:3px}
+body.mobile .port.kam>.plabel{min-width:0}
 body.mobile .port.kam .pby,body.mobile .port.kam [data-pdel]{display:none}
 
 /* frekvensplanen */
@@ -602,16 +611,11 @@ body.mobile .port.kam .pby,body.mobile .port.kam [data-pdel]{display:none}
  background:rgba(224,163,62,.12);border:1px solid #6b5418;color:#e8c46a}
 /* På telefonen står nummer, MHz og hakkene øverst – og navnet på sin egen
    linje nedenunder, så hele teksten kan ses. */
-body.mobile .port.freq{grid-template-columns:46px 78px 1fr 32px 32px 34px;gap:4px;
- grid-template-areas:"nr mhz sp s a menu" "lbl lbl lbl lbl lbl lbl";padding:6px 0}
-body.mobile .port.freq .pnum{grid-area:nr}
-body.mobile .port.freq .pfreq{grid-area:mhz;font-size:13px}
-body.mobile .port.freq .plabel{grid-area:lbl;font-size:15px}
-body.mobile .port.freq .tick{grid-area:s}
-body.mobile .port.freq .tick.t2{grid-area:a}
-body.mobile .port.freq .rowmenu{grid-area:menu}
-body.mobile .freqcol .porthead.freqhead{grid-template-columns:46px 78px 1fr 32px 32px 34px;gap:4px}
-body.mobile .freqcol .ph-l{display:none}
+body.mobile .port.freq,body.mobile .freqcol .porthead.freqhead{
+ grid-template-columns:36px 64px minmax(0,1fr) 34px 34px 32px;gap:3px;padding:4px 0}
+body.mobile .port.freq>.plabel{min-width:0}
+body.mobile .port.freq .pfreq{font-size:13px}
+body.mobile .port.freq .plabel{font-size:14.5px}
 body.mobile .port.freq .pfreqt,body.mobile .port.freq .pby,
 body.mobile .freqcol .ph-t,body.mobile .freqcol .ph-by,
 /* flyt, indsæt og slet ligger i ⋯-menuen på telefonen */
@@ -2841,6 +2845,7 @@ function drawBlocks(){
  if(typeof mobilTitel==='function')mobilTitel();
  if(typeof autosave==='function')autosave();
  if(typeof sideAndet==='function')sideAndet();
+ if(typeof skrumpAlle==='function')skrumpAlle();
 }
 function nodeTools(n){
  return `<span class="bntools">
@@ -3601,9 +3606,8 @@ function freqRad(dv,p,i){
     <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|ins|${p.id}" title="Kanal eller nummer på senderen">
     <input class="pfreq" value="${esc(p.freq||'')}" placeholder="MHz" inputmode="decimal"
            data-pfreq="${dv.id}|ins|${p.id}" title="Frekvens i MHz">
-    ${mobil?`<textarea class="plabel" rows="1" list="lbls" placeholder="—"
-           title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">${esc(p.label)}</textarea>`:`<input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
-           title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">`}
+    <input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
+           title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">
     <input class="pfreqt" value="${esc(p.ftype||'')}" list="freqtyper" placeholder="type"
            data-pftype="${dv.id}|ins|${p.id}" title="Håndholdt, bodypack, IEM …">
     ${p.label?`
@@ -3662,11 +3666,9 @@ function kamRad(dv,p,udgaaet){
     <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|ins|${p.id}" title="Kanalnummer">
     <button class="kamtype ${aes?'aes':''}" data-kamtype="${dv.id}|ins|${p.id}"
       title="Klik for at skifte mellem mic/line og AES">${aes?'AES':'mic/line'}</button>
-    ${mobil?`<textarea class="plabel" rows="1" list="lbls"
+    <input class="plabel" value="${esc(p.label)}" list="lbls"
            placeholder="${udgaaet?'udgår – AES bruger kanal 2':'—'}"
-           ${udgaaet?'disabled':''} title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">${esc(p.label)}</textarea>`:`<input class="plabel" value="${esc(p.label)}" list="lbls"
-           placeholder="${udgaaet?'udgår – AES bruger kanal 2':'—'}"
-           ${udgaaet?'disabled':''} title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">`}
+           ${udgaaet?'disabled':''} title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">
     ${p.label&&!udgaaet?`
      <label class="tick" title="Patchet${p.pby?' · af '+esc(p.pby):''}">
        <input type="checkbox" data-tick="${dv.id}|ins|${p.id}|patched" ${p.patched?'checked':''}></label>
@@ -3764,9 +3766,8 @@ function portList(dv,side,title){
      <div class="port ${p.label?'set':''} ${fresh(p)?'fresh':''} ${p.label&&p.patched&&p.checked?'ok':''}"
           data-port="${dv.id}|${side}|${p.id}">
        <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|${side}|${p.id}">
-       ${mobil?`<textarea class="plabel" rows="1" list="lbls" placeholder="—"
-              title="${esc(p.label)}" data-plabel="${dv.id}|${side}|${p.id}">${esc(p.label)}</textarea>`:`<input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
-              title="${esc(p.label)}" data-plabel="${dv.id}|${side}|${p.id}">`}
+       <input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
+              title="${esc(p.label)}" data-plabel="${dv.id}|${side}|${p.id}">
        ${p.label?`
         <label class="tick" title="Patchet${p.pby?' · sat af '+esc(p.pby):''}">
           <input type="checkbox" data-tick="${dv.id}|${side}|${p.id}|patched" ${p.patched?'checked':''}></label>
@@ -3919,12 +3920,10 @@ function bindPlan(){
    if(nxt)nxt.title=vaerdi;
   };
   inp.onchange=commit;
-  /* på telefonen er feltet et tekstfelt, der kan ombryde – det skal vokse
-     med teksten, så hele navnet kan ses uden at scrolle i feltet */
-  if(inp.tagName==='TEXTAREA'){
-   const voks=()=>{ inp.style.height='auto'; inp.style.height=(inp.scrollHeight+2)+'px' };
-   voks(); inp.addEventListener('input',voks);
-  }
+  /* På telefonen beholder feltet sin højde – i stedet bliver skriften mindre,
+     når teksten er for lang. Så flytter linjerne sig ikke, og man kan stadig
+     læse det hele. */
+  if(mobil){ skrumpTekst(inp); inp.addEventListener('input',()=>skrumpTekst(inp)); }
   inp.onkeydown=e=>{
    if(e.key==='Enter'){
     e.preventDefault();
@@ -5286,6 +5285,24 @@ async function mobilProjekter(){
     gør:()=>document.getElementById('bCloud').click()});
   rk.push({ikon:'＋',tekst:'Nyt projekt',gør:()=>document.getElementById('bNew').click()});
   openSheet('Skift projekt',rk);
+}
+
+
+/* Mindsk skriften, til teksten kan være i feltet. Mindste størrelse er 9px –
+   derunder bliver det alligevel ulæseligt, og så klippes resten. */
+function skrumpTekst(inp){
+  if(!inp||!mobil) return;
+  const start=14.5;
+  inp.style.fontSize=start+'px';
+  if(inp.scrollWidth<=inp.clientWidth+1) return;
+  let fs=start, vagt=0;
+  while(inp.scrollWidth>inp.clientWidth+1 && fs>8 && vagt++<28){
+    fs-=0.5; inp.style.fontSize=fs+'px';
+  }
+}
+function skrumpAlle(){
+  if(!mobil) return;
+  document.querySelectorAll('#plan .plabel').forEach(skrumpTekst);
 }
 
 /* ── Hvem er inde – på telefonen ───────────────────────────────
