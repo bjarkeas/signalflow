@@ -2587,11 +2587,12 @@ const DEVICES={
   {t:'Clearcom IVC-32',   i:16, o:16}
  ],
  kam:[
-  {t:'Kamera (4 kanaler)', i:4, o:1},
-  {t:'Kamera uden retur',  i:4, o:0},
-  {t:'EXT-kilde',          i:4, o:0},
-  {t:'Drone',              i:2, o:0},
-  {t:'Stedkamera / FR-7',  i:2, o:0}
+  {t:'Kamera · 2 analoge',        i:2, o:1, kam:'mic'},
+  {t:'Kamera · 2 analoge + AES',  i:4, o:1, kam:'micaes'},
+  {t:'Kamera uden retur',         i:2, o:0, kam:'mic'},
+  {t:'EXT-kilde',                 i:2, o:0, kam:'mic'},
+  {t:'Drone',                     i:2, o:0, kam:'mic'},
+  {t:'Stedkamera / FR-7',         i:2, o:0, kam:'mic'}
  ],
  /* Frekvensplanen: "inputs" er antallet af frekvenslinjer, der oprettes */
  freq:[
@@ -2632,6 +2633,13 @@ function addDevice(tpl){
  snap();
  const d={id:id(),type:tpl.t,name:tpl.t,place:'',
    ins:mkPorts(tpl.i),outs:mkPorts(tpl.o)};
+ /* På et kamera bærer linjerne deres type: alle mic/line, eller 1–2 mic og
+    3–4 som AES-parret. Et kamera uden AES får bare de to analoge spor, og
+    man kan plusse flere til bagefter. */
+ if(planDom==='kam'){
+   const m=tpl.kam||'mic';
+   d.ins.forEach((p,i)=>{ p.kamtype = (m==='micaes'&&i>=2) ? 'aes' : 'mic' });
+ }
  dom().devices.push(d); drawPlan();
 }
 
@@ -3635,18 +3643,22 @@ function freqListe(dv){
    optager det kredsløbet fra kanal 2 – så udgår 2, og man har kanal 1
    mic/line plus 3 og 4 på AES. Planen viser det, så ingen booker en kanal,
    der ikke findes. */
+/* Hver linje bærer selv sin type. Gamle kort uden typen falder tilbage på
+   den gamle regel: 1 og 2 er mic/line, 3 og 4 er AES. */
 const KAM_AES=n=>/^(3|4|aes)/i.test((n||'').toString().trim());
+function kamType(p){ return p.kamtype || (KAM_AES(p.n)?'aes':'mic') }
 function kamAesIBrug(dv){
-  return ports(dv,'ins').some(p=>KAM_AES(p.n) && (p.label||'').trim());
+  return ports(dv,'ins').some(p=>kamType(p)==='aes' && (p.label||'').trim());
 }
 function kamRad(dv,p,udgaaet){
-  const aes=KAM_AES(p.n);
+  const aes=kamType(p)==='aes';
   const kl=[p.label?'set':'', fresh(p)?'fresh':'', (p.label&&p.patched&&p.checked)?'ok':'',
             udgaaet?'udgaaet':''].join(' ');
   return `<div class="port kam ${kl}" data-port="${dv.id}|ins|${p.id}"
       ${udgaaet?'title="Udgår, fordi AES-parret er i brug på kanal 3 og 4"':''}>
     <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|ins|${p.id}" title="Kanalnummer">
-    <span class="kamtype ${aes?'aes':''}">${aes?'AES':'mic/line'}</span>
+    <button class="kamtype ${aes?'aes':''}" data-kamtype="${dv.id}|ins|${p.id}"
+      title="Klik for at skifte mellem mic/line og AES">${aes?'AES':'mic/line'}</button>
     ${mobil?`<textarea class="plabel" rows="1" list="lbls"
            placeholder="${udgaaet?'udgår – AES bruger kanal 2':'—'}"
            ${udgaaet?'disabled':''} title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">${esc(p.label)}</textarea>`:`<input class="plabel" value="${esc(p.label)}" list="lbls"
@@ -3667,11 +3679,13 @@ function kamListe(dv){
   const alle=ports(dv,'ins');
   const {vis:arr, skjult}=synligePorte(dv,'ins');
   const aes=kamAesIBrug(dv);
-  const ibrug=alle.filter(p=>p.label&&!(aes&&(p.n||'').trim()==='2')).length;
+  const ibrug=alle.filter(p=>p.label&&!(aes&&kamType(p)==='mic'&&(p.n||'').trim()==='2')).length;
   return `<div class="portcol ins kamcol">
-    <div class="portitle">Lydkanaler <span>${ibrug}/${aes?alle.length-1:alle.length}</span></div>
-    ${aes?`<div class="kamnote">AES er i brug på 3 og 4 – kanal 2 udgår</div>`:''}
-    ${arr.map(p=>kamRad(dv,p,aes&&(p.n||'').trim()==='2')).join('')}
+    <div class="portitle">Lydkanaler <span>${ibrug}/${
+      aes&&alle.some(p=>kamType(p)==='mic'&&(p.n||'').trim()==='2') ? alle.length-1 : alle.length}</span></div>
+    ${aes&&alle.some(p=>kamType(p)==='mic'&&(p.n||'').trim()==='2')
+      ? `<div class="kamnote">AES er i brug – kanal 2 udgår</div>` : ''}
+    ${arr.map(p=>kamRad(dv,p, aes && kamType(p)==='mic' && (p.n||'').trim()==='2')).join('')}
     ${foldRest(dv,skjult)}
     <button class="addrow" data-padd="${dv.id}|ins" title="Tilføj en kanal">+ kanal</button>
   </div>`;
@@ -3963,6 +3977,15 @@ function bindPlan(){
   setTimeout(()=>{const f=document.querySelector('[data-plabel="'+CSS.escape(dv.id+'|'+side+'|'+ny.id)+'"]');
     if(f){f.focus();f.select()}},60);
  });
+ /* skift kanaltype på et kamera */
+ el2.querySelectorAll('[data-kamtype]').forEach(b=>b.onclick=ev=>{
+  ev.stopPropagation();
+  const [dv,p]=find(b.dataset.kamtype);
+  if(!p)return;
+  snap();
+  p.kamtype = kamType(p)==='aes' ? 'mic' : 'aes';
+  touch(p); autosave(); drawPlan();
+ });
  el2.querySelectorAll('[data-padd]').forEach(b=>b.onclick=()=>{
   const [did,side]=b.dataset.padd.split('|');
   const dv=dom().devices.find(x=>x.id===did);
@@ -3970,7 +3993,9 @@ function bindPlan(){
   const arr=ports(dv,side);
   const sidste=arr[arr.length-1];
   const m=sidste&&String(sidste.n||'').match(NRM);
-  dv[side].push({id:id(),n:m?m[1]+(parseInt(m[2],10)+1)+m[3]:String(arr.length+1),label:'',by:'',at:0});
+  const ny={id:id(),n:m?m[1]+(parseInt(m[2],10)+1)+m[3]:String(arr.length+1),label:'',by:'',at:0};
+  if(planDom==='kam') ny.kamtype='mic';     // man vælger selv AES bagefter
+  dv[side].push(ny);
   drawPlan();
  });
 
@@ -7056,10 +7081,14 @@ function kiFindKameraer(g){
     const navn=(/^\d+$/.test(nr)?'Kamera '+nr:(nr||'Kilde'))+(type?' · '+type:'');
     /* 1 og 2 er mic/line, 3 og 4 er AES-parret. Står der noget på 3 eller 4,
        er AES i brug, og så udgår kanal 2. */
-    const ins=K.kanaler.map(function(c,i){
-      return {n:String(i+1), label:v(r,c), freq:'', ftype:'', patched:false, checked:false, by:''};
-    });
-    while(ins.length<4) ins.push({n:String(ins.length+1), label:'', freq:'', ftype:'', patched:false, checked:false, by:''});
+    /* To analoge spor som standard. Står der noget i kolonne 3 eller 4, har
+       kameraet også AES-parret, og så kommer de med som AES-linjer. */
+    const brugt=K.kanaler.map(c=>v(r,c));
+    const harAes=brugt.slice(2).some(x=>x);
+    const antal=harAes?Math.max(4,brugt.length):2;
+    const ins=[];
+    for(let i=0;i<antal;i++) ins.push({n:String(i+1), label:brugt[i]||'', freq:'', ftype:'',
+      kamtype:(harAes&&i>=2)?'aes':'mic', patched:false, checked:false, by:''});
     const outs=[];
     if(K.retur>=0 && v(r,K.retur)) outs.push({n:'1', label:v(r,K.retur), freq:'', ftype:'', patched:false, checked:false, by:''});
     kort.push({dom:'kam', navn:navn, sted:[sted,src].filter(Boolean).join(' · '), ins, outs});
@@ -7131,7 +7160,10 @@ function kiFindBlokke(g){
   const kort={}, raekkef=[];
   blokke.forEach(function(b){
     const k=b.navn.toLowerCase();
-    if(!kort[k]){ kort[k]={dom:planDom==='freq'?'freq':planDom, navn:b.navn, sted:'', ins:[], outs:[]}; raekkef.push(k); }
+    /* Blokke med kanal/navn/kilde er en lydplan. Står man i Kameraer eller
+       Frekvenser, hører de alligevel hjemme under Lyd. */
+    if(!kort[k]){ kort[k]={dom:(planDom==='kam'||planDom==='freq')?'lyd':planDom,
+      navn:b.navn, sted:'', ins:[], outs:[]}; raekkef.push(k); }
     b.linjer.forEach(l=>kort[k][b.side].push({
       n:l.n, label:l.label+(l.kilde?' · '+l.kilde:''), freq:'', ftype:'',
       patched:false, checked:false, by:''
@@ -7245,6 +7277,7 @@ function kiAaben(){
             p2.label=l.label||p2.label;
             if(l.freq) p2.freq=l.freq;
             if(l.ftype) p2.ftype=l.ftype;
+            if(l.kamtype) p2.kamtype=l.kamtype;     // mic/line eller AES på et kamera
             if(l.patched) p2.patched=true;
             if(l.checked) p2.checked=true;
             p2.by=l.by||meName(); p2.at=Date.now();
