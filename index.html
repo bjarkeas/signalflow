@@ -4477,7 +4477,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.08-c';
+const SF_VERSION='2026.10.13-a';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -5071,7 +5071,10 @@ async function pullInner(){
  let r;
  try{ r=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=updated_at,updated_by'); }
  catch(e){ setSync('ingen forbindelse',true); return; }
- if(!r||!r.length)return;
+ /* Svarer databasen at projektet ikke findes, er det slettet. Vi venter på to
+    tomme svar i træk, så et enkelt skævt svar ikke river projektet fra os. */
+ if(!r||!r.length){ if(++tommeSvar>=2)projektVaek(); return }
+ tommeSvar=0;
  const t=r[0].updated_at;
  pollN++;
  /* Står tidsstemplet stille, er der ikke sket noget – så henter vi ingenting.
@@ -5207,7 +5210,31 @@ function setSync(txt,warn){
 /* ================= hvem er inde i projektet =================
    Hver maskine melder sig selv hvert tiende sekund og henter de andres
    meldinger. Linjer ældre end et minut regnes som gået igen. */
-let presTimer=null, presFolk=[], presFejl=null, presKlar=false;
+let presTimer=null, presFolk=[], presFejl=null, presKlar=false, presFejlTal=0;
+
+/* ── Projektet findes ikke længere ────────────────────────────
+   Bliver et projekt slettet – af en kollega, eller fra en anden maskine –
+   bliver id'et hængende her i browseren. Så melder maskinen sig hvert tiende
+   sekund ind i et projekt der ikke er der, databasen afviser det hver gang
+   (fejl 23503), og brugeren tror imens at han arbejder i et delt projekt.
+   Vi slipper id'et, beholder arbejdet lokalt og siger det højt én gang. */
+const DOEDT_PROJEKT=/23503|foreign key|project_id_fkey/i;
+let projektVaekSagt=false, tommeSvar=0;
+function projektVaek(){
+  clearInterval(presTimer); presTimer=null;
+  clearInterval(syncTimer); syncTimer=null;
+  presFolk=[]; presFejl=null; presFejlTal=0; tommeSvar=0;
+  cloudId=null; dirty=false;
+  autosave();                 // den lokale kopi må ikke pege på et dødt id
+  if(typeof tegnHvemErInde==='function')tegnHvemErInde();
+  if(typeof mobilTitel==='function')mobilTitel();
+  setAuto('ligger kun lokalt – projektet er væk på serveren',true);
+  if(projektVaekSagt)return;
+  projektVaekSagt=true;
+  alert('Projektet findes ikke længere i databasen – det er slettet et andet '
+    +'sted fra.\n\nDit arbejde ligger stadig her i browseren. Tryk Gem, hvis '
+    +'det skal op som et nyt projekt.');
+}
 
 function presSted(){
  if(view==='plan')return 'Kanalplan · '+(PLANDOMS[planDom]||'');
@@ -5231,18 +5258,28 @@ async function presMeld(){
       body:JSON.stringify({project_id:cloudId,who:hvem,sted:presSted(),at:new Date().toISOString()})});
    presFolk=(await sbFetch('signalflow_presence?project_id=eq.'+cloudId+'&select=who,sted,at'))||[];
   }
-  presFejl=null; presKlar=true;
+  presFejl=null; presKlar=true; presFejlTal=0;
   tegnHvemErInde();
  }catch(e){
   /* Tilstedeværelse må aldrig stå i vejen for arbejdet – men vi siger til,
      så man ved hvorfor feltet er tomt i stedet for at tro det virker. */
-  presFejl=e.message||'kunne ikke hente';
+  const besked=e.message||'kunne ikke hente';
+  /* Er projektet slettet, nytter det ikke at prøve igen hvert tiende sekund */
+  if(cloudId&&!guestToken&&DOEDT_PROJEKT.test(besked)){ projektVaek(); return }
+  presFejl=besked;
   presKlar=true;
+  /* Virker det ikke, skal vi ikke blive ved med at banke på i samme takt.
+     Først hvert minut, og til sidst holder vi op – ellers fylder det kun
+     loggen på serveren og batteriet på telefonen. */
+  presFejlTal++;
+  if(presFejlTal===5&&presTimer){ clearInterval(presTimer); presTimer=setInterval(presMeld,60000) }
+  if(presFejlTal>=25&&presTimer){ clearInterval(presTimer); presTimer=null }
   tegnHvemErInde();
  }
 }
 function startPres(){
  clearInterval(presTimer);
+ presFejlTal=0;
  presMeld();
  presTimer=setInterval(presMeld,10000);
 }
@@ -5696,11 +5733,18 @@ async function cloudSave(asNew,note){
  let svar=null;
  if(cloudId&&!asNew){
   svar=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=id,updated_at',{method:'PATCH',body:JSON.stringify(body)});
-  if(!svar||!svar.length)throw new Error('Projektet findes ikke længere i databasen.');
+  if(!svar||!svar.length){
+    /* Projektet er slettet under os. Slip id'et, så næste tryk på Gem lægger
+       arbejdet op som et nyt projekt i stedet for at fejle igen. */
+    projektVaek();
+    throw new Error('Projektet findes ikke længere i databasen.\n\n'
+      +'Tryk Gem én gang til, så bliver det lagt op som et nyt projekt.');
+  }
  }else{
   body.folder=currentFolder||null;
   svar=await sbFetch('signalflow_projects?select=id,updated_at',{method:'POST',body:JSON.stringify(body)});
   cloudId=svar[0].id;
+  projektVaekSagt=false; tommeSvar=0;
  }
  /* hver gemning lægger sig som en version, så man altid kan gå tilbage */
  await sbFetch('signalflow_versions?select=id',{method:'POST',body:JSON.stringify(
@@ -5718,9 +5762,45 @@ async function cloudOpen(id){
  const d=r[0].data;
  pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); ryddLuft(pages); blocks=d.blocks||blankBlocks(); projectName=d.name||r[0].name; cloudId=r[0].id; currentFolder=r[0].folder||'';
  activePage=0; doc=pages[0]; path=[]; sel=null; focus=null; undoStack=[];
+ projektVaekSagt=false; tommeSvar=0;
  draw(); autosave();
  lastSync=null; lokalTs=Date.now(); dirty=false; hentetFoerst=false; migrateSeen(); startSync();
 }
+/* "Oslo" → "Oslo (kopi)". Findes den allerede, tælles der op, så man kan
+   lave flere uden at skulle finde på navne. */
+function kopiNavn(navn, raekker){
+  const findes = n => (raekker||[]).some(r => (r.name||'').toLowerCase() === n.toLowerCase());
+  let n = navn + ' (kopi)';
+  if(!findes(n)) return n;
+  for(let i=2;i<200;i++){
+    const k = navn + ' (kopi ' + i + ')';
+    if(!findes(k)) return k;
+  }
+  return navn + ' (kopi ' + Date.now() + ')';
+}
+
+/* Hent projektet og læg en kopi ved siden af. Vi rører ikke det, der er
+   åbent – hverken dets id eller dets indhold. */
+async function cloudKopi(pid, nytNavn){
+  const r = await sbFetch('signalflow_projects?id=eq.'+pid+'&select=name,folder,data');
+  if(!r || !r.length) throw new Error('Projektet findes ikke længere.');
+  const kilde = r[0];
+  const data = JSON.parse(JSON.stringify(kilde.data || {}));
+  data.name = nytNavn;                       // navnet står også inde i data
+  const who = cfg().who || userName().split('@')[0] || '';
+  const svar = await sbFetch('signalflow_projects?select=id', {method:'POST',
+    body: JSON.stringify({name:nytNavn, folder:kilde.folder||null, data:data,
+                          updated_by:who, updated_at:new Date().toISOString()})});
+  if(!svar || !svar.length) throw new Error('Kopien blev ikke oprettet.');
+  /* Første version, så historikken ikke starter tom */
+  try{
+    await sbFetch('signalflow_versions?select=id', {method:'POST',
+      body: JSON.stringify({project_id:svar[0].id, data:data,
+                            note:'kopi af "'+(kilde.name||'')+'"', created_by:who})});
+  }catch(e){ console.warn('Kopiens første version blev ikke gemt:', e.message); }
+  return svar[0].id;
+}
+
 async function cloudVersions(pid){
  return await sbFetch('signalflow_versions?project_id=eq.'+pid
    +'&select=id,note,created_by,created_at&order=created_at.desc&limit=40');
@@ -5863,6 +5943,7 @@ function openProjects(){
            <div class="pacts">
              <button class="mini" data-open="${r.id}" title="Åbn">Åbn</button>
              <button class="mini" data-hist="${r.id}" title="Tidligere versioner">Historik</button>
+             <button class="mini" data-kopi="${r.id}" title="Lav en kopi i samme mappe">⧉</button>
              <button class="mini" data-ren="${r.id}" title="Omdøb / flyt">✎</button>
              <button class="mini" data-del="${r.id}" title="Slet">✕</button>
            </div>
@@ -5916,6 +5997,21 @@ function openProjects(){
         if(r.id===cloudId){projectName=nn.trim()||r.name;currentFolder=nf.trim();draw()}
         refresh();
       }).catch(e=>alert(e.message));
+    });
+    /* ── Lav en kopi ───────────────────────────────────────────
+       Kopien bliver liggende i samme mappe med "(kopi)" bagefter, og det
+       åbne projekt bliver stående – man skal ikke tvinges væk fra det, man
+       sidder i, bare fordi man vil have en kopi at rode i. */
+    listEl.querySelectorAll('[data-kopi]').forEach(n=>n.onclick=async()=>{
+      const r=rows.find(x=>x.id===n.dataset.kopi); if(!r)return;
+      const nyt=kopiNavn(r.name, rows);
+      n.disabled=true; const gl=n.textContent; n.textContent='…';
+      try{
+        await cloudKopi(r.id, nyt);
+        refresh();
+      }catch(e){
+        alert('Kunne ikke lave kopien.\n\n'+(e.message||e));
+      }finally{ n.disabled=false; n.textContent=gl; }
     });
     listEl.querySelectorAll('[data-del]').forEach(n=>n.onclick=()=>{
       const r=rows.find(x=>x.id===n.dataset.del);
