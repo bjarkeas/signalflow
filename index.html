@@ -279,15 +279,20 @@ body.mobile .pnum{font-size:13px;padding:10px 3px;width:42px}
 body.mobile .tick input{width:22px;height:22px}
 body.mobile .planbar{gap:7px}
 body.mobile .planbar .sharebtn{flex:1 1 auto;padding:10px 8px;font-size:12.5px}
-/* På telefonen bygges topbjælken uden opdatér, del link, csv, kolonner og
-   ret op – de knapper findes slet ikke her, de åd skærmen. Tilbage står
-   "Fold tomme" og "+ Udstyr". Print og gem ligger i ☰-menuen. */
+/* På telefonen bygges topbjælken uden opdatér, csv, kolonner og ret op – de
+   knapper findes slet ikke her, de åd skærmen. "Del link" bliver, når man er
+   logget ind: den bruges ude på gulvet. Gæsten har den ikke – han har jo
+   linket. Print og gem ligger i ☰-menuen. */
 body.mobile .planbar [data-save],body.mobile .planbar [data-imp],body.mobile .planbar [data-kimp],
-body.mobile .planbar [data-ppdf],body.mobile .planbar .whotag,
+body.mobile .planbar .whotag,
 body.mobile .planbar .whobox{display:none}
-body.mobile .planbar [data-foldall]{display:inline-flex;align-items:center;justify-content:center;
+body.mobile .planbar [data-foldall],
+body.mobile .planbar [data-ppdf],
+body.mobile .planbar [data-share]{display:inline-flex;align-items:center;justify-content:center;
  flex:0 0 auto;gap:5px;background:var(--panel2);border-color:var(--dim);color:var(--text);
  font-size:13px;padding:10px 12px}
+/* Gæstens bjælke holdes helt bar – han har print i ☰-menuen */
+body.mobile.guest .planbar [data-ppdf]{display:none}
 body.mobile .planadd{width:100%;margin-left:0}
 body.mobile .planadd .sharebtn{width:100%;padding:12px}
 body.mobile .btools .btool:not([data-badd="link"]):not([data-badd="snap"]){display:none}
@@ -3655,9 +3660,10 @@ function drawPlan(){
    ${meName()==='?'?`<input class="whobox" id="whoBox" placeholder="Dine initialer" title="Vises ud for de linjer du retter">`:
      `<span class="whotag" title="Dine initialer – klik for at rette">${esc(meName())}</span>`}
    <button class="sharebtn save" data-save="1" title="Gem i databasen nu, så kollegerne kan se det">Gem</button>
-   ${mobil?'':`
-   <button class="sharebtn" data-refresh="1" title="Hent kollegernes ændringer nu">↻ Opdatér</button>
-   <button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan – modtageren skal ikke logge ind">🔗 Del link</button>`}
+   ${mobil?''/* planen henter selv hvert sjette sekund */
+     :`<button class="sharebtn" data-refresh="1" title="Hent kollegernes ændringer nu">↻ Opdatér</button>`}
+   ${guestToken?''/* en gæst deler ikke linket videre – han har det jo */
+     :`<button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan – modtageren skal ikke logge ind">🔗 Del link</button>`}
    <button class="sharebtn" data-ppdf="1" title="Print ${PLANDOMS[planDom]}-planen eller gem den som PDF">↧ PDF</button>
    ${mobil?'':`
    <button class="sharebtn" data-pcsv="1" title="Hent ${PLANDOMS[planDom]}-planen som regneark til Excel">↧ CSV</button>
@@ -4668,7 +4674,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.14-h';
+const SF_VERSION='2026.10.14-j';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
