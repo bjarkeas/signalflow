@@ -892,6 +892,19 @@ body.mobile.guest #app{padding-bottom:12px}
 
 .devgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(470px,1fr));gap:14px;align-items:start}
 .dev{background:var(--panel);border:1px solid var(--line);border-radius:11px;overflow:hidden}
+/* Et kort en kollega har rettet i, skal kunne ses tværs over skærmen: farvet
+   ramme hele vejen rundt, en tyk bjælke i venstre kant og hans initialer i
+   hovedet. Farven er hans – er der flere inde, har de hver sin. */
+.dev.rettet{border-color:var(--ret);box-shadow:0 0 0 1px var(--ret),0 0 16px -4px var(--ret)}
+.dev.rettet::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+ background:var(--ret);z-index:3}
+.dev.rettet .devhead{position:relative}
+.dev.rettet .devhead::after{content:'';position:absolute;inset:0;background:var(--ret);
+ opacity:.1;pointer-events:none}
+.retfolk{display:flex;gap:4px;flex:none;max-width:40%;overflow:hidden}
+.retchip{font-family:var(--fm);font-size:9px;letter-spacing:.04em;text-transform:uppercase;
+ background:var(--ret);color:#11161d;font-weight:700;border-radius:20px;padding:3px 7px;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:84px}
 .devhead{display:flex;align-items:center;gap:10px;padding:11px 12px;background:var(--panel2);border-bottom:1px solid var(--line)}
 .devnames{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
 .devname{background:none;border:none;color:var(--text);font-family:var(--fd);font-weight:700;font-size:16px;
@@ -923,9 +936,10 @@ body.mobile.guest #app{padding-bottom:12px}
  border-radius:5px;padding:5px 7px;font:12px var(--fb)}
 .plabel:focus,.pnum:focus{outline:none;border-color:var(--intercom)}
 .port.set .plabel{border-color:#2f4a3d;background:#141c18}
-.port.fresh .plabel{border-color:var(--lyd);box-shadow:0 0 0 1px rgba(255,182,72,.28)}
+/* En rettelse fra en kollega får hans farve – både på linjen og på kortet */
+.port.fresh .plabel{border-color:var(--ret,var(--lyd));box-shadow:0 0 0 1px var(--ret,var(--lyd))}
 .port.fresh::before{content:'';position:absolute;left:-6px;top:50%;transform:translateY(-50%);
- width:5px;height:5px;border-radius:50%;background:var(--lyd)}
+ width:5px;height:5px;border-radius:50%;background:var(--ret,var(--lyd))}
 .pby{display:none;pointer-events:none;position:absolute;right:128px;top:50%;transform:translateY(-50%);z-index:2;
  font-family:var(--fm);font-size:8.5px;color:var(--dim);white-space:nowrap;max-width:52px;
  overflow:hidden;text-overflow:ellipsis;background:var(--panel);padding:2px 4px;border-radius:4px}
@@ -2848,6 +2862,43 @@ const meName=()=>cfg().who||userName().split('@')[0]||'?';
 const hasName=()=>meName()!=='?';
 function touch(p){p.by=hasName()?meName():'';p.at=Date.now()}
 function fresh(p){const t=lastSeen();return t&&p.at&&p.at>t&&p.by!==meName()}
+
+/* ── Hvem har rettet hvad siden sidst ──────────────────────────
+   Hver kollega får sin egen farve, og kortene de har rettet i bliver
+   markeret med den. Den første farve er orange, for i langt de fleste
+   tilfælde har én kollega været inde – og så er det den man ser.
+   Farven følger navnet, så den samme person har den samme farve hver gang
+   og på alle maskiner. Er to navne uheldige og rammer det samme sted,
+   rykkes den ene videre, så to kolleger aldrig har samme farve samtidig. */
+const RET_FARVER=['#ff9a3c','#56c2ff','#b78bff','#5fd38a','#ff6f91','#ffd93d','#4dd0c4','#ff8a65'];
+/* Tildelingen laves én gang pr. optegning og læses af både kortene og linjerne */
+let retFarveNu={};
+/* Alle navne med nye rettelser i HELE planen får tildelt farve én gang pr.
+   optegning – ellers kunne den samme person få to farver på to kort.
+   Navnene sorteres, så tildelingen er den samme hver gang, og den FØRSTE får
+   orange: er der kun én kollega inde – og det er der næsten altid – er
+   markeringen orange. Kommer der flere, får de hver sin farve. */
+function retFarver(){
+ const navne=new Set();
+ Object.keys(PLANDOMS).forEach(k=>((ensurePlan()[k]||{}).devices||[]).forEach(d=>{
+  alive(d.ins).concat(alive(d.outs)).forEach(p=>{ if(fresh(p))navne.add(p.by||'?') });
+ }));
+ const kort={};
+ [...navne].sort((a,b)=>a.localeCompare(b,'da')).forEach((n,i)=>{
+  kort[n]=RET_FARVER[i%RET_FARVER.length];
+ });
+ return kort;
+}
+/* Hvem har rettet i netop dette kort – i den rækkefølge de sidst rørte det */
+function kortRettere(dv){
+ const sidst={};
+ alive(dv.ins).concat(alive(dv.outs)).forEach(p=>{
+  if(!fresh(p))return;
+  const n=p.by||'?';
+  if(!sidst[n]||p.at>sidst[n])sidst[n]=p.at;
+ });
+ return Object.keys(sidst).sort((a,b)=>sidst[b]-sidst[a]);
+}
 function ago(ms){
  if(!ms)return '';
  const s=Math.round((Date.now()-ms)/1000);
@@ -3650,6 +3701,8 @@ function drawPlan(){
  const el2=document.getElementById('plan');
  const nyt=newCount();
  const labels=usedLabels();
+ /* én farve pr. kollega, tildelt samlet for hele planen */
+ retFarveNu=retFarver();
 
  let h=`<div class="planbar">
    <div class="domtabs">${Object.keys(PLANDOMS).map(k=>
@@ -3703,13 +3756,19 @@ function drawPlan(){
   const lab=labelled(dv,'ins').concat(labelled(dv,'outs'));
   const np=lab.filter(p=>p.patched).length, nc=lab.filter(p=>p.checked).length;
   const done=devDone(dv);
-  h+=`<div class="dev ${(dv.w||CARDW)<580?'narrow':''}" data-dev="${dv.id}" style="left:${dv.x}px;top:${dv.y}px;width:${dv.w||CARDW}px">
+  /* har kolleger rettet i kortet siden sidst, får det deres farve */
+  const rettere=kortRettere(dv);
+  const retStil=rettere.length?`;--ret:${retFarveNu[rettere[0]]||RET_FARVER[0]}`:'';
+  h+=`<div class="dev ${(dv.w||CARDW)<580?'narrow':''} ${rettere.length?'rettet':''}" data-dev="${dv.id}" style="left:${dv.x}px;top:${dv.y}px;width:${dv.w||CARDW}px${retStil}">
     <div class="devhead">
       <span class="draghandle" data-dragdev="${dv.id}" title="Træk for at flytte kortet">⠿</span>
       <div class="devnames">
         <input class="devname" value="${esc(dv.name)}" data-dname="${dv.id}" placeholder="Navn på udstyr">
         <input class="devplace" value="${esc(dv.place||'')}" data-dplace="${dv.id}" placeholder="Placering, fx Studie">
       </div>
+      ${rettere.length?`<span class="retfolk" title="Rettet siden du sidst så planen:\n${esc(rettere.join('\n'))}">${
+        rettere.map(n=>`<span class="retchip" style="--ret:${retFarveNu[n]||RET_FARVER[0]}">${esc(n)}</span>`).join('')
+      }</span>`:''}
       <div class="devmeta">
         <button class="pt p ${lab.length&&np===lab.length?'lit':''}" data-dall="${dv.id}|patched"
           title="Patchet – ${np} af ${lab.length}. Klik for at sætte alle">P<em>${np}/${lab.length}</em></button>
@@ -3931,6 +3990,7 @@ function portList(dv,side,title){
      <span class="ph-by"></span><span class="ph-x"></span></div>
    ${arr.map(p=>`
      <div class="port ${p.label?'set':''} ${fresh(p)?'fresh':''} ${p.label&&p.patched&&p.checked?'ok':''}"
+          ${fresh(p)?`style="--ret:${retFarveNu[p.by||'?']||RET_FARVER[0]}"`:''}
           data-port="${dv.id}|${side}|${p.id}">
        <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|${side}|${p.id}">
        <input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
@@ -4674,7 +4734,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.14-j';
+const SF_VERSION='2026.10.14-k';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
