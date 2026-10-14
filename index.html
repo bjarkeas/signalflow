@@ -1070,12 +1070,12 @@ body.mobile .laasknap{min-height:34px}
    Boksen står i arkets hoved ved siden af titlen – ikke oven på tegningen.
    Så kan den aldrig dække en sektion, hverken på skærmen eller på papir.
    En tom afstandsklods i venstre side holder titlen midt på arket. */
-.sheethead{display:flex;align-items:flex-start;gap:18px}
-.sheethead .headmid{flex:1 1 auto;min-width:280px}
-/* Klodsen må gerne klemmes sammen, hvis boksen fylder meget – ellers ville
-   titlen blive presset ned i to-tre linjer, bare for at stå helt centreret. */
-.sheethead .headspacer{flex:0 1 auto;min-width:0}
-.infoboks{flex:none;position:relative;background:#fff;border:1px solid #c4c4c4;border-radius:5px;
+/* Boksen ligger i sin egen linje øverst til højre, OVER titlen. Den og titlen
+   deler ingenting: trækker man i boksen, bliver titlen stående præcis hvor
+   den er, og den er stadig centreret på arket. */
+.sheethead{display:block}
+.sheethead .infoboks{margin:0 0 12px auto}
+.infoboks{position:relative;background:#fff;border:1px solid #c4c4c4;border-radius:5px;
  padding:calc(8px*var(--isk)) calc(12px*var(--isk));box-shadow:0 1px 4px rgba(0,0,0,.08);--isk:1}
 /* Boksen er aflang: signalfarverne til venstre, navn og telefon ved siden af */
 /* Rækken brydes ikke: signalfarverne ombryder inde i deres egen spalte, så
@@ -1083,20 +1083,18 @@ body.mobile .laasknap{min-height:34px}
 .infoboks .iindhold{display:flex;align-items:flex-start;gap:calc(14px*var(--isk));flex-wrap:nowrap}
 .infoboks.smal .iindhold{flex-wrap:wrap}
 body.mobile .infoboks .iindhold{flex-wrap:wrap}
-.infoboks .isignaler{flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;align-content:flex-start;
+/* Farverne fylder kun det de skal. Trækker man boksen bred, bliver luften
+   liggende ude i højre side i stedet for midt imellem farverne og navnet. */
+.infoboks .isignaler{flex:0 1 auto;min-width:0;display:flex;flex-wrap:wrap;align-content:flex-start;
  gap:calc(3px*var(--isk)) calc(13px*var(--isk))}
 .infoboks .ichip{display:flex;align-items:center;gap:calc(6px*var(--isk));white-space:nowrap;
  font-size:calc(11px*var(--isk))}
 .infoboks .idot{width:calc(10px*var(--isk));height:calc(10px*var(--isk));border-radius:50%;flex:none}
-.infoboks .idash{width:calc(16px*var(--isk));flex:none;border-top:2px dashed #555}
 .infoboks .ifolk{flex:0 0 auto;border-left:1px solid #e3e3e3;padding-left:calc(12px*var(--isk));
  display:flex;flex-direction:column;gap:calc(3px*var(--isk))}
-.infoboks .ifelt{display:flex;align-items:baseline;gap:calc(7px*var(--isk));
- font-size:calc(10.5px*var(--isk));color:#333}
-.infoboks .ifelt em{font-style:normal;font-family:var(--fm);font-size:calc(8.5px*var(--isk));
- letter-spacing:.05em;text-transform:uppercase;color:#999;flex:none;width:calc(52px*var(--isk))}
+.infoboks .ifelt{display:flex;align-items:baseline;font-size:calc(11px*var(--isk));color:#333}
 .infoboks .ifelt .ivaerdi{font-weight:600;overflow-wrap:anywhere;cursor:text;
- min-width:calc(72px*var(--isk))}
+ min-width:calc(64px*var(--isk));white-space:nowrap}
 .infoboks .ifelt .ivaerdi.tom{font-weight:400;color:#b0b0b0}
 .infoboks:hover .rs{opacity:.85}
 .infoboks:hover .fitools{opacity:1}
@@ -1105,8 +1103,6 @@ body.mobile .infoboks .iindhold{flex-wrap:wrap}
 .infoboks.smal .ifolk{border-left:none;padding-left:0;border-top:1px solid #e3e3e3;
  padding-top:calc(6px*var(--isk));margin-top:calc(3px*var(--isk));width:100%}
 /* På telefonen er der ikke plads ved siden af titlen – så lægger den sig under */
-body.mobile .sheethead{display:block}
-body.mobile .sheethead .headspacer{display:none}
 body.mobile .infoboks{width:auto!important;margin:4px 0 16px;--isk:1!important}
 body.mobile .infoboks .ifolk{border-left:none;padding-left:0;border-top:1px solid #e3e3e3;
  padding-top:6px;margin-top:3px;width:100%}
@@ -1627,14 +1623,12 @@ function draw(keepSide){
  }
  if(laastNu){ editing=null; }
  const sh=sheet(); const title=sheetTitle();
- const iboks = infoVises(sh) ? infoHTML(sh) : '';
  let h=`<div class="sheethead">
-   ${iboks?`<div class="headspacer" style="width:${infoBredde(sh)}px"></div>`:''}
+   ${infoVises(sh)?infoHTML(sh):''}
    <div class="headmid">
      <div class="sheettitle" data-e="title">${esc(title)}</div>
      <div class="sheetsub">${path.length?'Underark · '+path.map(p=>esc(p.label)).join(' › '):'Signalflow'}</div>
    </div>
-   ${iboks}
  </div>`;
 
  if(focus){
@@ -1939,9 +1933,9 @@ function unanchor(it){
    Navn og telefon gælder HELE projektet: man skriver dem ét sted, og så står
    de på alle sider. Om boksen vises, og hvor stor den er, er derimod sidens
    eget – man kan sagtens ville have den væk på én enkelt side. */
-const INFO_B=600;                  // bredden boksen starter med – alt på én linje
-const INFO_MIN=260, INFO_MAX=900;
-const INFO_SMAL=420;               // under denne bredde falder navn og telefon ned under
+const INFO_B=350;                  // bredden boksen starter med – lige akkurat om indholdet
+const INFO_MIN=230, INFO_MAX=820;
+const INFO_SMAL=300;               // under denne bredde falder navn og telefon ned under
 function infoBoks(sh){const s=sh||sheet(); if(!s.info)s.info={}; return s.info}
 function infoVises(sh){const s=sh||sheet(); return !s.info||s.info.vis!==false}
 function infoBredde(sh){
@@ -1992,21 +1986,23 @@ function infoHTML(sh){
  const w=infoBredde(sh);
  const af=infoAf(sh);
  const tlf=infoTlf(sh);
- const felt=(navn,vaerdi,noegle,hint)=>
-  `<div class="ifelt"><em>${navn}</em>`
+ /* Ingen etiketter: et navn og et telefonnummer kan man se hvad er. Først når
+    feltet er tomt, står der hvad man skal skrive – ellers kunne man ikke gætte
+    hvor man trykker. */
+ const felt=(tom,vaerdi,noegle,hint)=>
+  `<div class="ifelt">`
   +`<span class="ivaerdi ${vaerdi?'':'tom'}" data-e="${noegle}" title="${hint}">`
-  +`${esc(vaerdi||'klik for at skrive')}</span></div>`;
+  +`${esc(vaerdi||tom)}</span></div>`;
  return `<div class="infoboks ${w<INFO_SMAL?'smal':''}" style="width:${w}px;--isk:${infoSkala(w).toFixed(3)}">
    <div class="iindhold">
      <div class="isignaler">
        ${Object.keys(LAYERS).map(k=>
          `<span class="ichip"><span class="idot" style="background:${DOT[k]}"></span>`
         +`<span style="color:${COL[k]}">${esc(LAYERS[k])}</span></span>`).join('')}
-       <span class="ichip"><span class="idash"></span><span>Backup – stiplet</span></span>
      </div>
      <div class="ifolk">
-       ${felt('Tegnet af',af.tekst,'infoaf','Hvem har lavet tegningen – skrives én gang og står på alle sider')}
-       ${felt('Telefon',tlf,'infotlf','Telefonnummer – skrives én gang og står på alle sider')}
+       ${felt('skriv dit navn',af.tekst,'infoaf','Hvem har lavet tegningen – skrives én gang og står på alle sider')}
+       ${felt('telefonnummer',tlf,'infotlf','Telefonnummer – skrives én gang og står på alle sider')}
      </div>
    </div>
    <span class="fitools">
@@ -4664,7 +4660,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.14-e';
+const SF_VERSION='2026.10.14-g';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -8070,10 +8066,8 @@ function exportDrawio(o){
      signalfarverne og hvem der har lavet den */
   if(infoVises(sh)){
    const iw=Math.max(380,infoBredde(sh)), ih=58;
-   V(Object.keys(LAYERS).map(k=>'●  '+LAYERS[k]).join('    ')
-     +'    - -  Backup – stiplet\n'
-     +'Tegnet af:  '+(infoAf(sh).tekst||'—')
-     +'      Telefon:  '+(infoTlf(sh)||'—'),
+   V(Object.keys(LAYERS).map(k=>'●  '+LAYERS[k]).join('    ')+'\n'
+     +(infoAf(sh).tekst||'—')+'      '+(infoTlf(sh)||'—'),
      'sf=forklaring;rounded=1;arcSize=4;html=1;whiteSpace=wrap;verticalAlign=middle;align=left;'
     +'fontSize=11;spacing=8;fillColor=#ffffff;strokeColor=#c4c4c4;',
      SHEETW-M-iw, M, iw, ih);
@@ -8819,8 +8813,7 @@ document.getElementById('sheet').addEventListener('mousedown',ev=>{
      bliver større eller mindre i ét træk */
   if(kind==='info'){
    dragState={mode:'resize',kind:'info',x0:ev.clientX,y0:ev.clientY,
-     w0:infoBredde(sheet()), el:rs.parentElement,
-     spacer:el.querySelector('.headspacer')};
+     w0:infoBredde(sheet()), el:rs.parentElement};
    snap(); document.body.style.userSelect='none';
    return;
   }
@@ -8923,7 +8916,6 @@ document.addEventListener('mousemove',ev=>{
   d.el.style.width=w+'px';
   d.el.style.setProperty('--isk',infoSkala(w).toFixed(3));
   d.el.classList.toggle('smal', w<INFO_SMAL);
-  if(d.spacer)d.spacer.style.width=w+'px';   // titlen bliver siddende midt på arket
   d.wNow=w;
  } else if(d.kind==='item'){
   const minB = d.el.classList&&d.el.classList.contains('fpanel') ? 120 : 90;
