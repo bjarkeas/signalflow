@@ -1065,10 +1065,60 @@ body.mobile .laasknap{min-height:34px}
 .lcount{font-family:var(--fm);font-size:11px;font-weight:500;min-width:22px;text-align:right;color:#111}
 .lname{flex:1}
 .ltot{border-top:1px solid #e0e0e0;margin-top:7px;padding-top:6px;font-family:var(--fm);font-size:10.5px;color:#777;display:flex;justify-content:space-between}
+
+/* ── Forklaringsboksen i øverste højre hjørne ──────────────────
+   Boksen står i arkets hoved ved siden af titlen – ikke oven på tegningen.
+   Så kan den aldrig dække en sektion, hverken på skærmen eller på papir.
+   En tom afstandsklods i venstre side holder titlen midt på arket. */
+.sheethead{display:flex;align-items:flex-start;gap:18px}
+.sheethead .headmid{flex:1 1 auto;min-width:280px}
+/* Klodsen må gerne klemmes sammen, hvis boksen fylder meget – ellers ville
+   titlen blive presset ned i to-tre linjer, bare for at stå helt centreret. */
+.sheethead .headspacer{flex:0 1 auto;min-width:0}
+.infoboks{flex:none;position:relative;background:#fff;border:1px solid #c4c4c4;border-radius:5px;
+ padding:calc(8px*var(--isk)) calc(12px*var(--isk));box-shadow:0 1px 4px rgba(0,0,0,.08);--isk:1}
+/* Boksen er aflang: signalfarverne til venstre, navn og telefon ved siden af */
+/* Rækken brydes ikke: signalfarverne ombryder inde i deres egen spalte, så
+   navn og telefon bliver stående ved siden af i stedet for at falde ned under. */
+.infoboks .iindhold{display:flex;align-items:flex-start;gap:calc(14px*var(--isk));flex-wrap:nowrap}
+.infoboks.smal .iindhold{flex-wrap:wrap}
+body.mobile .infoboks .iindhold{flex-wrap:wrap}
+.infoboks .isignaler{flex:1 1 auto;min-width:0;display:flex;flex-wrap:wrap;align-content:flex-start;
+ gap:calc(3px*var(--isk)) calc(13px*var(--isk))}
+.infoboks .ichip{display:flex;align-items:center;gap:calc(6px*var(--isk));white-space:nowrap;
+ font-size:calc(11px*var(--isk))}
+.infoboks .idot{width:calc(10px*var(--isk));height:calc(10px*var(--isk));border-radius:50%;flex:none}
+.infoboks .idash{width:calc(16px*var(--isk));flex:none;border-top:2px dashed #555}
+.infoboks .ifolk{flex:0 0 auto;border-left:1px solid #e3e3e3;padding-left:calc(12px*var(--isk));
+ display:flex;flex-direction:column;gap:calc(3px*var(--isk))}
+.infoboks .ifelt{display:flex;align-items:baseline;gap:calc(7px*var(--isk));
+ font-size:calc(10.5px*var(--isk));color:#333}
+.infoboks .ifelt em{font-style:normal;font-family:var(--fm);font-size:calc(8.5px*var(--isk));
+ letter-spacing:.05em;text-transform:uppercase;color:#999;flex:none;width:calc(52px*var(--isk))}
+.infoboks .ifelt .ivaerdi{font-weight:600;overflow-wrap:anywhere;cursor:text;
+ min-width:calc(72px*var(--isk))}
+.infoboks .ifelt .ivaerdi.tom{font-weight:400;color:#b0b0b0}
+.infoboks:hover .rs{opacity:.85}
+.infoboks:hover .fitools{opacity:1}
+@media print{.infoboks .fitools,.infoboks .rs{display:none!important}}
+/* Trækkes boksen smal, falder navn og telefon ned under farverne af sig selv */
+.infoboks.smal .ifolk{border-left:none;padding-left:0;border-top:1px solid #e3e3e3;
+ padding-top:calc(6px*var(--isk));margin-top:calc(3px*var(--isk));width:100%}
+/* På telefonen er der ikke plads ved siden af titlen – så lægger den sig under */
+body.mobile .sheethead{display:block}
+body.mobile .sheethead .headspacer{display:none}
+body.mobile .infoboks{width:auto!important;margin:4px 0 16px;--isk:1!important}
+body.mobile .infoboks .ifolk{border-left:none;padding-left:0;border-top:1px solid #e3e3e3;
+ padding-top:6px;margin-top:3px;width:100%}
+body.mobile .infoboks .rs{display:none}
+
 /* håndtag til at trække i størrelsen */
 .rs{position:absolute;right:-4px;bottom:-4px;width:13px;height:13px;border:1px solid #0a5bd3;background:#fff;border-radius:3px;cursor:nwse-resize;opacity:0;z-index:7}
 .rs.edge{right:-5px;top:0;bottom:18px;height:auto;width:9px;border-radius:2px;cursor:ew-resize;z-index:5}
 .rs.edge.left{left:-5px;right:auto}
+/* Boksen hænger fast i højre kant, så den vokser til VENSTRE. Håndtaget
+   sidder derfor i venstre hjørne – ellers trækker man den modsatte vej. */
+.rs.venstre{left:-4px;right:auto;cursor:nesw-resize}
 .srcbox:hover .rs,.dstbox:hover .rs,.fitem:hover .rs{opacity:.85}
 .fitools{position:absolute;top:-11px;right:0;display:flex;gap:3px;opacity:0;z-index:6}
 .fitem:hover .fitools{opacity:1}
@@ -1424,18 +1474,31 @@ function dragRow(e, grip, rowSel, listeAf, felt, efter){
 
 const newCh=(n)=>({id:id(),nr:'Ch. '+n,label:'',layer:'lyd'});
 
-/* Ryk numrene én op eller ned fra et bestemt sted.
-   Vi tæller ikke om fra toppen: mange grupper springer med vilje – fx fra
-   Ch. 8 til Ch. 11 – og de spring skal bevares. */
 /* Tegningen kalder nummeret "nr", kanalplanen kalder det "n" – derfor feltnavnet.
    Mønsteret tager det SIDSTE tal i teksten, så både "Ch. 3" og "4W2" virker. */
 const NRM=/^(.*?)(\d+)(\D*)$/;
-function skubNumre(liste,fra,retning,felt){
+
+/* Numrene i en gruppe hører til hver sin serie: "Ch. 1, Ch. 2 …" er én,
+   "4W 1, 4W 2 …" en anden, og video har sin egen. To linjer er i samme serie,
+   når de har samme signaltype OG samme tekst foran tallet.
+   Uden det ville en slettet lydkanal trække intercom-numrene nedenunder med
+   sig – 4W 1 blev til 4W 0. */
+function nrSerie(x,felt){
+ const m=x&&String(x[felt||'nr']||'').match(NRM);
+ if(!m)return null;                                 // linjen har slet intet tal
+ return (x.layer||'')+'\u0000'+m[1].trim().toLowerCase();
+}
+/* Ryk numrene i ÉN serie én op eller ned fra et bestemt sted. Alt andet
+   nedenunder står helt stille.
+   Vi tæller ikke om fra toppen: mange grupper springer med vilje – fx fra
+   Ch. 8 til Ch. 11 – og de spring skal bevares. */
+function skubSerie(liste,fra,retning,serie,felt){
  const f=felt||'nr';
+ if(!serie)return;                                  // intet tal at rykke efter
  for(let i=fra;i<liste.length;i++){
+  if(nrSerie(liste[i],f)!==serie)continue;
   const m=String(liste[i][f]||'').match(NRM);
-  if(!m)continue;                                   // "TBA" og lignende står
-  liste[i][f]=m[1]+(parseInt(m[2],10)+retning)+m[3];
+  if(m)liste[i][f]=m[1]+(parseInt(m[2],10)+retning)+m[3];
  }
 }
 /* Find det nummer en ny linje skal have på den plads den lægger sig ind på */
@@ -1503,6 +1566,8 @@ function undo(){
 function findGrp(gid){for(const sc of sheet().sections){const g=sc.groups.find(x=>x.id===gid);if(g)return[g,sc]}return[null,null]}
 
 /* ---- sider (faner) ---- */
+/* En ny side får forklaringsboksen af sig selv – navn og telefon lånes fra de
+   andre sider, så man ikke skal skrive det samme forfra hver gang. */
 function addPage(){snap();pages.push(newSheet('Ny side '+(pages.length+1)));switchPage(pages.length-1)}
 function switchPage(i){activePage=i;doc=pages[i];path=[];sel=null;focus=null;draw()}
 function delPage(i){
@@ -1562,8 +1627,15 @@ function draw(keepSide){
  }
  if(laastNu){ editing=null; }
  const sh=sheet(); const title=sheetTitle();
- let h=`<div class="sheettitle" data-e="title">${esc(title)}</div>
-        <div class="sheetsub">${path.length?'Underark · '+path.map(p=>esc(p.label)).join(' › '):'Signalflow'}</div>`;
+ const iboks = infoVises(sh) ? infoHTML(sh) : '';
+ let h=`<div class="sheethead">
+   ${iboks?`<div class="headspacer" style="width:${infoBredde(sh)}px"></div>`:''}
+   <div class="headmid">
+     <div class="sheettitle" data-e="title">${esc(title)}</div>
+     <div class="sheetsub">${path.length?'Underark · '+path.map(p=>esc(p.label)).join(' › '):'Signalflow'}</div>
+   </div>
+   ${iboks}
+ </div>`;
 
  if(focus){
   const what = focus.t==='sec'
@@ -1702,6 +1774,7 @@ ${(g.sub&&g.sub.sections&&g.sub.sections.some(s=>(s.groups||[]).length))?
    <button class="add" data-addtext="1" title="Frit tekstfelt du kan placere hvor som helst på arket">+ tekstfelt</button>
    <button class="add" data-addlegend="1" title="Boks med symboler, positioner og antal – fx bemanding">+ symbolforklaring</button>
    <button class="add" data-addpanel="1" title="Grafisk intercom-panel med taster og adresse – fx et Riedel- eller Clearcom-panel">+ intercom panel</button>
+   ${infoVises(sh)?'':`<button class="add" data-infotilbage="1" title="Sæt forklaringsboksen tilbage i øverste højre hjørne">+ forklaringsboks</button>`}
  </div>`;
 
  /* frit placerede elementer ovenpå arket (låste er tegnet inde i boksene) */
@@ -1857,6 +1930,90 @@ function unanchor(it){
    it.y=Math.max(0,Math.round(r.top -sr.top -el.clientTop));
  }else{const s0=dropSpot(); it.x=s0.x; it.y=s0.y}
  delete it.anchor;
+}
+
+/* ── Forklaringsboksen ─────────────────────────────────────────
+   Hvert ark har en boks i øverste højre hjørne med signalfarverne, hvem der
+   har lavet tegningen og et telefonnummer. Den er der fra starten – også på
+   gamle projekter, hvor der slet ikke står noget om den endnu.
+   Navn og telefon gælder HELE projektet: man skriver dem ét sted, og så står
+   de på alle sider. Om boksen vises, og hvor stor den er, er derimod sidens
+   eget – man kan sagtens ville have den væk på én enkelt side. */
+const INFO_B=600;                  // bredden boksen starter med – alt på én linje
+const INFO_MIN=260, INFO_MAX=900;
+const INFO_SMAL=420;               // under denne bredde falder navn og telefon ned under
+function infoBoks(sh){const s=sh||sheet(); if(!s.info)s.info={}; return s.info}
+function infoVises(sh){const s=sh||sheet(); return !s.info||s.info.vis!==false}
+function infoBredde(sh){
+ const o=(sh||sheet()).info||{};
+ return Math.max(INFO_MIN,Math.min(INFO_MAX,+o.w||INFO_B));
+}
+/* Gå alle ark igennem – både siderne og de underark, der ligger inde i
+   grupperne. Bruges når navn eller telefon skal slå igennem overalt. */
+function alleArk(fn){
+ const gaa=sh=>{
+  if(!sh)return;
+  fn(sh);
+  (sh.sections||[]).forEach(sc=>(sc.groups||[]).forEach(g=>{if(g.sub)gaa(g.sub)}));
+ };
+ (pages||[]).forEach(gaa);
+}
+/* Navn og telefon skrives ét sted og gælder hele projektet: har siden ikke sit
+   eget, låner den fra den første side der har noget. Så får nye sider og
+   underark det med af sig selv, uden at vi skal stemple dem ved oprettelsen.
+   Skriver man noget andet på en enkelt side, står DET ved magt på den side. */
+function infoFra(felt){
+ let fundet='';
+ alleArk(a=>{ if(!fundet && a.info && a.info[felt]) fundet=a.info[felt] });
+ return fundet;
+}
+/* Står der slet intet navn i projektet, foreslår vi den der er logget ind.
+   Forslaget bliver først skrevet ind, når nogen retter feltet – ellers ville en
+   kollega, der bare kigger, komme til at stå som ophavsmand. */
+function infoAf(sh){
+ const o=(sh||sheet()).info||{};
+ if(o.af)return {tekst:o.af, gemt:true};
+ const laant=infoFra('af');
+ if(laant)return {tekst:laant, gemt:true};
+ const m=meName();
+ return {tekst:(m&&m!=='?')?m:'', gemt:false};
+}
+function infoTlf(sh){
+ const o=(sh||sheet()).info||{};
+ return o.tlf || infoFra('tlf') || '';
+}
+/* Skriften følger bredden, men kun til en vis grænse – ellers bliver teksten
+   ulæselig, når boksen trækkes helt sammen. */
+/* Skriften vokser kun halvt så hurtigt som boksen. Trækker man den bredere,
+   skal den ekstra plads mest blive til plads – ellers bliver boksen bare en
+   forstørrelse af sig selv og aldrig mere aflang. */
+const infoSkala=w=>Math.max(.82,Math.min(1.5,1+(w/INFO_B-1)*0.45));
+function infoHTML(sh){
+ const w=infoBredde(sh);
+ const af=infoAf(sh);
+ const tlf=infoTlf(sh);
+ const felt=(navn,vaerdi,noegle,hint)=>
+  `<div class="ifelt"><em>${navn}</em>`
+  +`<span class="ivaerdi ${vaerdi?'':'tom'}" data-e="${noegle}" title="${hint}">`
+  +`${esc(vaerdi||'klik for at skrive')}</span></div>`;
+ return `<div class="infoboks ${w<INFO_SMAL?'smal':''}" style="width:${w}px;--isk:${infoSkala(w).toFixed(3)}">
+   <div class="iindhold">
+     <div class="isignaler">
+       ${Object.keys(LAYERS).map(k=>
+         `<span class="ichip"><span class="idot" style="background:${DOT[k]}"></span>`
+        +`<span style="color:${COL[k]}">${esc(LAYERS[k])}</span></span>`).join('')}
+       <span class="ichip"><span class="idash"></span><span>Backup – stiplet</span></span>
+     </div>
+     <div class="ifolk">
+       ${felt('Tegnet af',af.tekst,'infoaf','Hvem har lavet tegningen – skrives én gang og står på alle sider')}
+       ${felt('Telefon',tlf,'infotlf','Telefonnummer – skrives én gang og står på alle sider')}
+     </div>
+   </div>
+   <span class="fitools">
+     <button class="mini" data-infovaek="1" title="Fjern forklaringsboksen fra denne side">✕</button>
+   </span>
+   <span class="rs venstre" data-rs="info|${sh.id}" title="Træk for at gøre boksen større eller mindre"></span>
+ </div>`;
 }
 
 function itemHTML(it){
@@ -3955,8 +4112,9 @@ function bindPlan(){
   const [dv,p,side]=find(b.dataset.pdel);
   snap();
   const synlige=ports(dv,side); const j=synlige.indexOf(p);
+  const serie=nrSerie(p,'n');               // kun linjens egen nummerserie rykker
   p.del=Date.now(); p.by=meName();
-  skubNumre(synlige,j+1,-1,'n');
+  skubSerie(synlige,j+1,-1,serie,'n');
   drawPlan();
  });
  el2.querySelectorAll('[data-pmenu]').forEach(b=>b.onclick=()=>sheetPort(b.dataset.pmenu));
@@ -3973,7 +4131,7 @@ function bindPlan(){
   const synlige=ports(dv,side);
   const j=synlige.indexOf(p);
   const ny={id:id(),n:nyttNr(synlige,j,'n'),label:'',by:'',at:0};
-  skubNumre(synlige,j,1,'n');
+  skubSerie(synlige,j,1,nrSerie(ny,'n'),'n');
   dv[side].splice(dv[side].indexOf(p),0,ny);
   drawPlan();
   setTimeout(()=>{const f=document.querySelector('[data-plabel="'+CSS.escape(dv.id+'|'+side+'|'+ny.id)+'"]');
@@ -4064,19 +4222,48 @@ function bindDevDrag(el2){
 /* ---- link direkte til kanalplanen ---- */
 let pendingOpen=null, pendingPlan=false;
 
-function planLink(tok){
+function planLink(tok,pid){
  const u=location.origin+location.pathname;
  const q=['view=plan','only=1','dom='+planDom];
- if(tok)q.push('t='+tok); else if(cloudId)q.push('p='+cloudId);
+ if(tok){
+  q.push('t='+tok);
+  /* Projektets id kommer med som kvittering. Gæsten tjekker at nøglen
+     faktisk åbner DET projekt – ellers siger den fra i stedet for at vise
+     en plan fra et andet projekt. */
+  if(pid||cloudId)q.push('p='+(pid||cloudId));
+ }else if(cloudId)q.push('p='+cloudId);
  return u+'?'+q.join('&');
 }
-/* Laver en nøgle til projektet første gang der deles, og genbruger den siden. */
+/* Laver en nøgle til projektet første gang der deles, og genbruger den siden.
+   Nøglen ligger i signalflow_shares med en fremmednøgle til projektet, så den
+   kun kan forsvinde sammen med projektet selv. Er den nye SQL ikke kørt endnu,
+   falder vi tilbage til den gamle kolonne, så delingen stadig virker. */
 async function shareToken(){
- const r=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=share_token');
- if(r&&r.length&&r[0].share_token)return r[0].share_token;
- const tok=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2));
- await sbFetch('signalflow_projects?id=eq.'+cloudId,
-   {method:'PATCH',body:JSON.stringify({share_token:tok})});
+ if(!cloudId)throw new Error('Gem projektet i databasen først – et delelink hører til ét bestemt projekt.');
+ let tok=null;
+ try{
+  const svar=await sbFetch('rpc/sf_share_make',
+    {method:'POST',body:JSON.stringify({pid:cloudId,who:meName()})});
+  tok=Array.isArray(svar)?(svar[0]&&(svar[0].sf_share_make||svar[0])):svar;
+  if(tok&&typeof tok==='object')tok=null;
+ }catch(e){ tok=null; }          // funktionen findes ikke endnu
+ if(!tok){
+  const r=await sbFetch('signalflow_projects?id=eq.'+cloudId+'&select=share_token');
+  tok=(r&&r.length&&r[0].share_token)||null;
+  if(!tok){
+   tok=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random().toString(16).slice(2));
+   await sbFetch('signalflow_projects?id=eq.'+cloudId,
+     {method:'PATCH',body:JSON.stringify({share_token:tok})});
+  }
+ }
+ /* Prøv linket af, FØR det bliver sendt videre. Et dødt link opdager man
+    ellers først, når kollegaen står med det. */
+ let raekker=null;
+ try{ raekker=await rpc('sf_plan_get',{tok:tok}) }catch(e){ raekker=null }
+ if(raekker&&!raekker.length)
+  throw new Error('Linket virker ikke i databasen endnu.\n\nKør SQL-opsætningen igen: menuen → "Vis SQL".');
+ if(raekker&&raekker.length&&raekker[0].id&&raekker[0].id!==cloudId)
+  throw new Error('Nøglen åbner et andet projekt end det, der er åbent.\n\nKør SQL-opsætningen igen: menuen → "Vis SQL".');
  return tok;
 }
 function copyLink(link,btn){
@@ -4477,7 +4664,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.13-a';
+const SF_VERSION='2026.10.14-e';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -4585,6 +4772,11 @@ function sheetApp(){
     gør:()=>openPanelValg()});
   ekstra.push({ikon:'T',tekst:'Tilføj tekstfelt',gør:()=>klik('[data-addtext]')});
   ekstra.push({ikon:'◇',tekst:'Tilføj symbolforklaring',gør:()=>klik('[data-addlegend]')});
+  ekstra.push(infoVises()
+    ? {ikon:'▣',tekst:'Fjern forklaringsboksen',under:'kun på denne side',
+       gør:()=>{snap();infoBoks(sheet()).vis=false;draw()}}
+    : {ikon:'▣',tekst:'Vis forklaringsboksen',under:'signalfarver, navn og telefon',
+       gør:()=>{snap();infoBoks(sheet()).vis=true;draw()}});
   ekstra.push({ikon:'⊞',tekst:'Ny side',gør:()=>addPage()});
   ekstra.push({skil:1});
  }
@@ -4684,14 +4876,18 @@ function sheetKanal(gid,cid){
     snap();
     const ny=newCh(i+1); ny.nr=nyttNr(g.channels,i); ny.layer=ch.layer;
     if(ch.dir)ny.dir=ch.dir; if(ch.role)ny.role=ch.role;
-    skubNumre(g.channels,i,1); g.channels.splice(i,0,ny); draw();
+    skubSerie(g.channels,i,1,nrSerie(ny)); g.channels.splice(i,0,ny); draw();
     setTimeout(()=>{const el3=document.querySelector('[data-e="chlabel"][data-id="'+gid+'|'+ny.id+'"]');
       if(el3)startEdit(el3)},60)}},
   {ikon:'▲',tekst:'Flyt op',gør:()=>flytKanal(g,i,-1)},
   {ikon:'▼',tekst:'Flyt ned',gør:()=>flytKanal(g,i,1)},
   {skil:1},
   {ikon:'✕',tekst:'Slet kanalen',fare:1,gør:()=>{
-    snap(); g.channels.splice(i,1); skubNumre(g.channels,i,-1); draw()}}
+    snap();
+    const serie=nrSerie(ch);                  // serien skal findes FØR linjen er væk
+    g.channels.splice(i,1);
+    skubSerie(g.channels,i,-1,serie);
+    draw()}}
  ]);
 }
 function flytKanal(g,i,ret){
@@ -4749,14 +4945,19 @@ function sheetPort(ref){
   {ikon:'⤒',tekst:'Indsæt linje ovenover',gør:()=>{
     snap();
     const ny={id:id(),n:nyttNr(synlige,j,'n'),label:'',by:'',at:0};
-    skubNumre(synlige,j,1,'n');
+    skubSerie(synlige,j,1,nrSerie(ny,'n'),'n');
     dv[side].splice(dv[side].indexOf(p),0,ny);drawPlan()}},
   {ikon:'▲',tekst:'Flyt op',gør:()=>flytPort(dv,side,j,-1)},
   {ikon:'▼',tekst:'Flyt ned',gør:()=>flytPort(dv,side,j,1)},
   {skil:1},
   {ikon:'✕',tekst:'Fjern linjen',fare:1,gør:()=>{
-    snap();p.del=Date.now();p.by=meName();
-    skubNumre(ports(dv,side),j+1,-1,'n');drawPlan()}}
+    snap();
+    const serie=nrSerie(p,'n');
+    p.del=Date.now();p.by=meName();
+    /* "synlige" blev hentet før linjen blev fjernet, så den står stadig på
+       plads j – derfor j+1. Hentede vi listen igen her, ville vi springe
+       linjen lige under over. */
+    skubSerie(synlige,j+1,-1,serie,'n');drawPlan()}}
  ]);
 }
 function flytPort(dv,side,i,ret){
@@ -4875,6 +5076,12 @@ function askGuestName(){
    ét projekt – men intet andet. Hverken tegninger, blokdiagrammer eller
    de øvrige projekter kan nås med nøglen. */
 let guestToken=null, guestPush=null, guestSync=null;
+/* Hvilket projekt linket siger, det hører til. Står der noget andet i svaret
+   fra databasen, viser vi IKKE planen – så er der noget galt i opsætningen,
+   og en gæst skal aldrig få et projekt, linket ikke gav adgang til. */
+let guestPid=null;
+/* Var planen tom, dengang vi hentede den? Kun så må vi gemme en tom plan. */
+let guestPlanVarTom=true;
 /* Gæsten må først gemme, når planen er hentet. Ellers kunne et delelink nå at
    skrive en tom plan op i databasen, inden data var kommet ned. */
 let guestReady=false;
@@ -4909,9 +5116,29 @@ async function guestPull(){
  let rows;
  try{ rows=await rpc('sf_plan_get',{tok:guestToken}) }
  catch(e){ setSync(e.message,true); return }
- if(!rows||!rows.length){setSync('linket virker ikke længere',true);return}
+ if(!rows||!rows.length){
+  /* Nøglen findes ikke længere. Et link holder, så længe projektet gør –
+     så er projektet slettet. */
+  clearInterval(guestSync); guestSync=null;
+  guestReady=false;
+  setSync('projektet findes ikke længere',true);
+  guestBesked('Projektet er slettet','Linket hørte til ét bestemt projekt, og det findes ikke længere i databasen. Bed om et nyt link.');
+  return;
+ }
  const row=rows[0];
- guestReady=true;
+ /* Linket bar projektets id med. Svarer databasen med et andet projekt, er
+    opsætningen gal – og så er det bedre at sige fra end at vise en plan,
+    linket ikke gav adgang til. */
+ if(guestPid && row.id && row.id!==guestPid){
+  clearInterval(guestSync); guestSync=null;
+  guestReady=false;
+  setSync('linket passer ikke til projektet',true);
+  guestBesked('Linket passer ikke','Nøglen i linket åbner et andet projekt end det, linket blev lavet til. Bed om et nyt link.');
+  return;
+ }
+ if(row.id)guestPid=guestPid||row.id;      // første svar binder linket fast
+ guestPlanVarTom=planTom(row.plan);
+ guestReady=true;                          // FØRST her: nu har vi serverens plan
  projectName=row.name||'Kanalplan';
  if(row.updated_at===lastSync&&plan)return;
  const foc=focusedRef();
@@ -4938,8 +5165,22 @@ async function guestPull(){
  setSync('opdateret');
  if(document.getElementById('plan').innerHTML)syncPlanDOM(); else drawPlan();
 }
+/* Er der overhovedet udstyr i en plan? Bruges som sikring: en tom plan må
+   aldrig skrives op over en plan, der har noget i sig. Slettet udstyr bliver
+   stående med et sletningstidspunkt, så listen bliver ikke tom af en sletning –
+   den er kun tom, hvis vi aldrig har fået noget. */
+function planTom(p){
+ if(!p)return true;
+ return !Object.keys(p).some(k=>(((p[k]||{}).devices)||[]).length);
+}
 function guestSave(){
+ /* Tre låse, fordi det her er dyrt at tage fejl i: planen skal være hentet,
+    vi skal have set serverens tidsstempel, og vi skriver aldrig tomt oven på
+    noget. Før kunne en mislykket hentning få gæsten til at tro, den var klar –
+    og så blev projektets kanalplan tørret ud. */
  if(!guestReady)return;          // planen er ikke hentet endnu
+ if(!lastSync)return;            // vi har aldrig set serverens udgave
+ if(planTom(ensurePlan())&&!guestPlanVarTom)return;
  clearTimeout(guestPush);
  guestPush=setTimeout(async()=>{
   try{
@@ -4950,15 +5191,32 @@ function guestSave(){
   }catch(e){setSync('kunne ikke gemme',true)}
  },1500);
 }
-function startGuest(tok){
+/* En besked midt på skærmen, når linket ikke kan bruges. Gæsten har hverken
+   menu eller login at falde tilbage på, så det skal stå tydeligt. */
+function guestBesked(overskrift,tekst){
+ let n=document.getElementById('guestbesked');
+ if(!n){
+  n=document.createElement('div'); n.id='guestbesked';
+  n.style.cssText='position:fixed;inset:0;z-index:4000;display:flex;align-items:center;'
+   +'justify-content:center;background:rgba(8,11,16,.92);padding:24px;text-align:center';
+  document.body.appendChild(n);
+ }
+ n.innerHTML='<div style="max-width:420px;color:#e8e8e8;font-family:var(--fs,system-ui)">'
+  +'<div style="font-size:19px;font-weight:700;margin-bottom:10px">'+esc(overskrift)+'</div>'
+  +'<div style="font-size:14px;line-height:1.5;color:#b9b9b9">'+esc(tekst)+'</div></div>';
+}
+function startGuest(tok,pid){
  guestToken=tok;
+ guestPid=pid||null;
  document.body.classList.add('unlocked','onlyplan','guest');
  view='plan'; document.body.classList.add('planview');
  ensurePlan(); ensureBlocks();
  askGuestName().then(()=>{mEl.dataset.locked='';drawPlan()});
  setSync('henter …');
+ /* guestReady sættes KUN inde i guestPull, og kun når planen faktisk er
+    kommet ned. Blev den sat her, ville en mislykket hentning give grønt lys
+    til at gemme – med en tom plan. */
  guestPull().then(()=>{
-  guestReady=true;
   if(!document.getElementById('plan').innerHTML)drawPlan();
  }).catch(e=>setSync(e.message,true));
  clearInterval(guestSync);
@@ -5644,13 +5902,6 @@ alter table categories enable row level security;
 drop policy if exists "cat_laes" on categories;
 create policy "cat_laes" on categories for select using (true);
 
--- Gæsten spørger først om tidsstemplet, så planen kun hentes når den er ændret.
-create or replace function sf_plan_ts(tok uuid)
-returns timestamptz language sql security definer set search_path = public as $$
-  select p.updated_at from signalflow_projects p where p.share_token = tok
-$$;
-grant execute on function sf_plan_ts(uuid) to anon, authenticated;
-
 -- ===== Hvem er inde i projektet lige nu =====
 -- Hver bruger skriver en linje om sig selv hvert tiende sekund. Linjer der er
 -- ældre end et minut regnes som "gået igen".
@@ -5671,12 +5922,128 @@ create policy "pres_skriv" on signalflow_presence for insert with check (auth.ui
 create policy "pres_ret"   on signalflow_presence for update using (auth.uid() is not null);
 create policy "pres_slet"  on signalflow_presence for delete using (auth.uid() is not null);
 
--- Gæster på et delelink har ikke login, så de går gennem disse to funktioner.
+-- ===== Delelink til kanalplanen =====
+-- Gæsten ser KUN planen, og kun for det ene projekt linket hører til.
+--
+-- Nøglen lå før i en kolonne på selve projektet. Alt hvad der skriver
+-- projektet kan røre den kolonne – og så er linket dødt, selv om projektet
+-- stadig findes. Derfor ligger nøglen nu i sin egen tabel med en fremmednøgle
+-- til projektet: den kan kun forsvinde, hvis projektet selv bliver slettet.
+create table if not exists signalflow_shares (
+  token       uuid primary key default gen_random_uuid(),
+  project_id  uuid not null references signalflow_projects(id) on delete cascade,
+  created_at  timestamptz not null default now(),
+  created_by  text
+);
+create index if not exists sfs_projekt on signalflow_shares(project_id);
+-- Ét link pr. projekt: deler man igen, får man det samme link tilbage.
+create unique index if not exists sfs_et_pr_projekt on signalflow_shares(project_id);
+
+alter table signalflow_shares enable row level security;
+drop policy if exists "sfs_laes"  on signalflow_shares;
+drop policy if exists "sfs_skriv" on signalflow_shares;
+drop policy if exists "sfs_slet"  on signalflow_shares;
+create policy "sfs_laes"  on signalflow_shares for select using (auth.uid() is not null);
+create policy "sfs_skriv" on signalflow_shares for insert with check (auth.uid() is not null);
+create policy "sfs_slet"  on signalflow_shares for delete using (auth.uid() is not null);
+
+-- Nøgler der allerede er delt ud, flyttes med, så gamle links bliver ved at virke
+alter table signalflow_projects add column if not exists share_token uuid;
+insert into signalflow_shares (token, project_id)
+select p.share_token, p.id from signalflow_projects p where p.share_token is not null
+on conflict do nothing;
+
+-- Slå en nøgle op: først i den nye tabel, ellers i den gamle kolonne
+create or replace function sf_share_pid(tok uuid)
+returns uuid language sql stable security definer set search_path = public as $$
+  select coalesce(
+    (select s.project_id from signalflow_shares s where s.token = tok),
+    (select p.id from signalflow_projects p where p.share_token = tok)
+  )
+$$;
+
+-- Lav – eller genbrug – linket til ét bestemt projekt
+create or replace function sf_share_make(pid uuid, who text)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare tok uuid;
+begin
+  if auth.uid() is null then
+    raise exception 'Du skal være logget ind for at dele en kanalplan.';
+  end if;
+  if not exists (select 1 from signalflow_projects where id = pid) then
+    raise exception 'Projektet findes ikke.';
+  end if;
+  select s.token into tok from signalflow_shares s where s.project_id = pid;
+  if tok is not null then return tok; end if;
+  select p.share_token into tok from signalflow_projects p where p.id = pid;
+  if tok is null then tok := gen_random_uuid(); end if;
+  insert into signalflow_shares (token, project_id, created_by)
+  values (tok, pid, coalesce(who,''))
+  on conflict (project_id) do update set token = excluded.token
+  returning signalflow_shares.token into tok;
+  update signalflow_projects set share_token = tok where id = pid;
+  return tok;
+end $$;
+revoke all on function sf_share_make(uuid, text) from public;
+grant execute on function sf_share_make(uuid, text) to authenticated;
+
+-- Gæstens funktioner. Returtypen på sf_plan_get er ændret (id er kommet med),
+-- så den skal droppes før den kan laves om.
+drop function if exists sf_plan_get(uuid);
+create function sf_plan_get(tok uuid)
+returns table(id uuid, name text, plan jsonb, updated_at timestamptz, updated_by text)
+language sql stable security definer set search_path = public as $$
+  select p.id, p.name, p.data->'plan', p.updated_at, p.updated_by
+    from signalflow_projects p where p.id = sf_share_pid(tok)
+$$;
+
+-- Gæsten spørger først om tidsstemplet, så planen kun hentes når den er ændret.
+create or replace function sf_plan_ts(tok uuid)
+returns timestamptz language sql stable security definer set search_path = public as $$
+  select p.updated_at from signalflow_projects p where p.id = sf_share_pid(tok)
+$$;
+
+-- Er der overhovedet udstyr i en plan? Bruges som værn nedenfor.
+create or replace function sf_plan_tom(pl jsonb)
+returns boolean language sql immutable set search_path = public as $$
+  select not exists (
+    select 1
+      from jsonb_each(case when jsonb_typeof(pl)='object' then pl else '{}'::jsonb end) omr
+      cross join lateral jsonb_array_elements(
+        case when jsonb_typeof(omr.value->'devices')='array'
+             then omr.value->'devices' else '[]'::jsonb end) d
+  )
+$$;
+
+create or replace function sf_plan_set(tok uuid, newplan jsonb, who text)
+returns timestamptz language plpgsql security definer set search_path = public as $$
+declare ts timestamptz; pid uuid; gammel jsonb;
+begin
+  pid := sf_share_pid(tok);
+  if pid is null then return null; end if;
+  select p.data->'plan' into gammel from signalflow_projects p where p.id = pid;
+  -- Et sidste værn: en gæst, der lige har mistet forbindelsen, kan nå at
+  -- sende sin tomme startplan. Den må aldrig tørre en plan ud, der har
+  -- noget i sig. Slettet udstyr bliver staaende med et sletningstidspunkt,
+  -- saa en rigtig sletning bliver ikke stoppet her.
+  if sf_plan_tom(newplan) and not sf_plan_tom(gammel) then
+    select p.updated_at into ts from signalflow_projects p where p.id = pid;
+    return ts;
+  end if;
+  update signalflow_projects
+     set data = jsonb_set(coalesce(data,'{}'::jsonb), '{plan}', newplan, true),
+         updated_by = coalesce(who,''), updated_at = now()
+   where id = pid
+   returning updated_at into ts;
+  return ts;
+end $$;
+
+-- Gæster på et delelink har ikke login, så de melder sig gennem disse to.
 create or replace function sf_pres_set(tok uuid, hvem text, hvor text)
 returns void language plpgsql security definer set search_path = public as $$
 declare pid uuid;
 begin
-  select id into pid from signalflow_projects where share_token = tok;
+  pid := sf_share_pid(tok);
   if pid is null then return; end if;
   insert into signalflow_presence(project_id, who, sted, at)
   values (pid, coalesce(nullif(hvem,''),'gæst'), hvor, now())
@@ -5685,42 +6052,20 @@ end $$;
 
 create or replace function sf_pres_get(tok uuid)
 returns table(who text, sted text, at timestamptz)
-language sql security definer set search_path = public as $$
-  select p.who, p.sted, p.at
-    from signalflow_presence p
-    join signalflow_projects pr on pr.id = p.project_id
-   where pr.share_token = tok and p.at > now() - interval '1 minute';
-$$;
-grant execute on function sf_pres_set(uuid, text, text) to anon, authenticated;
-grant execute on function sf_pres_get(uuid) to anon, authenticated;
-
--- Delelink til kanalplanen: gæsten ser KUN planen, og kun for det ene projekt.
-alter table signalflow_projects add column if not exists share_token uuid;
-create unique index if not exists sfp_share on signalflow_projects(share_token);
-
-create or replace function sf_plan_get(tok uuid)
-returns table(name text, plan jsonb, updated_at timestamptz, updated_by text)
-language sql security definer set search_path = public as $$
-  select p.name, p.data->'plan', p.updated_at, p.updated_by
-  from signalflow_projects p where p.share_token = tok
+language sql stable security definer set search_path = public as $$
+  select p.who, p.sted, p.at from signalflow_presence p
+   where p.project_id = sf_share_pid(tok) and p.at > now() - interval '1 minute';
 $$;
 
-create or replace function sf_plan_set(tok uuid, newplan jsonb, who text)
-returns timestamptz language plpgsql security definer set search_path = public as $$
-declare ts timestamptz;
-begin
-  update signalflow_projects
-     set data = jsonb_set(data, '{plan}', newplan, true),
-         updated_by = coalesce(who,''), updated_at = now()
-   where share_token = tok
-   returning updated_at into ts;
-  return ts;
-end $$;
-
+revoke all on function sf_share_pid(uuid) from public;
 revoke all on function sf_plan_get(uuid) from public;
 revoke all on function sf_plan_set(uuid, jsonb, text) from public;
-grant execute on function sf_plan_get(uuid) to anon, authenticated;
-grant execute on function sf_plan_set(uuid, jsonb, text) to anon, authenticated;`;
+revoke all on function sf_plan_tom(jsonb) from public;
+grant execute on function sf_plan_get(uuid)              to anon, authenticated;
+grant execute on function sf_plan_set(uuid, jsonb, text) to anon, authenticated;
+grant execute on function sf_plan_ts(uuid)               to anon, authenticated;
+grant execute on function sf_pres_set(uuid, text, text)  to anon, authenticated;
+grant execute on function sf_pres_get(uuid)              to anon, authenticated;`;
 
 /* ---- kald mod databasen ---- */
 const snapshot=()=>({app:'signalflow',name:projectName,pages:pages,plan:ensurePlan(),blocks:ensureBlocks()});
@@ -7721,6 +8066,20 @@ function exportDrawio(o){
     M,y,SHEETW-2*M,34);
   y+=54;
 
+  /* forklaringsboksen følger med ud i draw.io – ellers mangler tegningen både
+     signalfarverne og hvem der har lavet den */
+  if(infoVises(sh)){
+   const iw=Math.max(380,infoBredde(sh)), ih=58;
+   V(Object.keys(LAYERS).map(k=>'●  '+LAYERS[k]).join('    ')
+     +'    - -  Backup – stiplet\n'
+     +'Tegnet af:  '+(infoAf(sh).tekst||'—')
+     +'      Telefon:  '+(infoTlf(sh)||'—'),
+     'sf=forklaring;rounded=1;arcSize=4;html=1;whiteSpace=wrap;verticalAlign=middle;align=left;'
+    +'fontSize=11;spacing=8;fillColor=#ffffff;strokeColor=#c4c4c4;',
+     SHEETW-M-iw, M, iw, ih);
+   y=Math.max(y, M+ih+20);
+  }
+
   sh.sections.forEach(sc=>{
    const st=sc.style||{};
    const srcW=+(st.srcW||190), dstW=+(st.dstW||210);
@@ -8456,6 +8815,15 @@ document.getElementById('sheet').addEventListener('mousedown',ev=>{
    }
   }
   const [kind,ref]=rs.dataset.rs.split('|');
+  /* forklaringsboksen: bredden styrer også skriftstørrelsen, så hele boksen
+     bliver større eller mindre i ét træk */
+  if(kind==='info'){
+   dragState={mode:'resize',kind:'info',x0:ev.clientX,y0:ev.clientY,
+     w0:infoBredde(sheet()), el:rs.parentElement,
+     spacer:el.querySelector('.headspacer')};
+   snap(); document.body.style.userSelect='none';
+   return;
+  }
   const sc=sheet().sections.find(s=>s.id===ref);
   const it=kind==='item'?findItem(ref):null;
   const st=sc?SS(sc):null;
@@ -8549,6 +8917,14 @@ document.addEventListener('mousemove',ev=>{
     const nu=parseFloat(el.style.minHeight)||sr.height;
     el.style.minHeight=(nu+(br.bottom-(sr.bottom-60)))+'px';
   }
+ } else if(d.kind==='info'){
+  /* håndtaget sidder i venstre hjørne: træk mod venstre gør boksen større */
+  const w=Math.max(INFO_MIN,Math.min(INFO_MAX,d.w0-dx));
+  d.el.style.width=w+'px';
+  d.el.style.setProperty('--isk',infoSkala(w).toFixed(3));
+  d.el.classList.toggle('smal', w<INFO_SMAL);
+  if(d.spacer)d.spacer.style.width=w+'px';   // titlen bliver siddende midt på arket
+  d.wNow=w;
  } else if(d.kind==='item'){
   const minB = d.el.classList&&d.el.classList.contains('fpanel') ? 120 : 90;
   d.el.style.width=Math.max(minB,d.w0+dx)+'px';
@@ -8585,6 +8961,8 @@ document.addEventListener('mouseup',()=>{
    d.it.x=Math.max(0,Math.round(r.left-sr.left-el.clientLeft));
    d.it.y=Math.max(0,Math.round(r.top -sr.top -el.clientTop));
   }
+ } else if(d.kind==='info'){
+  infoBoks(sheet()).w=Math.max(INFO_MIN,Math.min(INFO_MAX,d.wNow||d.w0));
  } else if(d.kind==='item'){
   let w=parseFloat(d.el.style.width)||d.w0;
   if(d.it.anchor){
@@ -8661,6 +9039,8 @@ function focusNext(kind,ref,back){
 }
 function getVal(k,r){
  if(k==='title')return sheetTitle();
+ if(k==='infoaf')return infoAf(sheet()).tekst;
+ if(k==='infotlf')return infoTlf(sheet());
  if(k==='src'){const sc=sheet().sections.find(s=>s.id===r);return sc?sc.src:''}
  if(k==='dst'){const sc=sheet().sections.find(s=>s.id===r);return sc?sc.dst:''}
  if(k==='srcline'||k==='dstline'){const[sid,lid]=String(r).split('|');
@@ -8675,6 +9055,12 @@ function getVal(k,r){
 }
 function setVal(k,r,v){
  if(k==='title'){setSheetTitle(v);return}
+ /* Navn og telefon hører til tegningen som helhed, ikke til den enkelte side.
+    Derfor skrives de på alle ark med det samme: retter man nummeret, mens man
+    står på side 4, skal side 1 også have det nye nummer. Sider der laves
+    bagefter låner værdien gennem infoFra(). */
+ if(k==='infoaf'){const t=v.trim(); alleArk(a=>{infoBoks(a).af=t});return}
+ if(k==='infotlf'){const t=v.trim(); alleArk(a=>{infoBoks(a).tlf=t});return}
  if(k==='src'){const sc=sheet().sections.find(s=>s.id===r);if(sc)sc.src=v;return}
  if(k==='dst'){const sc=sheet().sections.find(s=>s.id===r);if(sc)sc.dst=v;return}
  if(k==='srcline'||k==='dstline'){const[sid,lid]=String(r).split('|');
@@ -8706,6 +9092,8 @@ el.addEventListener('click',ev=>{
  const d=k=>t.closest('['+k+']');
  let n;
  if(n=d('data-addsec')){addSec();return}
+ if(n=d('data-infovaek')){snap();infoBoks(sheet()).vis=false;draw();return}
+ if(n=d('data-infotilbage')){snap();infoBoks(sheet()).vis=true;draw();return}
  if(n=d('data-addgrp')){snap();const sc=sheet().sections.find(s=>s.id===n.dataset.addgrp);const g=newGroup('Kilde '+(sc.groups.length+1));g.feed='TX '+(sc.groups.length+1);g.channels=[newCh(1)];sc.groups.push(g);sel={t:'grp',id:g.id};draw();return}
  if(n=d('data-addch')){snap();const[g]=findGrp(n.dataset.addch);
    const sidste=g.channels[g.channels.length-1];
@@ -8724,7 +9112,7 @@ el.addEventListener('click',ev=>{
    ny.nr=nyttNr(g.channels,i);
    /* den nye arver signaltype, retning og rolle fra den kanal den lægger sig over */
    if(forrige){ny.layer=forrige.layer; if(forrige.dir)ny.dir=forrige.dir; if(forrige.role)ny.role=forrige.role}
-   skubNumre(g.channels,i,1);
+   skubSerie(g.channels,i,1,nrSerie(ny));
    g.channels.splice(i,0,ny);
    draw();
    /* skriv med det samme i den nye linje */
@@ -8743,8 +9131,10 @@ el.addEventListener('click',ev=>{
    draw();return}
  if(n=d('data-delc')){snap();const[gid,cid]=n.dataset.delc.split('|');const[g]=findGrp(gid);
    const i=g.channels.findIndex(c=>c.id===cid);
+   if(i<0)return;                              // linjen er allerede væk
+   const serie=nrSerie(g.channels[i]);         // serien skal findes FØR linjen er væk
    g.channels.splice(i,1);
-   skubNumre(g.channels,i,-1);
+   skubSerie(g.channels,i,-1,serie);
    draw();return}
  if(n=d('data-delsec')){snap();sheet().sections=sheet().sections.filter(s=>s.id!==n.dataset.delsec);draw();return}
  if(n=d('data-up')){move(n.dataset.up,-1);return}
@@ -8945,9 +9335,10 @@ document.getElementById('gGo').onclick=function(){
   if(e.key==='Enter'){e.preventDefault();document.getElementById('gGo').click()}
  };
 });
-const _t=new URLSearchParams(location.search).get('t');
+const _q=new URLSearchParams(location.search);
+const _t=_q.get('t');
 if(_t){
- startGuest(_t);
+ startGuest(_t,_q.get('p'));
 }else if(session()){
  unlock();
 }else{
