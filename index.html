@@ -279,14 +279,13 @@ body.mobile .pnum{font-size:13px;padding:10px 3px;width:42px}
 body.mobile .tick input{width:22px;height:22px}
 body.mobile .planbar{gap:7px}
 body.mobile .planbar .sharebtn{flex:1 1 auto;padding:10px 8px;font-size:12.5px}
-/* På mobil ligger de fleste i ☰-menuen – men "Del link" bruges hele tiden
-   ude på gulvet, så den skal være synlig. */
+/* På telefonen bygges topbjælken uden opdatér, del link, csv, kolonner og
+   ret op – de knapper findes slet ikke her, de åd skærmen. Tilbage står
+   "Fold tomme" og "+ Udstyr". Print og gem ligger i ☰-menuen. */
 body.mobile .planbar [data-save],body.mobile .planbar [data-imp],body.mobile .planbar [data-kimp],
-body.mobile .planbar [data-ppdf],
-body.mobile .planbar [data-pcsv],body.mobile .planbar .whotag,
+body.mobile .planbar [data-ppdf],body.mobile .planbar .whotag,
 body.mobile .planbar .whobox{display:none}
-body.mobile .planbar [data-kol3]{display:none}
-body.mobile .planbar [data-kol1],body.mobile .planbar [data-foldall],body.mobile .planbar [data-share]{display:inline-flex;align-items:center;justify-content:center;
+body.mobile .planbar [data-foldall]{display:inline-flex;align-items:center;justify-content:center;
  flex:0 0 auto;gap:5px;background:var(--panel2);border-color:var(--dim);color:var(--text);
  font-size:13px;padding:10px 12px}
 body.mobile .planadd{width:100%;margin-left:0}
@@ -872,6 +871,12 @@ body.onlyplan #bFoldAll,body.onlyplan #bNew{display:none}
 body.guest #bCloud,body.guest #bSave,body.guest #bOpen,body.guest #bExport,
 body.guest #bUndo,body.guest #crumbs .projname{display:none}
 body.guest .gastmark{display:inline-flex}
+/* Gæsten ser kun kanalplanen – der er intet sidepanel at folde ud, ingen
+   bundnavigation til de andre visninger, intet projektskifte og ingen
+   gem-knap: planen gemmer sig selv, hver gang der rettes. */
+body.guest #sideknap, body.guest #side{display:none!important}
+body.guest #mnav, body.guest #mCloud, body.guest #mSave{display:none!important}
+body.mobile.guest #app{padding-bottom:12px}
 .gastmark{display:none;align-items:center;gap:6px;font-family:var(--fm);font-size:10px;
  color:var(--intercom);border:1px solid var(--intercom);border-radius:7px;padding:5px 9px;white-space:nowrap}
 .whobox{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 10px;font:inherit;width:130px}
@@ -3650,14 +3655,17 @@ function drawPlan(){
    ${meName()==='?'?`<input class="whobox" id="whoBox" placeholder="Dine initialer" title="Vises ud for de linjer du retter">`:
      `<span class="whotag" title="Dine initialer – klik for at rette">${esc(meName())}</span>`}
    <button class="sharebtn save" data-save="1" title="Gem i databasen nu, så kollegerne kan se det">Gem</button>
+   ${mobil?'':`
    <button class="sharebtn" data-refresh="1" title="Hent kollegernes ændringer nu">↻ Opdatér</button>
-   <button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan – modtageren skal ikke logge ind">🔗 Del link</button>
+   <button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan – modtageren skal ikke logge ind">🔗 Del link</button>`}
    <button class="sharebtn" data-ppdf="1" title="Print ${PLANDOMS[planDom]}-planen eller gem den som PDF">↧ PDF</button>
+   ${mobil?'':`
    <button class="sharebtn" data-pcsv="1" title="Hent ${PLANDOMS[planDom]}-planen som regneark til Excel">↧ CSV</button>
    <button class="sharebtn" data-kol1="1" title="Stil kortene i én lang kolonne, så du kun skal rulle nedad">↕ Én kolonne</button>
-   <button class="sharebtn" data-kol3="1" title="Stil kortene op i tre kolonner ved siden af hinanden">⫴ Tre kolonner</button>
+   <button class="sharebtn" data-kol3="1" title="Stil kortene op i tre kolonner ved siden af hinanden">⫴ Tre kolonner</button>`}
    <button class="sharebtn" data-foldall="1" title="Fold alle kort sammen, så kun linjer med signal vises – tryk igen for at folde ud">⊟ Fold tomme</button>
-   <button class="sharebtn ${planSnap?'on':''}" data-psnap="1" title="Lås til gitter: kortene falder på plads i lige rækker, og der vises hjælpelinjer når de flugter">⊞ Ret op</button>
+   ${mobil?''/* På telefonen står kortene i én kolonne i forvejen – der er intet at rette op */
+     :`<button class="sharebtn ${planSnap?'on':''}" data-psnap="1" title="Lås til gitter: kortene falder på plads i lige rækker, og der vises hjælpelinjer når de flugter">⊞ Ret op</button>`}
    ${guestToken?'':`
      <div class="planadd">
        <button class="sharebtn save" data-arch="1" title="Hent udstyr fra lageret">+ Udstyr</button>
@@ -4660,7 +4668,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.14-g';
+const SF_VERSION='2026.10.14-h';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -4740,16 +4748,25 @@ function closeSheet(){document.getElementById('sheetwrap').classList.remove('on'
 
 /* ---- menuerne ---- */
 function sheetApp(){
+ /* Gæsten på et delelink har kun kanalplanen. Resten af menuen – projekter,
+    gem, import, lås, eksport – hører ikke til her, og et par af punkterne
+    ville slet ikke virke uden login. */
+ if(guestToken){
+  openSheet('Menu',[
+   {ikon:'✎',tekst:'Skift dit navn',vaerdi:meName()==='?'?'':meName(),
+    under:'vises ud for de linjer du retter',
+    gør:()=>askGuestName().then(()=>drawPlan())},
+   {ikon:'↧',tekst:'Print kanalplanen',under:PLANDOMS[planDom],
+    gør:()=>exportPlanPDF({paper:'A4',orient:'portrait',margin:10,kun:planDom})}
+  ]);
+  return;
+ }
  const ekstra=[];
  if(view==='plan'){
-  ekstra.push({ikon:'↻',tekst:'Hent kollegernes ændringer',gør:()=>pull()});
-  ekstra.push({ikon:'🔗',tekst:'Del link til kanalplanen',gør:()=>{
-    if(!cloudId)return alert('Gem projektet i databasen først.');
-    shareToken().then(t=>copyLink(planLink(t),{textContent:''})).then(()=>alert('Linket er kopieret.'))
-      .catch(e=>alert(e.message))}});
+  /* Planen henter selv kollegernes rettelser hvert sjette sekund, så der er
+     ingen opdatér-knap. Delelink og regneark hører til ved computeren. */
   ekstra.push({ikon:'↧',tekst:'Print kanalplanen',under:PLANDOMS[planDom],
     gør:()=>exportPlanPDF({paper:'A4',orient:'portrait',margin:10,kun:planDom})});
-  ekstra.push({ikon:'↧',tekst:'Kanalplan som regneark',gør:()=>exportPlanCSV(planDom)});
   ekstra.push({ikon:'⤒',tekst:'Importér udstyr',gør:()=>importItems('plan')});
   ekstra.push({skil:1});
  }
@@ -5204,9 +5221,14 @@ function guestBesked(overskrift,tekst){
 function startGuest(tok,pid){
  guestToken=tok;
  guestPid=pid||null;
+ /* Gæsten fik før altid skrivebordsudgaven – også på en telefon. Derfor var
+    topbjælken fuld af knapper, der ikke er brug for, når man står ude med
+    telefonen i hånden. Nu vælger den udgave efter skærmen som alle andre. */
+ document.body.classList.add('sideskjult');      // ingen sidebar i kanalplanen
  document.body.classList.add('unlocked','onlyplan','guest');
  view='plan'; document.body.classList.add('planview');
  ensurePlan(); ensureBlocks();
+ if(typeof vaelgUdgave==='function')vaelgUdgave();   // mobil eller skrivebord efter skærmen
  askGuestName().then(()=>{mEl.dataset.locked='';drawPlan()});
  setSync('henter …');
  /* guestReady sættes KUN inde i guestPull, og kun når planen faktisk er
