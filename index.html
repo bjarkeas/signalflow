@@ -100,7 +100,7 @@ header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 14px;b
 
 
 
-/* ---- skift mellem tegning og kanalplan ---- */
+/* ---- skift mellem tegning og plan ---- */
 .viewsw{display:flex;gap:2px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:2px}
 .vbtn{background:none;border:none;color:var(--dim);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12.5px;white-space:nowrap}
 .vbtn.on{background:var(--panel2);color:var(--text)}
@@ -179,7 +179,7 @@ body.mobile:not(.planview):not(.blockview):not(.archview) #app{padding-top:100px
 body.mobile #laasbanner{display:none!important}
 /* Arket ligger i tredje gitterrække på skrivebordet (under topbjælke og
    faner). På mobilen findes de rækker ikke – uden det her får man et stort
-   tomt bånd øverst i kanalplan og blokdiagram. */
+   tomt bånd øverst i plan og blokdiagram. */
 body.mobile #stage{grid-column:1/-1;grid-row:1/-1;padding:10px 10px 16px}
 
 /* topbjælke */
@@ -269,7 +269,7 @@ body.mobile .ch .lbl{font-size:15px;flex:1}
 body.mobile .grp{margin-bottom:12px}
 body.mobile .sheettitle{font-size:19px}
 
-/* kanalplan og lager på mobil */
+/* plan og lager på mobil */
 body.mobile .devcanvas{width:auto!important;height:auto!important}
 body.mobile .dev{position:relative!important;left:auto!important;top:auto!important;
  width:auto!important;margin:0 0 12px}
@@ -627,7 +627,7 @@ body.mobile .port.freq .grip,body.mobile .port.freq [data-pins],
 body.mobile .port.freq [data-pdel]{display:none}
 
 
-/* sidepanelet i kanalplan, blokdiagram og lager */
+/* sidepanelet i plan, blokdiagram og lager */
 .sdliste{margin:10px 0 14px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
 .sdrow{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:8px 10px;
  border-bottom:1px solid var(--line);font-size:12px;cursor:default}
@@ -857,7 +857,7 @@ body.blockview #stage{grid-column:1/2;background:#0b0e13;padding:14px}
  .btool{flex:1;text-align:center;padding:9px 6px}
 }
 
-/* ---- kanalplan ---- */
+/* ---- plan ---- */
 .planbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .domtabs{display:flex;gap:3px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:3px}
 .domtab{background:none;border:none;color:var(--dim);border-radius:7px;padding:7px 16px;cursor:pointer;font-size:13px}
@@ -870,13 +870,13 @@ body.blockview #stage{grid-column:1/2;background:#0b0e13;padding:14px}
 .sharebtn{background:var(--panel);border:1px solid var(--line);color:var(--dim);border-radius:8px;
  padding:8px 12px;cursor:pointer;font-size:12px;white-space:nowrap}
 .sharebtn:hover{color:var(--text);border-color:var(--faint)}
-/* kun kanalplanen – til dem der får et link */
+/* kun planen – til dem der får et link */
 body.onlyplan .viewsw,body.onlyplan #tabbar,body.onlyplan .bus,
 body.onlyplan #bFoldAll,body.onlyplan #bNew{display:none}
 body.guest #bCloud,body.guest #bSave,body.guest #bOpen,body.guest #bExport,
 body.guest #bUndo,body.guest #crumbs .projname{display:none}
 body.guest .gastmark{display:inline-flex}
-/* Gæsten ser kun kanalplanen – der er intet sidepanel at folde ud, ingen
+/* Gæsten ser kun planen – der er intet sidepanel at folde ud, ingen
    bundnavigation til de andre visninger, intet projektskifte og ingen
    gem-knap: planen gemmer sig selv, hver gang der rettes. */
 body.guest #sideknap, body.guest #side{display:none!important}
@@ -993,6 +993,20 @@ body.mobile.guest #app{padding-bottom:12px}
 .grpnavn{font-family:var(--fd);font-weight:700;font-size:13.5px;letter-spacing:.03em}
 .grpsti{font-family:var(--fm);font-size:9.5px;color:var(--faint)}
 .grptal{font-family:var(--fm);font-size:9.5px;color:var(--lyd)}
+/* bunkerne i vælgeren – ét stykke udstyr ad gangen */
+.bunke{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--bg)}
+.bunke.on{border-color:var(--intercom)}
+.bunkehoved{display:flex;align-items:center;gap:9px;width:100%;background:var(--panel2);
+ border:none;color:var(--text);padding:9px 11px;cursor:pointer;text-align:left}
+.bunkehoved:hover{background:var(--panel)}
+.bunkepil{font-size:8px;width:8px;flex:none;color:var(--faint)}
+.bunkenavn{flex:1;min-width:0;font-family:var(--fd);font-weight:700;font-size:13px;
+ letter-spacing:.03em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bunkeomr{font-family:var(--fm);font-size:9px;color:var(--faint);flex:none}
+.bunketal{font-family:var(--fm);font-size:9px;color:var(--lyd);flex:none}
+.bunkeliste{display:flex;flex-direction:column;gap:3px;padding:6px 7px 7px}
+.bunkeliste .grpvalg{padding:7px 10px;border-radius:6px}
+.bunkeliste .grpnavn{font-size:12.5px}
 .lydvalg{position:relative;padding-right:30px}
 .lydvalg .lydslet{position:absolute;right:7px;top:8px;opacity:.5}
 .lydvalg:hover .lydslet{opacity:1}
@@ -1007,6 +1021,11 @@ body.mobile .audn{width:54px;font-size:9px}
   /* på papir foldes alle lydkanaler ud; knappen er overflødig */
   .audbtn{display:none!important}
   .audlist{display:block!important;background:none;border-left:1px solid #bbb}
+  /* Håndtrykkene hører til skærmen. På papir siger de ikke noget – teksten
+     står der jo – og de larmer bare i en i forvejen tæt tegning. */
+  .bindknap,.bindplads,.audmaerke,.fastmaerke,.bindikon{display:none!important}
+  .audbind{color:#555}
+  .plabel.fast,.audl.fast{background:none;border-color:#cfcfcf;color:#1d1d1d}
 }
 
 /* En rettelse fra en kollega får hans farve – både på linjen og på kortet */
@@ -1383,7 +1402,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div class="logo" title="SignalFlow · version 2026.09.22-b">Signal<em>Flow</em></div>
     <div class="viewsw">
       <button class="vbtn on" data-view="flow" title="Signalflow-tegningen med afsender, signaler og modtager">Tegning</button>
-      <button class="vbtn" data-view="plan" title="Hvilke signaler der sidder i hvilke stik, med patch og tjek">Kanalplan</button>
+      <button class="vbtn" data-view="plan" title="Hvilke signaler der sidder i hvilke stik, med patch og tjek">Plan</button>
       <button class="vbtn" data-view="blocks" title="Kasser, udstyr og forbindelser – til at forklare et setup">Blokdiagram</button>
       <button class="vbtn" data-view="arch" title="Jeres fælles lager – det samme som i lagerprogrammet">Lager</button>
     </div>
@@ -1398,7 +1417,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <button class="hbtn" id="bExport" title="Gem som PDF, CSV, draw.io, HTML eller projektfil">Eksportér</button>
     <button class="hbtn" id="bFoldAll" title="Fold alle grupper sammen eller ud – giver overblik på store ark">⇕</button>
     <button class="hbtn" id="bNew" title="Start forfra med et tomt projekt">Nyt</button>
-    <span class="gastmark" title="Du er inde via et delelink og ser kun kanalplanen">delt kanalplan</span>
+    <span class="gastmark" title="Du er inde via et delelink og ser kun planen">delt plan</span>
     <span id="autoStatus" title="Autogem i browseren"></span>
     <button class="hbtn" id="bCloud" title="Projekter, mapper og versionshistorik">☁ Projekter</button>
     <button class="hbtn" id="bSave" title="Gem projektet i databasen og læg samtidig en sikkerhedskopi på din maskine">Gem</button>
@@ -1438,7 +1457,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 </div>
 <nav id="mnav">
   <button data-view="flow"><span>▤</span>Tegning</button>
-  <button data-view="plan"><span>☰</span>Kanalplan</button>
+  <button data-view="plan"><span>☰</span>Plan</button>
   <button data-view="blocks"><span>▦</span>Blok</button>
   <button data-view="arch"><span>⌸</span>Lager</button>
 </nav>
@@ -1567,7 +1586,7 @@ function dragRow(e, grip, rowSel, listeAf, felt, efter){
 
 const newCh=(n)=>({id:id(),nr:'Ch. '+n,label:'',layer:'lyd'});
 
-/* Tegningen kalder nummeret "nr", kanalplanen kalder det "n" – derfor feltnavnet.
+/* Tegningen kalder nummeret "nr", planen kalder det "n" – derfor feltnavnet.
    Mønsteret tager det SIDSTE tal i teksten, så både "Ch. 3" og "4W2" virker. */
 const NRM=/^(.*?)(\d+)(\D*)$/;
 
@@ -1618,7 +1637,7 @@ function blank(){
 
 
 /* Ingen produktionsdata ligger i filen. Alt hentes fra databasen efter login,
-   så hverken tegninger, kanalplaner eller bemanding kan læses af udenforstående. */
+   så hverken tegninger, planer eller bemanding kan læses af udenforstående. */
 function oslo(){return [blank()]}
 
 let projectName='Nyt projekt';
@@ -2027,23 +2046,50 @@ function unanchor(it){
 }
 
 /* ── Håndtrykkene i tegningen ──────────────────────────────────
-   Venstre side af en kanal: hvor i kanalplanen ender den som INPUT.
-   Højre side af gruppen: hvilket OUTPUT i kanalplanen gruppen fodrer.
+   Venstre side af en kanal: hvor i planen signalet kommer fra (INPUT).
+   Højre side af gruppen: hvilket OUTPUT i planen gruppen fodrer.
    Pladsen er der altid, også når der ikke er bundet noget – ellers ville
    linjerne hoppe, hver gang man bandt eller løsnede. */
 function bindKnapIn(g,ch){
- if((ch.layer||'lyd')!=='lyd')return '<span class="bindplads"></span>';
+ /* Lyd peger på et lydinput, video peger på et videoinput. Intercom og net
+    har ikke noget at pege på endnu, så de får en tom plads, der holder
+    linjerne på række. */
+ const lag=ch.layer||'lyd';
+ if(lag!=='lyd'&&lag!=='video')return '<span class="bindplads"></span>';
  const b=ch.ind;
  const hvor=b?indMaalNavn(b):'';
  return `<button class="bindknap ind ${b?'on':''}" data-bindin="${g.id}|${ch.id}"
-   title="${b?'Ender i kanalplanen som '+esc(hvor)+' – klik for at skifte eller løsne':'Bind kanalen til et input i kanalplanen'}">🤝</button>`;
+   title="${b?'Kommer fra '+esc(hvor)+' – klik for at skifte eller løsne'
+            :'Vælg hvor '+(lag==='video'?'videoen':'kanalen')+' kommer fra i planen'}">🤝</button>`;
 }
 function bindKnapUd(g){
  const u=udFor(g.id);
  return `<button class="bindknap ud ${u?'on':''}" data-bindout="${g.id}"
-   title="${u?'Gruppens lyd ligger på '+esc((u.dv.name||'')+' · output '+(u.port.n||'')+' '+(u.port.label||''))+' – klik for at skifte eller løsne':'Bind gruppens lyd til et videooutput i kanalplanen'}">🤝</button>`;
+   title="${u?'Gruppens lyd ligger på '+esc((u.dv.name||'')+' · output '+(u.port.n||'')+' '+(u.port.label||''))+' – klik for at skifte eller løsne':'Bind gruppens lyd til et videooutput i planen'}">🤝</button>`;
 }
-/* Navnet på det sted i planen en kanal er bundet hen */
+/* Hvad står der i virkeligheden på linjen? Er den bundet fra tegningen, er
+   det tegningens tekst – ellers planens eget felt. Print, regneark og
+   optællinger skal bruge DEN, ikke det tomme felt. */
+function portTekst(dom2,dv,p,side){
+ if(side==='ins'){
+  const ind=indFor(dom2,dv.id,p.id);
+  if(ind)return ind.ch.label||'';
+ }
+ return p.label||'';
+}
+
+/* Et felt der skrives fra tegningen, vises som låst tekst i stedet for et
+   skrivefelt. Bruges af alle tre slags linjer i planen – almindelige,
+   kameralinjer og frekvenslinjer – så de opfører sig ens. */
+function planFastFelt(dom2,dv,p,side){
+ if(side!=='ins')return null;
+ const ind=indFor(dom2,dv.id,p.id);
+ if(!ind)return null;
+ return `<span class="plabel fast" title="Skrives i tegningen: ${esc(ind.g.label||'')} · ${esc(ind.ch.nr||'')}"
+   ><span class="fastmaerke">🤝</span>${esc(ind.ch.label||'—')}</span>`;
+}
+
+/* Navnet på det sted i planen en kanal kommer fra */
 function indMaalNavn(b){
  const p=ensurePlan();
  const dv=((p[b.dom]||{}).devices||[]).find(x=>x.id===b.dev);
@@ -2229,7 +2275,7 @@ function crumbs(){
 
 
 /* ── Sidepanelet i de øvrige visninger ─────────────────────────
-   Panelet stod tomt i kanalplan, blokdiagram og lager – og fanen til at åbne
+   Panelet stod tomt i plan, blokdiagram og lager – og fanen til at åbne
    det hang der uden noget at åbne. Nu viser det, hvor langt man er, og de
    få ting man ellers skal lede efter. */
 function sideAndet(){
@@ -2263,7 +2309,7 @@ function sideAndet(){
       if(d2.length) dub=`<div class="sadvarsel">⚠ Samme frekvens flere steder:<br>${
         d2.map(f=>esc(f)+' <em>'+esc([...new Set(brugt[f])].join(', '))+'</em>').join('<br>')}</div>`;
     }
-    s.innerHTML=`<h2>KANALPLAN</h2><div class="sub">${PLANDOMS[planDom]}</div>
+    s.innerHTML=`<h2>PLAN</h2><div class="sub">${PLANDOMS[planDom]}</div>
       <div class="sdliste">${raek}</div>${dub}
       <div class="hint">
         <b>Sådan arbejder man</b>
@@ -2839,7 +2885,7 @@ function addItem(kind,key,label){
 }
 let lastBox=null;
 
-/* ================= kanalplaner ================= */
+/* ================= planer ================= */
 /* Én plan pr. domæne. Hvert stykke udstyr har inputs og outputs med hver sin
    tekst, og hver linje husker hvem der har rettet den og hvornår. */
 const PLANDOMS={lyd:'Lyd',video:'Video',kam:'Kameraer',net:'Netværk',freq:'Frekvenser'};
@@ -2956,7 +3002,7 @@ function audListe(p){
    Et videosignal kan bindes til en gruppe i tegningen. Så er gruppens
    lydkanaler OG videosignalets lydkanaler det samme – ikke to kopier der
    skal holdes ens. Derfor virker det automatisk begge veje: retter man
-   teksten i tegningen, står den i kanalplanen, og omvendt. Laver man en
+   teksten i tegningen, står den i planen, og omvendt. Laver man en
    kanal mere det ene sted, er den der også det andet. */
 const grpLag=(g,lag)=>(g.channels||[]).filter(c=>(c.layer||'lyd')===lag);
 const grpLyd=g=>grpLag(g,'lyd');
@@ -2982,10 +3028,10 @@ function grpFind(gid){
  if(!grpCache){ grpCache={}; alleGrupper().forEach(x=>{grpCache[x.g.id]=x}) }
  return grpCache[gid]||null;
 }
-/* ── Bindinger fra tegningen til kanalplanens INPUT ────────────
-   Et input i kanalplanen kan komme hvilket som helst sted fra i tegningen,
+/* ── Bindinger fra tegningen til planens INPUT ────────────
+   Et input i planen kan komme hvilket som helst sted fra i tegningen,
    så den binding sidder på den enkelte kanal i gruppen – ikke på gruppen.
-   Den går KUN én vej: tegningen skriver navnet, kanalplanen viser det.
+   Den går KUN én vej: tegningen skriver navnet, planen viser det.
    Derfor ligger teksten ét sted, og der er ingen tvivl om hvem der bestemmer.
 
    Målet er enten en inputlinje i en plan (fx lydplanens input 5) eller en
@@ -3026,7 +3072,7 @@ function grpNavn(gid){
 }
 /* Hvor skal der skrives hen – i gruppen eller i videolinjens egne kanaler?
    Felterne hedder ikke det samme de to steder: tegningen kalder nummeret
-   "nr", kanalplanen kalder det "n". */
+   "nr", planen kalder det "n". */
 function audRef(p,id,opret){
  const f=p.grp?grpFind(p.grp):null;
  if(f){
@@ -3035,7 +3081,7 @@ function audRef(p,id,opret){
  }
  return {o:audFind(p,id,opret), nf:'n', pi:-1};
 }
-/* Rettes en gruppe fra kanalplanen, skal sidens tidsstempel med – ellers
+/* Rettes en gruppe fra planen, skal sidens tidsstempel med – ellers
    kan en kollegas fletning smide rettelsen væk igen. */
 function grpRettet(pi){ if(pi>=0&&pages[pi])pages[pi].mt=Date.now() }
 
@@ -3260,7 +3306,7 @@ function drawBlocks(){
      `<button class="btab ${i===blockPage?'on':''}" data-bpage="${i}" title="${i===blockPage?'Klik igen for at omdøbe · træk for at flytte fanen':'Skift til siden '+esc(pg.title)+' · træk for at flytte fanen'}">${esc(pg.title)}</button>`).join('')}
      <button class="btabadd" data-bpadd="1" title="Ny side i blokdiagrammet, fx strømplan">+</button>
      <button class="btabadd" data-bpdel="1" title="Slet den åbne side">✕</button></div>
-   <button class="btool left" data-badd="import" title="Hent udstyr der allerede er brugt i kanalplanen">⤒ Importér</button>
+   <button class="btool left" data-badd="import" title="Hent udstyr der allerede er brugt i planen">⤒ Importér</button>
    <div class="btools">
      <button class="btool" data-badd="box" title="Ny kasse, fx Studie eller TV Compound. Udstyr kan lægges indeni">▭ Kasse</button>
      <button class="btool" data-badd="item" title="Hent udstyr fra det fælles lager">+ Udstyr</button>
@@ -3658,9 +3704,9 @@ function openSymbols(){
  });
 }
 
-/* ---- importér mellem kanalplan og blokdiagram ----
-   target='blocks': hent det der står i kanalplanen ind på diagrammet.
-   target='plan'  : hent det der står på diagrammet ind i kanalplanen. */
+/* ---- importér mellem plan og blokdiagram ----
+   target='blocks': hent det der står i planen ind på diagrammet.
+   target='plan'  : hent det der står på diagrammet ind i planen. */
 function importItems(target){
  const tilBlok=target!=='plan';
  const kilder=[];
@@ -3675,9 +3721,9 @@ function importItems(target){
   }));
  }
  openModal('Importér udstyr',
-   tilBlok?'Fra kanalplanen og arkivet':'Fra blokdiagrammet og arkivet',`
+   tilBlok?'Fra planen og arkivet':'Fra blokdiagrammet og arkivet',`
   <div class="mf"><input type="text" name="impq" placeholder="Søg i udstyr …" autocomplete="off"></div>
-  <div class="msec">${tilBlok?'Brugt i kanalplanen':'Står på blokdiagrammet'}</div>
+  <div class="msec">${tilBlok?'Brugt i planen':'Står på blokdiagrammet'}</div>
   <div id="impSrc" class="chklist" style="max-height:180px">
    ${kilder.length?kilder.map(r=>`<label class="chk">
      <input type="checkbox" data-imp="${r.key}">
@@ -3685,7 +3731,7 @@ function importItems(target){
      <b>${esc(r.name||'(uden navn)')}</b>
      <span style="margin-left:auto;font-family:var(--fm);font-size:9.5px;color:var(--faint)">${esc(r.sub||'')}</span>
     </label>`).join('')
-    :`<div class="msub" style="padding:9px;text-transform:none;letter-spacing:0">Der er ikke noget at hente ${tilBlok?'i kanalplanen':'på blokdiagrammet'} endnu.</div>`}
+    :`<div class="msub" style="padding:9px;text-transform:none;letter-spacing:0">Der er ikke noget at hente ${tilBlok?'i planen':'på blokdiagrammet'} endnu.</div>`}
   </div>
   <div class="msec">Arkivet</div>
   <div id="impArch" class="chklist" style="max-height:180px">Henter …</div>
@@ -3754,7 +3800,7 @@ function importItems(target){
       if(lastBox){n.parent=lastBox;n.x=18;n.y=46+bp().nodes.filter(x=>x.parent===lastBox).length*126}
       bp().nodes.push(n);
      }else{
-      /* ind i kanalplanen som et kort */
+      /* ind i planen som et kort */
       if(arkiv){dom().devices.push(lagerToDevice(arkiv));return}
       const [,pi,nid]=k.split(':');
       const pg=(ensureBlocks().pages||[])[+pi];
@@ -3936,7 +3982,7 @@ function printBlocks(){
  setTimeout(()=>udskriv(navn),150);
 }
 
-/* ---- tegn kanalplanen ---- */
+/* ---- tegn planen ---- */
 const CARDW=760;
 /* Ret op: gitter og hjælpelinjer, så kortene kan stilles lige op. */
 let planSnap=true;
@@ -3959,7 +4005,7 @@ function drawPlan(){
    <div class="domtabs">${Object.keys(PLANDOMS).map(k=>
      `<button class="domtab ${k===planDom?'on':''}" data-dom="${k}" title="${PLANDOMS[k]}-planen – hvert område har sit eget udstyr">${PLANDOMS[k]}</button>`).join('')}</div>
    ${guestToken?'':`<button class="sharebtn left" data-imp="1" title="Hent udstyr der allerede er brugt på blokdiagrammet">⤒ Fra blokdiagram</button>
-     <button class="sharebtn left" data-kimp="1" title="Importér en kanalplan fra csv, Excel eller indsat tekst">⤒ Importér fil</button>`}
+     <button class="sharebtn left" data-kimp="1" title="Importér en plan fra csv, Excel eller indsat tekst">⤒ Importér fil</button>`}
    ${nyt?`<button class="newsbadge" data-seen="1">${nyt} ${nyt===1?'ny ændring':'nye ændringer'} siden sidst · markér som set</button>`:''}
    ${meName()==='?'?`<input class="whobox" id="whoBox" placeholder="Dine initialer" title="Vises ud for de linjer du retter">`:
      `<span class="whotag" title="Dine initialer – klik for at rette">${esc(meName())}</span>`}
@@ -4074,7 +4120,7 @@ function drawPlan(){
 
 
 /* ── Frekvensplan for trådløse mikrofoner ──────────────────────
-   Samme datamodel som resten af kanalplanen: et kort er et system (rack,
+   Samme datamodel som resten af planen: et kort er et system (rack,
    kuffert, sæt), og hver linje er en frekvens. Fordi linjerne ligger i det
    samme felt som de øvrige planer, flettes de også automatisk, når to
    retter samtidig. Linjen har blot nogle flere felter. */
@@ -4145,9 +4191,10 @@ function kamRad(dv,p,udgaaet){
     <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|ins|${p.id}" title="Kanalnummer">
     <button class="kamtype ${aes?'aes':''}" data-kamtype="${dv.id}|ins|${p.id}"
       title="Klik for at skifte mellem mic/line og AES">${aes?'AES':'mic/line'}</button>
-    <input class="plabel" value="${esc(p.label)}" list="lbls"
-           placeholder="${udgaaet?'udgår – AES bruger kanal 2':'—'}"
-           ${udgaaet?'disabled':''} title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">
+    ${planFastFelt('kam',dv,p,'ins')
+       || `<input class="plabel" value="${esc(p.label)}" list="lbls"
+            placeholder="${udgaaet?'udgår – AES bruger kanal 2':'—'}"
+            ${udgaaet?'disabled':''} title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">`}
     ${p.label&&!udgaaet?`
      <label class="tick" title="Patchet${p.pby?' · af '+esc(p.pby):''}">
        <input type="checkbox" data-tick="${dv.id}|ins|${p.id}|patched" ${p.patched?'checked':''}></label>
@@ -4238,7 +4285,8 @@ function foldRest(dv,skjult){
    beskrevet lyd på, uden at åbne noget. */
 function audKnap(dv,side,p){
  if(planDom!=='video')return '';
- if(!p.label)return '';
+ /* teksten kan komme fra tegningen – så er der også et signal på linjen */
+ if(!p.label && !(side==='ins'&&indFor('video',dv.id,p.id)))return '';
  const noegle=audNoegle(dv,side,p);
  const skrevet=audSkrevet(p), antal=audListe(p).length;
  return `<button class="mini audbtn ${skrevet?'har':''} ${audAaben===noegle?'on':''}"
@@ -4251,7 +4299,8 @@ function audKnap(dv,side,p){
    et bånd for sig, for så ville hver eneste linje få en ekstra linje under
    sig, også dem uden lyd. */
 function audListeBlok(dv,side,p){
- if(planDom!=='video'||!p.label)return '';
+ if(planDom!=='video')return '';
+ if(!p.label && !(side==='ins'&&indFor('video',dv.id,p.id)))return '';
  const noegle=audNoegle(dv,side,p);
  if(audAaben!==noegle)return '';
  const liste=audListe(p);
@@ -4297,12 +4346,9 @@ function portList(dv,side,title){
           ${fresh(p)?`style="--ret:${retFarveNu[p.by||'?']||RET_FARVER[0]}"`:''}
           data-port="${dv.id}|${side}|${p.id}">
        <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|${side}|${p.id}">
-       ${(()=>{const ind=side==='ins'?indFor(planDom,dv.id,p.id):null;
-         return ind
-          ? `<span class="plabel fast" title="Skrives i tegningen: ${esc(ind.g.label||'')} · ${esc(ind.ch.nr||'')}"
-                   ><span class="fastmaerke">🤝</span>${esc(ind.ch.label||'—')}</span>`
-          : `<input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
-              title="${esc(p.label)}" data-plabel="${dv.id}|${side}|${p.id}">`})()}
+       ${planFastFelt(planDom,dv,p,side)
+          || `<input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
+               title="${esc(p.label)}" data-plabel="${dv.id}|${side}|${p.id}">`}
        ${p.label?`
         <label class="tick" title="Patchet${p.pby?' · sat af '+esc(p.pby):''}">
           <input type="checkbox" data-tick="${dv.id}|${side}|${p.id}|patched" ${p.patched?'checked':''}></label>
@@ -4518,7 +4564,7 @@ function bindPlan(){
  el2.querySelectorAll('[data-audn]').forEach(inp=>{
   inp.onchange=()=>{
    const [p,a,r]=audFinder(inp.dataset.audn,true);
-   /* nummeret hedder "nr" i tegningen og "n" i kanalplanen */
+   /* nummeret hedder "nr" i tegningen og "n" i planen */
    if(a&&a[r.nf]!==inp.value){snap();a[r.nf]=inp.value;touch(a);grpRettet(r.pi);autosave()}
   };
  });
@@ -4677,7 +4723,7 @@ function bindDevDrag(el2){
 }
 
 
-/* ---- link direkte til kanalplanen ---- */
+/* ---- link direkte til planen ---- */
 let pendingOpen=null, pendingPlan=false;
 
 function planLink(tok,pid){
@@ -4867,7 +4913,7 @@ function drawArchive(){
       </div>
 
       <div class="aefoot">
-        <button class="sharebtn" id="ae-toplan" title="Læg udstyret ind i den kanalplan du arbejder i">→ Indsæt i kanalplan</button>
+        <button class="sharebtn" id="ae-toplan" title="Læg udstyret ind i den plan du arbejder i">→ Indsæt i plan</button>
         <button class="sharebtn" id="ae-toblock" title="Læg udstyret på blokdiagrammet">→ Indsæt på blokdiagram</button>
         <span class="aemeta">${cur.qr_code?'QR: '+esc(cur.qr_code):''}</span>
       </div>`
@@ -4889,7 +4935,7 @@ function lagPortCol(cur,side,title){
      <div class="aerow">
        <input class="aenum" value="${esc(p.n||'')}" data-aen="${side}|${i}" title="Nummer på stikket">
        <input class="aelab" value="${esc(p.label||'')}" data-ael="${side}|${i}"
-              placeholder="Standardtekst (valgfri)" title="Teksten følger med, når udstyret hentes ind i en kanalplan">
+              placeholder="Standardtekst (valgfri)" title="Teksten følger med, når udstyret hentes ind i en plan">
        <input class="aetyp" value="${esc(p.type||'')}" data-aet="${side}|${i}" list="stiklist"
               placeholder="Stik" title="Stiktype på netop denne linje">
        <button class="mini" data-aeup="${side}|${i}" title="Flyt op">▲</button>
@@ -5122,7 +5168,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.15-f';
+const SF_VERSION='2026.10.15-j';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -5210,7 +5256,7 @@ document.addEventListener('keydown',ev=>{
 
 /* ---- menuerne ---- */
 function sheetApp(){
- /* Gæsten på et delelink har kun kanalplanen. Resten af menuen – projekter,
+ /* Gæsten på et delelink har kun planen. Resten af menuen – projekter,
     gem, import, lås, eksport – hører ikke til her, og et par af punkterne
     ville slet ikke virke uden login. */
  if(guestToken){
@@ -5218,7 +5264,7 @@ function sheetApp(){
    {ikon:'✎',tekst:'Skift dit navn',vaerdi:meName()==='?'?'':meName(),
     under:'vises ud for de linjer du retter',
     gør:()=>askGuestName().then(()=>drawPlan())},
-   {ikon:'↧',tekst:'Print kanalplanen',under:PLANDOMS[planDom],
+   {ikon:'↧',tekst:'Print planen',under:PLANDOMS[planDom],
     gør:()=>exportPlanPDF({paper:'A4',orient:'portrait',margin:10,kun:planDom})}
   ]);
   return;
@@ -5227,7 +5273,7 @@ function sheetApp(){
  if(view==='plan'){
   /* Planen henter selv kollegernes rettelser hvert sjette sekund, så der er
      ingen opdatér-knap. Delelink og regneark hører til ved computeren. */
-  ekstra.push({ikon:'↧',tekst:'Print kanalplanen',under:PLANDOMS[planDom],
+  ekstra.push({ikon:'↧',tekst:'Print planen',under:PLANDOMS[planDom],
     gør:()=>exportPlanPDF({paper:'A4',orient:'portrait',margin:10,kun:planDom})});
   ekstra.push({ikon:'⤒',tekst:'Importér udstyr',gør:()=>importItems('plan')});
   ekstra.push({skil:1});
@@ -5408,7 +5454,7 @@ function sheetGruppe(gid){
  ]);
 }
 
-/* ── Vælg hvor en kanal ender i kanalplanen ────────────────────
+/* ── Vælg hvor en kanal ender i planen ────────────────────
    Listen rummer begge slags mål: inputlinjerne i lyd-, intercom- og
    netplanen, og lydkanalerne under hvert videoinput. */
 function bindInVaelg(gid,chid){
@@ -5417,60 +5463,121 @@ function bindInVaelg(gid,chid){
  const ch=g&&(g.channels||[]).find(x=>x.id===chid);
  if(!ch)return;
  const p=ensurePlan();
- const maal=[];
+ const lag=ch.layer||'lyd';
+ /* Målene samles i bunker – ét stykke udstyr ad gangen, og under video én
+    bunke pr. videosignal. Ellers bliver listen uoverskuelig: et rack med 16
+    input og et kryds med otte lydkanaler pr. signal løber hurtigt op.
+    En VIDEOkanal peger på selve videoinputtet; en LYDkanal peger på et
+    lydinput, et kameraspor, en frekvens – eller en lydkanal inde i et
+    videosignal. */
+ const bunker=[];
+ const find=n=>bunker.find(b=>b.noegle===n);
  Object.keys(PLANDOMS).forEach(d2=>{
+  if(lag==='video' && d2!=='video')return;
+  if(lag==='lyd'   && d2==='net')return;
   ((p[d2]||{}).devices||[]).forEach(dv=>{
    if(dv.del)return;
    alive(dv.ins).forEach(port=>{
-    if(d2==='video'){
-     /* under video er det lydkanalerne der kan bindes, ikke selve billedet */
+    if(d2==='video'&&lag==='video'){
+     /* videoen selv: inputlinjen på krydset */
+     const n=d2+'|'+dv.id;
+     let b=find(n);
+     if(!b)bunker.push(b={noegle:n, hoved:(dv.name||''), omr:PLANDOMS[d2], maal:[]});
+     b.maal.push({dom:d2, dev:dv.id, port:port.id,
+       linje:'Input '+(port.n||'')+(port.label?' · '+port.label:'')});
+    }else if(d2==='video'){
      if(!port.label)return;
-     audListe(port).forEach(a=>maal.push({
+     const n=d2+'|'+dv.id+'|'+port.id;
+     let b=find(n);
+     if(!b)bunker.push(b={noegle:n, hoved:(dv.name||'')+' · '+(port.label||port.n||''),
+                          omr:PLANDOMS[d2], maal:[]});
+     audListe(port).forEach(a=>b.maal.push({
        dom:d2, dev:dv.id, port:port.id, aud:a.id,
-       hoved:(dv.name||'')+' · '+(port.label||port.n||''),
-       linje:a.n+(a.label?' · '+a.label:''), omr:PLANDOMS[d2]}));
+       linje:a.n+(a.label?' · '+a.label:'')}));
     }else{
-     maal.push({dom:d2, dev:dv.id, port:port.id,
-       hoved:(dv.name||''), linje:'Input '+(port.n||'')+(port.label?' · '+port.label:''),
-       omr:PLANDOMS[d2]});
+     const n=d2+'|'+dv.id;
+     let b=find(n);
+     if(!b)bunker.push(b={noegle:n, hoved:(dv.name||''), omr:PLANDOMS[d2], maal:[]});
+     /* kameraplanen og frekvensplanen har kanaler, ikke "input" */
+     const ord = (d2==='kam'||d2==='freq') ? 'Kanal ' : 'Input ';
+     let ekstra='';
+     if(d2==='kam'){
+      /* Er AES i brug på kameraet, udgår kanal 2 – og så kan der heller
+         ikke bindes til den. Ellers ville man pege på en plads, der ikke
+         findes i virkeligheden. */
+      if(kamAesIBrug(dv) && kamType(port)==='mic' && (port.n||'').trim()==='2')return;
+      ekstra=' · '+(kamType(port)==='aes'?'AES':'mic/line');
+     }
+     if(d2==='freq'&&port.freq)ekstra=' · '+port.freq+' MHz';
+     b.maal.push({dom:d2, dev:dv.id, port:port.id,
+       linje:ord+(port.n||'')+(port.label?' · '+port.label:'')+ekstra});
     }
    });
   });
  });
+ const idx=indIndeks();
+ bunker.forEach(b=>{
+  b.taget=b.maal.filter(m=>idx[indNoegle(m)]).length;
+  b.min=b.maal.some(m=>{const t=idx[indNoegle(m)]; return t&&t.ch.id===ch.id});
+ });
+ /* Den bunke kanalen allerede peger ind i, står åben fra start */
+ let aaben=(bunker.find(b=>b.min)||{}).noegle||null;
  const nu=ch.ind?indNoegle(ch.ind):'';
- const krop = maal.length
-  ? `<div class="grpliste">${maal.map(m=>{
-      const n=indNoegle(m);
-      const taget=indIndeks()[n];
-      const minEgen=taget&&taget.ch.id===ch.id;
-      return `<button class="grpvalg ${minEgen?'on':''}" data-maal="${esc(JSON.stringify(m))}">
-        <span class="grpnavn">${esc(m.linje)}</span>
-        <span class="grpsti">${esc(m.hoved)} · ${esc(m.omr)}</span>
-        ${taget&&!minEgen?`<span class="grptal">optaget af ${esc(taget.ch.nr||'')} ${esc(taget.ch.label||'')} i ${esc(taget.g.label||'')}</span>`:''}
-      </button>`}).join('')}</div>`
-  : `<div class="msub" style="text-transform:none;letter-spacing:0;line-height:1.6">
-       Der er ingen inputlinjer i kanalplanen endnu.<br>
-       Læg udstyr ind under Kanalplan først.</div>`;
- openModal('Hvor ender kanalen?', (ch.nr||'')+' · '+(ch.label||'uden tekst')+' – vælg et input i kanalplanen',
-  krop+`<div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-top:12px">
-      Teksten skrives fra tegningen til kanalplanen. Den kan ikke rettes i
-      kanalplanen – der er kun ét sted at skrive den.
+
+ const tegn=root=>{
+  const ud=root.querySelector('#bindListe');
+  if(!bunker.length){
+   ud.innerHTML='<div class="msub" style="text-transform:none;letter-spacing:0;line-height:1.6">'
+    +'Der er ingen inputlinjer i planen endnu.<br>Læg udstyr ind under Plan først.</div>';
+   return;
+  }
+  ud.innerHTML=bunker.map(b=>{
+   const aab=aaben===b.noegle;
+   return `<div class="bunke ${aab?'on':''}">
+     <button class="bunkehoved" data-bunke="${esc(b.noegle)}">
+       <span class="bunkepil">${aab?'▾':'▸'}</span>
+       <span class="bunkenavn">${esc(b.hoved)}</span>
+       <span class="bunkeomr">${esc(b.omr)}</span>
+       <span class="bunketal">${b.maal.length}${b.taget?' · '+b.taget+' bundet':''}</span>
+     </button>
+     ${aab?`<div class="bunkeliste">${b.maal.map(m=>{
+       const n=indNoegle(m), taget=idx[n], minEgen=taget&&taget.ch.id===ch.id;
+       return `<button class="grpvalg ${minEgen?'on':''}" data-maal="${esc(JSON.stringify(m))}">
+         <span class="grpnavn">${esc(m.linje)}</span>
+         ${taget?`<span class="grptal">${minEgen?'bundet til denne kanal'
+            :'optaget af '+esc(taget.ch.nr||'')+' '+esc(taget.ch.label||'')+' i '+esc(taget.g.label||'')}</span>`:''}
+       </button>`}).join('')}</div>`:''}
+   </div>`;
+  }).join('');
+  ud.querySelectorAll('[data-bunke]').forEach(n=>n.onclick=()=>{
+   aaben = aaben===n.dataset.bunke ? null : n.dataset.bunke;   // én ad gangen
+   tegn(root);
+  });
+  ud.querySelectorAll('[data-maal]').forEach(b=>b.onclick=()=>{
+   const m=JSON.parse(b.dataset.maal);
+   const taget=idx[indNoegle(m)];
+   if(taget&&taget.ch.id!==ch.id&&
+      !confirm('Pladsen er allerede bundet til "'+(taget.ch.label||taget.ch.nr||'')+'".\n\nFlyt den over på denne kanal?'))return;
+   snap();
+   if(taget&&taget.ch.id!==ch.id)delete taget.ch.ind;
+   ch.ind={dom:m.dom, dev:m.dev, port:m.port}; if(m.aud)ch.ind.aud=m.aud;
+   indNulstil(); closeModal(); draw();
+  });
+ };
+
+ openModal(lag==='video'?'Hvor kommer videoen fra?':'Hvor kommer kanalen fra?',
+   (ch.nr||'')+' · '+(ch.label||'uden tekst')+' – vælg det input i planen, signalet kommer fra',
+  `<div id="bindListe" class="grpliste"></div>
+   <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-top:12px">
+      Teksten skrives fra tegningen til planen. Den kan ikke rettes i
+      planen – der er kun ét sted at skrive den.
     </div>
     <div class="mrow" style="margin-top:12px">
       ${nu?`<button class="btn" data-loes="1">Løsn bindingen</button>`:''}
       <button class="btn" data-annul="1">Fortryd</button>
     </div>`,
   root=>{
-   root.querySelectorAll('[data-maal]').forEach(b=>b.onclick=()=>{
-    const m=JSON.parse(b.dataset.maal);
-    const taget=indIndeks()[indNoegle(m)];
-    if(taget&&taget.ch.id!==ch.id&&
-       !confirm('Pladsen er allerede bundet til "'+(taget.ch.label||taget.ch.nr||'')+'".\n\nFlyt den over på denne kanal?'))return;
-    snap();
-    if(taget&&taget.ch.id!==ch.id)delete taget.ch.ind;
-    ch.ind={dom:m.dom, dev:m.dev, port:m.port}; if(m.aud)ch.ind.aud=m.aud;
-    indNulstil(); closeModal(); draw();
-   });
+   tegn(root);
    const l=root.querySelector('[data-loes]');
    if(l)l.onclick=()=>{snap(); delete ch.ind; indNulstil(); closeModal(); draw()};
    const a=root.querySelector('[data-annul]');
@@ -5499,8 +5606,8 @@ function bindUdVaelg(gid){
       </button>`).join('')}</div>`
   : `<div class="msub" style="text-transform:none;letter-spacing:0;line-height:1.6">
        Der er ingen videooutput med signal på endnu.<br>
-       Læg et kryds ind under Kanalplan › Video først.</div>`;
- openModal('Hvor ligger gruppens lyd?', (g.label||g.feed||'gruppen')+' – vælg et videooutput i kanalplanen',
+       Læg et kryds ind under Plan › Video først.</div>`;
+ openModal('Hvor ligger gruppens lyd?', (g.label||g.feed||'gruppen')+' – vælg et videooutput i planen',
   krop+`<div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-top:12px">
       Gruppens lydkanaler bliver outputtets lydkanaler. Her går det begge
       veje: retter du teksten det ene sted, står den begge steder.
@@ -5678,7 +5785,7 @@ function saetKanaler(g,lag,kanaler){
  g.channels.splice(Math.min(foerste,g.channels.length),0,...nye);
 }
 
-/* ---- linjemenu i kanalplanen ---- */
+/* ---- linjemenu i planen ---- */
 function sheetPort(ref){
  const [did,side,pid]=ref.split('|');
  const dv=dom().devices.find(x=>x.id===did);
@@ -5733,7 +5840,7 @@ function flytPort(dv,side,i,ret){
  drawPlan();
 }
 
-/* ---- kortmenu i kanalplanen ---- */
+/* ---- kortmenu i planen ---- */
 function sheetKort(did){
  const dv=dom().devices.find(x=>x.id===did);
  if(!dv)return;
@@ -5771,11 +5878,11 @@ function sheetKort(did){
  ]);
 }
 
-/* ---- skift mellem tegning og kanalplan ---- */
+/* ---- skift mellem tegning og plan ---- */
 let view='flow';
 function setView(v){
  view=v;
- /* Låsen gælder kun tegningens ark. I kanalplan, blokdiagram og lager skal
+ /* Låsen gælder kun tegningens ark. I plan, blokdiagram og lager skal
     hverken banneret eller den grå sidebar være der. */
  document.body.classList.toggle('arklaast', v==='flow' && typeof arkLaast==='function' && arkLaast());
  const ml0=document.getElementById('mlaas');
@@ -5812,7 +5919,7 @@ function askGuestName(){
    <div id="whoMsg" class="msub" style="text-transform:none;letter-spacing:0;color:var(--video);min-height:15px"></div>
    <div class="mrow"><button class="btn go" data-ok="1" style="width:100%">Fortsæt</button></div>
    <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;margin-top:12px;line-height:1.6">
-     Du åbner en delt kanalplan. Alt hvad du skriver, kan dine kolleger se med det samme.
+     Du åbner en delt plan. Alt hvad du skriver, kan dine kolleger se med det samme.
    </div>`,root=>{
     const inp=root.querySelector('[name="who"]'), msg=root.querySelector('#whoMsg');
     const go=()=>{
@@ -5830,8 +5937,8 @@ function askGuestName(){
  });
 }
 
-/* ================= gæsteadgang til kanalplanen =================
-   Et delelink bærer en nøgle. Med den kan man se og rette kanalplanen for
+/* ================= gæsteadgang til planen =================
+   Et delelink bærer en nøgle. Med den kan man se og rette planen for
    ét projekt – men intet andet. Hverken tegninger, blokdiagrammer eller
    de øvrige projekter kan nås med nøglen. */
 let guestToken=null, guestPush=null, guestSync=null;
@@ -5898,7 +6005,7 @@ async function guestPull(){
  if(row.id)guestPid=guestPid||row.id;      // første svar binder linket fast
  guestPlanVarTom=planTom(row.plan);
  guestReady=true;                          // FØRST her: nu har vi serverens plan
- projectName=row.name||'Kanalplan';
+ projectName=row.name||'Plan';
  if(row.updated_at===lastSync&&plan)return;
  const foc=focusedRef();
  const aktivRef=(foc&&foc.dataset.plabel)||(skriverSelv(skriver.ref)?skriver.ref:null);
@@ -5936,7 +6043,7 @@ function guestSave(){
  /* Tre låse, fordi det her er dyrt at tage fejl i: planen skal være hentet,
     vi skal have set serverens tidsstempel, og vi skriver aldrig tomt oven på
     noget. Før kunne en mislykket hentning få gæsten til at tro, den var klar –
-    og så blev projektets kanalplan tørret ud. */
+    og så blev projektets plan tørret ud. */
  if(!guestReady)return;          // planen er ikke hentet endnu
  if(!lastSync)return;            // vi har aldrig set serverens udgave
  if(planTom(ensurePlan())&&!guestPlanVarTom)return;
@@ -5970,7 +6077,7 @@ function startGuest(tok,pid){
  /* Gæsten fik før altid skrivebordsudgaven – også på en telefon. Derfor var
     topbjælken fuld af knapper, der ikke er brug for, når man står ude med
     telefonen i hånden. Nu vælger den udgave efter skærmen som alle andre. */
- document.body.classList.add('sideskjult');      // ingen sidebar i kanalplanen
+ document.body.classList.add('sideskjult');      // ingen sidebar i planen
  document.body.classList.add('unlocked','onlyplan','guest');
  view='plan'; document.body.classList.add('planview');
  ensurePlan(); ensureBlocks();
@@ -6198,7 +6305,7 @@ async function pullInner(){
  lastSync=full[0].updated_at;
  setSync('opdateret · '+(full[0].updated_by||''));
  /* Har vi noget efter fletningen, som serveren ikke har – i tegningen, i
-    kanalplanen eller i blokdiagrammet – skal det sendes op. Ellers ville
+    planen eller i blokdiagrammet – skal det sendes op. Ellers ville
     vores rettelse kun findes her på maskinen. */
  if(JSON.stringify({p:pages,pl:plan,b:blocks||null})!==serverDoc)dirty=true;
  autosave();
@@ -6278,7 +6385,7 @@ function projektVaek(){
 }
 
 function presSted(){
- if(view==='plan')return 'Kanalplan · '+(PLANDOMS[planDom]||'');
+ if(view==='plan')return 'Plan · '+(PLANDOMS[planDom]||'');
  if(view==='blocks')return 'Blokdiagram · '+((bp()||{}).title||'');
  if(view==='arch')return 'Lageret';
  const sh=pages[activePage]||{};
@@ -6443,7 +6550,7 @@ function tegnHvemErInde(){
  el3.innerHTML='<span class="whoicon" title="'+andre.length+' andre er inde i projektet">●</span>'
   +vis.map(p=>
    `<span class="whochip" title="${esc(p.who)} arbejder i ${esc(p.sted||'projektet')}">
-      <b>${esc(p.who)}</b><em>${esc((p.sted||'').replace(/^(Tegning|Kanalplan|Blokdiagram) · /,''))}</em>
+      <b>${esc(p.who)}</b><em>${esc((p.sted||'').replace(/^(Tegning|Plan|Blokdiagram) · /,''))}</em>
     </span>`).join('')
   +(flere>0?`<span class="whomore" title="${esc(andre.map(p=>p.who+' · '+(p.sted||'')).join('\n'))}">+${flere}</span>`:'');
  el3.title=andre.map(p=>p.who+' · '+(p.sted||'')).join('\n');
@@ -6705,7 +6812,7 @@ create policy "pres_skriv" on signalflow_presence for insert with check (auth.ui
 create policy "pres_ret"   on signalflow_presence for update using (auth.uid() is not null);
 create policy "pres_slet"  on signalflow_presence for delete using (auth.uid() is not null);
 
--- ===== Delelink til kanalplanen =====
+-- ===== Delelink til planen =====
 -- Gæsten ser KUN planen, og kun for det ene projekt linket hører til.
 --
 -- Nøglen lå før i en kolonne på selve projektet. Alt hvad der skriver
@@ -6751,7 +6858,7 @@ returns uuid language plpgsql security definer set search_path = public as $$
 declare tok uuid;
 begin
   if auth.uid() is null then
-    raise exception 'Du skal være logget ind for at dele en kanalplan.';
+    raise exception 'Du skal være logget ind for at dele en plan.';
   end if;
   if not exists (select 1 from signalflow_projects where id = pid) then
     raise exception 'Projektet findes ikke.';
@@ -7299,7 +7406,7 @@ async function lagerCategories(){
  catch(e){ lagerCats=[] }
  return lagerCats;
 }
-/* gem et kort fra kanalplanen som nyt udstyr på lageret */
+/* gem et kort fra planen som nyt udstyr på lageret */
 async function lagerSaveFromDevice(dv){
  if(!dv)return;
  const nm=prompt('Navn på lageret:',dv.name); if(nm===null)return;
@@ -7314,7 +7421,7 @@ async function lagerSaveFromDevice(dv){
   lagerRows=null; setSync('lagt på lageret');
  }catch(e){alert(e.message)}
 }
-/* lav et kanalplan-kort ud af et stykke udstyr fra lageret */
+/* lav et plan-kort ud af et stykke udstyr fra lageret */
 function lagerToDevice(e){
  const t=techOf(e);
  const mk=arr=>arr.map(p=>({id:id(),n:String(p.n||''),label:p.label||'',by:'',at:0}));
@@ -7322,11 +7429,11 @@ function lagerToDevice(e){
    ins:mk(t.ins), outs:mk(t.outs)};
 }
 function openArchive(mode){
- /* mode: 'plan' = ind i kanalplanen, 'block' = ind på blokdiagrammet.
+ /* mode: 'plan' = ind i planen, 'block' = ind på blokdiagrammet.
     Udstyret kommer fra lageret – det samme lager som lagerprogrammet bruger. */
  const forPlan=mode==='plan', forBlock=mode==='block';
  openModal('Lager',
-   forPlan?'Vælg hvad der skal i kanalplanen':forBlock?'Vælg hvad der skal på blokdiagrammet':'Jeres fælles udstyr', `
+   forPlan?'Vælg hvad der skal i planen':forBlock?'Vælg hvad der skal på blokdiagrammet':'Jeres fælles udstyr', `
   <div class="mf"><input type="text" name="q" placeholder="Søg i lageret …"></div>
   <div id="archList" class="chklist" style="max-height:280px">Henter …</div>
   ${forPlan?`
@@ -7366,7 +7473,7 @@ function openArchive(mode){
    root.querySelector('[data-cancel]').onclick=closeModal;
    root.querySelector('[data-lager]').onclick=()=>{closeModal();setView('arch')};
 
-   /* standardudstyr – kun i kanalplanen */
+   /* standardudstyr – kun i planen */
    root.querySelectorAll('[data-std]').forEach(b=>b.onclick=()=>{
      const v=b.dataset.std;
      if(v==='custom'){
@@ -8233,7 +8340,7 @@ function ipLayout(){
 
 
 /* ══════════════════════════════════════════════════════════════
-   IMPORTÉR KANALPLAN FRA FIL
+   IMPORTÉR PLAN FRA FIL
    Læser vores egen csv-eksport tilbage, et Excel-ark, eller en liste fra et
    andet system. Kolonnerne genkendes på deres overskrifter – både danske og
    engelske – og man ser altid, hvad der bliver oprettet, før det sker.
@@ -8496,7 +8603,7 @@ function kiAaben(){
      <button class="btn go" id="kiOk" disabled>Importér</button>
      <button class="btn" data-cancel="1">Annullér</button>
    </div>`;
-  openModal('Importér kanalplan','fra csv, Excel eller indsat tekst',html,root=>{
+  openModal('Importér plan','fra csv, Excel eller indsat tekst',html,root=>{
     root.querySelector('[data-cancel]').onclick=closeModal;
     const vis=root.querySelector('#kiVis');
     const brug=function(gitter){
@@ -8988,7 +9095,7 @@ function planRows(kun){
  Object.keys(PLANDOMS).filter(k=>!kun||k===kun).forEach(k=>alive((ensurePlan()[k].devices||[])).forEach(d=>{
   [['ins','Input'],['outs','Output']].forEach(([side,txt])=>{
    alive(d[side]).forEach(p=>rows.push([PLANDOMS[k],d.name,d.place||'',
-     k==='freq'?'':txt, p.n, p.freq||'', p.label||'', p.ftype||'',
+     k==='freq'?'':txt, p.n, p.freq||'', portTekst(k,d,p,side), p.ftype||'',
      p.patched?'ja':'', p.checked?'ja':'', p.by||'',
      p.at?new Date(p.at).toLocaleString('da-DK'):'']));
   });
@@ -8997,22 +9104,23 @@ function planRows(kun){
 }
 function exportPlanCSV(kun){
  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
- const navn=fileName('csv',false,'kanalplan'+(kun?'_'+kun:''));
+ const navn=fileName('csv',false,'plan'+(kun?'_'+kun:''));
  dl('\ufeff'+planRows(kun).map(r=>r.map(q).join(';')).join('\r\n'),navn,'text/csv;charset=utf-8');
  closeModal();
 }
 function planPrintHTML(kun){
- let h=`<div class="sheettitle">${esc(projectName)} · Kanalplan${kun?' · '+PLANDOMS[kun]:''}</div>`;
+ let h=`<div class="sheettitle">${esc(projectName)} · Plan${kun?' · '+PLANDOMS[kun]:''}</div>`;
  Object.keys(PLANDOMS).filter(k=>!kun||k===kun).forEach(k=>{
   const ds=alive(ensurePlan()[k].devices||[]);
   if(!ds.length)return;
   h+=`<h2 class="pph">${PLANDOMS[k]}</h2>`;
   ds.forEach(d=>{
-   const col=(arr,t)=>`<div class="ppcol"><div class="ppt">${t}<span class="ppk">P T</span></div>`
-     +alive(arr).map(p=>`<div class="ppr"><span class="ppn">${esc(p.n)}</span>
-        <span class="ppl">${esc(p.label||'')}</span>
-        <span class="ppb">${p.label?(p.patched?'✓':'☐'):''}</span>
-        <span class="ppb">${p.label?(p.checked?'✓':'☐'):''}</span></div>`).join('')+`</div>`;
+   const col=(arr,t,side)=>`<div class="ppcol"><div class="ppt">${t}<span class="ppk">P T</span></div>`
+     +alive(arr).map(p=>{const tx=portTekst(k,d,p,side);
+       return `<div class="ppr"><span class="ppn">${esc(p.n)}</span>
+        <span class="ppl">${esc(tx)}</span>
+        <span class="ppb">${tx?(p.patched?'✓':'☐'):''}</span>
+        <span class="ppb">${tx?(p.checked?'✓':'☐'):''}</span></div>`}).join('')+`</div>`;
    if(k==='freq'){
     /* frekvensplanen står bedre som én tabel med MHz og bruger */
     h+=`<div class="ppdev"><div class="ppname">${esc(d.name)}${d.place?' · '+esc(d.place):''}</div>
@@ -9028,7 +9136,7 @@ function planPrintHTML(kun){
     return;
    }
    h+=`<div class="ppdev"><div class="ppname">${esc(d.name)}${d.place?' · '+esc(d.place):''}</div>
-     <div class="ppcols">${col(d.ins,'Input')}${col(d.outs,'Output')}</div></div>`;
+     <div class="ppcols">${col(d.ins,'Input','ins')}${col(d.outs,'Output','outs')}</div></div>`;
   });
  });
  return h;
@@ -9040,7 +9148,7 @@ function exportPlanPDF(o){
    `@page{size:${o.paper} ${o.orient};margin:0}
     @media print{.psheet{margin:${padPx}px}}`;
  closeModal();
- const navn=projectName+' – Kanalplan'+(o.kun?' – '+PLANDOMS[o.kun]:'');
+ const navn=projectName+' – Plan'+(o.kun?' – '+PLANDOMS[o.kun]:'');
  setTimeout(()=>udskriv(navn),120);
 }
 
@@ -9069,8 +9177,8 @@ function openExport(){
     <select name="fmt">
       <option value="pdf">PDF · til print og deling</option>
       <option value="csv">CSV · regneark (Excel)</option>
-      <option value="plancsv">Kanalplan · CSV</option>
-      <option value="planpdf">Kanalplan · PDF</option>
+      <option value="plancsv">Plan · CSV</option>
+      <option value="planpdf">Plan · PDF</option>
       <option value="drawio">draw.io · redigerbar tegning</option>
       <option value="html">HTML · selvstændig fil</option>
       <option value="json">JSON · projektfil til SignalFlow</option>
@@ -9960,7 +10068,7 @@ document.querySelectorAll('.busbtn').forEach(b=>b.onclick=()=>{
 
 /* tastatur */
 document.addEventListener('keydown',e=>{
- /* I kanalplanen står markøren næsten altid i et felt, så fortryd skal
+ /* I planen står markøren næsten altid i et felt, så fortryd skal
     virke alligevel – ellers kan man ikke fortryde en linje man lige rettede. */
  if(view==='plan'&&(e.ctrlKey||e.metaKey)&&e.key==='z'){
   e.preventDefault(); if(document.activeElement)document.activeElement.blur(); undo(); return;
