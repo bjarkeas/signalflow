@@ -985,12 +985,17 @@ body.mobile.guest #app{padding-bottom:12px}
  font:11.5px var(--fb);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .fastmaerke{font-size:8.5px;flex:none;opacity:.8}
 /* håndtrykkene i tegningen */
-.bindknap{background:none;border:none;cursor:pointer;flex:none;width:15px;padding:0;
- font-size:9.5px;line-height:1;filter:grayscale(1);opacity:0;transition:opacity .1s}
-.ch:hover .bindknap,.feed:hover .bindknap{opacity:.55}
+/* Håndtrykket stod på opacity:0 og dukkede først op, når musen var over
+   linjen – så kunne man ikke finde det uden at vide, at det var der.
+   Det står nu fremme hele tiden: dæmpet og gråt når intet er bundet,
+   fuldt og i farve når det er. */
+.bindknap{background:none;border:none;cursor:pointer;flex:none;width:16px;padding:0;
+ font-size:11px;line-height:1;filter:grayscale(1);opacity:.6;transition:opacity .1s}
+.ch:hover .bindknap,.feed:hover .bindknap{opacity:.9}
+.bindknap:hover{opacity:1!important;filter:none}
 .bindknap.on{opacity:1;filter:none}
 .ch:hover .bindknap.on,.feed:hover .bindknap.on{opacity:1}
-.bindplads{flex:none;width:15px}
+.bindplads{flex:none;width:16px}
 .bindknap.ud{margin-left:6px}
 /* Sporplanerne står ved siden af gruppenavnet, hvor man er i forvejen.
    Knappen er dæmpet, men synlig – man skal kunne finde den uden at lede. */
@@ -1000,7 +1005,12 @@ body.mobile.guest #app{padding-bottom:12px}
 @media print{.sporknap{display:none!important}}
 .audlist.bundet{border-left-color:var(--intercom);background:rgba(63,217,156,.05)}
 .audlist.bundet .aud.set .audl{border-color:#2f4a3d;background:#141c18}
+/* Listen er en flex-kolonne med en højdegrænse. Flex-børn krymper som
+   standard, så med mange bunker blev hver enkelt mast ned til en stribe –
+   og fordi bunken klipper sit indhold, stod bjælkerne tomme. De skal
+   beholde deres højde og lade listen rulle i stedet. */
 .grpliste{display:flex;flex-direction:column;gap:5px;max-height:46vh;overflow-y:auto}
+.grpliste>*{flex:none}
 .grpvalg{display:flex;flex-direction:column;gap:2px;text-align:left;cursor:pointer;
  background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;color:var(--text)}
 .grpvalg:hover{border-color:var(--intercom)}
@@ -1124,6 +1134,9 @@ body.mobile .laasknap{min-height:34px}
 .dev.narrow .ports{grid-template-columns:1fr}
 .dev.narrow .portcol.ins{border-right:none;border-bottom:1px solid var(--line)}
 .dev{position:absolute}
+/* kortene glider på plads, når et kort foldes ud – de hopper ikke */
+#plan .dev{transition:transform .14s ease}
+#plan .dev.moving{transition:none}
 .dev.moving{opacity:.75;z-index:50;box-shadow:0 14px 34px rgba(0,0,0,.5)}
 .dev .rs{right:-5px;bottom:-5px;opacity:0}
 .dev:hover .rs{opacity:.8}
@@ -1133,22 +1146,30 @@ body.mobile .laasknap{min-height:34px}
    Tre bokse i topbjælken: optik, kamera, stativ – i den rækkefølge man
    pakker dem. Prikken til venstre siger, om det er ledigt i jobbets dage.
    En stiplet kant viser den næste plads man mangler. */
-.udstyr{display:flex;align-items:center;gap:6px;flex:none}
+ /* Boksene står midt i bjælken. Navnet fylder kun det, det skal – ellers
+    skubber det udstyret helt over i P og T, og bjælken ser skæv ud. */
+.udstyr{display:flex;align-items:center;gap:6px;margin:0 auto;flex:0 1 auto;min-width:0}
+/* Navnet får en fast udgangsbredde i stedet for at æde hele bjælken, men må
+   give efter, når kortet er smalt – ellers skubber det P og T ud over kanten. */
+.devhead.medudstyr .devnames{flex:0 1 auto;width:172px;min-width:92px}
+.devhead.medudstyr .devname,.devhead.medudstyr .devplace{width:100%}
 .uplads{display:flex;flex-direction:column;align-items:flex-start;gap:1px;
  background:var(--bg);border:1px solid var(--line);border-radius:7px;
- padding:4px 9px 5px 19px;cursor:pointer;position:relative;text-align:left;
- min-width:92px;max-width:150px;font-family:inherit}
+ padding:4px 9px 5px 9px;cursor:pointer;position:relative;text-align:left;
+ flex:0 1 auto;min-width:72px;max-width:160px;font-family:inherit}
 .uplads:hover{border-color:var(--dim);background:var(--panel)}
-.uetiket{font:8.5px var(--fm);letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+ /* Prikken sidder ved etiketten i stedet for ude i venstre kant. Den siger
+    det samme, og udstyrets navn får de ti point ekstra, det manglede. */
+.uetiket{font:8.5px var(--fm);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+ display:flex;align-items:center;gap:5px;max-width:100%}
 .unavn{font:11.5px var(--fb);color:var(--faint);white-space:nowrap;overflow:hidden;
- text-overflow:ellipsis;max-width:122px}
+ text-overflow:ellipsis;max-width:100%}
 .uplads.har .unavn{color:var(--text)}
-.uplads::before{content:'';position:absolute;left:7px;top:50%;transform:translateY(-50%);
- width:6px;height:6px;border-radius:50%;background:#333a45}
-.uplads.u-ledig::before{background:#3fd99c;box-shadow:0 0 7px rgba(63,217,156,.55)}
-.uplads.u-presset::before{background:#ffb648;box-shadow:0 0 7px rgba(255,182,72,.5)}
-.uplads.u-optaget::before{background:#ff6f6f;box-shadow:0 0 7px rgba(255,111,111,.55)}
-.uplads.u-ukendt::before{background:var(--faint)}
+.uetiket::before{content:'';flex:none;width:6px;height:6px;border-radius:50%;background:#333a45}
+.u-ledig .uetiket::before{background:#3fd99c;box-shadow:0 0 7px rgba(63,217,156,.55)}
+.u-presset .uetiket::before{background:#ffb648;box-shadow:0 0 7px rgba(255,182,72,.5)}
+.u-optaget .uetiket::before{background:#ff6f6f;box-shadow:0 0 7px rgba(255,111,111,.55)}
+.u-ukendt .uetiket::before{background:var(--faint)}
 .uplads.u-optaget{border-color:#5a2f2f}
 .uplads.naeste{border-color:var(--intercom);border-style:dashed}
 /* Et smalt kort har ikke plads til tre bokse ved siden af navnet –
@@ -1158,7 +1179,7 @@ body.mobile .laasknap{min-height:34px}
 .dev.narrow .uplads{flex:1 1 auto;max-width:none}
 body.mobile .devhead{flex-wrap:wrap}
 body.mobile .udstyr{order:5;width:100%;margin-top:4px;flex-wrap:wrap}
-body.mobile .uplads{flex:1 1 30%;min-width:0;max-width:none;padding:6px 8px 7px 19px}
+body.mobile .uplads{flex:1 1 30%;min-width:0;max-width:none;padding:6px 9px 7px 9px}
 body.mobile .unavn{max-width:100%}
 
 /* vælgeren */
@@ -1187,8 +1208,8 @@ body.mobile .unavn{max-width:100%}
 .uvalg.u-optaget .uvstatus{color:#ff6f6f}
 /* På papir er prikken ligegyldig – der tæller navnet på det, der skal med. */
 @media print{
-  .uplads{border-color:#ccc;padding-left:9px;background:none}
-  .uplads::before{display:none}
+  .uplads{border-color:#ccc;background:none}
+  .uetiket::before{display:none}
   .uetiket{color:#777}
   .unavn{color:#111}
   .uplads:not(.har){display:none}
@@ -1456,6 +1477,9 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
 .planprint .ppdev{break-inside:avoid;page-break-inside:avoid;margin-bottom:12px;border:1px solid #d4d4d4;border-radius:4px}
 .planprint .ppname{font-family:var(--fd);font-weight:700;font-size:14px;background:#eee;padding:5px 9px;color:#222}
 /* Udstyret: det man skal have med i kassen, lige under kortets navn. */
+.planprint .ppdev.enkel{break-inside:avoid;page-break-inside:avoid}
+.planprint .ppdev.enkel .ppudstyr{border-bottom:none}
+.planprint .ppintet{padding:5px 9px 6px;font-size:11px;color:#999;font-style:italic}
 .planprint .ppudstyr{display:flex;flex-wrap:wrap;gap:3px 18px;padding:5px 9px 6px;
  border-bottom:1px solid #ddd;font-size:11.5px;color:#111;background:#fafafa}
 .planprint .ppudstyr em{font-style:normal;font-family:var(--fm);font-size:8.5px;
@@ -1839,10 +1863,6 @@ function draw(keepSide){
  if(laastNu){ editing=null; }
  grpNulstil(); indNulstil();      // opslagene hentes forfra ved hver optegning
 
- /* Har området udstyrspladser, skal prikkerne vise noget rigtigt med det
-    samme – ikke først når man åbner vælgeren. Vi henter lager og bookinger
-    én gang og tegner om, når de er der. */
- if(pladserFor(planDom).length) udstyrsDataSikret();
  const sh=sheet(); const title=sheetTitle();
  let h=`<div class="sheethead">
    ${infoVises(sh)?infoHTML(sh):''}
@@ -4101,6 +4121,9 @@ const devDone=dv=>{
 
 function drawPlan(){
  if(!lastSeen())store(seenKey(),String(Date.now()));
+ /* Har området udstyrsbokse, skal prikkerne vise noget rigtigt med det samme –
+    ikke først når man åbner vælgeren. */
+ if(pladserFor(planDom).length) udstyrsDataSikret();
  const el2=document.getElementById('plan');
  const nyt=newCount();
  const labels=usedLabels();
@@ -4166,7 +4189,7 @@ function drawPlan(){
   const rettere=kortRettere(dv);
   const retStil=rettere.length?`;--ret:${retFarveNu[rettere[0]]||RET_FARVER[0]}`:'';
   h+=`<div class="dev ${(dv.w||CARDW)<580?'narrow':''} ${rettere.length?'rettet':''}" data-dev="${dv.id}" style="left:${dv.x}px;top:${dv.y}px;width:${dv.w||CARDW}px${retStil}">
-    <div class="devhead">
+    <div class="devhead ${pladserFor(planDom).length?'medudstyr':''}">
       <span class="draghandle" data-dragdev="${dv.id}" title="Træk for at flytte kortet">⠿</span>
       <div class="devnames">
         <input class="devname" value="${esc(dv.name)}" data-dname="${dv.id}" placeholder="Navn på udstyr">
@@ -4526,7 +4549,7 @@ function bindPlan(){
  const ps=el2.querySelector('[data-psnap]');
  if(ps)ps.onclick=()=>{planSnap=!planSnap;drawPlan()};
  const pp=el2.querySelector('[data-ppdf]');
- if(pp)pp.onclick=()=>exportPlanPDF({paper:'A4',orient:'portrait',margin:10,kun:planDom});
+ if(pp)pp.onclick=printPlan;
  const pc=el2.querySelector('[data-pcsv]');
  if(pc)pc.onclick=()=>exportPlanCSV(planDom);
  const ar=el2.querySelector('[data-arch]'); if(ar)ar.onclick=()=>openArchive('plan');
@@ -4779,6 +4802,47 @@ function bindPlan(){
  });
 
  bindDevDrag(el2);
+ skubForLydliste(el2);
+}
+
+/* ── Plads til de udfoldede lydkanaler ────────────────────────
+   Kortene ligger frit, hvor man har stillet dem. Folder man lydkanalerne ud
+   under et videosignal, vokser kortet – og uden hjælp lægger det sig oven i
+   kortet nedenunder. Vi skubber de kort, der står under det, ned så længe
+   listen er åben.
+
+   Det sker KUN på skærmen, med transform. Ingen x og y bliver rettet, så
+   der bliver ikke noget at gemme, sende til kollegerne eller fortryde – og
+   lukker man listen igen, står alt præcis hvor det stod. */
+function skubForLydliste(el2){
+ el2=el2||document.getElementById('plan');
+ if(!el2)return;
+ el2.querySelectorAll('.dev.skubbet').forEach(n=>{
+  n.style.transform=''; n.classList.remove('skubbet');
+ });
+ const canvas=el2.querySelector('#devcanvas');
+ if(canvas)canvas.style.paddingBottom='';
+ const liste=el2.querySelector('.audlist');
+ if(!liste)return;
+ const kort=liste.closest('.dev');
+ if(!kort)return;
+ /* præcis det, listen lægger til kortets højde */
+ const cs=getComputedStyle(liste);
+ const delta=liste.offsetHeight
+   +(parseFloat(cs.marginTop)||0)+(parseFloat(cs.marginBottom)||0);
+ if(delta<=0)return;
+ const r=kort.getBoundingClientRect();
+ const bundFoer=r.bottom-delta;          // hvor kortet sluttede, før listen kom
+ el2.querySelectorAll('.dev').forEach(n=>{
+  if(n===kort)return;
+  const q=n.getBoundingClientRect();
+  if(q.top<bundFoer-1)return;                       // står ovenfor – rører det ikke
+  if(q.right<=r.left+1||q.left>=r.right-1)return;   // står ved siden af
+  n.style.transform='translateY('+delta+'px)';
+  n.classList.add('skubbet');
+ });
+ /* og plads til at rulle ned til det nederste kort */
+ if(canvas)canvas.style.paddingBottom=delta+'px';
 }
 
 /* ---- kortene ligger hvor du lægger dem ---- */
@@ -5283,7 +5347,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.15-m';
+const SF_VERSION='2026.10.15-p';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -5380,7 +5444,7 @@ function sheetApp(){
     under:'vises ud for de linjer du retter',
     gør:()=>askGuestName().then(()=>drawPlan())},
    {ikon:'↧',tekst:'Print planen',under:PLANDOMS[planDom],
-    gør:()=>exportPlanPDF({paper:'A4',orient:'portrait',margin:10,kun:planDom})}
+    gør:()=>printPlan()}
   ]);
   return;
  }
@@ -5389,7 +5453,7 @@ function sheetApp(){
   /* Planen henter selv kollegernes rettelser hvert sjette sekund, så der er
      ingen opdatér-knap. Delelink og regneark hører til ved computeren. */
   ekstra.push({ikon:'↧',tekst:'Print planen',under:PLANDOMS[planDom],
-    gør:()=>exportPlanPDF({paper:'A4',orient:'portrait',margin:10,kun:planDom})});
+    gør:()=>printPlan()});
   ekstra.push({ikon:'⤒',tekst:'Importér udstyr',gør:()=>importItems('plan')});
   ekstra.push({skil:1});
  }
@@ -5658,6 +5722,7 @@ function bindInVaelg(gid,chid){
  let aaben=(bunker.find(b=>b.min)||{}).noegle||null;
  const nu=ch.ind?indNoegle(ch.ind):'';
 
+ let soeg='';
  const tegn=root=>{
   const ud=root.querySelector('#bindListe');
   if(!bunker.length){
@@ -5665,8 +5730,21 @@ function bindInVaelg(gid,chid){
     +'Der er ingen inputlinjer i planen endnu.<br>Læg udstyr ind under Plan først.</div>';
    return;
   }
-  ud.innerHTML=bunker.map(b=>{
-   const aab=aaben===b.noegle;
+  /* Med et kryds fuldt af signaler bliver listen lang. Søgningen kigger både
+     på bunkens navn og på linjerne inde i den, så "extern 5" og "kommentator"
+     begge finder vej. En bunke der er fundet ved sine linjer, åbnes. */
+  const q=soeg.trim().toLowerCase();
+  const passer=b=>!q || b.hoved.toLowerCase().includes(q)
+    || b.omr.toLowerCase().includes(q) || b.maal.some(m=>m.linje.toLowerCase().includes(q));
+  const vis=bunker.filter(passer);
+  if(!vis.length){
+   ud.innerHTML='<div class="msub" style="text-transform:none;letter-spacing:0;padding:10px">'
+     +'Intet i planen matcher "'+esc(soeg)+'".</div>';
+   return;
+  }
+  ud.innerHTML=vis.map(b=>{
+   const aab = aaben===b.noegle
+     || (!!q && !b.hoved.toLowerCase().includes(q) && b.maal.some(m=>m.linje.toLowerCase().includes(q)));
    return `<div class="bunke ${aab?'on':''}">
      <button class="bunkehoved" data-bunke="${esc(b.noegle)}">
        <span class="bunkepil">${aab?'▾':'▸'}</span>
@@ -5701,7 +5779,8 @@ function bindInVaelg(gid,chid){
 
  openModal(lag==='video'?'Hvor kommer videoen fra?':'Hvor kommer kanalen fra?',
    (ch.nr||'')+' · '+(ch.label||'uden tekst')+' – vælg det input i planen, signalet kommer fra',
-  `<div id="bindListe" class="grpliste"></div>
+  `<div class="mf"><input type="text" name="bsoeg" placeholder="Søg i planen – fx extern 5 eller kommentator"></div>
+   <div id="bindListe" class="grpliste"></div>
    <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-top:12px">
       Teksten skrives fra tegningen til planen. Den kan ikke rettes i
       planen – der er kun ét sted at skrive den.
@@ -5712,6 +5791,8 @@ function bindInVaelg(gid,chid){
     </div>`,
   root=>{
    tegn(root);
+   const sf=root.querySelector('[name="bsoeg"]');
+   if(sf)sf.oninput=()=>{soeg=sf.value; tegn(root)};
    const l=root.querySelector('[data-loes]');
    if(l)l.onclick=()=>{snap(); delete ch.ind; indNulstil(); closeModal(); draw()};
    const a=root.querySelector('[data-annul]');
@@ -7154,7 +7235,11 @@ const UDSTYR_PLADSER={
  kam:[{k:'optik', navn:'Optik',  kat:'optik',  tom:'Vælg optik'},
       {k:'krop',  navn:'Kamera', kat:'kamera', tom:'Vælg kamera'},
       {k:'stativ',navn:'Stativ', kat:'stativ', tom:'Vælg stativ'}],
- lyd:[], video:[], net:[], freq:[]
+ /* Lydkortet er typen – "WL rack". Boksen siger, hvilken af dem fra lageret
+    det er, og om den er ledig i jobbets dage. Flere pladser kan skrives ind
+    her, så følger bokse, vælger, ledighed, print og booking med af sig selv. */
+ lyd:[{k:'enhed', navn:'Udstyr', kat:'', tom:'Vælg enhed', fraNavn:true}],
+ video:[], net:[], freq:[]
 };
 const pladserFor=d2=>UDSTYR_PLADSER[d2]||[];
 const pladsFind=(d2,k)=>pladserFor(d2).find(p=>p.k===k);
@@ -7283,14 +7368,30 @@ async function bookingerSkriv(){
 /* De tre bokse i kortets topbjælke. Prikken til venstre siger, om det er
    ledigt i jobbets dage; den stiplede kant viser den næste plads man mangler,
    så man pakker i rækkefølge: optik, kamera, stativ. */
-let udstyrHenter=false;
+/* Ét aftryk af bookingerne. Ændrer det sig ikke, er der heller ingen grund
+   til at tegne planen om. */
+function bookingAftryk(){
+ return (epJobs||[]).map(j=>j.id+'|'+j.start_date+'|'+j.end_date+'|'+JSON.stringify(j.items||[])).join('¤')
+  +'§'+(sfKladder||[]).map(b2=>b2.ref||(b2.project_id+b2.equipment_name)).join('¤');
+}
+let udstyrHenter=false, udstyrSidst=0;
 function udstyrsDataSikret(){
  if(udstyrHenter)return;
- if(lagerRows&&epJobs!==null)return;
  if(!session())return;
- udstyrHenter=true;
- Promise.all([lagerList(), bookingerHent()])
-  .then(()=>{ udstyrHenter=false; if(view==='plan'&&pladserFor(planDom).length)drawPlan() })
+ const foerste = !lagerRows || epJobs===null;
+ /* Bookingerne skal holdes friske. En kollega kan booke den sidste WL rack i
+    East Production, mens planen står åben her – så skal prikken skifte af
+    sig selv. Vi henter igen, når tallene er et halvt minut gamle, og tegner
+    kun om, når der faktisk er noget nyt. Ellers ville optegningen kalde sig
+    selv i ring. */
+ if(!foerste && Date.now()-udstyrSidst<30000)return;
+ udstyrHenter=true; udstyrSidst=Date.now();
+ const foer=bookingAftryk();
+ Promise.all([lagerList(), bookingerHent(true)])
+  .then(()=>{
+    udstyrHenter=false; udstyrSidst=Date.now();
+    if((foerste||bookingAftryk()!==foer)&&view==='plan'&&pladserFor(planDom).length)drawPlan();
+  })
   .catch(()=>{ udstyrHenter=false });
 }
 
@@ -7332,23 +7433,32 @@ function lagerForPlads(pp,q){
  const kat=(pp.kat||'').toLowerCase();
  const traeffer=e=>((e.category||'')+' '+(e.name||'')).toLowerCase().includes(kat);
  let r=kat?alle.filter(traeffer):alle.slice();
- const bredt=!r.length;
+ const bredt=!!kat&&!r.length;
  if(bredt)r=alle.slice();
  if(q){const t=q.toLowerCase();
    r=r.filter(e=>((e.name||'')+' '+(e.category||'')+' '+(e.tv2_number||'')).toLowerCase().includes(t))}
  return {rows:r, bredt:bredt};
+}
+/* Pladser uden fast kategori åbner på kortets eget navn: står der "WL rack"
+   på kortet, er WL rack 1, 2 og 3 det man skal se med det samme. */
+function pladsStartSoeg(pp,dv){
+ return (pp&&pp.fraNavn&&dv) ? String(dv.name||'').trim() : '';
 }
 
 function udstyrVaelg(devId,k){
  const pp=pladsFind(planDom,k); if(!pp)return;
  const dv=(dom().devices||[]).find(x=>x.id===devId); if(!dv)return;
  const valgt=udstyrPaa(dv,k);
+ const start=pladsStartSoeg(pp,dv);
  openModal(pp.navn+' til '+(dv.name||'kortet'),
    harJob()?('jobbets dage: '+jobTekst()):'projektet har ingen dage endnu', `
+  ${start?`<div class="usoeghint">Viser lageret filtreret på <b>${esc(start)}</b> –
+     ryd feltet for at se det hele.</div>`:''}
   ${harJob()?'':`<div class="ujobmangler">
      Uden datoer kan vi ikke vide, om udstyret er ledigt.
      <button class="btn" data-ujob="1">Sæt jobbets dage</button></div>`}
-  <div class="mf"><input type="text" name="q" placeholder="Søg i lageret …"></div>
+  <div class="mf"><input type="text" name="q" value="${esc(pladsStartSoeg(pp,dv))}"
+       placeholder="Søg i lageret …"></div>
   <div id="ulist" class="chklist" style="max-height:300px">Henter lageret …</div>
   <div class="mrow">
     ${valgt?`<button class="btn" data-uryd="1">Ryd pladsen</button>`:''}
@@ -7393,7 +7503,9 @@ function udstyrVaelg(devId,k){
    const q=root.querySelector('[name="q"]');
    if(q)q.oninput=tegn;
    /* lageret og bookingerne hentes én gang og bliver hængende i sessionen */
-   Promise.all([lagerList(), bookingerHent()]).then(tegn)
+   /* Her står man med valget. Det er værd at spørge serveren én gang til,
+      så man ikke booker noget, en kollega tog for to minutter siden. */
+   Promise.all([lagerList(), bookingerHent(true)]).then(tegn)
      .catch(e2=>{listEl.innerHTML='<div class="archempty">'+esc(e2.message||'Kunne ikke hente lageret.')+'</div>'});
   });
 }
@@ -7915,10 +8027,15 @@ function openArchive(mode){
  /* mode: 'plan' = ind i planen, 'block' = ind på blokdiagrammet.
     Udstyret kommer fra lageret – det samme lager som lagerprogrammet bruger. */
  const forPlan=mode==='plan', forBlock=mode==='block';
- openModal('Lager',
-   forPlan?'Vælg hvad der skal i planen':forBlock?'Vælg hvad der skal på blokdiagrammet':'Jeres fælles udstyr', `
-  <div class="mf"><input type="text" name="q" placeholder="Søg i lageret …"></div>
-  <div id="archList" class="chklist" style="max-height:280px">Henter …</div>
+ /* Har området udstyrsbokse på kortene, hører lageret til DER – ikke her.
+    Man sætter "en WL rack" ind, og vælger bagefter i boksen hvilken af dem
+    det er, og ser samtidig om den er ledig i jobbets dage. */
+ const iBoksen = forPlan && pladserFor(planDom).length>0;
+ openModal(iBoksen?'Nyt udstyr i planen':'Lager',
+   iBoksen?'Vælg hvad for noget – hvilken enhed vælger du på kortet bagefter'
+   :forPlan?'Vælg hvad der skal i planen':forBlock?'Vælg hvad der skal på blokdiagrammet':'Jeres fælles udstyr', `
+  ${iBoksen?'':`<div class="mf"><input type="text" name="q" placeholder="Søg i lageret …"></div>
+  <div id="archList" class="chklist" style="max-height:280px">Henter …</div>`}
   ${forPlan?`
    <div class="msec">${planDom==='freq'?'Standardsystemer':'Standardudstyr'}</div>
    <div class="picks std">
@@ -7927,14 +8044,22 @@ function openArchive(mode){
     <button class="pick" data-std="custom" title="Skriv selv navn og antal">
       <b>${planDom==='freq'?'Andet system':'Andet udstyr'}</b>
       <span>${planDom==='freq'?'skriv selv antal frekvenser':'skriv selv antal'}</span></button>
-   </div>`:''}
+   </div>
+   ${iBoksen?`<div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;
+      line-height:1.6;margin:10px 0 0">
+      Lageret ligger i <b>${esc((pladserFor(planDom)[0]||{}).navn||'udstyrsboksen')}</b>-boksen
+      øverst på kortet. Der vælger du den enkelte enhed – og ser, om den er
+      ledig i jobbets dage.</div>`:''}`:''}
   <div class="mrow">
-    ${(forPlan||forBlock)?`<button class="btn go" data-ains="1">Indsæt valgte</button>`:''}
+    ${((forPlan||forBlock)&&!iBoksen)?`<button class="btn go" data-ains="1">Indsæt valgte</button>`:''}
     <button class="btn" data-lager="1">Åbn lageret</button>
     <button class="btn" data-cancel="1">Luk</button>
   </div>`,root=>{
    const box=root.querySelector('#archList');
    let rows=[];
+   if(!box){
+    /* Intet lager i dette vindue – kun standardudstyret nedenfor. */
+   } else {
    const render=()=>{
     const q=(val(root,'q')||'').toLowerCase();
     const vis2=rows.filter(r=>!q||((r.name||'')+' '+(r.category||'')).toLowerCase().includes(q));
@@ -7953,6 +8078,7 @@ function openArchive(mode){
    lagerList(true).then(r=>{rows=r||[];render()})
      .catch(e=>{box.innerHTML='<div class="msub" style="padding:10px;color:var(--video)">'+esc(e.message)+'</div>'});
    root.querySelector('[name="q"]').oninput=render;
+   }
    root.querySelector('[data-cancel]').onclick=closeModal;
    root.querySelector('[data-lager]').onclick=()=>{closeModal();setView('arch')};
 
@@ -9600,8 +9726,12 @@ function udstyrPrint(dom2,dv){
  return `<div class="ppudstyr">${valgt.map(x=>
    `<span><em>${esc(x.pp.navn)}</em> ${esc(x.v.navn)}</span>`).join('')}</div>`;
 }
-function planPrintHTML(kun){
+function planPrintHTML(kun,o){
+ /* Kameraplanen kan printes på to måder: hele listen med lydkanalerne, eller
+    kun kameraerne med deres udstyr. Det sidste er pakkesedlen. */
+ const medLyd = !o || o.lyd!==false;
  let h=`<div class="sheettitle">${esc(projectName)} · Plan${kun?' · '+PLANDOMS[kun]:''}${
+   medLyd?'':' · uden lydkanaler'}${
    harJob()?` <span class="ppdage">${esc(jobTekst())}</span>`:''}</div>`;
  Object.keys(PLANDOMS).filter(k=>!kun||k===kun).forEach(k=>{
   const ds=alive(ensurePlan()[k].devices||[]);
@@ -9629,21 +9759,44 @@ function planPrintHTML(kun){
       </div></div>`;
     return;
    }
+   if(k==='kam'&&!medLyd){
+    /* Uden lydkanalerne er kortet en pakkeseddel: hvad hedder kameraet,
+       hvor står det, og hvad skal med i kassen. */
+    h+=`<div class="ppdev enkel"><div class="ppname">${esc(d.name)}${d.place?' · '+esc(d.place):''}</div>
+      ${udstyrPrint(k,d)||'<div class="ppintet">Intet udstyr valgt</div>'}</div>`;
+    return;
+   }
    h+=`<div class="ppdev"><div class="ppname">${esc(d.name)}${d.place?' · '+esc(d.place):''}</div>
      ${udstyrPrint(k,d)}
-     <div class="ppcols">${col(d.ins,'Input','ins')}${col(d.outs,'Output','outs')}</div></div>`;
+     <div class="ppcols">${col(d.ins,k==='kam'?'Lydkanaler':'Input','ins')}${
+       k==='kam'&&!alive(d.outs).length?'':col(d.outs,k==='kam'?'Retur':'Output','outs')}</div></div>`;
   });
  });
  return h;
 }
+/* Kameraplanen printes til to formål: den fulde plan med lydkanalerne, og
+   pakkesedlen med kameraerne og deres udstyr. Derfor spørger vi – men kun
+   på kameraplanen; de andre områder har ikke noget at vælge imellem. */
+function printPlan(){
+ const o={paper:'A4',orient:'portrait',margin:10,kun:planDom};
+ if(planDom!=='kam'){ exportPlanPDF(o); return }
+ openSheet('Print kameraplanen',[
+  {ikon:'♪',tekst:'Med lydkanaler',under:'hele planen, som den står på skærmen',
+   gør:()=>exportPlanPDF(Object.assign({},o,{lyd:true}))},
+  {ikon:'⌸',tekst:'Uden lydkanaler',under:'kun kameraerne og deres udstyr – til pakning',
+   gør:()=>exportPlanPDF(Object.assign({},o,{lyd:false}))}
+ ]);
+}
+
 function exportPlanPDF(o){
- document.getElementById('printroot').innerHTML=`<div class="psheet planprint">${planPrintHTML(o.kun)}</div>`;
+ document.getElementById('printroot').innerHTML=`<div class="psheet planprint">${planPrintHTML(o.kun,o)}</div>`;
  const padPx=o.margin*96/25.4;
  document.getElementById('pagestyle').textContent=
    `@page{size:${o.paper} ${o.orient};margin:0}
     @media print{.psheet{margin:${padPx}px}}`;
  closeModal();
- const navn=projectName+' – Plan'+(o.kun?' – '+PLANDOMS[o.kun]:'');
+ const navn=projectName+' – Plan'+(o.kun?' – '+PLANDOMS[o.kun]:'')
+   +(o.lyd===false?' – uden lydkanaler':'');
  setTimeout(()=>udskriv(navn),120);
 }
 
