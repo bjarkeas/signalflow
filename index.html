@@ -1009,6 +1009,13 @@ body.mobile.guest #app{padding-bottom:12px}
    standard, så med mange bunker blev hver enkelt mast ned til en stribe –
    og fordi bunken klipper sit indhold, stod bjælkerne tomme. De skal
    beholde deres højde og lade listen rulle i stedet. */
+/* Gruppen er bundet på den side, pilen ikke længere peger. Vi skjuler det
+   ikke – man skal kunne se det og slippe det. */
+.bindanden{background:rgba(255,182,72,.08);border:1px solid #4a3f2b;border-radius:8px;
+ padding:9px 11px;margin-bottom:10px;font-size:12px;line-height:1.6}
+.bindanden b{display:block;font-size:11px;font-family:var(--fm);letter-spacing:.08em;
+ text-transform:uppercase;color:var(--lyd);margin-bottom:3px}
+.bindanden span{color:var(--dim)}
 .grpliste{display:flex;flex-direction:column;gap:5px;max-height:46vh;overflow-y:auto}
 .grpliste>*{flex:none}
 .grpvalg{display:flex;flex-direction:column;gap:2px;text-align:left;cursor:pointer;
@@ -2190,8 +2197,10 @@ function bindKnapIn(g,ch){
 }
 function bindKnapUd(g){
  const u=udFor(g.id);
+ const sider=grpSider(g);
+ const ord=sider.length>1?'videosignal':(sider[0]==='ins'?'videoinput':'videooutput');
  return `<button class="bindknap ud ${u?'on':''}" data-bindout="${g.id}"
-   title="${u?'Gruppens lyd ligger på '+esc((u.dv.name||'')+' · output '+(u.port.n||'')+' '+(u.port.label||''))+' – klik for at skifte eller løsne':'Bind gruppens lyd til et videooutput i planen'}">🤝</button>`;
+   title="${u?'Gruppens lyd ligger på '+esc((u.dv.name||'')+' · '+SIDENAVN[u.side].toLowerCase()+' '+(u.port.n||'')+' '+(u.port.label||''))+' – klik for at skifte eller løsne':'Bind gruppens lyd til et '+ord+' i planen'}">🤝</button>`;
 }
 /* Hvad står der i virkeligheden på linjen? Er den bundet fra tegningen, er
    det tegningens tekst – ellers planens eget felt. Print, regneark og
@@ -3179,13 +3188,26 @@ function indFor(dom2,dev,port,aud){
 }
 /* Hvor er denne gruppe bundet hen som OUTPUT? Bindingen står på plan-linjen,
    så vi leder efter den der peger tilbage på gruppen. */
+/* Hvilken side af udstyret hører gruppen til?
+   Peger pilen ud mod modtageren, ligger gruppens lyd på et OUTPUT – signalet
+   forlader udstyret. Er pilen vendt om, kommer signalet den anden vej, og så
+   er det et INPUT, der skal vælges. Går det begge veje, kan det være begge. */
+function grpSider(g){
+ const d=(g&&g.dir)||'ltr';
+ if(d==='rtl')return ['ins'];
+ if(d==='both')return ['outs','ins'];
+ return ['outs'];
+}
+const SIDENAVN={outs:'Output', ins:'Input'};
 function udFor(gid){
  const p=ensurePlan();
  for(const dom2 of Object.keys(PLANDOMS)){
   for(const dv of ((p[dom2]||{}).devices||[])){
    if(dv.del)continue;
-   for(const o of alive(dv.outs)){
-    if(o.grp===gid)return {dom:dom2, dv:dv, port:o};
+   for(const side of ['outs','ins']){
+    for(const o of alive(dv[side])){
+     if(o.grp===gid)return {dom:dom2, dv:dv, port:o, side:side};
+    }
    }
   }
  }
@@ -5347,7 +5369,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.15-p';
+const SF_VERSION='2026.10.15-q';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -5805,27 +5827,45 @@ function bindUdVaelg(gid){
  const f=grpFind(gid); const g=f&&f.g;
  if(!g)return;
  const p=ensurePlan();
+ /* Pilens retning bestemmer, hvilken side der kan vælges fra. */
+ const sider=grpSider(g);
  const maal=[];
  ((p.video||{}).devices||[]).forEach(dv=>{
   if(dv.del)return;
-  alive(dv.outs).forEach(o=>{ if(o.label)maal.push({dev:dv.id,port:o.id,
-    hoved:dv.name||'', linje:'Output '+(o.n||'')+' · '+o.label, grp:o.grp||''}) });
+  sider.forEach(side=>{
+   alive(dv[side]).forEach(o=>{ if(o.label)maal.push({dev:dv.id,port:o.id,side:side,
+     hoved:dv.name||'', linje:SIDENAVN[side]+' '+(o.n||'')+' · '+o.label, grp:o.grp||''}) });
+  });
  });
  const nu=udFor(gid);
- const krop = maal.length
+ /* Er gruppen bundet på den anden side – fx fordi pilen er vendt om bagefter
+    – skjuler vi det ikke. Den står øverst, så man kan se den og slippe den. */
+ const anden = nu && sider.indexOf(nu.side)<0 ? nu : null;
+ const ordet = sider.length>1?'videosignal':(sider[0]==='ins'?'videoinput':'videooutput');
+ const krop = (anden?`<div class="bindanden">
+      <b>Bundet den anden vej</b>
+      <span>Gruppens lyd ligger på ${esc((anden.dv.name||'')+' · '+SIDENAVN[anden.side].toLowerCase()
+        +' '+(anden.port.n||'')+' '+(anden.port.label||''))}.
+      Pilen peger nu ${(g.dir==='rtl')?'den anden vej':'ud mod modtageren'},
+      så den hører til på ${sider[0]==='ins'?'inputsiden':'outputsiden'}.</span>
+    </div>`:'')
+  + (maal.length
   ? `<div class="grpliste">${maal.map(m=>`
-      <button class="grpvalg ${m.grp===gid?'on':''}" data-ud="${m.dev}|${m.port}">
+      <button class="grpvalg ${m.grp===gid?'on':''}" data-ud="${m.dev}|${m.side}|${m.port}">
         <span class="grpnavn">${esc(m.linje)}</span>
         <span class="grpsti">${esc(m.hoved)} · Video</span>
         ${m.grp&&m.grp!==gid?`<span class="grptal">bundet til ${esc(grpNavn(m.grp))}</span>`:''}
       </button>`).join('')}</div>`
   : `<div class="msub" style="text-transform:none;letter-spacing:0;line-height:1.6">
-       Der er ingen videooutput med signal på endnu.<br>
-       Læg et kryds ind under Plan › Video først.</div>`;
- openModal('Hvor ligger gruppens lyd?', (g.label||g.feed||'gruppen')+' – vælg et videooutput i planen',
+       Der er ingen ${esc(ordet)} med signal på endnu.<br>
+       Læg et kryds ind under Plan › Video først.</div>`);
+ openModal('Hvor ligger gruppens lyd?',
+  (g.label||g.feed||'gruppen')+' – '+(g.dir==='rtl'?'pilen er vendt om, så vælg et videoinput i planen'
+    :g.dir==='both'?'signalet går begge veje – vælg input eller output i planen'
+    :'vælg et videooutput i planen'),
   krop+`<div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-top:12px">
-      Gruppens lydkanaler bliver outputtets lydkanaler. Her går det begge
-      veje: retter du teksten det ene sted, står den begge steder.
+      Gruppens lydkanaler bliver ${sider[0]==='ins'?'inputtets':'outputtets'} lydkanaler.
+      Her går det begge veje: retter du teksten det ene sted, står den begge steder.
     </div>
     <div class="mrow" style="margin-top:12px">
       ${nu?`<button class="btn" data-loes="1">Løsn bindingen</button>`:''}
@@ -5833,12 +5873,12 @@ function bindUdVaelg(gid){
     </div>`,
   root=>{
    root.querySelectorAll('[data-ud]').forEach(b=>b.onclick=()=>{
-    const [did,pid]=b.dataset.ud.split('|');
+    const [did,side,pid]=b.dataset.ud.split('|');
     const dv=((ensurePlan().video||{}).devices||[]).find(x=>x.id===did);
-    const port=dv&&(dv.outs||[]).find(x=>x.id===pid);
+    const port=dv&&(dv[side]||[]).find(x=>x.id===pid);
     if(!port)return;
     if(port.grp&&port.grp!==gid&&
-       !confirm('Outputtet er allerede bundet til "'+grpNavn(port.grp)+'".\n\nSkift til denne gruppe?'))return;
+       !confirm(SIDENAVN[side]+'tet er allerede bundet til "'+grpNavn(port.grp)+'".\n\nSkift til denne gruppe?'))return;
     snap();
     const gl=udFor(gid); if(gl)delete gl.port.grp;     // kun ét sted ad gangen
     port.grp=gid; touch(port);
