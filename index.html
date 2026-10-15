@@ -936,6 +936,79 @@ body.mobile.guest #app{padding-bottom:12px}
  border-radius:5px;padding:5px 7px;font:12px var(--fb)}
 .plabel:focus,.pnum:focus{outline:none;border-color:var(--intercom)}
 .port.set .plabel{border-color:#2f4a3d;background:#141c18}
+/* ── Lydkanaler i et videosignal ───────────────────────────────
+   Knappen sidder i linjen, listen folder ud under den. */
+.audbtn{font-family:var(--fm);font-size:9.5px;letter-spacing:.02em;min-width:22px}
+/* Er der skrevet lyd på signalet, står tallet fremme hele tiden – så kan man
+   se hvilke signaler der er beskrevet, uden at køre musen hen over dem. */
+.port .audbtn.har,.port:hover .audbtn.har{opacity:1;color:var(--lyd)}
+.audbtn.on,.port .audbtn.on,.port:hover .audbtn.on{opacity:1;color:#11161d;
+ background:var(--lyd);border-radius:4px}
+.audlist{margin:1px 0 6px 22px;width:calc(100% - 22px);border-left:2px solid var(--lyd);
+ padding:4px 0 5px 8px;background:rgba(255,182,72,.05);border-radius:0 6px 6px 0}
+.aud{display:flex;align-items:center;gap:6px;padding:2px 4px 2px 0;position:relative}
+.audn{width:62px;flex:none;background:var(--bg);border:1px solid var(--line);color:var(--dim);
+ border-radius:5px;padding:4px 3px;font:9.5px var(--fm);text-align:center}
+.audl{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--text);
+ border-radius:5px;padding:4px 7px;font:11.5px var(--fb)}
+.audl:focus,.audn:focus{outline:none;border-color:var(--intercom)}
+.aud.set .audl{border-color:#4a3f2b;background:#1a1711}
+.aud.fresh .audl{border-color:var(--ret,var(--lyd));box-shadow:0 0 0 1px var(--ret,var(--lyd))}
+.aud .pby{right:76px}
+.audadd{font-size:10px;margin:2px 0 0 2px}
+/* håndtrykket: bindingen til en gruppe i tegningen */
+.audbind{display:flex;align-items:center;gap:6px;width:100%;background:none;border:none;
+ color:var(--faint);font-family:var(--fm);font-size:9.5px;letter-spacing:.04em;
+ padding:2px 4px 5px 0;cursor:pointer;text-align:left}
+.audbind:hover{color:var(--text)}
+.audbind.on{color:var(--intercom)}
+.bindikon{font-size:11px;flex:none;filter:grayscale(1);opacity:.7}
+.audbind.on .bindikon{filter:none;opacity:1}
+.bindtekst{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audmaerke{font-size:8.5px;flex:none;width:12px;text-align:center;opacity:.8}
+/* En plads der skrives fra tegningen kan ikke rettes her – der er kun ét
+   sted at skrive teksten, og det er i tegningen. */
+.plabel.fast,.audl.fast{display:flex;align-items:center;gap:6px;cursor:default;
+ background:rgba(63,217,156,.07);border-color:#2f4a3d;color:var(--text)}
+.plabel.fast{flex:1;min-width:0;border:1px solid #2f4a3d;border-radius:5px;padding:5px 7px;
+ font:12px var(--fb);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.audl.fast{flex:1;min-width:0;border:1px solid #2f4a3d;border-radius:5px;padding:4px 7px;
+ font:11.5px var(--fb);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.fastmaerke{font-size:8.5px;flex:none;opacity:.8}
+/* håndtrykkene i tegningen */
+.bindknap{background:none;border:none;cursor:pointer;flex:none;width:15px;padding:0;
+ font-size:9.5px;line-height:1;filter:grayscale(1);opacity:0;transition:opacity .1s}
+.ch:hover .bindknap,.feed:hover .bindknap{opacity:.55}
+.bindknap.on{opacity:1;filter:none}
+.ch:hover .bindknap.on,.feed:hover .bindknap.on{opacity:1}
+.bindplads{flex:none;width:15px}
+.bindknap.ud{margin-left:6px}
+.audlist.bundet{border-left-color:var(--intercom);background:rgba(63,217,156,.05)}
+.audlist.bundet .aud.set .audl{border-color:#2f4a3d;background:#141c18}
+.grpliste{display:flex;flex-direction:column;gap:5px;max-height:46vh;overflow-y:auto}
+.grpvalg{display:flex;flex-direction:column;gap:2px;text-align:left;cursor:pointer;
+ background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px;color:var(--text)}
+.grpvalg:hover{border-color:var(--intercom)}
+.grpvalg.on{border-color:var(--intercom);background:rgba(63,217,156,.1)}
+.grpnavn{font-family:var(--fd);font-weight:700;font-size:13.5px;letter-spacing:.03em}
+.grpsti{font-family:var(--fm);font-size:9.5px;color:var(--faint)}
+.grptal{font-family:var(--fm);font-size:9.5px;color:var(--lyd)}
+.lydvalg{position:relative;padding-right:30px}
+.lydvalg .lydslet{position:absolute;right:7px;top:8px;opacity:.5}
+.lydvalg:hover .lydslet{opacity:1}
+.lydvis{display:flex;flex-wrap:wrap;gap:4px 8px;margin:4px 0 10px;
+ background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;
+ max-height:150px;overflow-y:auto}
+.lydvis span{font-size:11.5px;color:var(--text);white-space:nowrap}
+.lydvis em{font-style:normal;font-family:var(--fm);font-size:9px;color:var(--faint);margin-right:5px}
+body.mobile .audlist{margin-left:12px;width:calc(100% - 12px)}
+body.mobile .audn{width:54px;font-size:9px}
+@media print{
+  /* på papir foldes alle lydkanaler ud; knappen er overflødig */
+  .audbtn{display:none!important}
+  .audlist{display:block!important;background:none;border-left:1px solid #bbb}
+}
+
 /* En rettelse fra en kollega får hans farve – både på linjen og på kortet */
 .port.fresh .plabel{border-color:var(--ret,var(--lyd));box-shadow:0 0 0 1px var(--ret,var(--lyd))}
 .port.fresh::before{content:'';position:absolute;left:-6px;top:50%;transform:translateY(-50%);
@@ -1646,6 +1719,7 @@ function draw(keepSide){
   lb.classList.toggle('on', !!laastNu);
  }
  if(laastNu){ editing=null; }
+ grpNulstil(); indNulstil();      // opslagene hentes forfra ved hver optegning
  const sh=sheet(); const title=sheetTitle();
  let h=`<div class="sheethead">
    ${infoVises(sh)?infoHTML(sh):''}
@@ -1724,6 +1798,7 @@ function draw(keepSide){
        <span class="endtag ${g.rx?'':'ghost'}" data-e="rx" data-id="${g.id}">${esc(g.rx||'RX')}</span>
        <span class="dirmark" title="Retning">${g.dir==='rtl'?'←':g.dir==='both'?'↔':'→'}</span>
        <span class="lbl" data-e="glabel" data-id="${g.id}" style="font-weight:600;color:${labC};font-size:${px(gs.labelSize,11.5)}px">${esc(g.label)}</span>
+       ${bindKnapUd(g)}
        <span class="chcount">${g.collapsed?g.channels.length+' kanaler':''}</span>
        <span class="tools">
          <button class="mini rowmenu" data-grpmenu="${g.id}" title="Muligheder for gruppen">⋯</button>
@@ -1745,6 +1820,7 @@ function draw(keepSide){
     const cv=vis(ch.layer,crole);
     const chC=px(gs.chColor,'#3a3a3a'), chS=px(gs.chSize,11);
     h+=`<div class="ch ${crole==='backup'?'cbackup':''} ${cv?'':'faded'}" style="color:${chC}">
+      ${bindKnapIn(g,ch)}
       <span class="dot" style="background:${DOT[ch.layer]}" data-cyc="${g.id}|${ch.id}" title="Signaltype: ${LAYERS[ch.layer]} – klik for at skifte til den næste"></span>
       <span class="chnr" data-e="chnr" data-id="${g.id}|${ch.id}" style="font-size:${chS-0.5}px">${esc(ch.nr)}</span>
       ${crole==='backup'?'<span class="chb" title="Backup-linje">B</span>':''}
@@ -1948,6 +2024,37 @@ function unanchor(it){
    it.y=Math.max(0,Math.round(r.top -sr.top -el.clientTop));
  }else{const s0=dropSpot(); it.x=s0.x; it.y=s0.y}
  delete it.anchor;
+}
+
+/* ── Håndtrykkene i tegningen ──────────────────────────────────
+   Venstre side af en kanal: hvor i kanalplanen ender den som INPUT.
+   Højre side af gruppen: hvilket OUTPUT i kanalplanen gruppen fodrer.
+   Pladsen er der altid, også når der ikke er bundet noget – ellers ville
+   linjerne hoppe, hver gang man bandt eller løsnede. */
+function bindKnapIn(g,ch){
+ if((ch.layer||'lyd')!=='lyd')return '<span class="bindplads"></span>';
+ const b=ch.ind;
+ const hvor=b?indMaalNavn(b):'';
+ return `<button class="bindknap ind ${b?'on':''}" data-bindin="${g.id}|${ch.id}"
+   title="${b?'Ender i kanalplanen som '+esc(hvor)+' – klik for at skifte eller løsne':'Bind kanalen til et input i kanalplanen'}">🤝</button>`;
+}
+function bindKnapUd(g){
+ const u=udFor(g.id);
+ return `<button class="bindknap ud ${u?'on':''}" data-bindout="${g.id}"
+   title="${u?'Gruppens lyd ligger på '+esc((u.dv.name||'')+' · output '+(u.port.n||'')+' '+(u.port.label||''))+' – klik for at skifte eller løsne':'Bind gruppens lyd til et videooutput i kanalplanen'}">🤝</button>`;
+}
+/* Navnet på det sted i planen en kanal er bundet hen */
+function indMaalNavn(b){
+ const p=ensurePlan();
+ const dv=((p[b.dom]||{}).devices||[]).find(x=>x.id===b.dev);
+ if(!dv)return 'et sted der ikke findes længere';
+ const port=(dv.ins||[]).find(x=>x.id===b.port);
+ if(!port)return dv.name||'';
+ if(b.aud){
+  const a=audListe(port).find(x=>x.id===b.aud);
+  return (dv.name||'')+' · '+(port.label||port.n||'')+' · '+(a?a.n:'lydkanal');
+ }
+ return (dv.name||'')+' · '+PLANDOMS[b.dom]+' input '+(port.n||'');
 }
 
 /* ── Forklaringsboksen ─────────────────────────────────────────
@@ -2805,6 +2912,149 @@ const dom=()=>ensurePlan()[planDom];
 const alive=arr=>(arr||[]).filter(x=>!x.del);
 const devs=()=>alive(dom().devices);
 const ports=(dv,side)=>alive(dv[side]);
+
+/* ── Lydkanaler i et videosignal ───────────────────────────────
+   Et videosignal har lyd med sig – som regel otte kanaler. Lå de alle sammen
+   fremme, ville et kort med 16 videolinjer vise 144 linjer, og så kan man
+   ikke se noget. Derfor er de foldet sammen, og man åbner ét signal ad gangen.
+
+   Kanalerne fylder INTET, før der står noget i dem. En kanal har et fast id,
+   der er regnet ud fra videolinjens id ("x12~a3" = tredje lydkanal på linje
+   x12), så den kan flettes mellem to maskiner, uden at den nogensinde har
+   været gemt. Først når nogen skriver i den – eller sætter et hak – lægger
+   den sig i p.aud.
+
+   Formen er den samme som en almindelig linje (n, label, by, at, patched,
+   checked). Så virker "hvem rettede hvad", hakkene og farvemarkeringen af
+   nye rettelser på lydkanalerne uden at skulle laves om. */
+const AUD_STD=8;                        // otte kanaler som udgangspunkt
+const audId=(p,i)=>p.id+'~a'+i;
+const audNr=id=>{const m=/~a(\d+)$/.exec(id); return m?+m[1]:0};
+/* Hele listen som den skal vises: de otte faste plus dem der måtte være
+   kommet til, og med det der er gemt lagt ind på rette plads. */
+function audListe(p){
+ /* Er signalet bundet til en gruppe, ER gruppens lydkanaler listen. */
+ const f=p.grp?grpFind(p.grp):null;
+ if(f) return grpLyd(f.g).map((c,i)=>({
+   id:c.id, n:c.nr||('Kanal '+(i+1)), label:c.label||'',
+   by:c.by||'', at:c.at||0, patched:!!c.patched, checked:!!c.checked,
+   pby:c.pby||'', cby:c.cby||'', bundet:true}));
+ const gemt={}; (p.aud||[]).forEach(a=>{ if(!a.del)gemt[a.id]=a });
+ let antal=AUD_STD;
+ Object.keys(gemt).forEach(id=>{ antal=Math.max(antal, audNr(id)) });
+ antal=Math.max(antal, +p.audN||0);
+ const ud=[];
+ for(let i=1;i<=antal;i++){
+  const id=audId(p,i);
+  ud.push(gemt[id]||{id:id, n:'Kanal '+i, label:'', by:'', at:0});
+  delete gemt[id];
+ }
+ Object.keys(gemt).forEach(id=>ud.push(gemt[id]));   // kanaler uden fast nummer
+ return ud;
+}
+/* ── Bindingen til tegningen ───────────────────────────────────
+   Et videosignal kan bindes til en gruppe i tegningen. Så er gruppens
+   lydkanaler OG videosignalets lydkanaler det samme – ikke to kopier der
+   skal holdes ens. Derfor virker det automatisk begge veje: retter man
+   teksten i tegningen, står den i kanalplanen, og omvendt. Laver man en
+   kanal mere det ene sted, er den der også det andet. */
+const grpLag=(g,lag)=>(g.channels||[]).filter(c=>(c.layer||'lyd')===lag);
+const grpLyd=g=>grpLag(g,'lyd');
+const antalKanaler=(g,lag)=>{const n=grpLag(g,lag).length; return n+(n===1?' kanal':' kanaler')};
+/* Alle grupper i hele projektet – også dem der ligger på underark */
+function alleGrupper(){
+ const ud=[];
+ const gaa=(sh,pi,sti)=>{
+  (sh.sections||[]).forEach(sc=>(sc.groups||[]).forEach(g=>{
+   ud.push({g:g, pi:pi, sti:sti, sek:(sc.src||'')+' → '+(sc.dst||'')});
+   if(g.sub)gaa(g.sub, pi, sti+' › '+(g.label||''));
+  }));
+ };
+ (pages||[]).forEach((p,i)=>gaa(p,i,p.title||'Side '+(i+1)));
+ return ud;
+}
+/* Opslaget sker én gang pr. optegning – ellers gennemgår vi hele projektet
+   for hver eneste lydkanal der skal tegnes. */
+let grpCache=null;
+const grpNulstil=()=>{grpCache=null};
+function grpFind(gid){
+ if(!gid)return null;
+ if(!grpCache){ grpCache={}; alleGrupper().forEach(x=>{grpCache[x.g.id]=x}) }
+ return grpCache[gid]||null;
+}
+/* ── Bindinger fra tegningen til kanalplanens INPUT ────────────
+   Et input i kanalplanen kan komme hvilket som helst sted fra i tegningen,
+   så den binding sidder på den enkelte kanal i gruppen – ikke på gruppen.
+   Den går KUN én vej: tegningen skriver navnet, kanalplanen viser det.
+   Derfor ligger teksten ét sted, og der er ingen tvivl om hvem der bestemmer.
+
+   Målet er enten en inputlinje i en plan (fx lydplanens input 5) eller en
+   lydkanal under et videoinput. Begge dele kan lade sig gøre. */
+const indNoegle=b=>b&&(b.dom+'|'+b.dev+'|'+b.port+(b.aud?'|'+b.aud:''));
+let indCache=null;
+const indNulstil=()=>{indCache=null};
+function indIndeks(){
+ if(indCache)return indCache;
+ indCache={};
+ alleGrupper().forEach(x=>(x.g.channels||[]).forEach(c=>{
+  if(c.ind&&c.ind.dev&&c.ind.port)indCache[indNoegle(c.ind)]={ch:c,g:x.g,pi:x.pi,sti:x.sti};
+ }));
+ return indCache;
+}
+/* Hvad er bundet til denne plads i planen – hvis noget? */
+function indFor(dom2,dev,port,aud){
+ return indIndeks()[dom2+'|'+dev+'|'+port+(aud?'|'+aud:'')]||null;
+}
+/* Hvor er denne gruppe bundet hen som OUTPUT? Bindingen står på plan-linjen,
+   så vi leder efter den der peger tilbage på gruppen. */
+function udFor(gid){
+ const p=ensurePlan();
+ for(const dom2 of Object.keys(PLANDOMS)){
+  for(const dv of ((p[dom2]||{}).devices||[])){
+   if(dv.del)continue;
+   for(const o of alive(dv.outs)){
+    if(o.grp===gid)return {dom:dom2, dv:dv, port:o};
+   }
+  }
+ }
+ return null;
+}
+function grpNavn(gid){
+ const f=grpFind(gid);
+ if(!f)return '';
+ return (f.g.label||f.g.feed||'gruppe')+' · '+f.sti;
+}
+/* Hvor skal der skrives hen – i gruppen eller i videolinjens egne kanaler?
+   Felterne hedder ikke det samme de to steder: tegningen kalder nummeret
+   "nr", kanalplanen kalder det "n". */
+function audRef(p,id,opret){
+ const f=p.grp?grpFind(p.grp):null;
+ if(f){
+  const c=grpLyd(f.g).find(x=>x.id===id);
+  if(c)return {o:c, nf:'nr', pi:f.pi};
+ }
+ return {o:audFind(p,id,opret), nf:'n', pi:-1};
+}
+/* Rettes en gruppe fra kanalplanen, skal sidens tidsstempel med – ellers
+   kan en kollegas fletning smide rettelsen væk igen. */
+function grpRettet(pi){ if(pi>=0&&pages[pi])pages[pi].mt=Date.now() }
+
+/* Find kanalen – og lav den, hvis den skal skrives i for første gang */
+function audFind(p,id,opret){
+ p.aud=p.aud||[];
+ let a=p.aud.find(x=>x.id===id);
+ if(!a&&opret){
+  a={id:id, n:'Kanal '+(audNr(id)||''), label:'', by:'', at:0};
+  p.aud.push(a);
+  p.aud.sort((x,y)=>(audNr(x.id)||999)-(audNr(y.id)||999));
+ }
+ return a;
+}
+const audSkrevet=p=>audListe(p).filter(a=>a.label).length;
+/* Hvilket signal står åbent lige nu. Det er en visning, ikke data: det bliver
+   hverken gemt eller sendt videre til kollegerne. */
+let audAaben=null;
+const audNoegle=(dv,side,p)=>dv.id+'|'+side+'|'+p.id;
 const newestTouch=d=>Math.max(0,(d.mt||0),
   ...(d.ins||[]).concat(d.outs||[]).map(p=>Math.max(p.at||0,p.del||0)));
 
@@ -3703,6 +3953,7 @@ function drawPlan(){
  const labels=usedLabels();
  /* én farve pr. kollega, tildelt samlet for hele planen */
  retFarveNu=retFarver();
+ grpNulstil(); indNulstil();      // opslagene hentes forfra ved hver optegning
 
  let h=`<div class="planbar">
    <div class="domtabs">${Object.keys(PLANDOMS).map(k=>
@@ -3739,17 +3990,19 @@ function drawPlan(){
 
 
  /* Kort uden plads får en, så de ikke lander oven i hinanden.
-    Højden gættes ud fra antal linjer, så stakken bliver pæn fra start. */
+    Højden gættes ud fra antal linjer, så stakken bliver pæn fra start.
+    Alle områder starter i ÉN kolonne: tre kolonner var svære at overskue, og
+    man skulle rulle til siden for at finde den yderste. Har man selv flyttet
+    kortene ud i flere kolonner, bliver de stående – vi rører kun dem, der
+    ikke har en plads endnu, og de lægger sig nederst. */
  const estH=d=>74+Math.max(ports(d,'ins').length,ports(d,'outs').length)*30+46;
- const colY=[20,20,20];
+ let bund=20;
  list.forEach(d=>{
-  if(typeof d.x==='number'&&typeof d.y==='number'){
-   const c=Math.min(2,Math.max(0,Math.round((d.x-20)/(CARDW+40))));
-   colY[c]=Math.max(colY[c], d.y+estH(d)+24);
-   return;
-  }
-  let c=0; for(let i=1;i<3;i++)if(colY[i]<colY[c])c=i;
-  d.x=20+c*(CARDW+40); d.y=colY[c]; colY[c]+=estH(d)+24;
+  if(typeof d.y==='number')bund=Math.max(bund, d.y+estH(d)+24);
+ });
+ list.forEach(d=>{
+  if(typeof d.x==='number'&&typeof d.y==='number')return;
+  d.x=20; d.y=bund; bund+=estH(d)+24;
  });
  h+=`<div class="devcanvas ${planSnap?'snap':''}" id="devcanvas">`;
  list.forEach(dv=>{
@@ -3979,6 +4232,57 @@ function foldRest(dv,skjult){
     title="Vis alle linjer">+ ${skjult} tomme linjer skjult</button>`;
 }
 
+/* Knappen i videolinjen. Den fylder én plads i knaprækken – lydkanalerne
+   skubber IKKE linjerne fra hinanden, for de åbner i en rude ved siden af
+   kortet. Tallet står på knappen, så man kan se hvilke signaler der er
+   beskrevet lyd på, uden at åbne noget. */
+function audKnap(dv,side,p){
+ if(planDom!=='video')return '';
+ if(!p.label)return '';
+ const noegle=audNoegle(dv,side,p);
+ const skrevet=audSkrevet(p), antal=audListe(p).length;
+ return `<button class="mini audbtn ${skrevet?'har':''} ${audAaben===noegle?'on':''}"
+   data-audtoggle="${noegle}"
+   title="Lydkanaler i dette videosignal – ${skrevet} af ${antal} beskrevet">♪${skrevet||''}</button>`;
+}
+
+/* Lydkanalerne folder ud UNDER videolinjen, rykket ind, så man kan se at de
+   hører til den. Knappen til at åbne dem sidder oppe i linjen selv – ikke i
+   et bånd for sig, for så ville hver eneste linje få en ekstra linje under
+   sig, også dem uden lyd. */
+function audListeBlok(dv,side,p){
+ if(planDom!=='video'||!p.label)return '';
+ const noegle=audNoegle(dv,side,p);
+ if(audAaben!==noegle)return '';
+ const liste=audListe(p);
+ const bundet=p.grp&&grpFind(p.grp);
+ return `<div class="audlist ${bundet?'bundet':''}">
+   ${bundet?`<div class="audbind on" title="Kanalerne kommer fra tegningen. Bindingen laves og løsnes i tegningen – håndtrykket i højre side af gruppen.">
+     <span class="bindikon">🤝</span>
+     <span class="bindtekst">${esc(grpNavn(p.grp))}</span></div>`:''}
+   ${liste.map(a=>`
+     <div class="aud ${a.label?'set':''} ${fresh(a)?'fresh':''}"
+          ${fresh(a)?`style="--ret:${retFarveNu[a.by||'?']||RET_FARVER[0]}"`:''}>
+       ${(a.bundet||indFor(planDom,dv.id,p.id,a.id))?'<span class="audmaerke" title="Kommer fra tegningen">🤝</span>':''}
+       <input class="audn" value="${esc(a.n)}" data-audn="${noegle}|${a.id}"
+              title="Navn eller nummer på lydkanalen">
+       ${(()=>{const ind=indFor(planDom,dv.id,p.id,a.id);
+         return ind
+          ? `<span class="audl fast" title="Skrives i tegningen: ${esc(ind.g.label||'')} · ${esc(ind.ch.nr||'')}">${esc(ind.ch.label||'—')}</span>`
+          : `<input class="audl" value="${esc(a.label)}" list="lbls" placeholder="—"
+              title="${esc(a.label)}" data-audl="${noegle}|${a.id}">`})()}
+       ${a.label?`
+        <label class="tick" title="Patchet${a.pby?' · sat af '+esc(a.pby):''}">
+          <input type="checkbox" data-audtick="${noegle}|${a.id}|patched" ${a.patched?'checked':''}></label>
+        <label class="tick t2" title="Tjekket${a.cby?' · sat af '+esc(a.cby):''}">
+          <input type="checkbox" data-audtick="${noegle}|${a.id}|checked" ${a.checked?'checked':''}></label>`
+        :`<span class="tickgap"></span><span class="tickgap"></span>`}
+       <span class="pby" title="${a.by?esc(a.by)+' · '+new Date(a.at).toLocaleString('da-DK'):''}">${a.by?esc(a.by):''}</span>
+     </div>`).join('')}
+   <button class="add audadd" data-audadd="${noegle}" title="Giv signalet en lydkanal mere">+ lydkanal</button>
+ </div>`;
+}
+
 function portList(dv,side,title){
  const alle=ports(dv,side);
  const {vis:arr, skjult}=synligePorte(dv,side);
@@ -3993,8 +4297,12 @@ function portList(dv,side,title){
           ${fresh(p)?`style="--ret:${retFarveNu[p.by||'?']||RET_FARVER[0]}"`:''}
           data-port="${dv.id}|${side}|${p.id}">
        <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|${side}|${p.id}">
-       <input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
-              title="${esc(p.label)}" data-plabel="${dv.id}|${side}|${p.id}">
+       ${(()=>{const ind=side==='ins'?indFor(planDom,dv.id,p.id):null;
+         return ind
+          ? `<span class="plabel fast" title="Skrives i tegningen: ${esc(ind.g.label||'')} · ${esc(ind.ch.nr||'')}"
+                   ><span class="fastmaerke">🤝</span>${esc(ind.ch.label||'—')}</span>`
+          : `<input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
+              title="${esc(p.label)}" data-plabel="${dv.id}|${side}|${p.id}">`})()}
        ${p.label?`
         <label class="tick" title="Patchet${p.pby?' · sat af '+esc(p.pby):''}">
           <input type="checkbox" data-tick="${dv.id}|${side}|${p.id}|patched" ${p.patched?'checked':''}></label>
@@ -4002,11 +4310,13 @@ function portList(dv,side,title){
           <input type="checkbox" data-tick="${dv.id}|${side}|${p.id}|checked" ${p.checked?'checked':''}></label>`
         :`<span class="tickgap"></span><span class="tickgap"></span>`}
        <span class="pby" title="${p.by?esc(p.by)+' · '+new Date(p.at).toLocaleString('da-DK'):''}">${p.by?esc(p.by):''}</span>
+       ${audKnap(dv,side,p)}
        <button class="mini rowmenu" data-pmenu="${dv.id}|${side}|${p.id}" title="Muligheder for denne linje">⋯</button>
        <button class="mini grip" data-pgrip="${dv.id}|${side}|${p.id}" title="Træk for at flytte linjen op eller ned">⠿</button>
        <button class="mini" data-pins="${dv.id}|${side}|${p.id}" title="Indsæt en ny linje lige over denne – numrene rykker automatisk">⤒</button>
        <button class="mini" data-pdel="${dv.id}|${side}|${p.id}" title="Fjern denne linje fra kortet">✕</button>
-     </div>`).join('')}
+     </div>
+     ${audListeBlok(dv,side,p)}`).join('')}
    ${foldRest(dv,skjult)}
    <button class="add" data-padd="${dv.id}|${side}" title="Tilføj endnu en ${title.toLowerCase()}-linje">+ ${title.toLowerCase()}</button>
  </div>`;
@@ -4166,6 +4476,84 @@ function bindPlan(){
  el2.querySelectorAll('[data-pnum]').forEach(inp=>{
   inp.onchange=()=>{const [dv,p]=find(inp.dataset.pnum);
    if(p){snap();p.n=inp.value;touch(p);autosave()}};
+ });
+
+ /* ---- lydkanalerne i et videosignal ---- */
+ const audFinder=(ref,opret)=>{
+  const [did,side,pid,aid]=ref.split('|');
+  const dv=dom().devices.find(x=>x.id===did);
+  const p=dv&&(dv[side]||[]).find(x=>x.id===pid);
+  if(!p)return [null,null];
+  const r=audRef(p,aid,opret);
+  return [p, r.o, r];
+ };
+ el2.querySelectorAll('[data-audtoggle]').forEach(b=>b.onclick=()=>{
+  /* ét signal ad gangen: åbner man et nyt, lukker det forrige */
+  audAaben = (audAaben===b.dataset.audtoggle) ? null : b.dataset.audtoggle;
+  drawPlan();
+ });
+ el2.querySelectorAll('[data-audl]').forEach(inp=>{
+  const commit=()=>{
+   const [p,a,r]=audFinder(inp.dataset.audl,true);
+   if(!a||a.label===inp.value)return;
+   snap(); a.label=inp.value; touch(a);
+   grpRettet(r.pi);           // er den bundet, er det tegningen der er rettet
+   autosave(); drawPlan();
+  };
+  inp.onchange=commit;
+  if(mobil){ skrumpTekst(inp); inp.addEventListener('input',()=>skrumpTekst(inp)); }
+  inp.onkeydown=e=>{
+   if(e.key==='Enter'){
+    e.preventDefault();
+    const ref=inp.dataset.audl;
+    commit();
+    /* videre til næste lydkanal, så man kan skrive otte i træk */
+    const alle=[...document.querySelectorAll('[data-audl]')];
+    const nu=document.querySelector('[data-audl="'+CSS.escape(ref)+'"]');
+    const nx=alle[alle.indexOf(nu)+1];
+    if(nx){nx.focus();nx.select()}
+   }
+  };
+ });
+ el2.querySelectorAll('[data-audn]').forEach(inp=>{
+  inp.onchange=()=>{
+   const [p,a,r]=audFinder(inp.dataset.audn,true);
+   /* nummeret hedder "nr" i tegningen og "n" i kanalplanen */
+   if(a&&a[r.nf]!==inp.value){snap();a[r.nf]=inp.value;touch(a);grpRettet(r.pi);autosave()}
+  };
+ });
+ el2.querySelectorAll('[data-audtick]').forEach(box=>{
+  box.onchange=()=>{
+   const d=box.dataset.audtick.split('|');
+   const felt=d.pop();
+   const [p,a,r]=audFinder(d.join('|'),true);
+   if(!a)return;
+   snap();
+   a[felt]=box.checked;
+   a[felt==='patched'?'pby':'cby']=box.checked?meName():'';
+   touch(a); grpRettet(r.pi); autosave(); drawPlan();
+  };
+ });
+ el2.querySelectorAll('[data-audadd]').forEach(b=>b.onclick=()=>{
+  const [did,side,pid]=b.dataset.audadd.split('|');
+  const dv=dom().devices.find(x=>x.id===did);
+  const p=dv&&(dv[side]||[]).find(x=>x.id===pid);
+  if(!p)return;
+  snap();
+  const f=p.grp?grpFind(p.grp):null;
+  if(f){
+   /* Bundet signal: kanalen laves i GRUPPEN, så den også står i tegningen */
+   const lyd=grpLyd(f.g), sidste=lyd[lyd.length-1];
+   const ny=newCh(lyd.length+1);
+   const m=sidste&&String(sidste.nr||'').match(NRM);
+   if(m)ny.nr=m[1]+(parseInt(m[2],10)+1)+m[3];
+   const hvor=sidste?f.g.channels.indexOf(sidste)+1:f.g.channels.length;
+   f.g.channels.splice(hvor,0,ny);
+   grpRettet(f.pi);
+  }else{
+   p.audN=audListe(p).length+1;       // én mere end der er nu
+  }
+  autosave(); drawPlan();
  });
  /* frekvens og type – kun i frekvensplanen */
  el2.querySelectorAll('[data-pfreq]').forEach(inp=>{
@@ -4734,7 +5122,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.14-k';
+const SF_VERSION='2026.10.15-f';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -4811,6 +5199,14 @@ function openSheet(titel, punkter){
  wrap.onclick=e=>{ if(e.target===wrap && startUdenfor)closeSheet(); startUdenfor=false };
 }
 function closeSheet(){document.getElementById('sheetwrap').classList.remove('on')}
+/* Arket nedefra lukkede kun på ✕ eller et tryk ved siden af. På en computer
+   venter man Escape – og uden den blev arket liggende og spærrede for alt
+   andet, man prøvede at trykke på. */
+document.addEventListener('keydown',ev=>{
+ if(ev.key!=='Escape')return;
+ const w=document.getElementById('sheetwrap');
+ if(w&&w.classList.contains('on')){ev.stopPropagation();closeSheet()}
+},true);
 
 /* ---- menuerne ---- */
 function sheetApp(){
@@ -4996,6 +5392,13 @@ function sheetGruppe(gid){
     snap();g.collapsed=!g.collapsed;draw()}},
   {ikon:'⊞',tekst:'Åbn underark',gør:()=>drill(g.id)},
   {skil:1},
+  {ikon:'♪',tekst:'Hent lydsporplan',under:'fra arkivet',gør:()=>hentSporplan(g,'lyd')},
+  {ikon:'⤓',tekst:'Gem som lydsporplan',vaerdi:antalKanaler(g,'lyd'),
+   under:'så den kan bruges på andre grupper',gør:()=>gemSporplan(g,'lyd')},
+  {ikon:'☎',tekst:'Hent intercomsporplan',under:'fra arkivet',gør:()=>hentSporplan(g,'intercom')},
+  {ikon:'⤓',tekst:'Gem som intercomsporplan',vaerdi:antalKanaler(g,'intercom'),
+   under:'så den kan bruges på andre grupper',gør:()=>gemSporplan(g,'intercom')},
+  {skil:1},
   {ikon:'⧉',tekst:'Kopiér gruppen',gør:()=>{snap();
     const c=JSON.parse(JSON.stringify(g));c.id=id();c.channels.forEach(x=>x.id=id());
     sc.groups.splice(sc.groups.indexOf(g)+1,0,c);draw()}},
@@ -5005,6 +5408,276 @@ function sheetGruppe(gid){
  ]);
 }
 
+/* ── Vælg hvor en kanal ender i kanalplanen ────────────────────
+   Listen rummer begge slags mål: inputlinjerne i lyd-, intercom- og
+   netplanen, og lydkanalerne under hvert videoinput. */
+function bindInVaelg(gid,chid){
+ const f=grpFind(gid);
+ const g=f&&f.g;
+ const ch=g&&(g.channels||[]).find(x=>x.id===chid);
+ if(!ch)return;
+ const p=ensurePlan();
+ const maal=[];
+ Object.keys(PLANDOMS).forEach(d2=>{
+  ((p[d2]||{}).devices||[]).forEach(dv=>{
+   if(dv.del)return;
+   alive(dv.ins).forEach(port=>{
+    if(d2==='video'){
+     /* under video er det lydkanalerne der kan bindes, ikke selve billedet */
+     if(!port.label)return;
+     audListe(port).forEach(a=>maal.push({
+       dom:d2, dev:dv.id, port:port.id, aud:a.id,
+       hoved:(dv.name||'')+' · '+(port.label||port.n||''),
+       linje:a.n+(a.label?' · '+a.label:''), omr:PLANDOMS[d2]}));
+    }else{
+     maal.push({dom:d2, dev:dv.id, port:port.id,
+       hoved:(dv.name||''), linje:'Input '+(port.n||'')+(port.label?' · '+port.label:''),
+       omr:PLANDOMS[d2]});
+    }
+   });
+  });
+ });
+ const nu=ch.ind?indNoegle(ch.ind):'';
+ const krop = maal.length
+  ? `<div class="grpliste">${maal.map(m=>{
+      const n=indNoegle(m);
+      const taget=indIndeks()[n];
+      const minEgen=taget&&taget.ch.id===ch.id;
+      return `<button class="grpvalg ${minEgen?'on':''}" data-maal="${esc(JSON.stringify(m))}">
+        <span class="grpnavn">${esc(m.linje)}</span>
+        <span class="grpsti">${esc(m.hoved)} · ${esc(m.omr)}</span>
+        ${taget&&!minEgen?`<span class="grptal">optaget af ${esc(taget.ch.nr||'')} ${esc(taget.ch.label||'')} i ${esc(taget.g.label||'')}</span>`:''}
+      </button>`}).join('')}</div>`
+  : `<div class="msub" style="text-transform:none;letter-spacing:0;line-height:1.6">
+       Der er ingen inputlinjer i kanalplanen endnu.<br>
+       Læg udstyr ind under Kanalplan først.</div>`;
+ openModal('Hvor ender kanalen?', (ch.nr||'')+' · '+(ch.label||'uden tekst')+' – vælg et input i kanalplanen',
+  krop+`<div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-top:12px">
+      Teksten skrives fra tegningen til kanalplanen. Den kan ikke rettes i
+      kanalplanen – der er kun ét sted at skrive den.
+    </div>
+    <div class="mrow" style="margin-top:12px">
+      ${nu?`<button class="btn" data-loes="1">Løsn bindingen</button>`:''}
+      <button class="btn" data-annul="1">Fortryd</button>
+    </div>`,
+  root=>{
+   root.querySelectorAll('[data-maal]').forEach(b=>b.onclick=()=>{
+    const m=JSON.parse(b.dataset.maal);
+    const taget=indIndeks()[indNoegle(m)];
+    if(taget&&taget.ch.id!==ch.id&&
+       !confirm('Pladsen er allerede bundet til "'+(taget.ch.label||taget.ch.nr||'')+'".\n\nFlyt den over på denne kanal?'))return;
+    snap();
+    if(taget&&taget.ch.id!==ch.id)delete taget.ch.ind;
+    ch.ind={dom:m.dom, dev:m.dev, port:m.port}; if(m.aud)ch.ind.aud=m.aud;
+    indNulstil(); closeModal(); draw();
+   });
+   const l=root.querySelector('[data-loes]');
+   if(l)l.onclick=()=>{snap(); delete ch.ind; indNulstil(); closeModal(); draw()};
+   const a=root.querySelector('[data-annul]');
+   if(a)a.onclick=closeModal;
+  });
+}
+
+/* Vælg hvilket videooutput gruppens lyd ligger på */
+function bindUdVaelg(gid){
+ const f=grpFind(gid); const g=f&&f.g;
+ if(!g)return;
+ const p=ensurePlan();
+ const maal=[];
+ ((p.video||{}).devices||[]).forEach(dv=>{
+  if(dv.del)return;
+  alive(dv.outs).forEach(o=>{ if(o.label)maal.push({dev:dv.id,port:o.id,
+    hoved:dv.name||'', linje:'Output '+(o.n||'')+' · '+o.label, grp:o.grp||''}) });
+ });
+ const nu=udFor(gid);
+ const krop = maal.length
+  ? `<div class="grpliste">${maal.map(m=>`
+      <button class="grpvalg ${m.grp===gid?'on':''}" data-ud="${m.dev}|${m.port}">
+        <span class="grpnavn">${esc(m.linje)}</span>
+        <span class="grpsti">${esc(m.hoved)} · Video</span>
+        ${m.grp&&m.grp!==gid?`<span class="grptal">bundet til ${esc(grpNavn(m.grp))}</span>`:''}
+      </button>`).join('')}</div>`
+  : `<div class="msub" style="text-transform:none;letter-spacing:0;line-height:1.6">
+       Der er ingen videooutput med signal på endnu.<br>
+       Læg et kryds ind under Kanalplan › Video først.</div>`;
+ openModal('Hvor ligger gruppens lyd?', (g.label||g.feed||'gruppen')+' – vælg et videooutput i kanalplanen',
+  krop+`<div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-top:12px">
+      Gruppens lydkanaler bliver outputtets lydkanaler. Her går det begge
+      veje: retter du teksten det ene sted, står den begge steder.
+    </div>
+    <div class="mrow" style="margin-top:12px">
+      ${nu?`<button class="btn" data-loes="1">Løsn bindingen</button>`:''}
+      <button class="btn" data-annul="1">Fortryd</button>
+    </div>`,
+  root=>{
+   root.querySelectorAll('[data-ud]').forEach(b=>b.onclick=()=>{
+    const [did,pid]=b.dataset.ud.split('|');
+    const dv=((ensurePlan().video||{}).devices||[]).find(x=>x.id===did);
+    const port=dv&&(dv.outs||[]).find(x=>x.id===pid);
+    if(!port)return;
+    if(port.grp&&port.grp!==gid&&
+       !confirm('Outputtet er allerede bundet til "'+grpNavn(port.grp)+'".\n\nSkift til denne gruppe?'))return;
+    snap();
+    const gl=udFor(gid); if(gl)delete gl.port.grp;     // kun ét sted ad gangen
+    port.grp=gid; touch(port);
+    closeModal(); draw();
+   });
+   const l=root.querySelector('[data-loes]');
+   if(l)l.onclick=()=>{snap(); const u=udFor(gid); if(u){delete u.port.grp;touch(u.port)} closeModal(); draw()};
+   const a=root.querySelector('[data-annul]');
+   if(a)a.onclick=closeModal;
+  });
+}
+
+/* ── Arkiv over sporplaner ─────────────────────────────────────
+   En sporplan er den række kanaler en gruppe har på ét lag: lydsporplanen er
+   "Ch. 1 Kamera-mic V, Ch. 2 Kamera-mic H …", intercomsporplanen er
+   "4W 1 Prod, 4W 2 Kamera …". De samme opstillinger går igen fra produktion
+   til produktion, så de gemmes i arkivet og hentes ind på en ny gruppe.
+
+   Arkivet ligger i databasen, så kollegerne har de samme planer. Er tabellen
+   ikke oprettet endnu, falder vi tilbage til denne maskine alene – så kan man
+   bruge det med det samme, og det siger selv til, at SQL'en mangler. */
+const SPORLAG={
+ lyd:      {navn:'lydsporplan',       Navn:'Lydsporplan',       hvad:'lydkanaler'},
+ intercom: {navn:'intercomsporplan',  Navn:'Intercomsporplan',  hvad:'intercomkanaler'}
+};
+const LS_SPOR='signalflow:sporplaner';
+let sporArkivLokalt=false;           // kører vi på reserven?
+function sporplanerLokalt(){
+ try{ return JSON.parse(load(LS_SPOR)||'[]') }catch(e){ return [] }
+}
+async function sporplanerHent(lag){
+ try{
+  const r=await sbFetch('signalflow_lydplaner?select=id,name,note,type,kanaler,created_by,updated_at'
+    +'&type=eq.'+lag+'&order=name.asc');
+  sporArkivLokalt=false;
+  return r||[];
+ }catch(e){
+  sporArkivLokalt=true;
+  return sporplanerLokalt().filter(x=>(x.type||'lyd')===lag)
+    .sort((a,b)=>(a.name||'').localeCompare(b.name||'','da'));
+ }
+}
+async function sporplanGem(lag,navn,note,kanaler){
+ const who=meName()==='?'?'':meName();
+ const nu=new Date().toISOString();
+ if(!sporArkivLokalt){
+  try{
+   /* findes navnet på det samme lag i forvejen, rettes den i stedet */
+   const fandtes=await sbFetch('signalflow_lydplaner?select=id&type=eq.'+lag
+     +'&name=eq.'+encodeURIComponent(navn));
+   if(fandtes&&fandtes.length){
+    await sbFetch('signalflow_lydplaner?id=eq.'+fandtes[0].id,{method:'PATCH',
+      body:JSON.stringify({note:note,kanaler:kanaler,created_by:who,updated_at:nu})});
+   }else{
+    await sbFetch('signalflow_lydplaner',{method:'POST',
+      body:JSON.stringify({name:navn,note:note,type:lag,kanaler:kanaler,created_by:who,updated_at:nu})});
+   }
+   return 'db';
+  }catch(e){ sporArkivLokalt=true; }
+ }
+ const liste=sporplanerLokalt().filter(x=>
+   !((x.type||'lyd')===lag && (x.name||'').toLowerCase()===navn.toLowerCase()));
+ liste.push({id:'l'+Date.now(),name:navn,note:note,type:lag,kanaler:kanaler,created_by:who,updated_at:nu});
+ store(LS_SPOR,JSON.stringify(liste));
+ return 'lokal';
+}
+async function sporplanSlet(pid){
+ if(!sporArkivLokalt){
+  try{ await sbFetch('signalflow_lydplaner?id=eq.'+pid,{method:'DELETE'}); return }
+  catch(e){ sporArkivLokalt=true; }
+ }
+ store(LS_SPOR,JSON.stringify(sporplanerLokalt().filter(x=>x.id!==pid)));
+}
+
+/* Gem gruppens kanaler på ét lag i arkivet */
+function gemSporplan(g,lag){
+ const L=SPORLAG[lag];
+ const kanaler=grpLag(g,lag).map(c=>({nr:c.nr||'',label:c.label||''}));
+ if(!kanaler.length)return alert('Gruppen har ingen '+L.hvad+' at gemme.');
+ openModal('Gem som '+L.navn, kanaler.length+' '+L.hvad+' fra "'+(g.label||g.feed||'gruppen')+'"',
+  `<div class="mf"><label>Navn på planen</label>
+     <input type="text" name="navn" value="${esc(g.label||g.feed||'')}" placeholder="fx Kamera med kommentator"></div>
+   <div class="mf"><label>Note (valgfri)</label>
+     <input type="text" name="note" placeholder="hvornår bruges den?"></div>
+   <div class="lydvis">${kanaler.map(k=>
+     `<span><em>${esc(k.nr)}</em>${esc(k.label||'—')}</span>`).join('')}</div>
+   <div id="lydMsg" class="msub" style="text-transform:none;letter-spacing:0;min-height:15px"></div>
+   <div class="mrow"><button class="btn go" data-ok="1" style="width:100%">Gem i arkivet</button></div>`,
+  root=>{
+   const navn=root.querySelector('[name="navn"]'), note=root.querySelector('[name="note"]');
+   const msg=root.querySelector('#lydMsg');
+   root.querySelector('[data-ok]').onclick=async function(){
+    const n=navn.value.trim();
+    if(n.length<2){msg.textContent='Giv planen et navn først.';navn.focus();return}
+    this.textContent='Gemmer …'; this.disabled=true;
+    try{
+     const hvor=await sporplanGem(lag,n,note.value.trim(),kanaler);
+     closeModal();
+     if(hvor==='lokal')alert('Planen er gemt på denne maskine.\n\nFor at dele den med kollegerne skal SQL\'en for signalflow_lydplaner køres i databasen.');
+    }catch(e){ this.textContent='Gem i arkivet'; this.disabled=false; msg.textContent=e.message }
+   };
+  });
+}
+
+/* Hent en sporplan ind på gruppen */
+function hentSporplan(g,lag){
+ const L=SPORLAG[lag];
+ openModal('Hent '+L.navn,'Henter ind på "'+(g.label||g.feed||'gruppen')+'"',
+  `<div id="lydListe" class="grpliste"><div class="msub">henter …</div></div>
+   <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-top:12px">
+     Planen erstatter gruppens ${esc(L.hvad)}. De andre signaltyper i gruppen bliver hvor de er.
+   </div>`,
+  async root=>{
+   const ud=root.querySelector('#lydListe');
+   let liste=[];
+   try{ liste=await sporplanerHent(lag) }catch(e){ ud.innerHTML='<div class="msub">'+esc(e.message)+'</div>'; return }
+   if(!liste.length){
+    ud.innerHTML='<div class="msub" style="text-transform:none;letter-spacing:0;line-height:1.6">'
+     +'Der er ingen '+esc(L.navn)+'er i arkivet endnu.<br>'
+     +'Gem en gruppes '+esc(L.hvad)+' som '+esc(L.navn)+', så står den her næste gang.</div>';
+    return;
+   }
+   ud.innerHTML=liste.map(x=>{
+    const k=x.kanaler||[];
+    return `<div class="grpvalg lydvalg" data-lyd="${x.id}">
+      <span class="grpnavn">${esc(x.name)}</span>
+      <span class="grpsti">${k.length} ${k.length===1?'kanal':'kanaler'}${x.note?' · '+esc(x.note):''}${x.created_by?' · '+esc(x.created_by):''}</span>
+      <span class="grptal">${k.slice(0,4).map(c=>esc(c.label||c.nr)).join(' · ')}${k.length>4?' …':''}</span>
+      <button class="mini lydslet" data-slet="${x.id}" title="Fjern planen fra arkivet">✕</button>
+    </div>`;
+   }).join('')+(sporArkivLokalt?'<div class="msub" style="text-transform:none;letter-spacing:0;margin-top:8px">Arkivet ligger kun på denne maskine – kør SQL\'en for at dele det.</div>':'');
+   ud.querySelectorAll('[data-lyd]').forEach(n=>n.onclick=ev=>{
+    if(ev.target.closest('[data-slet]'))return;
+    const plan=liste.find(x=>x.id===n.dataset.lyd);
+    if(!plan)return;
+    const harTekst=grpLag(g,lag).some(c=>c.label);
+    if(harTekst&&!confirm('Gruppen har allerede tekst på sine '+L.hvad+'.\n\nErstat dem med "'+plan.name+'"?'))return;
+    snap();
+    saetKanaler(g,lag,plan.kanaler||[]);
+    closeModal(); draw();
+   });
+   ud.querySelectorAll('[data-slet]').forEach(n=>n.onclick=async ev=>{
+    ev.stopPropagation();
+    const plan=liste.find(x=>x.id===n.dataset.slet);
+    if(!plan||!confirm('Fjern "'+plan.name+'" fra arkivet?'))return;
+    await sporplanSlet(plan.id);
+    hentSporplan(g,lag);
+   });
+  });
+}
+
+/* Læg en plans kanaler ind på ét lag i gruppen. De andre signaltyper står
+   uberørt, og rækkefølgen holdes: lyden lander der hvor lyden stod. */
+function saetKanaler(g,lag,kanaler){
+ const gamle=grpLag(g,lag);
+ const foerste=gamle.length?g.channels.indexOf(gamle[0]):g.channels.length;
+ const nye=kanaler.map(k=>({id:id(),nr:k.nr||'',label:k.label||'',layer:lag}));
+ g.channels=g.channels.filter(c=>(c.layer||'lyd')!==lag);
+ g.channels.splice(Math.min(foerste,g.channels.length),0,...nye);
+}
+
 /* ---- linjemenu i kanalplanen ---- */
 function sheetPort(ref){
  const [did,side,pid]=ref.split('|');
@@ -5012,7 +5685,14 @@ function sheetPort(ref){
  const p=dv&&dv[side].find(x=>x.id===pid);
  if(!p)return;
  const synlige=ports(dv,side), j=synlige.indexOf(p);
- openSheet((p.n||'')+'  ·  '+(p.label||'tom linje'),[
+ /* På telefonen er knapperne i linjen skjult – lydkanalerne åbnes herfra */
+ const lyd = (planDom==='video'&&p.label) ? [{ikon:'♪',tekst:'Lydkanaler',
+   vaerdi:audSkrevet(p)+'/'+audListe(p).length,
+   under:'de lydkanaler der ligger i dette videosignal',
+   gør:()=>{audAaben=audNoegle(dv,side,p);drawPlan();
+     setTimeout(()=>{const r=document.querySelector('.audlist');
+       if(r)r.scrollIntoView({block:'nearest',behavior:'smooth'})},80)}}] : [];
+ openSheet((p.n||'')+'  ·  '+(p.label||'tom linje'),lyd.concat([
   {ikon:'✎',tekst:'Ret signalet',gør:()=>{
     const f=document.querySelector('[data-plabel="'+CSS.escape(ref)+'"]');
     if(f){f.focus();f.select()}}},
@@ -5037,7 +5717,7 @@ function sheetPort(ref){
        plads j – derfor j+1. Hentede vi listen igen her, ville vi springe
        linjen lige under over. */
     skubSerie(synlige,j+1,-1,serie,'n');drawPlan()}}
- ]);
+ ]));
 }
 function flytPort(dv,side,i,ret){
  const synlige=ports(dv,side);
@@ -5358,6 +6038,20 @@ function mergePlan(mine,theirs){
  });
  return out;
 }
+/* Lydkanalerne i ét videosignal, flettet kanal for kanal. Hver kanal har sit
+   eget tidsstempel, så to kan skrive i hver sin kanal samtidig. */
+function mergeAud(a,b){
+ if(!a&&!b)return null;
+ if(!a||!a.length)return b||null;
+ if(!b||!b.length)return a;
+ const byId={}, order=[];
+ (a||[]).forEach(x=>{byId[x.id]=x;order.push(x.id)});
+ (b||[]).forEach(x=>{
+  if(!byId[x.id]){byId[x.id]=x;order.push(x.id)}
+  else if(Math.max(x.at||0,x.del||0) > Math.max(byId[x.id].at||0,byId[x.id].del||0))byId[x.id]=x;
+ });
+ return order.map(i=>byId[i]).sort((x,y)=>(audNr(x.id)||999)-(audNr(y.id)||999));
+}
 function mergeDev(a,b){
  const d=JSON.parse(JSON.stringify(a));
  /* en sletning står ved magt, medmindre den anden side har rettet bagefter */
@@ -5371,7 +6065,12 @@ function mergeDev(a,b){
    if(!byId[p.id]){byId[p.id]=p;order.push(p.id)}
    else{
     const cur=byId[p.id];
-    if(Math.max(p.at||0,p.del||0) > Math.max(cur.at||0,cur.del||0))byId[p.id]=p;
+    /* Linjen selv: den nyeste vinder, som den altid har gjort. Men
+       lydkanalerne inde i linjen flettes hver for sig – ellers ville den
+       der rettede videolinjens navn tørre kollegaens otte lydkanaler ud. */
+    const vinder = Math.max(p.at||0,p.del||0) > Math.max(cur.at||0,cur.del||0) ? p : cur;
+    const aud = mergeAud(cur.aud, p.aud);
+    byId[p.id] = aud ? Object.assign({}, vinder, {aud:aud}) : vinder;
    }
   });
   d[side]=order.map(i=>byId[i]);
@@ -9172,6 +9871,8 @@ el.addEventListener('click',ev=>{
  const d=k=>t.closest('['+k+']');
  let n;
  if(n=d('data-addsec')){addSec();return}
+ if(n=d('data-bindin')){const[gi,ci]=n.dataset.bindin.split('|');bindInVaelg(gi,ci);return}
+ if(n=d('data-bindout')){bindUdVaelg(n.dataset.bindout);return}
  if(n=d('data-infovaek')){snap();infoBoks(sheet()).vis=false;draw();return}
  if(n=d('data-infotilbage')){snap();infoBoks(sheet()).vis=true;draw();return}
  if(n=d('data-addgrp')){snap();const sc=sheet().sections.find(s=>s.id===n.dataset.addgrp);const g=newGroup('Kilde '+(sc.groups.length+1));g.feed='TX '+(sc.groups.length+1);g.channels=[newCh(1)];sc.groups.push(g);sel={t:'grp',id:g.id};draw();return}
