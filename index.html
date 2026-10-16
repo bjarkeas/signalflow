@@ -999,9 +999,13 @@ body.mobile.guest #app{padding-bottom:12px}
 .bindknap.ud{margin-left:6px}
 /* Sporplanerne står ved siden af gruppenavnet, hvor man er i forvejen.
    Knappen er dæmpet, men synlig – man skal kunne finde den uden at lede. */
-.sporknap{background:none;border:none;cursor:pointer;flex:none;padding:0 2px;margin-left:7px;
- font-size:11px;line-height:1;color:var(--faint);opacity:.6}
-.sporknap:hover{opacity:1;color:var(--lyd)}
+/* En bar ♪ på 10 px kunne ikke findes. Knappen har sit navn med nu – det er
+   den vej ind til arkivet, man skal kunne se uden at lede. */
+.sporknap{background:#fff;border:1px solid #d8d8d8;border-radius:999px;cursor:pointer;
+ flex:none;padding:2px 9px;margin-left:8px;white-space:nowrap;
+ font:600 9.5px var(--fm);letter-spacing:.07em;text-transform:uppercase;
+ color:#6b6b6b}
+.sporknap:hover{color:#8a5a00;border-color:var(--lyd);background:#fff7e8}
 @media print{.sporknap{display:none!important}}
 .audlist.bundet{border-left-color:var(--intercom);background:rgba(63,217,156,.05)}
 .audlist.bundet .aud.set .audl{border-color:#2f4a3d;background:#141c18}
@@ -1039,6 +1043,13 @@ body.mobile.guest #app{padding-bottom:12px}
 .bunkeliste{display:flex;flex-direction:column;gap:3px;padding:6px 7px 7px}
 .bunkeliste .grpvalg{padding:7px 10px;border-radius:6px}
 .bunkeliste .grpnavn{font-size:12.5px}
+.arkfaner{display:flex;gap:6px;margin:0 0 12px}
+.arkfane{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:8px;
+ color:var(--dim);cursor:pointer;padding:8px 10px;font:600 12px var(--fb)}
+.arkfane:hover{border-color:var(--dim);color:var(--text)}
+.arkfane.on{border-color:var(--intercom);color:var(--text);background:rgba(63,217,156,.08)}
+.arkrk{cursor:default}
+.arkrk:hover{border-color:var(--line)}
 .lydvalg{position:relative;padding-right:30px}
 .lydvalg .lydslet{position:absolute;right:7px;top:8px;opacity:.5}
 .lydvalg:hover .lydslet{opacity:1}
@@ -1333,6 +1344,13 @@ body.mobile .infoboks .iindhold{flex-wrap:wrap}
 .infoboks .ifelt .ivaerdi{font-weight:600;overflow-wrap:anywhere;cursor:text;
  min-width:calc(64px*var(--isk));white-space:nowrap}
 .infoboks .ifelt .ivaerdi.tom{font-weight:400;color:#b0b0b0}
+/* Dagene er jobbets, ikke tegningens – de rettes ét sted, under Projekter.
+   Her står de bare, i monospace så datoerne flugter. */
+.infoboks .idage .ivaerdi{font-family:var(--fm);font-size:calc(10px*var(--isk));
+ font-weight:500;color:#555;cursor:pointer}
+.infoboks .idage .ivaerdi:hover{color:#111}
+.infoboks .idage .ivaerdi.tom{font-weight:400;color:#b8b8b8}
+@media print{.infoboks .idage .ivaerdi{color:#333}}
 .infoboks:hover .rs{opacity:.85}
 .infoboks:hover .fitools{opacity:1}
 @media print{.infoboks .fitools,.infoboks .rs{display:none!important}}
@@ -1549,6 +1567,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <button class="hbtn" id="bNew" title="Start forfra med et tomt projekt">Nyt</button>
     <span class="gastmark" title="Du er inde via et delelink og ser kun planen">delt plan</span>
     <span id="autoStatus" title="Autogem i browseren"></span>
+    <button class="hbtn" id="bSpor" title="Arkivet over sporplaner – gemte opstillinger af lyd- og intercomkanaler">♪ Sporplaner</button>
     <button class="hbtn" id="bCloud" title="Projekter, mapper og versionshistorik">☁ Projekter</button>
     <button class="hbtn" id="bSave" title="Gem projektet i databasen og læg samtidig en sikkerhedskopi på din maskine">Gem</button>
    </div>
@@ -1771,6 +1790,11 @@ function blank(){
 function oslo(){return [blank()]}
 
 let projectName='Nyt projekt';
+/* Jobbets dage hører til projektet på linje med navnet, og skal erklæres
+   lige så tidligt: den lokale kopi læses ind før koden længere nede i filen,
+   og en erklæring under det sted ville kaste – hvilket en try/catch slugte,
+   så dagene forsvandt uden at sige noget. */
+let job={start:'',slut:'',sted:'',note:''};
 let pages=oslo();
 let activePage=0;
 let doc=pages[activePage];
@@ -1949,7 +1973,7 @@ function draw(keepSide){
        <span class="dirmark" title="Retning">${g.dir==='rtl'?'←':g.dir==='both'?'↔':'→'}</span>
        <span class="lbl" data-e="glabel" data-id="${g.id}" style="font-weight:600;color:${labC};font-size:${px(gs.labelSize,11.5)}px">${esc(g.label)}</span>
        <button class="sporknap" data-sporplan="${g.id}"
-         title="Sporplaner – hent en opstilling ind på gruppen, eller gem gruppens som en ny">♪</button>
+         title="Sporplaner – hent en opstilling ind på gruppen, eller gem gruppens som en ny">♪ Sporplan</button>
        ${bindKnapUd(g)}
        <span class="chcount">${g.collapsed?g.channels.length+' kanaler':''}</span>
        <span class="tools">
@@ -2315,6 +2339,11 @@ function infoHTML(sh){
      <div class="ifolk">
        ${felt('skriv dit navn',af.tekst,'infoaf','Hvem har lavet tegningen – skrives én gang og står på alle sider')}
        ${felt('telefonnummer',tlf,'infotlf','Telefonnummer – skrives én gang og står på alle sider')}
+       <div class="ifelt idage">
+         <span class="ivaerdi ${harJob()?'':'tom'}" data-jobboks="1"
+           title="${harJob()?'Jobbets dage – klik for at rette dem':'Jobbets dage – klik for at sætte dem. De gælder hele projektet.'}"
+           >${esc(harJob()?jobKort():'jobbets dage')}</span>
+       </div>
      </div>
    </div>
    <span class="fitools">
@@ -5369,7 +5398,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.15-q';
+const SF_VERSION='2026.10.16-a';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -5505,6 +5534,7 @@ function sheetApp(){
  openSheet('Menu',ekstra.concat([
   {ikon:'⏱',tekst:'Jobbets dage',vaerdi:harJob()?jobDato(job.start):'ingen',
    under:'de dage udstyret skal bookes i',gør:()=>openJob()},
+  {ikon:'♪',tekst:'Sporplaner',under:'arkivet over gemte opstillinger',gør:()=>openSporarkiv('lyd')},
   {ikon:'☁',tekst:'Projekter',under:'åbn, gem version, del',gør:()=>openProjects()},
   {ikon:'⤓',tekst:'Gem',under:'i projektet og som kopi på enheden',gør:()=>document.getElementById('bSave').click()},
   {ikon:'↥',tekst:'Importér projekt fra fil',gør:()=>spoergGem('importere et projekt',()=>document.getElementById('file').click())},
@@ -5984,6 +6014,61 @@ function gemSporplan(g,lag){
 }
 
 /* Hent en sporplan ind på gruppen */
+/* ── Arkivet som et sted ──────────────────────────────────────
+   En ♪ ude i en gruppelinje er en handling, ikke et bibliotek. Her er
+   arkivet som noget man kan åbne og kigge i: begge lag, hvad der står i
+   hver plan, hvem der lavede den, og vejen videre til at hente den ind. */
+function openSporarkiv(lag){
+ lag=lag||'lyd';
+ const fane=k=>`<button class="arkfane ${k===lag?'on':''}" data-arkfane="${k}">
+   ${k==='lyd'?'♪ Lydsporplaner':'☎ Intercomsporplaner'}</button>`;
+ openModal('Sporplaner', 'Gemte opstillinger, der kan hentes ind på en gruppe', `
+  <div class="arkfaner">${fane('lyd')}${fane('intercom')}</div>
+  <div id="arkListe" class="grpliste"><div class="msub">henter …</div></div>
+  <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-top:12px">
+    Du henter og gemmer en sporplan <b>på en gruppe</b> i tegningen:
+    tryk <b>♪ Sporplan</b> ude ved gruppens navn. Her kan du se, hvad arkivet
+    indeholder, og rydde op i det.
+  </div>
+  <div class="mrow"><button class="btn" data-arkluk="1">Luk</button></div>`,
+  async root=>{
+   root.querySelector('[data-arkluk]').onclick=closeModal;
+   root.querySelectorAll('[data-arkfane]').forEach(n=>n.onclick=()=>{
+     closeModal(); setTimeout(()=>openSporarkiv(n.dataset.arkfane),40);
+   });
+   const ud=root.querySelector('#arkListe');
+   const L=SPORLAG[lag];
+   let liste=[];
+   try{ liste=await sporplanerHent(lag) }
+   catch(e){ ud.innerHTML='<div class="msub">'+esc(e.message||'Kunne ikke hente arkivet.')+'</div>'; return }
+   if(!liste.length){
+    ud.innerHTML='<div class="msub" style="text-transform:none;letter-spacing:0;line-height:1.6">'
+     +'Arkivet er tomt for '+esc(L.navn)+'er.<br>'
+     +'Åbn en gruppe i tegningen, tryk <b>♪ Sporplan</b> og gem dens '+esc(L.hvad)+'.</div>';
+   } else {
+    ud.innerHTML=liste.map(x=>{
+     const k=x.kanaler||[];
+     return `<div class="grpvalg lydvalg arkrk">
+       <span class="grpnavn">${esc(x.name)}</span>
+       <span class="grpsti">${k.length} ${k.length===1?'kanal':'kanaler'}${x.note?' · '+esc(x.note):''}${x.created_by?' · '+esc(x.created_by):''}</span>
+       <span class="grptal">${k.map(c=>esc(c.nr?c.nr+' '+(c.label||''):(c.label||''))).join(' · ')}</span>
+       <button class="mini lydslet" data-slet="${x.id}" title="Fjern planen fra arkivet">✕</button>
+     </div>`;
+    }).join('');
+    ud.querySelectorAll('[data-slet]').forEach(n=>n.onclick=async ev=>{
+     ev.stopPropagation();
+     const pl=liste.find(x=>x.id===n.dataset.slet);
+     if(!pl||!confirm('Fjern "'+pl.name+'" fra arkivet?'))return;
+     await sporplanSlet(pl.id);
+     closeModal(); setTimeout(()=>openSporarkiv(lag),40);
+    });
+   }
+   if(sporArkivLokalt)
+    ud.insertAdjacentHTML('beforeend','<div class="msub" style="text-transform:none;letter-spacing:0;margin-top:8px">'
+      +'Arkivet ligger kun på denne maskine – kør SQL\'en for at dele det med kollegerne.</div>');
+  });
+}
+
 function hentSporplan(g,lag){
  const L=SPORLAG[lag];
  openModal('Hent '+L.navn,'Henter ind på "'+(g.label||g.feed||'gruppen')+'"',
@@ -6859,7 +6944,7 @@ function autosave(){
  clearTimeout(autoTimer);
  autoTimer=setTimeout(()=>{
   const nu=Date.now();
-  const ok=store(LS_DATA, JSON.stringify({name:projectName,pages,plan:plan,blocks:blocks,ts:nu,cloudId:cloudId}));
+  const ok=store(LS_DATA, JSON.stringify({name:projectName,job:job,pages,plan:plan,blocks:blocks,ts:nu,cloudId:cloudId}));
   lokalTs=nu;                       // vores kopi er fra nu
   lastSaved=Date.now();
   setAuto(ok?'gemt '+new Date().toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'})
@@ -6869,7 +6954,9 @@ function autosave(){
 }
 window.addEventListener('beforeunload',()=>{
  clearTimeout(autoTimer);
- store(LS_DATA, JSON.stringify({name:projectName,pages,plan:plan,blocks:blocks,ts:Date.now(),cloudId:cloudId}));
+ /* Den samme kopi som autosave skriver – jobbets dage skal med her også,
+    ellers tørrer den dem af hver gang siden lukkes eller genindlæses. */
+ store(LS_DATA, JSON.stringify({name:projectName,job:job,pages,plan:plan,blocks:blocks,ts:Date.now(),cloudId:cloudId}));
 });
 
 /* Ved start: genoptag hvor du slap */
@@ -6884,7 +6971,11 @@ function restoreAuto(){
   const d=JSON.parse(raw);
   if(!d.pages||!d.pages.length)return false;
   lokalTs=+d.ts||0;
-  pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); ryddLuft(pages); ryddLuft(pages); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName; setJob(d); cloudId=d.cloudId||null;
+  pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); ryddLuft(pages); ryddLuft(pages); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName;
+  /* En lokal kopi gemt før jobbets dage fandtes, har ingen – og så skal de
+     dage, der står nu, blive stående i stedet for at blive ryddet. */
+  if(d.job)setJob(d);
+  cloudId=d.cloudId||null;
   activePage=0; doc=pages[0];
   const when=new Date(d.ts||Date.now());
   setAuto('genoptaget '+when.toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'}));
@@ -7232,7 +7323,6 @@ grant execute on function sf_pres_get(uuid)              to anon, authenticated;
    Udstyr er aldrig ledigt i sig selv – kun i forhold til en periode. Derfor
    har projektet en start og en slut. Det er dem, ledig/optaget regnes ud fra,
    og det er dem East Production booker på, når den henter udstyret herfra. */
-let job=tomtJob();
 function tomtJob(){ return {start:'',slut:'',sted:'',note:''} }
 function setJob(d){ job=Object.assign(tomtJob(), (d&&d.job)||{}) }
 const harJob=()=>!!(job.start&&job.slut);
@@ -7247,6 +7337,18 @@ function jobDato(s2){
 function jobTekst(){
  if(!harJob())return 'ingen datoer';
  return jobDato(job.start)+' – '+jobDato(job.slut)+(job.sted?' · '+job.sted:'');
+}
+/* Den korte form, til forklaringsboksen. Er det samme dag, er datoen nok
+   én gang og så klokkeslættene – ellers de to dage. */
+function jobKort(){
+ if(!harJob())return '';
+ const d=x=>{const t=new Date(x); return isNaN(t)?String(x).slice(0,10)
+   :t.toLocaleDateString('da-DK',{day:'2-digit',month:'2-digit',year:'numeric'})};
+ const k=x=>{const t=new Date(x); return isNaN(t)?''
+   :t.toLocaleTimeString('da-DK',{hour:'2-digit',minute:'2-digit'})};
+ return dagAf(job.start)===dagAf(job.slut)
+   ? d(job.start)+' · '+k(job.start)+'–'+k(job.slut)
+   : d(job.start)+' – '+d(job.slut);
 }
 /* to perioder rører hinanden, når den ene begynder før den anden slutter */
 const perioderKrydser=(a1,a2,b1,b2)=>!!(a1&&a2&&b1&&b2) && String(a1)<String(b2) && String(b1)<String(a2);
@@ -10670,6 +10772,7 @@ el.addEventListener('click',ev=>{
  if(n=d('data-sporplan')){sheetSporplan(n.dataset.sporplan);return}
  if(n=d('data-bindin')){const[gi,ci]=n.dataset.bindin.split('|');bindInVaelg(gi,ci);return}
  if(n=d('data-bindout')){bindUdVaelg(n.dataset.bindout);return}
+ if(n=d('data-jobboks')){openJob();return}
  if(n=d('data-infovaek')){snap();infoBoks(sheet()).vis=false;draw();return}
  if(n=d('data-infotilbage')){snap();infoBoks(sheet()).vis=true;draw();return}
  if(n=d('data-addgrp')){snap();const sc=sheet().sections.find(s=>s.id===n.dataset.addgrp);const g=newGroup('Kilde '+(sc.groups.length+1));g.feed='TX '+(sc.groups.length+1);g.channels=[newCh(1)];sc.groups.push(g);sel={t:'grp',id:g.id};draw();return}
@@ -10773,6 +10876,7 @@ document.addEventListener('keydown',e=>{
 document.getElementById('bUndo').onclick=undo;
 document.getElementById('bUndo').disabled=true;
 document.getElementById('bExport').onclick=openExport;
+document.getElementById('bSpor').onclick=()=>openSporarkiv('lyd');
 document.getElementById('bCloud').onclick=openCloud;
 document.getElementById('bFoldAll').onclick=()=>{
  const gs=[];sheet().sections.forEach(sc=>sc.groups.forEach(g=>gs.push(g)));
