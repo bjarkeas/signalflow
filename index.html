@@ -1207,6 +1207,10 @@ body.mobile .unavn{max-width:100%}
 .jobtxt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .jobtxt b{font:11px var(--fm);letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-weight:600}
 .jobtxt span{font-size:12.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* .btn er width:100%. I en flex-række vil den derfor have hele bredden og
+   maser teksten ned til ingenting, så den løber ud under knappen. I de her
+   to rækker skal knappen kun fylde sit eget navn. */
+.jobrow .btn,.ujobmangler .btn{width:auto;flex:none;white-space:nowrap;margin:0;padding:7px 14px}
 .ujobmangler{background:rgba(255,182,72,.08);border:1px solid #4a3f2b;border-radius:8px;
  padding:9px 11px;margin-bottom:10px;font-size:12px;color:var(--text);
  display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -1552,7 +1556,6 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <button class="vbtn on" data-view="flow" title="Signalflow-tegningen med afsender, signaler og modtager">Tegning</button>
       <button class="vbtn" data-view="plan" title="Hvilke signaler der sidder i hvilke stik, med patch og tjek">Plan</button>
       <button class="vbtn" data-view="blocks" title="Kasser, udstyr og forbindelser – til at forklare et setup">Blokdiagram</button>
-      <button class="vbtn" data-view="arch" title="Jeres fælles lager – det samme som i lagerprogrammet">Lager</button>
     </div>
     <button class="hbtn modeswitch" id="bMode" title="Skift mellem mobil- og skrivebordsudgave">📱</button>
     <div id="crumbs"></div>
@@ -1608,7 +1611,6 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   <button data-view="flow"><span>▤</span>Tegning</button>
   <button data-view="plan"><span>☰</span>Plan</button>
   <button data-view="blocks"><span>▦</span>Blok</button>
-  <button data-view="arch"><span>⌸</span>Lager</button>
 </nav>
 <div id="sheetwrap"><div id="sheetbox"></div></div>
 <div id="modal"></div>
@@ -5054,6 +5056,9 @@ function drawArchive(){
   <div class="archwrap">
     <div class="archlist">
       <div class="archtop">
+        ${lagerTilbage()}
+      </div>
+      <div class="archtop">
         <input type="text" id="archq" value="${esc(lagQ)}" placeholder="Søg i lageret …">
         <button class="sharebtn save" id="archnew" title="Opret et nyt stykke udstyr på lageret">+ Nyt</button>
       </div>
@@ -5179,6 +5184,8 @@ function bindArchive(){
  const rows=lagerRows||[];
  const cur=rows.find(r=>r.id===lagSel);
 
+ const retur=el2.querySelector('[data-lagerretur]');
+ if(retur)retur.onclick=()=>setView('plan');
  const q=el2.querySelector('#archq');
  if(q)q.oninput=()=>{lagQ=q.value;const pos=q.selectionStart;drawArchive();
    const n=document.getElementById('archq');if(n){n.focus();n.setSelectionRange(pos,pos)}};
@@ -5398,7 +5405,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.16-a';
+const SF_VERSION='2026.10.16-c';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -6018,6 +6025,13 @@ function gemSporplan(g,lag){
    En ♪ ude i en gruppelinje er en handling, ikke et bibliotek. Her er
    arkivet som noget man kan åbne og kigge i: begge lag, hvad der står i
    hver plan, hvem der lavede den, og vejen videre til at hente den ind. */
+/* Lagersiden har ikke længere sin egen fane. Åbner man den fra en
+   udstyrsboks, skal der være en tydelig vej tilbage. */
+function lagerTilbage(){
+ return `<button class="sharebtn" data-lagerretur="1"
+   title="Tilbage til planen">← Tilbage til planen</button>`;
+}
+
 function openSporarkiv(lag){
  lag=lag||'lyd';
  const fane=k=>`<button class="arkfane ${k===lag?'on':''}" data-arkfane="${k}">
@@ -7381,7 +7395,9 @@ const UDSTYR_PLADSER={
     det er, og om den er ledig i jobbets dage. Flere pladser kan skrives ind
     her, så følger bokse, vælger, ledighed, print og booking med af sig selv. */
  lyd:[{k:'enhed', navn:'Udstyr', kat:'', tom:'Vælg enhed', fraNavn:true}],
- video:[], net:[], freq:[]
+ video:[{k:'enhed', navn:'Udstyr', kat:'', tom:'Vælg enhed', fraNavn:true}],
+ net:[{k:'enhed', navn:'Udstyr', kat:'', tom:'Vælg enhed', fraNavn:true}],
+ freq:[]
 };
 const pladserFor=d2=>UDSTYR_PLADSER[d2]||[];
 const pladsFind=(d2,k)=>pladserFor(d2).find(p=>p.k===k);
@@ -7604,6 +7620,7 @@ function udstyrVaelg(devId,k){
   <div id="ulist" class="chklist" style="max-height:300px">Henter lageret …</div>
   <div class="mrow">
     ${valgt?`<button class="btn" data-uryd="1">Ryd pladsen</button>`:''}
+    <button class="btn" data-ulager="1" title="Ret udstyrets ind- og udgange – det er kun her, de kan sættes">Ret på lageret</button>
     <button class="btn" data-uluk="1">Luk</button>
   </div>`, root=>{
    const luk=root.querySelector('[data-uluk]'); if(luk)luk.onclick=closeModal;
@@ -7611,6 +7628,11 @@ function udstyrVaelg(devId,k){
    if(jb)jb.onclick=()=>{closeModal(); setTimeout(openJob,60)};
    const ry=root.querySelector('[data-uryd]');
    if(ry)ry.onclick=()=>{saetUdstyr(devId,k,null); closeModal()};
+   /* Lageret har ikke sin egen fane mere – navn, antal og resten styres i
+      East Production. Men ind- og udgange findes kun her, så vejen derhen
+      skal stadig være åben. */
+   const ul=root.querySelector('[data-ulager]');
+   if(ul)ul.onclick=()=>{closeModal(); setView('arch')};
    const listEl=root.querySelector('#ulist');
 
    const tegn=()=>{
