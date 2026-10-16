@@ -5405,7 +5405,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.16-c';
+const SF_VERSION='2026.10.16-d';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -6615,7 +6615,7 @@ async function pullInner(){
    plan=d0.plan||blankPlan();
    blocks=d0.blocks||blankBlocks();
    if(d0.name)projectName=d0.name;
-   if(d0.job)setJob(d0);
+   if(fletJob(d0))bookingerRydCache();
    dirty=false;
    setSync('hentet fra serveren');
   }else{
@@ -6665,7 +6665,7 @@ async function pullInner(){
  const nyIdx=pages.findIndex(p=>p.id===aktivId);
  if(nyIdx>=0)activePage=nyIdx;
  if(!dirty&&d.name)projectName=d.name;
- if(!dirty&&d.job)setJob(d);
+ if(!dirty&&fletJob(d))bookingerRydCache();
  if(activePage>=pages.length)activePage=0;
  doc=pages[activePage];
  lastSync=full[0].updated_at;
@@ -6988,7 +6988,7 @@ function restoreAuto(){
   pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); ryddLuft(pages); ryddLuft(pages); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName;
   /* En lokal kopi gemt før jobbets dage fandtes, har ingen – og så skal de
      dage, der står nu, blive stående i stedet for at blive ryddet. */
-  if(d.job)setJob(d);
+  fletJob(d);
   cloudId=d.cloudId||null;
   activePage=0; doc=pages[0];
   const when=new Date(d.ts||Date.now());
@@ -7337,9 +7337,36 @@ grant execute on function sf_pres_get(uuid)              to anon, authenticated;
    Udstyr er aldrig ledigt i sig selv – kun i forhold til en periode. Derfor
    har projektet en start og en slut. Det er dem, ledig/optaget regnes ud fra,
    og det er dem East Production booker på, når den henter udstyret herfra. */
-function tomtJob(){ return {start:'',slut:'',sted:'',note:''} }
+function tomtJob(){ return {start:'',slut:'',sted:'',note:'',at:0,by:''} }
 function setJob(d){ job=Object.assign(tomtJob(), (d&&d.job)||{}) }
+const jobSat=j=>!!(j&&j.start&&j.slut);
+/* Dagene er ÉN værdi for hele jobbet, men de kommer ind fra flere sider:
+   vores egen maskine, serveren, en kollegas fane, en gammel version. Alt
+   andet i appen flettes efter stempel – nyeste vinder – og dagene var det
+   eneste, der bare blev overskrevet. Derfor forsvandt de: et objekt er
+   sandt også når det er tomt, så en kopi gemt FØR nogen tastede dagene
+   ind, tørrede dem af ved næste poll.
+   Reglen her: en tom udgave vinder aldrig over en udfyldt, og en ældre
+   vinder aldrig over en nyere. */
+function fletJob(d){
+ const deres=(d&&d.job)||null;
+ if(!deres)return false;
+ if(!jobSat(deres)&&jobSat(job))return false;
+ if((+deres.at||0)<(+job.at||0))return false;
+ const foer=job.start+'|'+job.slut+'|'+job.sted;
+ setJob(d);
+ return foer!==job.start+'|'+job.slut+'|'+job.sted;
+}
 const harJob=()=>!!(job.start&&job.slut);
+/* East Production søger på projektets egne kolonner, så dagene står to
+   steder. Er de væk inde i data – en kopi fra før dagene fandtes – så er
+   kolonnerne den sidste, der stadig ved det. */
+function jobFraRaekke(r){
+ if(!r||harJob())return false;
+ if(!r.job_start||!r.job_end)return false;
+ job=Object.assign(tomtJob(),{start:r.job_start,slut:r.job_end,sted:r.job_sted||''});
+ return true;
+}
 /* 'YYYY-MM-DDTHH:mm' – samme format som datetime-local, og det kan
    sammenlignes som almindelig tekst, fordi det går fra stort til småt. */
 function jobDato(s2){
@@ -7701,7 +7728,10 @@ function openJob(){
     const a=val(root,'jstart'), b=val(root,'jslut');
     if(a&&b&&a>=b){ alert('Jobbet skal slutte efter det begynder.'); return }
     snap();
-    job={start:a,slut:b,sted:val(root,'jsted'),note:val(root,'jnote')};
+    /* Stemplet er det, der gør, at netop DE her dage vinder over en
+       hvilken som helst ældre kopi, der kommer ind fra serveren. */
+    job={start:a,slut:b,sted:val(root,'jsted'),note:val(root,'jnote'),
+         at:Date.now(),by:meName()};
     markDirty(); closeModal(); draw();
     setSync(harJob()?('jobbet varer '+jobTekst()):'dagene er ryddet');
     /* ledig/optaget afhænger af perioden – den skal regnes om */
@@ -7746,10 +7776,13 @@ async function cloudSave(asNew,note){
  bookingerSkriv();
 }
 async function cloudOpen(id){
- const r=await sbFetch('signalflow_projects?id=eq.'+id+'&select=id,name,folder,data');
+ /* '*' og ikke en liste: dagene står også i projektets egne kolonner, og
+    dem vil vi have med uden at opslaget brækker for den, der ikke har
+    kørt bookinger.sql endnu. */
+ const r=await sbFetch('signalflow_projects?id=eq.'+id+'&select=*');
  if(!r||!r.length)throw new Error('Kunne ikke hente projektet.');
  const d=r[0].data;
- pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); ryddLuft(pages); blocks=d.blocks||blankBlocks(); projectName=d.name||r[0].name; setJob(d); cloudId=r[0].id; currentFolder=r[0].folder||'';
+ pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); ryddLuft(pages); blocks=d.blocks||blankBlocks(); projectName=d.name||r[0].name; setJob(d); jobFraRaekke(r[0]); cloudId=r[0].id; currentFolder=r[0].folder||'';
  activePage=0; doc=pages[0]; path=[]; sel=null; focus=null; undoStack=[];
  projektVaekSagt=false; tommeSvar=0;
  draw(); autosave();
@@ -7798,7 +7831,11 @@ async function cloudRestore(vid){
  const r=await sbFetch('signalflow_versions?id=eq.'+vid+'&select=data,project_id');
  if(!r||!r.length)throw new Error('Kunne ikke hente versionen.');
  const d=r[0].data;
- pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); ryddLuft(pages); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName; setJob(d); cloudId=r[0].project_id;
+ pages=sikrePageIds(d.pages); plan=d.plan||blankPlan(); ryddLuft(pages); blocks=d.blocks||blankBlocks(); projectName=d.name||projectName;
+ /* En version gemt før dagene fandtes har ingen – og så er det dem, der
+    står nu, der gælder. Ellers ville en tilbagerulning rydde dem. */
+ if(jobSat((d&&d.job)||null))setJob(d);
+ cloudId=r[0].project_id;
  activePage=0; doc=pages[0]; path=[]; sel=null; focus=null; undoStack=[];
  draw(); autosave();
 }
