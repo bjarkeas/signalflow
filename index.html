@@ -971,10 +971,14 @@ body.mobile.guest #app{padding-bottom:12px}
  padding:2px 4px 5px 0;cursor:pointer;text-align:left}
 .audbind:hover{color:var(--text)}
 .audbind.on{color:var(--intercom)}
-.bindikon{font-size:11px;flex:none;filter:grayscale(1);opacity:.7}
-.audbind.on .bindikon{filter:none;opacity:1}
+/* Knuden ⚯ er et almindeligt tegn og ikke en emoji. Den tager tekstfarven,
+   så den kan være grå og stilfærdig i stedet for at råbe — håndtrykket
+   fyldte for meget på en linje, hvor den står ved siden af teksten. */
+.bindikon{font-size:14px;flex:none;color:#8a9bb0;opacity:.85;line-height:1}
+.audbind.on .bindikon{color:#6fa8c7;opacity:1}
 .bindtekst{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.audmaerke{font-size:8.5px;flex:none;width:12px;text-align:center;opacity:.8}
+.audmaerke{font-size:13px;flex:none;width:13px;text-align:center;
+ color:#8a9bb0;opacity:.8;line-height:1}
 /* En plads der skrives fra tegningen kan ikke rettes her – der er kun ét
    sted at skrive teksten, og det er i tegningen. */
 .plabel.fast,.audl.fast{display:flex;align-items:center;gap:6px;cursor:default;
@@ -983,17 +987,19 @@ body.mobile.guest #app{padding-bottom:12px}
  font:12px var(--fb);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .audl.fast{flex:1;min-width:0;border:1px solid #2f4a3d;border-radius:5px;padding:4px 7px;
  font:11.5px var(--fb);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.fastmaerke{font-size:8.5px;flex:none;opacity:.8}
+.fastmaerke{font-size:13px;flex:none;color:#8a9bb0;opacity:.8;line-height:1;
+ margin-right:2px}
 /* håndtrykkene i tegningen */
 /* Håndtrykket stod på opacity:0 og dukkede først op, når musen var over
    linjen – så kunne man ikke finde det uden at vide, at det var der.
    Det står nu fremme hele tiden: dæmpet og gråt når intet er bundet,
    fuldt og i farve når det er. */
 .bindknap{background:none;border:none;cursor:pointer;flex:none;width:16px;padding:0;
- font-size:11px;line-height:1;filter:grayscale(1);opacity:.6;transition:opacity .1s}
-.ch:hover .bindknap,.feed:hover .bindknap{opacity:.9}
-.bindknap:hover{opacity:1!important;filter:none}
-.bindknap.on{opacity:1;filter:none}
+ font-size:14px;line-height:1;color:#9aa7b4;opacity:.7;transition:opacity .1s,color .1s}
+.ch:hover .bindknap,.feed:hover .bindknap{opacity:1}
+.bindknap:hover{opacity:1!important;color:#4a5a6a}
+/* Bundet: stadig gråblå og rolig, bare tydeligere end den ubundne. */
+.bindknap.on{opacity:1;color:#5b86a8}
 .ch:hover .bindknap.on,.feed:hover .bindknap.on{opacity:1}
 .bindplads{flex:none;width:16px}
 .bindknap.ud{margin-left:6px}
@@ -1399,6 +1405,11 @@ body.mobile .infoboks .rs{display:none}
 .endtag.ghost{opacity:0;border-style:dashed}
 .ch:hover .endtag.ghost{opacity:.45}
 .grp:hover .endtag.ghost{opacity:.4}
+/* Et felt med en skygge i: pladsholderen er den anden sides tekst, og den
+   skal kunne kendes fra noget, man selv har skrevet. */
+.plabel.harspoeg::placeholder,.audl.harspoeg::placeholder{
+ color:#7b8aa0;font-style:italic;opacity:1}
+.plabel.harspoeg:focus::placeholder,.audl.harspoeg:focus::placeholder{color:#9aa7b8}
 
 /* sammenklapning – skjules på skærm, foldes ALTID ud ved print */
 .grp.collapsed .ch,.grp.collapsed .grpfoot{display:none}
@@ -2219,36 +2230,66 @@ function bindKnapIn(g,ch){
  const hvor=b?indMaalNavn(b):'';
  return `<button class="bindknap ind ${b?'on':''}" data-bindin="${g.id}|${ch.id}"
    title="${b?'Kommer fra '+esc(hvor)+' – klik for at skifte eller løsne'
-            :'Vælg hvor '+(lag==='video'?'videoen':'kanalen')+' kommer fra i planen'}">🤝</button>`;
+            :'Vælg hvor '+(lag==='video'?'videoen':'kanalen')+' kommer fra i planen'}">⚯</button>`;
 }
 function bindKnapUd(g){
  const u=udFor(g.id);
  const sider=grpSider(g);
  const ord=sider.length>1?'videosignal':(sider[0]==='ins'?'videoinput':'videooutput');
  return `<button class="bindknap ud ${u?'on':''}" data-bindout="${g.id}"
-   title="${u?'Gruppens lyd ligger på '+esc((u.dv.name||'')+' · '+SIDENAVN[u.side].toLowerCase()+' '+(u.port.n||'')+' '+(u.port.label||''))+' – klik for at skifte eller løsne':'Bind gruppens lyd til et '+ord+' i planen'}">🤝</button>`;
+   title="${u?'Gruppens lyd ligger på '+esc((u.dv.name||'')+' · '+SIDENAVN[u.side].toLowerCase()+' '+(u.port.n||'')+' '+(u.port.label||''))+' – klik for at skifte eller løsne':'Bind gruppens lyd til et '+ord+' i planen'}">⚯</button>`;
 }
 /* Hvad står der i virkeligheden på linjen? Er den bundet fra tegningen, er
    det tegningens tekst – ellers planens eget felt. Print, regneark og
    optællinger skal bruge DEN, ikke det tomme felt. */
 function portTekst(dom2,dv,p,side){
+ /* Det man SER, er det der printes. Har planen sin egen tekst, er det
+    den; ellers står skyggen fra tegningen, og så er det den. */
+ if((p.label||'').trim())return p.label;
  if(side==='ins'){
-  const ind=indFor(dom2,dv.id,p.id);
-  if(ind)return ind.ch.label||'';
+  const sp=plabelSpoeg(dom2,dv,p,side);
+  if(sp)return sp.tekst;
  }
  return p.label||'';
 }
 
-/* Et felt der skrives fra tegningen, vises som låst tekst i stedet for et
-   skrivefelt. Bruges af alle tre slags linjer i planen – almindelige,
-   kameralinjer og frekvenslinjer – så de opfører sig ens. */
-function planFastFelt(dom2,dv,p,side){
+/* Hvad står der i tegningen ud for den her linje i planen? Før blev feltet
+   LÅST med tegningens tekst, så man ikke kunne skrive sin egen. Men
+   tegningen og kanalplanen går til to slags kolleger og skal kunne
+   forklare det samme på hver sin måde – så nu er teksten en skygge, man
+   kan hente over eller lade være. */
+function plabelSpoeg(dom2,dv,p,side){
  if(side!=='ins')return null;
- const ind=indFor(dom2,dv.id,p.id);
- if(!ind)return null;
- return `<span class="plabel fast" title="Skrives i tegningen: ${esc(ind.g.label||'')} · ${esc(ind.ch.nr||'')}"
-   ><span class="fastmaerke">🤝</span>${esc(ind.ch.label||'—')}</span>`;
+ const alle=indAlleFor(dom2,dv.id,p.id);
+ if(!alle.length)return null;
+ const med=alle.filter(x=>(x.ch.label||'').trim());
+ if(!med.length)return null;
+ return {tekst:med[0].ch.label,
+         fra:(med[0].g.label||'tegningen')+(med[0].ch.nr?' · '+med[0].ch.nr:''),
+         flere:med.length>1?med.length:0};
 }
+/* Feltet med skyggen i. Bruges af alle tre slags linjer i planen –
+   almindelige, kameralinjer og frekvenslinjer – så de opfører sig ens. */
+function planLabelMaerke(dom2,dv,p,side){
+ const sp=plabelSpoeg(dom2,dv,p,side);
+ return sp?`<span class="fastmaerke" title="${esc('Hænger sammen med '+sp.fra
+   +' – teksten der er: '+sp.tekst)}">⚯</span>`:'';
+}
+function planLabelFelt(dom2,dv,p,side,ekstra){
+ const sp=plabelSpoeg(dom2,dv,p,side);
+ const ph=sp?esc(sp.tekst):(ekstra&&ekstra.ph?esc(ekstra.ph):'—');
+ const t=(sp&&!p.label)
+   ? esc('Står i '+sp.fra+': '+sp.tekst+' — mellemrum eller enter henter den over'
+         +(sp.flere?' ('+sp.flere+' kanaler peger herpå)':''))
+   : esc(p.label);
+ return `${sp?planLabelMaerke(dom2,dv,p,side):''}<input class="plabel${(!p.label&&sp)?' harspoeg':''}" value="${esc(p.label)}"
+   list="lbls" placeholder="${ph}" title="${t}"
+   ${sp?`data-spoeg="${esc(sp.tekst)}"`:''}
+   ${(ekstra&&ekstra.disabled)?'disabled':''}
+   data-plabel="${dv.id}|${side}|${p.id}">`;
+}
+/* Beholdes for de steder der kun spørger OM der er en binding. */
+function planFastFelt(){ return null }
 
 /* Navnet på det sted i planen en kanal kommer fra */
 function indMaalNavn(b){
@@ -3145,12 +3186,22 @@ const audNr=id=>{const m=/~a(\d+)$/.exec(id); return m?+m[1]:0};
 /* Hele listen som den skal vises: de otte faste plus dem der måtte være
    kommet til, og med det der er gemt lagt ind på rette plads. */
 function audListe(p){
- /* Er signalet bundet til en gruppe, ER gruppens lydkanaler listen. */
- const f=p.grp?grpFind(p.grp):null;
- if(f) return grpLyd(f.g).map((c,i)=>({
-   id:c.id, n:c.nr||('Kanal '+(i+1)), label:c.label||'',
-   by:c.by||'', at:c.at||0, patched:!!c.patched, checked:!!c.checked,
-   pby:c.pby||'', cby:c.cby||'', bundet:true}));
+ /* Planen har sine EGNE kanaltekster. Før var en bundet port bogstaveligt
+    gruppens kanaler – ét sæt tekst vist to steder. Det kunne ikke holde,
+    da ét input skulle kunne gå til flere grupper: hvis tre grupper hænger
+    på samme input, hvis tekst er så "den rigtige"?
+
+    Nu ejer hver side sin egen tekst, og den anden sides står som spøgelse
+    i et tomt felt. Det er også dét, der gør, at tegningen og kanalplanen
+    kan forklare det samme på to måder til to slags kolleger. */
+ const bundne=portGrps(p);
+ /* Har porten en gruppe, men ingen egne rækker endnu, skal der være lige
+    så mange rækker som gruppen har kanaler – ellers er der ikke noget at
+    vise spøgelserne i. */
+ if(bundne.length && !(p.aud||[]).some(a=>!a.del)){
+  const f=grpFind(bundne[0]);
+  if(f){ const n=grpLyd(f.g).length; if(n>(+p.audN||0)) p.audN=n; }
+ }
  const gemt={}; (p.aud||[]).forEach(a=>{ if(!a.del)gemt[a.id]=a });
  let antal=AUD_STD;
  Object.keys(gemt).forEach(id=>{ antal=Math.max(antal, audNr(id)) });
@@ -3208,14 +3259,70 @@ const indNulstil=()=>{indCache=null};
 function indIndeks(){
  if(indCache)return indCache;
  indCache={};
+ /* Flere kanaler må gerne pege på det SAMME input: ét input kan sagtens
+    bruges til flere ting. Før lå der ét opslag pr. plads, og den sidste
+    skrev de andre væk – de forsvandt uden at sige noget. Nu er det en
+    liste pr. plads. */
  alleGrupper().forEach(x=>(x.g.channels||[]).forEach(c=>{
-  if(c.ind&&c.ind.dev&&c.ind.port)indCache[indNoegle(c.ind)]={ch:c,g:x.g,pi:x.pi,sti:x.sti};
+  if(c.ind&&c.ind.dev&&c.ind.port){
+   const k=indNoegle(c.ind);
+   (indCache[k]||(indCache[k]=[])).push({ch:c,g:x.g,pi:x.pi,sti:x.sti});
+  }
  }));
  return indCache;
 }
+/* Alle kanaler, der peger på den her plads. */
+function indAlleFor(dom2,dev,port,aud){
+ return indIndeks()[dom2+'|'+dev+'|'+port+(aud?'|'+aud:'')]||[];
+}
+/* ── Spøgelsesteksten ──────────────────────────────────────────
+   Tegningen og kanalplanen går til to slags kolleger og skal kunne
+   forklare det samme på hver sin måde. Derfor ejer hver side sin egen
+   tekst – men den anden sides står som en grå skygge i et tomt felt, så
+   man kan se den og hente den over med mellemrum eller enter.
+
+   Kilden findes i den rækkefølge: en kanal i tegningen, der peger lige
+   på den her række, ellers gruppen der ligger på porten, på samme plads
+   i listen. */
+function spoegelsePlan(dom2, dv, p, audId, i){
+ const d=indAlleFor(dom2, dv.id, p.id, audId);
+ if(d.length && (d[0].ch.label||'').trim())
+  return {tekst:d[0].ch.label, fra:(d[0].g.label||'tegningen')};
+ const gs=portGrps(p);
+ for(let k=0;k<gs.length;k++){
+  const f=grpFind(gs[k]); if(!f)continue;
+  const c=grpLyd(f.g)[i];
+  if(c && (c.label||'').trim()) return {tekst:c.label, fra:(f.g.label||'gruppen')};
+ }
+ return null;
+}
+/* Den anden vej: hvad står der i planen ud for den her kanal i tegningen? */
+function spoegelseGrp(g, ch, i){
+ if(ch.ind && ch.ind.dev && ch.ind.port){
+  const pl=ensurePlan();
+  const dv=((pl[ch.ind.dom||'video']||{}).devices||[]).find(x=>x.id===ch.ind.dev);
+  const po=dv&&['outs','ins'].map(sd=>(dv[sd]||[]).find(x=>x.id===ch.ind.port)).find(Boolean);
+  if(po){
+   const liste=audListe(po);
+   const r=ch.ind.aud ? liste.find(a=>a.id===ch.ind.aud) : liste[i];
+   if(r && (r.label||'').trim())
+    return {tekst:r.label, fra:((dv.name||'')+' '+(po.n||'')).trim()||'planen'};
+  }
+ }
+ const u=udAlleFor(g.id);
+ for(let k=0;k<u.length;k++){
+  const r=audListe(u[k].port)[i];
+  if(r && (r.label||'').trim())
+   return {tekst:r.label, fra:((u[k].dv.name||'')+' '+(u[k].port.n||'')).trim()||'planen'};
+ }
+ return null;
+}
+
 /* Hvad er bundet til denne plads i planen – hvis noget? */
+/* Den første af dem – til de steder, der kun skal vide OM der er nogen. */
 function indFor(dom2,dev,port,aud){
- return indIndeks()[dom2+'|'+dev+'|'+port+(aud?'|'+aud:'')]||null;
+ const a=indAlleFor(dom2,dev,port,aud);
+ return a.length?a[0]:null;
 }
 /* Hvor er denne gruppe bundet hen som OUTPUT? Bindingen står på plan-linjen,
    så vi leder efter den der peger tilbage på gruppen. */
@@ -3230,19 +3337,42 @@ function grpSider(g){
  return ['outs'];
 }
 const SIDENAVN={outs:'Output', ins:'Input'};
-function udFor(gid){
+/* Hvilke grupper hænger på den her port? Før kunne der kun være én –
+   nu er det en liste, for det samme signal kan sagtens bære flere
+   grupper. Gamle linjer har stadig det enkelte felt, og det tæller med. */
+function portGrps(o){
+ if(!o)return [];
+ if(Array.isArray(o.grps))return o.grps.filter(Boolean);
+ return o.grp?[o.grp]:[];
+}
+function portSatGrps(o, liste){
+ const r=(liste||[]).filter(Boolean);
+ if(r.length){ o.grps=r; } else { delete o.grps; }
+ delete o.grp;                       // det gamle felt bruges ikke mere
+}
+function portHarGrp(o,gid){ return portGrps(o).indexOf(gid)>=0 }
+
+/* Alle de steder gruppen ligger. En gruppe kan sendes ud flere steder –
+   fx det samme signal til to modtagere. */
+function udAlleFor(gid){
  const p=ensurePlan();
- for(const dom2 of Object.keys(PLANDOMS)){
-  for(const dv of ((p[dom2]||{}).devices||[])){
-   if(dv.del)continue;
-   for(const side of ['outs','ins']){
-    for(const o of alive(dv[side])){
-     if(o.grp===gid)return {dom:dom2, dv:dv, port:o, side:side};
-    }
-   }
-  }
- }
- return null;
+ const ud=[];
+ Object.keys(PLANDOMS).forEach(dom2=>{
+  ((p[dom2]||{}).devices||[]).forEach(dv=>{
+   if(dv.del)return;
+   ['outs','ins'].forEach(side=>{
+    alive(dv[side]).forEach(o=>{
+     if(portHarGrp(o,gid))ud.push({dom:dom2, dv:dv, port:o, side:side});
+    });
+   });
+  });
+ });
+ return ud;
+}
+/* Den første – til de steder, der kun skal bruge ét sted at pege hen. */
+function udFor(gid){
+ const a=udAlleFor(gid);
+ return a.length?a[0]:null;
 }
 function grpNavn(gid){
  const f=grpFind(gid);
@@ -3253,11 +3383,8 @@ function grpNavn(gid){
    Felterne hedder ikke det samme de to steder: tegningen kalder nummeret
    "nr", planen kalder det "n". */
 function audRef(p,id,opret){
- const f=p.grp?grpFind(p.grp):null;
- if(f){
-  const c=grpLyd(f.g).find(x=>x.id===id);
-  if(c)return {o:c, nf:'nr', pi:f.pi};
- }
+ /* Altid i planens egne kanaler. Skal teksten også stå i tegningen, henter
+    man den derovre med mellemrum eller enter – den smitter ikke af selv. */
  return {o:audFind(p,id,opret), nf:'n', pi:-1};
 }
 /* Rettes en gruppe fra planen, skal sidens tidsstempel med – ellers
@@ -4315,8 +4442,7 @@ function freqRad(dv,p,i){
     <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|ins|${p.id}" title="Kanal eller nummer på senderen">
     <input class="pfreq" value="${esc(p.freq||'')}" placeholder="MHz" inputmode="decimal"
            data-pfreq="${dv.id}|ins|${p.id}" title="Frekvens i MHz">
-    <input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
-           title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">
+    ${planLabelFelt('freq',dv,p,'ins')}
     <input class="pfreqt" value="${esc(p.ftype||'')}" list="freqtyper" placeholder="type"
            data-pftype="${dv.id}|ins|${p.id}" title="Håndholdt, bodypack, IEM …">
     ${p.label?`
@@ -4375,10 +4501,8 @@ function kamRad(dv,p,udgaaet){
     <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|ins|${p.id}" title="Kanalnummer">
     <button class="kamtype ${aes?'aes':''}" data-kamtype="${dv.id}|ins|${p.id}"
       title="Klik for at skifte mellem mic/line og AES">${aes?'AES':'mic/line'}</button>
-    ${planFastFelt('kam',dv,p,'ins')
-       || `<input class="plabel" value="${esc(p.label)}" list="lbls"
-            placeholder="${udgaaet?'udgår – AES bruger kanal 2':'—'}"
-            ${udgaaet?'disabled':''} title="${esc(p.label)}" data-plabel="${dv.id}|ins|${p.id}">`}
+    ${planLabelFelt('kam',dv,p,'ins',
+        {ph:(udgaaet?'udgår – AES bruger kanal 2':''), disabled:udgaaet})}
     ${p.label&&!udgaaet?`
      <label class="tick" title="Patchet${p.pby?' · af '+esc(p.pby):''}">
        <input type="checkbox" data-tick="${dv.id}|ins|${p.id}|patched" ${p.patched?'checked':''}></label>
@@ -4491,22 +4615,30 @@ function audListeBlok(dv,side,p){
  const noegle=audNoegle(dv,side,p);
  if(audAaben!==noegle)return '';
  const liste=audListe(p);
- const bundet=p.grp&&grpFind(p.grp);
- return `<div class="audlist ${bundet?'bundet':''}">
-   ${bundet?`<div class="audbind on" title="Kanalerne kommer fra tegningen. Bindingen laves og løsnes i tegningen – håndtrykket i højre side af gruppen.">
-     <span class="bindikon">🤝</span>
-     <span class="bindtekst">${esc(grpNavn(p.grp))}</span></div>`:''}
-   ${liste.map(a=>`
+ const grps=portGrps(p).map(g=>grpFind(g)).filter(Boolean);
+ return `<div class="audlist ${grps.length?'bundet':''}">
+   ${grps.length?`<div class="audbind on" title="Teksten herovre er din egen. Står feltet tomt, viser den hvad der står i tegningen – tryk mellemrum eller enter for at hente den over.">
+     <span class="bindikon">⚯</span>
+     <span class="bindtekst">${esc(grps.map(f=>grpNavn(f.g.id)).join(', '))}</span></div>`:''}
+   ${liste.map((a,ai)=>`
      <div class="aud ${a.label?'set':''} ${fresh(a)?'fresh':''}"
           ${fresh(a)?`style="--ret:${retFarveNu[a.by||'?']||RET_FARVER[0]}"`:''}>
-       ${(a.bundet||indFor(planDom,dv.id,p.id,a.id))?'<span class="audmaerke" title="Kommer fra tegningen">🤝</span>':''}
+       ${(()=>{const sp=spoegelsePlan(planDom,dv,p,a.id,ai);
+         return sp?`<span class="audmaerke" title="${esc('Hænger sammen med '+sp.fra
+           +' – teksten der er: '+sp.tekst)}">⚯</span>`:''})()}
        <input class="audn" value="${esc(a.n)}" data-audn="${noegle}|${a.id}"
               title="Navn eller nummer på lydkanalen">
-       ${(()=>{const ind=indFor(planDom,dv.id,p.id,a.id);
-         return ind
-          ? `<span class="audl fast" title="Skrives i tegningen: ${esc(ind.g.label||'')} · ${esc(ind.ch.nr||'')}">${esc(ind.ch.label||'—')}</span>`
-          : `<input class="audl" value="${esc(a.label)}" list="lbls" placeholder="—"
-              title="${esc(a.label)}" data-audl="${noegle}|${a.id}">`})()}
+       ${(()=>{
+         /* Feltet er ALTID til at skrive i. Er det tomt, og står der noget
+            i tegningen, vises det som skygge – og mellemrum eller enter
+            henter det over. */
+         const sp=spoegelsePlan(planDom,dv,p,a.id,ai);
+         return `<input class="audl${(!a.label&&sp)?' harspoeg':''}" value="${esc(a.label)}"
+              list="lbls" placeholder="${sp?esc(sp.tekst):'—'}"
+              title="${sp&&!a.label?esc('Står i '+sp.fra+': '+sp.tekst+' — mellemrum eller enter henter den over')
+                      :esc(a.label)}"
+              ${sp?`data-spoeg="${esc(sp.tekst)}"`:''}
+              data-audl="${noegle}|${a.id}">`})()}
        ${a.label?`
         <label class="tick" title="Patchet${a.pby?' · sat af '+esc(a.pby):''}">
           <input type="checkbox" data-audtick="${noegle}|${a.id}|patched" ${a.patched?'checked':''}></label>
@@ -4534,9 +4666,7 @@ function portList(dv,side,title){
           ${fresh(p)?`style="--ret:${retFarveNu[p.by||'?']||RET_FARVER[0]}"`:''}
           data-port="${dv.id}|${side}|${p.id}">
        <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|${side}|${p.id}">
-       ${planFastFelt(planDom,dv,p,side)
-          || `<input class="plabel" value="${esc(p.label)}" list="lbls" placeholder="—"
-               title="${esc(p.label)}" data-plabel="${dv.id}|${side}|${p.id}">`}
+       ${planLabelFelt(planDom,dv,p,side)}
        ${p.label?`
         <label class="tick" title="Patchet${p.pby?' · sat af '+esc(p.pby):''}">
           <input type="checkbox" data-tick="${dv.id}|${side}|${p.id}|patched" ${p.patched?'checked':''}></label>
@@ -4683,6 +4813,20 @@ function bindPlan(){
   ptBadges(cb.closest('.dev'),dv);
  });
 
+ /* Mellemrum eller enter i et TOMT felt henter den anden sides tekst over
+    som din egen. Skriver du selv noget, er det dit alene – og sletter du
+    det hele, kommer skyggen igen. Returnerer sandt, hvis den tog den. */
+ const hentSpoeg=(inp,e,commit)=>{
+  if(e.key!==' '&&e.key!=='Enter')return false;
+  if((inp.value||'').length)return false;          // kun i et tomt felt
+  const sp=inp.dataset.spoeg;
+  if(!sp)return false;
+  e.preventDefault();
+  inp.value=sp;
+  commit();
+  return true;
+ };
+
  el2.querySelectorAll('[data-plabel]').forEach(inp=>{
   const commit=()=>{
    const [dv,p]=find(inp.dataset.plabel);
@@ -4694,6 +4838,7 @@ function bindPlan(){
    if(nxt)nxt.title=vaerdi;
   };
   inp.onchange=commit;
+  inp.addEventListener('keydown', e=>{ hentSpoeg(inp,e,commit) });
   /* På telefonen beholder feltet sin højde – i stedet bliver skriften mindre,
      når teksten er for lang. Så flytter linjerne sig ikke, og man kan stadig
      læse det hele. */
@@ -4734,12 +4879,17 @@ function bindPlan(){
    const [p,a,r]=audFinder(inp.dataset.audl,true);
    if(!a||a.label===inp.value)return;
    snap(); a.label=inp.value; touch(a);
-   grpRettet(r.pi);           // er den bundet, er det tegningen der er rettet
+   /* Planen skriver nu altid i sine egne kanaler – tegningen rettes ikke
+      med. Vil man have den samme tekst begge steder, henter man den over
+      med mellemrum eller enter. */
    autosave(); drawPlan();
   };
   inp.onchange=commit;
   if(mobil){ skrumpTekst(inp); inp.addEventListener('input',()=>skrumpTekst(inp)); }
   inp.onkeydown=e=>{
+   /* Tomt felt med en skygge: mellemrum eller enter henter den over i
+      stedet for at hoppe videre. */
+   if(hentSpoeg(inp,e,commit))return;
    if(e.key==='Enter'){
     e.preventDefault();
     const ref=inp.dataset.audl;
@@ -4777,19 +4927,9 @@ function bindPlan(){
   const p=dv&&(dv[side]||[]).find(x=>x.id===pid);
   if(!p)return;
   snap();
-  const f=p.grp?grpFind(p.grp):null;
-  if(f){
-   /* Bundet signal: kanalen laves i GRUPPEN, så den også står i tegningen */
-   const lyd=grpLyd(f.g), sidste=lyd[lyd.length-1];
-   const ny=newCh(lyd.length+1);
-   const m=sidste&&String(sidste.nr||'').match(NRM);
-   if(m)ny.nr=m[1]+(parseInt(m[2],10)+1)+m[3];
-   const hvor=sidste?f.g.channels.indexOf(sidste)+1:f.g.channels.length;
-   f.g.channels.splice(hvor,0,ny);
-   grpRettet(f.pi);
-  }else{
-   p.audN=audListe(p).length+1;       // én mere end der er nu
-  }
+  /* Kanalen laves her i planen. Gruppen i tegningen har sine egne – de to
+     lister står ved siden af hinanden og låner tekst af hinanden. */
+  p.audN=audListe(p).length+1;
   autosave(); drawPlan();
  });
  /* frekvens og type – kun i frekvensplanen */
@@ -5405,7 +5545,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.19-b';
+const SF_VERSION='2026.10.19-c';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -5774,8 +5914,8 @@ function bindInVaelg(gid,chid){
  });
  const idx=indIndeks();
  bunker.forEach(b=>{
-  b.taget=b.maal.filter(m=>idx[indNoegle(m)]).length;
-  b.min=b.maal.some(m=>{const t=idx[indNoegle(m)]; return t&&t.ch.id===ch.id});
+  b.taget=b.maal.filter(m=>(idx[indNoegle(m)]||[]).length).length;
+  b.min=b.maal.some(m=>(idx[indNoegle(m)]||[]).some(t=>t.ch.id===ch.id));
  });
  /* Den bunke kanalen allerede peger ind i, står åben fra start */
  let aaben=(bunker.find(b=>b.min)||{}).noegle||null;
@@ -5812,11 +5952,16 @@ function bindInVaelg(gid,chid){
        <span class="bunketal">${b.maal.length}${b.taget?' · '+b.taget+' bundet':''}</span>
      </button>
      ${aab?`<div class="bunkeliste">${b.maal.map(m=>{
-       const n=indNoegle(m), taget=idx[n], minEgen=taget&&taget.ch.id===ch.id;
+       const n=indNoegle(m), alle=idx[n]||[], minEgen=alle.some(t=>t.ch.id===ch.id);
+       /* Pladsen er ikke "optaget" længere – den kan bruges af flere. Men
+          man skal kunne se hvem der ellers hænger på den, inden man vælger. */
+       const andre=alle.filter(t=>t.ch.id!==ch.id);
        return `<button class="grpvalg ${minEgen?'on':''}" data-maal="${esc(JSON.stringify(m))}">
          <span class="grpnavn">${esc(m.linje)}</span>
-         ${taget?`<span class="grptal">${minEgen?'bundet til denne kanal'
-            :'optaget af '+esc(taget.ch.nr||'')+' '+esc(taget.ch.label||'')+' i '+esc(taget.g.label||'')}</span>`:''}
+         ${minEgen?`<span class="grptal">bundet til denne kanal</span>`:''}
+         ${andre.length?`<span class="grptal">${andre.length===1?'bruges også af ':'bruges også af '+andre.length+': '}${
+            esc(andre.slice(0,3).map(t=>(t.ch.nr||'')+' '+(t.ch.label||'')+' i '+(t.g.label||'')).join(', '))
+            }${andre.length>3?' …':''}</span>`:''}
        </button>`}).join('')}</div>`:''}
    </div>`;
   }).join('');
@@ -5826,12 +5971,13 @@ function bindInVaelg(gid,chid){
   });
   ud.querySelectorAll('[data-maal]').forEach(b=>b.onclick=()=>{
    const m=JSON.parse(b.dataset.maal);
-   const taget=idx[indNoegle(m)];
-   if(taget&&taget.ch.id!==ch.id&&
-      !confirm('Pladsen er allerede bundet til "'+(taget.ch.label||taget.ch.nr||'')+'".\n\nFlyt den over på denne kanal?'))return;
    snap();
-   if(taget&&taget.ch.id!==ch.id)delete taget.ch.ind;
-   ch.ind={dom:m.dom, dev:m.dev, port:m.port}; if(m.aud)ch.ind.aud=m.aud;
+   /* Ingen spørger mere, og ingen bliver sluppet: det samme input må gerne
+      gå til flere kanaler. Trykker man på den, kanalen allerede peger på,
+      slipper man den – så er det samme knap begge veje. */
+   const alt = ch.ind && indNoegle(ch.ind)===indNoegle(m);
+   if(alt) delete ch.ind;
+   else { ch.ind={dom:m.dom, dev:m.dev, port:m.port}; if(m.aud)ch.ind.aud=m.aud; }
    indNulstil(); closeModal(); draw();
   });
  };
@@ -5871,7 +6017,8 @@ function bindUdVaelg(gid){
   if(dv.del)return;
   sider.forEach(side=>{
    alive(dv[side]).forEach(o=>{ if(o.label)maal.push({dev:dv.id,port:o.id,side:side,
-     hoved:dv.name||'', linje:SIDENAVN[side]+' '+(o.n||'')+' · '+o.label, grp:o.grp||''}) });
+     hoved:dv.name||'', linje:SIDENAVN[side]+' '+(o.n||'')+' · '+o.label,
+     grps:portGrps(o)}) });
   });
  });
  const nu=udFor(gid);
@@ -5888,10 +6035,13 @@ function bindUdVaelg(gid){
     </div>`:'')
   + (maal.length
   ? `<div class="grpliste">${maal.map(m=>`
-      <button class="grpvalg ${m.grp===gid?'on':''}" data-ud="${m.dev}|${m.side}|${m.port}">
+      <button class="grpvalg ${m.grps.indexOf(gid)>=0?'on':''}" data-ud="${m.dev}|${m.side}|${m.port}">
         <span class="grpnavn">${esc(m.linje)}</span>
         <span class="grpsti">${esc(m.hoved)} · Video</span>
-        ${m.grp&&m.grp!==gid?`<span class="grptal">bundet til ${esc(grpNavn(m.grp))}</span>`:''}
+        ${m.grps.indexOf(gid)>=0?`<span class="grptal">gruppen ligger her</span>`:''}
+        ${(()=>{const andre=m.grps.filter(x=>x!==gid);
+          return andre.length?`<span class="grptal">bruges også af ${
+            esc(andre.map(x=>grpNavn(x)).join(', '))}</span>`:''})()}
       </button>`).join('')}</div>`
   : `<div class="msub" style="text-transform:none;letter-spacing:0;line-height:1.6">
        Der er ingen ${esc(ordet)} med signal på endnu.<br>
@@ -5914,15 +6064,21 @@ function bindUdVaelg(gid){
     const dv=((ensurePlan().video||{}).devices||[]).find(x=>x.id===did);
     const port=dv&&(dv[side]||[]).find(x=>x.id===pid);
     if(!port)return;
-    if(port.grp&&port.grp!==gid&&
-       !confirm(SIDENAVN[side]+'tet er allerede bundet til "'+grpNavn(port.grp)+'".\n\nSkift til denne gruppe?'))return;
     snap();
-    const gl=udFor(gid); if(gl)delete gl.port.grp;     // kun ét sted ad gangen
-    port.grp=gid; touch(port);
+    /* Ingen advarsel og ingen flytning: en port må bære flere grupper, og
+       en gruppe må ligge flere steder. Trykker man på et sted, gruppen
+       allerede ligger, slipper man netop det sted. */
+    const liste=portGrps(port);
+    const i=liste.indexOf(gid);
+    if(i>=0) liste.splice(i,1); else liste.push(gid);
+    portSatGrps(port, liste); touch(port);
     closeModal(); draw();
    });
    const l=root.querySelector('[data-loes]');
-   if(l)l.onclick=()=>{snap(); const u=udFor(gid); if(u){delete u.port.grp;touch(u.port)} closeModal(); draw()};
+   /* Løsn: gruppen slippes ALLE de steder, den ligger. */
+   if(l)l.onclick=()=>{snap();
+     udAlleFor(gid).forEach(u=>{ portSatGrps(u.port, portGrps(u.port).filter(x=>x!==gid)); touch(u.port) });
+     closeModal(); draw()};
    const a=root.querySelector('[data-annul]');
    if(a)a.onclick=closeModal;
   });
