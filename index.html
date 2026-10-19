@@ -5405,7 +5405,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.16-d';
+const SF_VERSION='2026.10.19-b';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -7466,20 +7466,74 @@ async function bookingerHent(force){
  try{ epJobs=await sbFetch('jobs?select=id,name,who,start_date,end_date,status,items') }
  catch(e){ epJobs=[]; fejl.push('jobs: '+(e.message||'')) }
  /* de andre SignalFlow-projekters kladder – tabellen findes måske ikke endnu */
- try{ sfKladder=await sbFetch(BOOK_TAB+'?select=project_id,project_name,job_start,job_end,equipment_id,equipment_name,qty') }
+ /* hentet_job_id skal med: det er den, der fortæller hvilket job i East
+    Production der ER dette projekt. Uden den regner projektet sit eget
+    udstyr som optaget af en fremmed, så snart det er hentet ind. */
+ try{ sfKladder=await sbFetch(BOOK_TAB+'?select=project_id,project_name,job_start,job_end,equipment_id,equipment_name,qty,hentet_job_id') }
  catch(e){ sfKladder=[] }
  bookFejl=fejl.join(' · ');
  bookHentet=Date.now();
 }
 
 /* hvem har fat i det her udstyr i vores dage – og hvor meget */
+/* Hvilke job i East Production er dette projekt?
+   Når East Production henter bookingen ind, stempler den jobbets id på
+   vores egne rækker i broen. Dem skal vi kende igen: ellers står projektet
+   og melder sit eget udstyr optaget – af sig selv. */
+function egneEpJob(){
+ const mine={};
+ /* 1. Stemplet. Det er det præcise: East Production skriver jobbets id på
+       vores egne linjer i broen, når den henter dem ind. */
+ if(cloudId){
+  (sfKladder||[]).forEach(b=>{
+   if(String(b.project_id)!==String(cloudId))return;
+   if(b.hentet_job_id) mine[String(b.hentet_job_id)]='stempel';
+  });
+ }
+ /* 2. Navn og dage. Stemplet kan mangle: adgangsreglerne kan have slået
+       opdateringen fra, jobbet kan være oprettet i hånden dernede, eller
+       East Production kan være en ældre udgave. Et job, der hedder det
+       samme som projektet OG ligger i de samme dage, ER dette projekt.
+       To produktioner med samme navn i samme dage findes ikke. */
+ const navn=(projectName||'').trim().toLowerCase();
+ if(navn && navn!=='nyt projekt' && harJob()){
+  (epJobs||[]).forEach(j=>{
+   if((j.name||'').trim().toLowerCase()!==navn)return;
+   if(!dageKrydser(job.start,job.slut,j.start_date,j.end_date))return;
+   if(!mine[String(j.id)]) mine[String(j.id)]='navn';
+  });
+ }
+ return mine;
+}
+/* Hvad holder vores EGET job i East Production af den her? Det tæller ikke
+   mod os – men man skal kunne se, at det er genkendt. Ellers sidder man og
+   gætter på, om tallet er rigtigt. */
+function egetTaget(eqId){
+ if(!harJob()||!eqId)return null;
+ const eq=(lagerRows||[]).find(e=>String(e.id)===String(eqId));
+ const navn=eq?eq.name:'';
+ if(!navn)return null;
+ const mine=egneEpJob();
+ let antal=0, jobnavn='', hvordan='';
+ (epJobs||[]).forEach(j=>{
+  if(!mine[String(j.id)])return;
+  if(!dageKrydser(job.start,job.slut,j.start_date,j.end_date))return;
+  jobUdstyr(j).forEach(u=>{ if(navnLig(u.navn,navn)){
+   antal+=u.antal; jobnavn=j.name||''; hvordan=mine[String(j.id)]; } });
+ });
+ return antal ? {antal:antal, navn:jobnavn, hvordan:hvordan} : null;
+}
 function optagetAf(eqId){
  if(!harJob()||!eqId)return [];
  const eq=(lagerRows||[]).find(e=>String(e.id)===String(eqId));
  const navn=eq?eq.name:'';
  if(!navn)return [];
  const ud=[];
+ const mineJob=egneEpJob();
  (epJobs||[]).forEach(j=>{
+  /* Vores eget job i East Production tæller ikke mod os selv – det ER
+     den her tegning, bare hentet ind. */
+  if(mineJob[String(j.id)])return;
   if(!dageKrydser(job.start,job.slut,j.start_date,j.end_date))return;
   jobUdstyr(j).forEach(u=>{ if(navnLig(u.navn,navn))
    ud.push({navn:(j.name||'et job i East Production')
@@ -7488,6 +7542,10 @@ function optagetAf(eqId){
  });
  (sfKladder||[]).forEach(b=>{
   if(String(b.project_id)===String(cloudId||'-'))return;
+  /* Er bookingen hentet ind i East Production, ER den et job dernede – og
+     det job er allerede talt med ovenfor. Uden den her linje tæller et
+     andet projekts udstyr dobbelt: én gang som job, én gang som kladde. */
+  if(b.hentet_job_id)return;
   if(!navnLig(b.equipment_name,navn))return;
   if(!dageKrydser(job.start,job.slut,b.job_start,b.job_end))return;
   ud.push({navn:(b.project_name||'et andet SignalFlow-projekt')+' (ikke hentet ind endnu)',
@@ -7505,11 +7563,20 @@ function ledigStatus(eqId){
  const taget=t.reduce((n,x)=>n+x.antal,0);
  const hvem=t.map(x=>'· '+x.navn+' ('+x.antal+' stk., '+dagAf(x.fra)+'–'+dagAf(x.til)+')').join('\n');
  if(bookFejl&&!t.length)return {k:'ukendt',tekst:bookFejl,taget:0,antal:antal};
+ /* Er projektet hentet ind i East Production, står vores eget udstyr som
+    booket dernede. Det tæller ikke mod os selv – men det skal stå, så man
+    kan se at det ER set, i stedet for at tro at tallet er forkert. */
+ const eget=egetTaget(eqId);
+ const egetTekst = eget
+   ? '\n· '+eget.antal+' stk. står på dette projekts egen booking i East '
+     +'Production'+(eget.navn?' ("'+eget.navn+'")':'')+' – den tæller ikke med'
+   : '';
  if(taget+1>antal)return {k:'optaget',taget:taget,antal:antal,
-   tekst:'alle '+antal+' er taget i dine dage:\n'+hvem};
+   tekst:'alle '+antal+' er taget i dine dage:\n'+hvem+egetTekst};
  if(taget)return {k:'presset',taget:taget,antal:antal,
-   tekst:taget+' af '+antal+' er taget:\n'+hvem};
- return {k:'ledig',taget:0,antal:antal,tekst:'ledig · '+antal+' på lageret'};
+   tekst:taget+' af '+antal+' er taget:\n'+hvem+egetTekst};
+ return {k:'ledig',taget:0,antal:antal,
+   tekst:'ledig · '+antal+' på lageret'+egetTekst};
 }
 const LEDIGORD={ledig:'ledig',presset:'næsten optaget',optaget:'optaget',ukendt:'ukendt',tom:''};
 
