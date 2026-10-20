@@ -994,15 +994,21 @@ body.mobile.guest #app{padding-bottom:12px}
    linjen – så kunne man ikke finde det uden at vide, at det var der.
    Det står nu fremme hele tiden: dæmpet og gråt når intet er bundet,
    fuldt og i farve når det er. */
-.bindknap{background:none;border:none;cursor:pointer;flex:none;width:16px;padding:0;
- font-size:14px;line-height:1;color:#9aa7b4;opacity:.7;transition:opacity .1s,color .1s}
-.ch:hover .bindknap,.feed:hover .bindknap{opacity:1}
+/* Knuden tager en smal rende i venstre side af linjen – ikke mere.
+   Renden står der altid, også når intet er bundet, så linjerne ikke hopper,
+   når man binder eller løsner. Men er der ikke bundet noget, er knuden
+   USYNLIG: den dukker op, når musen er på linjen. Før stod den og lyste på
+   hver eneste kanal og stjal både plads og opmærksomhed fra teksten. */
+.bindknap{background:none;border:none;cursor:pointer;flex:none;width:9px;padding:0;
+ font-size:10px;line-height:1;color:#9aa7b4;opacity:0;transition:opacity .1s,color .1s}
+.ch:hover .bindknap,.feed:hover .bindknap{opacity:.85}
 .bindknap:hover{opacity:1!important;color:#4a5a6a}
-/* Bundet: stadig gråblå og rolig, bare tydeligere end den ubundne. */
-.bindknap.on{opacity:1;color:#5b86a8}
+/* Bundet: den står fremme hele tiden – ellers kan man ikke se, at linjen
+   hænger sammen med noget. Stilfærdig gråblå, ikke et skilt. */
+.bindknap.on{opacity:.9;color:#5b86a8}
 .ch:hover .bindknap.on,.feed:hover .bindknap.on{opacity:1}
-.bindplads{flex:none;width:16px}
-.bindknap.ud{margin-left:6px}
+.bindplads{flex:none;width:9px}
+.bindknap.ud{margin-left:4px}
 /* Sporplanerne står ved siden af gruppenavnet, hvor man er i forvejen.
    Knappen er dæmpet, men synlig – man skal kunne finde den uden at lede. */
 /* En bar ♪ på 10 px kunne ikke findes. Knappen har sit navn med nu – det er
@@ -1183,17 +1189,27 @@ body.mobile .vcbibm{display:none}
 @media print{
   /* På papir er containerne en liste med spor – ikke felter man kan rette i */
   .vcbar,.vcfold,.vcvej,.vcslot,.vchead{display:none!important}
-  .ppvcret{font:700 9px var(--fm);letter-spacing:.06em;border:1px solid #999;
-    border-radius:3px;padding:1px 4px;margin-right:6px}
-  .ppvcgrp{font-weight:400;font-size:10.5px;color:#555;margin-left:8px}
-  .ppvcspor{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
-  .ppvcr{display:flex;align-items:center;gap:8px;padding:1px 0;
-    border-bottom:1px solid #e3e3e3;font-size:10.5px}
-  .ppvcr.tom{color:#aaa}
-  .ppvcr .ppn{width:52px;flex:none;font-family:var(--fm);font-size:9px}
-  .ppvcr .ppl{flex:1;min-width:0}
-  .ppvcr .ppb{width:12px;flex:none;text-align:center}
 }
+/* Udskriftens egen opstilling. Den står UDEN FOR @media print, fordi den
+   kun gælder inde i .planprint, som kun findes i udskriften – og fordi den
+   så kan måles og efterses uden at skulle skifte hele siden til print. */
+.planprint .ppvcret{font:700 9px var(--fm);letter-spacing:.06em;border:1px solid #999;
+  border-radius:3px;padding:1px 4px;margin-right:6px}
+.planprint .ppvcgrp{font-weight:400;font-size:10.5px;color:#555;margin-left:8px}
+/* To containere ved siden af hinanden, og sporene ned ad inden i hver.
+   Et kort må ikke brækkes midt over – så hellere lade det starte på
+   næste side. */
+.planprint .ppvcpar{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;align-items:start}
+.planprint .vckort{break-inside:avoid;page-break-inside:avoid;margin:0}
+.planprint .ppvcsum{font-size:10px;color:#777;margin:-6px 0 10px;
+  font-family:var(--fm);letter-spacing:.04em}
+.planprint .ppvcspor{display:block}
+.planprint .ppvctom{font-size:10px;color:#aaa;padding:2px 0 3px}
+.planprint .ppvcr{display:flex;align-items:center;gap:8px;padding:1px 0;
+  border-bottom:1px solid #e3e3e3;font-size:10.5px}
+.planprint .ppvcr .ppn{width:52px;flex:none;font-family:var(--fm);font-size:9px}
+.planprint .ppvcr .ppl{flex:1;min-width:0}
+.planprint .ppvcr .ppb{width:12px;flex:none;text-align:center}
 
 body.mobile .audlist{margin-left:12px;width:calc(100% - 12px)}
 body.mobile .audn{width:54px;font-size:9px}
@@ -1563,6 +1579,31 @@ body.mobile .infoboks .rs{display:none}
 .mf label{display:block;font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
 .mf input[type=text],.mf input[type=number],.mf select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:7px 8px;font:inherit}
 .mf input[type=color]{width:100%;height:34px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:2px;cursor:pointer}
+/* ── Sidelisten i eksportvinduet ──────────────────────────────
+   Hvilke sider der skal med, og hvilken vej hver af dem vender. De to ting
+   hører sammen og står derfor i den samme række. */
+.pgliste{max-height:30vh;overflow-y:auto;border:1px solid var(--line);
+ border-radius:7px;padding:4px}
+.pgrad{display:flex;align-items:center;gap:8px;padding:3px 5px;border-radius:5px}
+.pgrad:hover{background:var(--panel2)}
+.pgnavn{flex:1;min-width:0;display:flex;align-items:center;gap:8px;
+ font-size:12.5px;cursor:pointer;margin:0}
+.pgnavn input{width:auto;margin:0;accent-color:var(--intercom);flex:none}
+.pgnavn b{font-family:var(--fm);font-size:10px;color:var(--faint);
+ min-width:16px;text-align:right;font-weight:400}
+.pgnavn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pgrad select{flex:none;background:var(--bg);border:1px solid var(--line);
+ color:var(--dim);border-radius:5px;padding:4px 6px;font:11px var(--fb)}
+.pgknap{display:flex;align-items:center;gap:7px;margin-top:8px}
+.pgknap .btn.lille{width:auto;margin:0;padding:5px 10px;font-size:11.5px}
+.pgsvar{margin-left:auto;font-family:var(--fm);font-size:10px;color:var(--faint)}
+
+/* Valget af hvilket stykke udstyr på lageret kortets kanaler skal skrives på */
+.lagvalg{cursor:pointer}
+.lagvalg:hover{background:var(--panel2)}
+.lagvalg.valgt{background:rgba(63,217,156,.10);box-shadow:inset 3px 0 0 var(--intercom)}
+.lagvalg strong{font-weight:600;color:var(--intercom)}
+
 .msec{font-family:var(--fd);font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin:18px 0 9px;padding-top:13px;border-top:1px solid var(--line)}
 .mrow{display:flex;gap:8px;margin-top:18px}
 .mrow .btn{margin:0}
@@ -4542,7 +4583,7 @@ function drawPlan(){
       <div class="devacts">
         ${foldKnap(dv)}
         <button class="mini rowmenu" data-kortmenu="${dv.id}" title="Muligheder for kortet">⋯</button>
-        ${guestToken?'':`<button class="mini" data-darch="${dv.id}" title="Læg dette udstyr på lageret">⤓</button>`}
+        ${guestToken?'':`<button class="mini" data-darch="${dv.id}" title="Skriv kortets kanaler på et stykke udstyr, der findes på lageret">⤓</button>`}
         <button class="mini" data-ddup="${dv.id}" title="Lav en kopi af hele kortet">⧉</button>
         <button class="mini" data-ddel="${dv.id}" title="Slet kortet og alle dets linjer">✕</button>
       </div>
@@ -5023,29 +5064,44 @@ function vcCSV(){
     fileName('csv',false,'containere'),'text/csv;charset=utf-8');
  closeModal();
 }
+/* Sporene på papir: KUN dem der står noget i, og de står ned ad –
+   1, 2, 3, 4, 5 – ikke på skift til venstre og højre. Papiret bruges i
+   stedet til at stille to containere ved siden af hinanden, så en liste på
+   seksten containere ikke bliver til seksten sider med luft på. */
+function vcPrintSpor(dv){
+ const p=vcPort(dv); if(!p)return [];
+ const veje=vcVejData(dv);
+ const alle=veje.length?veje[0].spor:audListe(p).map((a,i)=>({
+   nr:a.n||String(i+1), min:a.label||'', tegning:'',
+   patched:!!a.patched, checked:!!a.checked}));
+ return alle.filter(s=>(s.min||'').trim()||(s.tegning||'').trim());
+}
 function vcPrintHTML(){
  const vist=vcFiltreret();
+ const kort=vist.map(dv=>{
+  const p=vcPort(dv); if(!p)return '';
+  const grp=vcBundne(dv).map(g=>grpNavn(g)).join(' / ');
+  const spor=vcPrintSpor(dv);
+  return `<div class="ppdev vckort"><div class="ppname">
+     <span class="ppvcret">${vcRetning(dv)==='ind'?'IND':'UD'}</span>
+     ${esc(dv.nr||'')} · ${esc(dv.name||'uden navn')}${dv.bib?' · '+esc(dv.bib):''}
+     ${grp?'<span class="ppvcgrp">'+esc(grp)+'</span>':''}</div>
+    ${spor.length
+      ? `<div class="ppvcspor">${spor.map(s=>`<div class="ppvcr">
+          <span class="ppn">${esc(s.nr)}</span>
+          <span class="ppl">${esc(s.min||s.tegning||'')}</span>
+          <span class="ppb">${s.patched?'✓':'☐'}</span>
+          <span class="ppb">${s.checked?'✓':'☐'}</span>
+        </div>`).join('')}</div>`
+      : `<div class="ppvctom">ingen lydspor skrevet</div>`}
+   </div>`;
+ }).filter(Boolean);
+ const skrevet=vist.reduce((n,dv)=>n+vcPrintSpor(dv).length,0);
  return `<div class="sheettitle">${esc(projectName)} · Video containere${
    vcFiltrePaa()?' · udvalg':''}${harJob()?` <span class="ppdage">${esc(jobTekst())}</span>`:''}</div>
-  ${vist.map(dv=>{
-   const p=vcPort(dv); if(!p)return '';
-   const grp=vcBundne(dv).map(g=>grpNavn(g)).join(' / ');
-   const liste=audListe(p);
-   const veje=vcVejData(dv);
-   const spor=veje.length?veje[0].spor:liste.map((a,i)=>({
-     nr:a.n||String(i+1), min:a.label||'', tegning:'',
-     patched:!!a.patched, checked:!!a.checked}));
-   return `<div class="ppdev"><div class="ppname">
-      <span class="ppvcret">${vcRetning(dv)==='ind'?'IND':'UD'}</span>
-      ${esc(dv.nr||'')} · ${esc(dv.name||'uden navn')}${dv.bib?' · '+esc(dv.bib):''}
-      ${grp?'<span class="ppvcgrp">'+esc(grp)+'</span>':''}</div>
-     <div class="ppvcspor">${spor.map(s=>`<div class="ppvcr ${s.min||s.tegning?'':'tom'}">
-        <span class="ppn">${esc(s.nr)}</span>
-        <span class="ppl">${esc(s.min||s.tegning||'')}</span>
-        <span class="ppb">${(s.min||s.tegning)?(s.patched?'✓':'☐'):''}</span>
-        <span class="ppb">${(s.min||s.tegning)?(s.checked?'✓':'☐'):''}</span>
-      </div>`).join('')}</div></div>`;
-  }).join('')}`;
+  <div class="ppvcsum">${vist.length} container${vist.length===1?'':'e'} · ${
+    skrevet} lydspor skrevet</div>
+  <div class="ppvcpar">${kort.join('')}</div>`;
 }
 function vcPrint(){
  document.getElementById('printroot').innerHTML=
@@ -6658,7 +6714,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.19-e';
+const SF_VERSION='2026.10.20-a';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -7511,7 +7567,9 @@ function sheetKort(did){
   {ikon:erFoldet(dv)?'⊞':'⊟',tekst:erFoldet(dv)?'Vis alle linjer':'Skjul tomme linjer',
    under:erFoldet(dv)?'':'kun linjer med signal vises',
    gør:()=>{ if(planFold.has(dv.id))planFold.delete(dv.id); else planFold.add(dv.id); gemFold(); drawPlan(); }},
-  {ikon:'⤓',tekst:'Gem i lageret',gør:()=>lagerSaveFromDevice(dv)},
+  {ikon:'⤓',tekst:'Skriv kanaler på lageret',
+   under:'på et stykke udstyr der findes i forvejen',
+   gør:()=>lagerSaveFromDevice(dv)},
   {skil:1},
   {ikon:'✕',tekst:'Slet kortet',fare:1,gør:()=>{
     if(!confirm('Slet "'+dv.name+'" med alle linjer?'))return;
@@ -9627,20 +9685,103 @@ async function lagerCategories(){
  catch(e){ lagerCats=[] }
  return lagerCats;
 }
-/* gem et kort fra planen som nyt udstyr på lageret */
+/* ── Kanalerne tilbage på lageret ─────────────────────────────
+   Før oprettede denne knap et NYT stykke udstyr på lageret, med navnet man
+   lige skrev i et prompt-felt. Med én bruger gik det; med flere endte det
+   med dubletter – tre "Rio 1608-D" fordi tre kolleger havde trykket hver
+   sin gang, og ingen af dem vidste det.
+
+   Lageret oprettes ét sted: i lagerprogrammet. Herfra kan man KUN skrive
+   kanalerne på noget, der findes i forvejen. Navn, antal, kategori,
+   serienummer og billede bliver ikke rørt – kun tech og de to felter, der
+   fortæller hvor mange ind- og udgange der er. */
+function lagerKanalTekst(n){
+ return n ? (n.ins.length+' ind / '+n.outs.length+' ud') : 'ingen kanaler';
+}
 async function lagerSaveFromDevice(dv){
  if(!dv)return;
- const nm=prompt('Navn på lageret:',dv.name); if(nm===null)return;
- const row={name:nm||dv.name, qty:1,
-   category:(lagerCats[0]&&lagerCats[0].name)||'Udstyr',
-   tech:{ins:alive(dv.ins).map(p=>({n:p.n,label:p.label,type:''})),
-         outs:alive(dv.outs).map(p=>({n:p.n,label:p.label,type:''})),conIn:'',conOut:''},
-   custom_fields:[{label:'Inputs',value:String(alive(dv.ins).length)},
-                  {label:'Outputs',value:String(alive(dv.outs).length)}]};
- try{
-  await sbFetch('equipment?select=id',{method:'POST',body:JSON.stringify(row)});
-  lagerRows=null; setSync('lagt på lageret');
- }catch(e){alert(e.message)}
+ const ins=alive(dv.ins), outs=alive(dv.outs);
+ const tech={ins:ins.map(p=>({n:p.n,label:p.label,type:''})),
+             outs:outs.map(p=>({n:p.n,label:p.label,type:''})),conIn:'',conOut:''};
+ let rows=[];
+ let hentefejl='';
+ try{ rows=await lagerList(true)||[] }
+ catch(e){ hentefejl=e.message||String(e) }
+
+ const navn=(dv.name||'').trim().toLowerCase();
+ const eksakt=rows.filter(r=>(r.name||'').trim().toLowerCase()===navn);
+ let valgt = eksakt.length===1 ? eksakt[0].id : null;
+
+ const linje=r=>{
+  const t=techOf(r);
+  const aendrer = t.ins.length!==ins.length || t.outs.length!==outs.length;
+  return `<div class="arow lagvalg ${valgt===r.id?'valgt':''}" data-lagv="${r.id}">
+    <span class="apic">${r.image_url?`<img src="${esc(r.image_url)}">`:'<span class="anoimg">—</span>'}</span>
+    <span class="amain"><b>${esc(r.name||'')}</b>
+      <em>${esc(r.category||'')}${r.qty?' · '+r.qty+' stk':''} · ${lagerKanalTekst(t)}${
+        aendrer?' → <strong>'+ins.length+' ind / '+outs.length+' ud</strong>':' · uændret'}</em></span>
+  </div>`;
+ };
+ const tegn=root=>{
+  const box=root.querySelector('#lagList');
+  const q=(root.querySelector('[name="q"]').value||'').trim().toLowerCase();
+  const vis2=rows.filter(r=>!q||((r.name||'')+' '+(r.category||'')).toLowerCase().indexOf(q)>=0);
+  box.innerHTML = vis2.length ? vis2.map(linje).join('')
+    : `<div class="msub" style="padding:10px;text-transform:none;letter-spacing:0;line-height:1.6">
+        ${rows.length?'Intet på lageret hedder noget i den retning.':'Lageret er tomt.'}<br>
+        Udstyr oprettes i lagerprogrammet – ikke herfra.</div>`;
+  box.querySelectorAll('[data-lagv]').forEach(n=>n.onclick=()=>{
+   valgt = (valgt===n.dataset.lagv) ? null : n.dataset.lagv;
+   tegn(root);
+  });
+  const g=root.querySelector('[data-lagok]');
+  if(g)g.disabled=!valgt;
+ };
+
+ openModal('Skriv kanalerne på lageret',
+  (dv.name||'kortet')+' · '+ins.length+' ind / '+outs.length+' ud',
+  `${hentefejl?`<div class="msub" style="color:var(--video);text-transform:none;letter-spacing:0">
+      Kunne ikke hente lageret: ${esc(hentefejl)}</div>`:''}
+   <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-bottom:10px">
+     Der bliver <b>ikke oprettet noget nyt</b> på lageret herfra – så undgår vi
+     dubletter, når flere arbejder i det samme. Vælg det stykke udstyr,
+     kortet svarer til: kun <b>antallet af kanaler</b> og deres tekster bliver
+     skrevet over. Navn, antal og kategori står, som de står.
+   </div>
+   <div class="mf"><input type="text" name="q" placeholder="Søg i lageret …"
+     value="${esc(dv.name||'')}"></div>
+   <div id="lagList" class="chklist" style="max-height:260px">Henter …</div>
+   <div class="mrow">
+     <button class="btn go" data-lagok="1" disabled>Skriv kanalerne</button>
+     <button class="btn" data-lagaab="1">Åbn lageret</button>
+     <button class="btn" data-cancel="1">Luk</button>
+   </div>`,
+  root=>{
+   tegn(root);
+   root.querySelector('[name="q"]').oninput=()=>tegn(root);
+   root.querySelector('[data-cancel]').onclick=closeModal;
+   root.querySelector('[data-lagaab]').onclick=()=>{closeModal();setView('arch')};
+   root.querySelector('[data-lagok]').onclick=async function(){
+    const r=rows.find(x=>x.id===valgt);
+    if(!r)return;
+    this.disabled=true; this.textContent='Skriver …';
+    /* custom_fields skrives med cfSet, så andre felter på varen bliver
+       stående – ellers ville vi rydde dem, kollegerne har skrevet. */
+    const kopi=Object.assign({},r);
+    cfSet(kopi,'Inputs',ins.length?ins.length:'');
+    cfSet(kopi,'Outputs',outs.length?outs.length:'');
+    try{
+     await sbFetch('equipment?id=eq.'+encodeURIComponent(r.id)+'&select=id',
+       {method:'PATCH',body:JSON.stringify({tech:tech,
+         custom_fields:(kopi.custom_fields||[]).filter(f=>(f.label||'').trim()||(f.value||'').trim())})});
+     lagerRows=null; setSync('kanalerne skrevet på '+(r.name||'lageret'));
+     closeModal();
+    }catch(e){
+     this.disabled=false; this.textContent='Skriv kanalerne';
+     alert('Kunne ikke skrive på lageret: '+(e.message||e));
+    }
+   };
+  });
 }
 /* lav et plan-kort ud af et stykke udstyr fra lageret */
 function lagerToDevice(e){
@@ -11030,73 +11171,114 @@ function renderPageHTML(pi,allLayers){
  return html;
 }
 
-const PAPER={A4:{p:210,l:297},A3:{p:297,l:420},Letter:{p:215.9,l:279.4},Tabloid:{p:279.4,l:431.8}};
+/* Papirstørrelser i mm: p = den korte side, l = den lange.
+   Navnene A2, A1 og A0 kender browseren IKKE – skriver man "size:A1", falder
+   Chrome tilbage til Letter uden at sige noget. Derfor skriver vi altid
+   målene i mm, og så kan arket blive lige så stort, man vil. */
+const PAPER={A5:{p:148,l:210},A4:{p:210,l:297},A3:{p:297,l:420},A2:{p:420,l:594},
+ A1:{p:594,l:841},A0:{p:841,l:1189},Letter:{p:215.9,l:279.4},Tabloid:{p:279.4,l:431.8}};
+const mmPx=v=>v*96/25.4;
+/* "420mm 297mm" i stedet for "A3 landscape" – se kommentaren over PAPER. */
+function vendtPapir(navn,retning){
+ const p=PAPER[navn]||PAPER.A3;
+ return retning==='portrait' ? p.p+'mm '+p.l+'mm' : p.l+'mm '+p.p+'mm';
+}
+
+/* ── Udskrift af tegningen ────────────────────────────────────
+   Hver side har sin EGEN retning. Det kan lade sig gøre, fordi css kan have
+   flere navngivne @page-regler, og hvert ark peger på sin. Uden det måtte
+   hele udskriften være enten stående eller liggende – og så blev de tunge
+   sider skaleret ned, til teksten ikke var til at læse, mens de lette sider
+   lå med luft omkring sig.
+
+   "Auto" regner efter: hvor meget kan arket fylde stående, og hvor meget
+   liggende? Den retning, der giver den største skala, vinder. */
 function exportPDF(o){
- const idx = o.scope==='all' ? pages.map((_,i)=>i) : [activePage];
+ const idx = (Array.isArray(o.sider)&&o.sider.length) ? o.sider.slice()
+           : (o.scope==='all' ? pages.map((_,i)=>i) : [activePage]);
+ if(!idx.length){ alert('Der er ikke valgt nogen sider at printe.'); return }
  /* Udskriften er et A3-ark, ikke en telefonskærm. Bruger vi telefonens
     bredde, bliver arket bygget i mobil-opsætning og klippet. */
  const W = Math.max(el.clientWidth||0, 1200);
- const mm = (PAPER[o.paper]||PAPER.A3)[o.orient==='landscape'?'l':'p'];
- const mmH = (PAPER[o.paper]||PAPER.A3)[o.orient==='landscape'?'p':'l'];
+ const pap = PAPER[o.paper]||PAPER.A3;
  const padPx = o.margin * 96/25.4;
- const sideB = mm*96/25.4, sideH = mmH*96/25.4;          // papiret i pixels
+ const LB=mmPx(pap.l), LH=mmPx(pap.p);     // liggende: bred og lav
+ const PB=mmPx(pap.p), PH=mmPx(pap.l);     // stående
+ const ret = o.ret||{};
  const stamp = new Date().toLocaleDateString('da-DK',{day:'2-digit',month:'2-digit',year:'numeric'});
 
+ /* Først tegnes arkene i fuld bredde. Indholdets mål afhænger ikke af
+    papiret – .pfitin har en fast bredde – så vi kan måle én gang og
+    bagefter regne på begge retninger. */
  document.getElementById('printroot').innerHTML = idx.map(i=>
-   `<div class="psheet" style="width:${sideB}px;height:${(sideH-2).toFixed(0)}px">
+   `<div class="psheet" data-pi="${i}" style="width:${LB}px">
       <div class="pfit"><div class="pfitin" style="width:${W}px">${renderPageHTML(i,o.allLayers)}</div></div>
       <div class="pfoot">${esc(pages[i].title)} · side ${idx.indexOf(i)+1} af ${idx.length} · udskrevet ${stamp}</div>
     </div>`).join('');
 
- /* Skalér HVER side, så den lige akkurat er der. Ellers ryger de sidste par
-    centimeter over på en side 2, hvor der kun står en stump.
-    Udskriften er skjult på skærmen, så vi måler den lige uden for kanten. */
  const rod=document.getElementById('printroot');
  rod.classList.add('maaler');
- {
-  document.querySelectorAll('#printroot .psheet').forEach(ps=>{
-   const ind=ps.querySelector('.pfitin');
-   const fod=ps.querySelector('.pfoot');
-   if(!ind)return;
-   const plads = { b: sideB-2*padPx, h: sideH-2*padPx-(fod?fod.offsetHeight+6:0) };
-   const har   = { b: ind.scrollWidth||W, h: ind.scrollHeight||1 };
-   const kBredde = plads.b/har.b;
-   const kBegge  = Math.min(kBredde, plads.h/har.h);
-   /* Under halv størrelse bliver teksten ulæselig. Så er det bedre at lade
-      arket løbe over på flere sider end at presse alt ned på ét. */
-   const MINK=0.5;
-   const enSide = kBegge>=MINK;
-   /* Skal arket alligevel over flere sider, må vi ikke forstørre det – så
-      ville det fylde endnu mere. Der holder vi os til 100 %. */
-   const kk = enSide ? Math.max(0.3, Math.min(kBegge, 1.8))
-                     : Math.max(0.3, Math.min(kBredde, 1));
-   /* Selve indholdet skaleres, mens rammen får den færdige størrelse.
-      Ellers ville rammen blive skaleret oven i sit eget mål. */
-   const box=ps.querySelector('.pfit');
-   ind.style.transform='scale('+kk.toFixed(4)+')';
-   ind.style.transformOrigin='top left';
-   box.style.transform='none';
-   box.style.width=(har.b*kk)+'px';
-   box.style.height=(har.h*kk)+'px';
-   box.style.overflow='hidden';
-   /* Krymper arket i højden, bliver det smallere end papiret. Så skal det
-      midt på siden – ikke klistret op i venstre hjørne. */
-   box.style.marginLeft=Math.max(0,(plads.b-har.b*kk)/2)+'px';
-   if(!enSide){                       // lad siden vokse og brække naturligt
-    ps.style.height='auto';
-    ps.style.minHeight=(sideH-2)+'px';
-   }
-   ps.dataset.skala=kk.toFixed(2);
-   ps.dataset.ensidet=enSide?'ja':'nej';
-  });
- }
+ let brugtL=false, brugtP=false;
+ document.querySelectorAll('#printroot .psheet').forEach(ps=>{
+  const ind=ps.querySelector('.pfitin');
+  const fod=ps.querySelector('.pfoot');
+  if(!ind)return;
+  const pi=+ps.dataset.pi;
+  const har = { b: ind.scrollWidth||W, h: ind.scrollHeight||1 };
+  const fodH = (fod?fod.offsetHeight+6:0);
+  /* Hvor stor kan arket blive på hver af de to retninger? */
+  const maal=(sb,sh)=>{
+   const plads={b:sb-2*padPx, h:sh-2*padPx-fodH};
+   return {kB:plads.b/har.b, kBegge:Math.min(plads.b/har.b, plads.h/har.h), plads:plads, sb:sb, sh:sh};
+  };
+  const L=maal(LB,LH), P=maal(PB,PH);
+  let valgt=ret[pi]||'auto';
+  if(valgt==='auto') valgt = (P.kBegge>L.kBegge+0.001) ? 'portrait' : 'landscape';
+  const m = valgt==='portrait' ? P : L;
+  if(valgt==='portrait')brugtP=true; else brugtL=true;
+  ps.classList.add(valgt==='portrait'?'sfP':'sfL');
+  ps.style.width=m.sb+'px';
+  ps.style.height=(m.sh-2).toFixed(0)+'px';
+  /* Under halv størrelse bliver teksten ulæselig. Så er det bedre at lade
+     arket løbe over på flere sider end at presse alt ned på ét. */
+  const MINK=0.5;
+  const enSide = m.kBegge>=MINK;
+  /* Skal arket alligevel over flere sider, må vi ikke forstørre det – så
+     ville det fylde endnu mere. Der holder vi os til 100 %. */
+  const kk = enSide ? Math.max(0.3, Math.min(m.kBegge, 1.8))
+                    : Math.max(0.3, Math.min(m.kB, 1));
+  /* Selve indholdet skaleres, mens rammen får den færdige størrelse.
+     Ellers ville rammen blive skaleret oven i sit eget mål. */
+  const box=ps.querySelector('.pfit');
+  ind.style.transform='scale('+kk.toFixed(4)+')';
+  ind.style.transformOrigin='top left';
+  box.style.transform='none';
+  box.style.width=(har.b*kk)+'px';
+  box.style.height=(har.h*kk)+'px';
+  box.style.overflow='hidden';
+  /* Krymper arket i højden, bliver det smallere end papiret. Så skal det
+     midt på siden – ikke klistret op i venstre hjørne. */
+  box.style.marginLeft=Math.max(0,(m.plads.b-har.b*kk)/2)+'px';
+  if(!enSide){                       // lad siden vokse og brække naturligt
+   ps.style.height='auto';
+   ps.style.minHeight=(m.sh-2)+'px';
+  }
+  ps.dataset.skala=kk.toFixed(2);
+  ps.dataset.retning=valgt;
+  ps.dataset.ensidet=enSide?'ja':'nej';
+ });
  rod.classList.remove('maaler');
 
+ /* Kun de regler, der faktisk bliver brugt. Står der en ubrugt @page-regel
+    tilbage, lægger Safari en tom side ind efter den. */
  document.getElementById('pagestyle').textContent =
-   `@page{size:${o.paper} ${o.orient};margin:0}
+   `${brugtL?`@page sfL{size:${pap.l}mm ${pap.p}mm;margin:0}`:''}
+    ${brugtP?`@page sfP{size:${pap.p}mm ${pap.l}mm;margin:0}`:''}
     @media print{
       html,body{margin:0!important;padding:0!important}
-      #printroot{width:${sideB}px;margin:0;padding:0}
+      #printroot{margin:0;padding:0}
+      .psheet.sfL{page:sfL}
+      .psheet.sfP{page:sfP}
       /* Safari deler sider anderledes end Chrome. Derfor: almindelige blokke
          uden flex, ingen margener, og et sideskift FØR hvert ark undtagen det
          første. Beder man om skift EFTER sidste ark, laver Safari en tom side. */
@@ -11110,7 +11292,11 @@ function exportPDF(o){
       .pfoot{position:absolute;left:${padPx}px;right:${padPx}px;bottom:${(padPx/2).toFixed(0)}px;margin:0}
     }`;
  closeModal();
- const navn=projectName+' – Tegning'+(o.scope==='all'?'':' – '+pages[activePage].title);
+ /* Filnavnet skal sige hvad der ER i filen: én side får sit navn med, et
+    udvalg får at vide hvor mange der er. */
+ const navn=projectName+' – Tegning'
+   +(idx.length===1 ? ' – '+(pages[idx[0]].title||'side '+(idx[0]+1))
+     : (idx.length===pages.length ? '' : ' – '+idx.length+' sider'));
  setTimeout(()=>{
    udskriv(navn);
  },120);
@@ -11419,7 +11605,9 @@ function exportPlanPDF(o){
  document.getElementById('printroot').innerHTML=`<div class="psheet planprint">${planPrintHTML(o.kun,o)}</div>`;
  const padPx=o.margin*96/25.4;
  document.getElementById('pagestyle').textContent=
-   `@page{size:${o.paper} ${o.orient};margin:0}
+   /* Målene i mm, ikke navnet: A2, A1 og A0 kender browseren ikke som navne,
+      og så falder den tavst tilbage til Letter. */
+   `@page{size:${vendtPapir(o.paper,o.orient)};margin:0}
     @media print{.psheet{margin:${padPx}px}}`;
  closeModal();
  const navn=projectName+' – Plan'+(o.kun?' – '+PLANDOMS[o.kun]:'')
@@ -11471,18 +11659,53 @@ function openExport(){
       Tag underark med (kun CSV)</label>
   </div>
 
+  <div id="pSider">
+    <div class="msec">Sider</div>
+    <div class="pgliste">
+      ${pages.map((pg,i)=>`<div class="pgrad">
+        <label class="pgnavn"><input type="checkbox" data-pg="${i}" ${i===activePage?'checked':''}>
+          <b>${i+1}</b> <span>${esc(pg.title||'side '+(i+1))}</span></label>
+        <select data-pgret="${i}" title="Retning for netop denne side">
+          <option value="auto">Auto</option>
+          <option value="landscape">Liggende</option>
+          <option value="portrait">Stående</option>
+        </select>
+      </div>`).join('')}
+    </div>
+    <div class="pgknap">
+      <button type="button" class="btn lille" data-pgalle="1">Alle sider</button>
+      <button type="button" class="btn lille" data-pgdenne="1">Kun denne</button>
+      <button type="button" class="btn lille" data-pgingen="1">Ingen</button>
+      <span class="pgsvar" id="pgSvar"></span>
+    </div>
+    <div class="msub" style="margin:8px 0 0;text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6">
+      <b>Auto</b> vælger den retning, siden kan fylde mest på – tunge sider
+      lægger sig liggende, høje og smalle stående. Retningerne må gerne være
+      forskellige i den samme fil.
+    </div>
+  </div>
+
   <div id="pPdf">
     <div class="msec">Sideopsætning</div>
     <div class="mgrid">
       <div class="mf"><label>Papir</label><select name="paper">
         <option value="A3" selected>A3</option><option value="A4">A4</option>
+        <option value="A2">A2 · 420 × 594 mm</option>
+        <option value="A1">A1 · 594 × 841 mm</option>
+        <option value="A0">A0 · 841 × 1189 mm</option>
+        <option value="A5">A5</option>
         <option value="Letter">Letter</option><option value="Tabloid">Tabloid</option>
       </select></div>
-      <div class="mf"><label>Retning</label><select name="orient">
+      <div class="mf" id="pOrient"><label>Retning</label><select name="orient">
         <option value="landscape" selected>Liggende</option>
         <option value="portrait">Stående</option>
       </select></div>
       <div class="mf"><label>Margen (mm)</label><input type="number" name="margin" min="0" max="30" value="8"></div>
+    </div>
+    <div class="msub" id="pStort" style="display:none;margin:8px 0 0;text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6">
+      Papir større end A3 kender printere sjældent. Vælg <b>Gem som PDF</b> i
+      printvinduet – så kommer filen ud i den rigtige størrelse og kan sendes
+      til et trykkeri eller en plotter.
     </div>
     <div class="msub" style="margin:12px 0 0;text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6">
       Sammenklappede grupper foldes automatisk ud. Vælg <b>Gem som PDF</b> i printvinduet,
@@ -11498,16 +11721,48 @@ function openExport(){
     <button class="btn" data-cancel="1">Annullér</button>
   </div>`,root=>{
    const fmt=root.querySelector('[name="fmt"]');
-   const sync=()=>{
-     root.querySelector('#pPdf').style.display = (fmt.value==='pdf'||fmt.value==='planpdf')?'':'none';
-     root.querySelector('#rowSubs').style.display = fmt.value==='csv'?'':'none';
-     root.querySelector('[name="scope"]').parentElement.parentElement.style.display = fmt.value==='json'?'none':'';
+   const pgHak=()=>[...root.querySelectorAll('[data-pg]')].filter(b=>b.checked)
+     .map(b=>+b.dataset.pg);
+   const pgSvar=()=>{
+     const n=pgHak().length;
+     const s2=root.querySelector('#pgSvar');
+     if(s2)s2.textContent = n ? (n===pages.length?'alle '+n+' sider':n+' af '+pages.length+' sider')
+                              : 'ingen sider valgt';
+     const ok=root.querySelector('[data-ok]');
+     if(ok)ok.disabled = (fmt.value==='pdf' && !n);
    };
-   fmt.onchange=sync; sync();
+   const sync=()=>{
+     /* Tegningens PDF har sin egen sideliste med retning pr. side – den
+        afløser både omfang-feltet og den fælles retning. */
+     const erPdf = fmt.value==='pdf';
+     root.querySelector('#pSider').style.display = erPdf?'':'none';
+     root.querySelector('#pPdf').style.display = (erPdf||fmt.value==='planpdf')?'':'none';
+     root.querySelector('#pOrient').style.display = erPdf?'none':'';
+     root.querySelector('#rowSubs').style.display = fmt.value==='csv'?'':'none';
+     root.querySelector('[name="scope"]').parentElement.parentElement.style.display =
+       (fmt.value==='json'||erPdf)?'none':'';
+     const stort=['A2','A1','A0'].indexOf(val(root,'paper'))>=0;
+     root.querySelector('#pStort').style.display = stort?'':'none';
+     pgSvar();
+   };
+   fmt.onchange=sync;
+   root.querySelector('[name="paper"]').onchange=sync;
+   root.querySelectorAll('[data-pg]').forEach(b=>b.onchange=pgSvar);
+   const saetAlle=v=>{ root.querySelectorAll('[data-pg]').forEach(b=>b.checked=v); pgSvar() };
+   root.querySelector('[data-pgalle]').onclick=()=>saetAlle(true);
+   root.querySelector('[data-pgingen]').onclick=()=>saetAlle(false);
+   root.querySelector('[data-pgdenne]').onclick=()=>{
+     root.querySelectorAll('[data-pg]').forEach(b=>b.checked = (+b.dataset.pg===activePage));
+     pgSvar();
+   };
+   sync();
    root.querySelector('[data-cancel]').onclick=closeModal;
    root.querySelector('[data-ok]').onclick=()=>{
+     const ret={};
+     root.querySelectorAll('[data-pgret]').forEach(s2=>{ ret[+s2.dataset.pgret]=s2.value });
      const o={
        scope:val(root,'scope'),
+       sider:pgHak(), ret:ret,
        allLayers:root.querySelector('[name="allLayers"]').checked,
        subs:root.querySelector('[name="subs"]').checked,
        paper:val(root,'paper'),orient:val(root,'orient'),margin:+val(root,'margin')||0
