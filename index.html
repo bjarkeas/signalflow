@@ -1064,6 +1064,137 @@ body.mobile.guest #app{padding-bottom:12px}
  max-height:150px;overflow-y:auto}
 .lydvis span{font-size:11.5px;color:var(--text);white-space:nowrap}
 .lydvis em{font-style:normal;font-family:var(--fm);font-size:9px;color:var(--faint);margin-right:5px}
+/* ── Video containere ──────────────────────────────────────────
+   Én lang liste med søgebånd foroven. Rækken er smal, for der er flere
+   hundrede af dem, og man skal kunne se mange ad gangen. Lydsporene bruger
+   de samme stile som i videoplanen – det er de samme felter. */
+.vcbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px;
+ padding:9px 12px;background:var(--panel);border:1px solid var(--line);
+ border-radius:9px;margin:0 0 10px}
+.vcsoeg{flex:1 1 260px;min-width:160px;background:var(--bg);border:1px solid var(--line);
+ color:var(--text);border-radius:7px;padding:7px 10px;font:12.5px var(--fb)}
+.vcsoeg:focus{outline:none;border-color:var(--intercom)}
+.vcbar select{background:var(--bg);border:1px solid var(--line);color:var(--dim);
+ border-radius:7px;padding:7px 8px;font:11.5px var(--fb)}
+.vcbar select.paa{border-color:var(--lyd);color:var(--lyd)}
+.vcsvar{font-family:var(--fm);font-size:10px;color:var(--faint);white-space:nowrap;
+ margin-left:auto}
+.vcsvar.tom{color:var(--lyd)}
+.vcliste{display:flex;flex-direction:column;gap:2px;padding-bottom:40px}
+.vchead{display:flex;align-items:center;gap:7px;padding:0 10px 5px;
+ font-family:var(--fm);font-size:9px;letter-spacing:.07em;color:var(--faint);
+ text-transform:uppercase}
+.vchead .h-f{width:16px;flex:none}
+.vchead .h-nr{width:62px;flex:none;text-align:center}
+.vchead .h-r{width:38px;flex:none;text-align:center}
+.vchead .h-n{flex:1}
+.vchead .h-s{width:46px;flex:none;text-align:center}
+.vchead .h-b{width:92px;flex:none}
+.vcrad{display:flex;align-items:center;gap:7px;padding:4px 10px;
+ background:var(--panel);border:1px solid var(--line);border-radius:7px}
+.vcrad:hover{border-color:var(--dim)}
+.vcrad.ude{border-color:var(--lyd);border-bottom-left-radius:0;border-bottom-right-radius:0}
+.vcrad.rettet{border-color:var(--ret,var(--lyd));box-shadow:0 0 0 1px var(--ret,var(--lyd))}
+.vcfold{width:16px;flex:none;background:none;border:none;color:var(--faint);
+ cursor:pointer;font-size:9px;padding:0;line-height:1}
+.vcfold:hover{color:var(--text)}
+.vcnr{width:62px;flex:none;background:var(--bg);border:1px solid var(--line);color:var(--dim);
+ border-radius:5px;padding:5px 3px;font:10.5px var(--fm);text-align:center}
+.vcret{width:38px;flex:none;background:var(--bg);border:1px solid var(--line);
+ border-radius:5px;padding:4px 0;cursor:pointer;
+ font:700 9px var(--fm);letter-spacing:.06em;color:var(--dim)}
+.vcrad.ind .vcret{color:var(--net);border-color:#24384f}
+.vcrad.ud .vcret{color:var(--video);border-color:#4a2626}
+.vcret:hover{border-color:var(--dim);color:var(--text)}
+.vcnavn{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--text);
+ border-radius:5px;padding:5px 7px;font:12px var(--fb)}
+.vcnavn:focus,.vcnr:focus{outline:none;border-color:var(--intercom)}
+.vcrad.har .vcnavn{border-color:#2f4a3d;background:#141c18}
+.vcbibm{flex:none;font-family:var(--fm);font-size:9px;color:var(--faint);
+ background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:3px 6px;
+ max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vcspor{width:46px;flex:none;text-align:center;font-family:var(--fm);font-size:9.5px;
+ color:var(--faint)}
+.vcspor.har{color:var(--lyd)}
+.vcbind{width:16px;flex:none;opacity:.55}
+.vcrad:hover .vcbind{opacity:1}
+.vcbind.on{opacity:1}
+.vcvej{flex:none}
+.vcslot{width:22px;flex:none}
+/* Sporene hænger under rækken, så man kan se at de hører til den */
+.vcspormere{margin:0 0 6px}
+.vcspormere .audlist{margin:0;width:100%;border-radius:0 0 7px 7px;
+ border:1px solid var(--line);border-top:none;border-left:2px solid var(--lyd);
+ padding:5px 10px 7px}
+.vctom{font-size:12.5px;color:var(--faint);padding:18px 4px;line-height:1.6}
+
+/* ── Signalvejen ───────────────────────────────────────────────── */
+.vvrude{max-height:62vh;overflow-y:auto}
+.vvtom{font-size:12.5px;color:var(--dim);line-height:1.7;padding:6px 2px 2px}
+.vvvej{margin:0 0 18px}
+.vvkaede{display:flex;flex-wrap:wrap;align-items:stretch;gap:8px;margin:0 0 10px}
+.vvbox{display:flex;flex-direction:column;gap:2px;background:var(--panel2);
+ border:1px solid var(--line);border-radius:8px;padding:8px 11px;
+ font:600 12.5px var(--fb);color:var(--text);min-width:120px}
+.vvbox em{font-style:normal;font-family:var(--fm);font-size:9px;letter-spacing:.04em;
+ color:var(--faint);text-transform:uppercase}
+.vvbox.mig{border-color:var(--video);color:var(--text)}
+.vvbox.gruppe{border-color:var(--intercom)}
+.vvbox.mangler{border-style:dashed;color:var(--faint)}
+.vvpil{align-self:center;color:var(--faint);font-size:14px}
+.vvandet{font-size:11.5px;color:var(--faint);margin:0 0 8px;line-height:1.6}
+.vvtab{width:100%;border-collapse:collapse;font-size:12px}
+.vvtab th{text-align:left;font:9px var(--fm);letter-spacing:.07em;text-transform:uppercase;
+ color:var(--faint);padding:4px 7px;border-bottom:1px solid var(--line)}
+.vvtab td{padding:4px 7px;border-bottom:1px solid var(--line);color:var(--text)}
+.vvtab tr.tomspor td{color:var(--faint)}
+.vvtab .vvnr{font-family:var(--fm);font-size:10px;color:var(--dim);width:58px}
+.vvtab .vvfra{font-size:11px;color:var(--dim)}
+.vvintet{color:var(--faint)}
+
+/* ── Biblioteksvinduet ────────────────────────────────────────── */
+.vcbliste{display:flex;flex-direction:column;gap:4px;max-height:48vh;overflow-y:auto}
+.vcbtop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+.vcbtop b{font-family:var(--fd);letter-spacing:.03em}
+.vcbtop .vcsvar{margin-left:auto}
+.vcbcont{display:flex;flex-direction:column;gap:2px;max-height:42vh;overflow-y:auto;
+ border:1px solid var(--line);border-radius:8px;padding:5px}
+.vcbrad{display:flex;align-items:center;gap:9px;padding:5px 8px;border-radius:6px;
+ cursor:pointer;font-size:12.5px}
+.vcbrad:hover{background:var(--panel2)}
+.vcbrad.on{background:rgba(63,217,156,.08)}
+.vcbrad.iproj{opacity:.5;cursor:default}
+.vcbrad input{width:auto;margin:0;accent-color:var(--intercom);flex:none}
+.vcbret{flex:none;font:700 8.5px var(--fm);letter-spacing:.06em;border:1px solid var(--line);
+ border-radius:3px;padding:2px 4px;color:var(--dim)}
+.vcbret.ind{color:var(--net)}
+.vcbret.ud{color:var(--video)}
+.vcbnr{flex:none;width:62px;font-family:var(--fm);font-size:10.5px;color:var(--dim)}
+.vcbnavn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vcbspor{flex:none;font-family:var(--fm);font-size:9.5px;color:var(--lyd)}
+.vcbhar{flex:none;font-family:var(--fm);font-size:9px;color:var(--faint)}
+
+body.mobile .vcbar{padding:8px}
+body.mobile .vcsvar{margin-left:0;width:100%}
+body.mobile .vchead{display:none}
+body.mobile .vcrad{flex-wrap:wrap}
+body.mobile .vcnavn{flex:1 1 100%;order:9}
+body.mobile .vcbibm{display:none}
+@media print{
+  /* På papir er containerne en liste med spor – ikke felter man kan rette i */
+  .vcbar,.vcfold,.vcvej,.vcslot,.vchead{display:none!important}
+  .ppvcret{font:700 9px var(--fm);letter-spacing:.06em;border:1px solid #999;
+    border-radius:3px;padding:1px 4px;margin-right:6px}
+  .ppvcgrp{font-weight:400;font-size:10.5px;color:#555;margin-left:8px}
+  .ppvcspor{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+  .ppvcr{display:flex;align-items:center;gap:8px;padding:1px 0;
+    border-bottom:1px solid #e3e3e3;font-size:10.5px}
+  .ppvcr.tom{color:#aaa}
+  .ppvcr .ppn{width:52px;flex:none;font-family:var(--fm);font-size:9px}
+  .ppvcr .ppl{flex:1;min-width:0}
+  .ppvcr .ppb{width:12px;flex:none;text-align:center}
+}
+
 body.mobile .audlist{margin-left:12px;width:calc(100% - 12px)}
 body.mobile .audn{width:54px;font-size:9px}
 @media print{
@@ -3095,7 +3226,8 @@ let lastBox=null;
 /* ================= planer ================= */
 /* Én plan pr. domæne. Hvert stykke udstyr har inputs og outputs med hver sin
    tekst, og hver linje husker hvem der har rettet den og hvornår. */
-const PLANDOMS={lyd:'Lyd',video:'Video',kam:'Kameraer',net:'Netværk',freq:'Frekvenser'};
+const PLANDOMS={lyd:'Lyd',video:'Video',kam:'Kameraer',net:'Netværk',freq:'Frekvenser',
+ vc:'Video containere'};
 /* almindelige stiktyper – kun forslag, man kan skrive hvad som helst */
 const CONNECTORS=['XLR han','XLR hun','XLR 3-pol','XLR 5-pol','Jack 6,3 mm','Minijack 3,5 mm',
  'BNC','SDI BNC','HDMI','RJ45','etherCON','SMPTE 311M','LC fiber','SC fiber','opticalCON',
@@ -4314,7 +4446,10 @@ function drawPlan(){
  let h=`<div class="planbar">
    <div class="domtabs">${Object.keys(PLANDOMS).map(k=>
      `<button class="domtab ${k===planDom?'on':''}" data-dom="${k}" title="${PLANDOMS[k]}-planen – hvert område har sit eget udstyr">${PLANDOMS[k]}</button>`).join('')}</div>
-   ${guestToken?'':`<button class="sharebtn left" data-imp="1" title="Hent udstyr der allerede er brugt på blokdiagrammet">⤒ Fra blokdiagram</button>
+   ${(guestToken||planDom==='vc')?''
+     /* Containerne hentes ikke fra blokdiagrammet eller lageret – de bor i
+        routeren. De har deres egne knapper nede i listen. */
+     :`<button class="sharebtn left" data-imp="1" title="Hent udstyr der allerede er brugt på blokdiagrammet">⤒ Fra blokdiagram</button>
      <button class="sharebtn left" data-kimp="1" title="Importér en plan fra csv, Excel eller indsat tekst">⤒ Importér fil</button>`}
    ${nyt?`<button class="newsbadge" data-seen="1">${nyt} ${nyt===1?'ny ændring':'nye ændringer'} siden sidst · markér som set</button>`:''}
    ${meName()==='?'?`<input class="whobox" id="whoBox" placeholder="Dine initialer" title="Vises ud for de linjer du retter">`:
@@ -4326,17 +4461,36 @@ function drawPlan(){
      :`<button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan – modtageren skal ikke logge ind">🔗 Del link</button>`}
    <button class="sharebtn" data-ppdf="1" title="Print ${PLANDOMS[planDom]}-planen eller gem den som PDF">↧ PDF</button>
    ${mobil?'':`
-   <button class="sharebtn" data-pcsv="1" title="Hent ${PLANDOMS[planDom]}-planen som regneark til Excel">↧ CSV</button>
+   <button class="sharebtn" data-pcsv="1" title="Hent ${PLANDOMS[planDom]}-planen som regneark til Excel">↧ CSV</button>`}
+   ${(mobil||planDom==='vc')?''/* containerne står i én liste – der er ingen kort at stille op */:`
    <button class="sharebtn" data-kol1="1" title="Stil kortene i én lang kolonne, så du kun skal rulle nedad">↕ Én kolonne</button>
    <button class="sharebtn" data-kol3="1" title="Stil kortene op i tre kolonner ved siden af hinanden">⫴ Tre kolonner</button>`}
-   <button class="sharebtn" data-foldall="1" title="Fold alle kort sammen, så kun linjer med signal vises – tryk igen for at folde ud">⊟ Fold tomme</button>
-   ${mobil?''/* På telefonen står kortene i én kolonne i forvejen – der er intet at rette op */
+   ${planDom==='vc'?''
+     :`<button class="sharebtn" data-foldall="1" title="Fold alle kort sammen, så kun linjer med signal vises – tryk igen for at folde ud">⊟ Fold tomme</button>`}
+   ${(mobil||planDom==='vc')?''/* På telefonen står kortene i én kolonne i forvejen – der er intet at rette op */
      :`<button class="sharebtn ${planSnap?'on':''}" data-psnap="1" title="Lås til gitter: kortene falder på plads i lige rækker, og der vises hjælpelinjer når de flugter">⊞ Ret op</button>`}
-   ${guestToken?'':`
+   ${(guestToken||planDom==='vc')?'':`
      <div class="planadd">
        <button class="sharebtn save" data-arch="1" title="Hent udstyr fra lageret">+ Udstyr</button>
      </div>`}
  </div>`;
+
+ /* Video containerne står i én liste med søgning og filtre – ikke som kort
+    på et lærred. Der er flere hundrede af dem, og de skal findes, ikke
+    bladres igennem. Resten af planen er den samme: samme bånd foroven,
+    samme felter i lydsporene, samme binding til tegningen. */
+ if(planDom==='vc'){
+  h+=vcListeHTML();
+  h+=`<datalist id="lbls">${labels.map(l=>`<option value="${esc(l)}">`).join('')}</datalist>`;
+  el2.className=(el2.className||'').replace(/\s*dom-\w+/g,'')+' dom-vc';
+  el2.innerHTML=h;
+  bindPlan();
+  bindVC();
+  if(typeof mobilTitel==='function')mobilTitel();
+  if(typeof autosave==='function')autosave();
+  if(typeof sideAndet==='function')sideAndet();
+  return;
+ }
 
  const list=devs();
  if(!list.length){
@@ -4429,6 +4583,955 @@ function drawPlan(){
  if(typeof sideAndet==='function')sideAndet();
 }
 
+
+/* ══════════════════════════════════════════════════════════════
+   VIDEO CONTAINERE
+   Når systemet bygges, oprettes der containere i videorouteren: ét
+   videosignal med op til 16 lydspor hængt på. Der er så mange af dem –
+   Remote 2 har flere hundrede faste – at de ikke kan stå i grupper på
+   sider som tegningen. Derfor står de i én liste med søgning og filtre,
+   og de foldes ud én ad gangen.
+
+   En container ER et stykke "udstyr" i planen med ÉN linje: ind-containere
+   har linjen på inputsiden, ud-containere på outputsiden. Det er ikke en
+   omvej – det er dét, der gør, at lydsporene, bindingen til tegningen,
+   spøgelsesteksten, hakkene for patchet/tjekket, "hvem rettede hvad" og
+   sammenfletningen mellem to maskiner virker her uden en linje ny kode.
+   Nummeret og navnet står på containeren og skrives med over i linjen,
+   så print, regneark og tegningens opslag ser det samme.
+   ══════════════════════════════════════════════════════════════ */
+const VC_SPOR=16;                  // 16 lydspor pr. container
+let vcSoeg='';
+let vcF={retning:'',lyd:'',bundet:'',bib:''};
+let vcUde=new Set();               // containere der står foldet UD
+
+const vcAlle=()=>alive(((ensurePlan().vc)||{}).devices||[]);
+const vcRetning=dv=>((dv&&dv.retning)==='ud'?'ud':'ind');
+const vcSide=dv=>(vcRetning(dv)==='ind'?'ins':'outs');
+/* Den ene linje. Den ledes efter på begge sider: er en container vendt om,
+   eller kommer den skæv ind fra et regneark, skal den stadig kunne vises. */
+function vcPort(dv){
+ if(!dv)return null;
+ const i=alive(dv.ins||[]), o=alive(dv.outs||[]);
+ return (vcSide(dv)==='ins' ? (i[0]||o[0]) : (o[0]||i[0])) || null;
+}
+function vcPortSide(dv){
+ const p=vcPort(dv); if(!p)return vcSide(dv);
+ return alive(dv.ins||[]).indexOf(p)>=0 ? 'ins' : 'outs';
+}
+/* Nummeret og navnet bor på containeren. Linjen får dem skrevet med, så alt
+   det, der læser planen – print, csv, tegningens spøgelser – ser det samme
+   ét sted fra. */
+function vcSyncPort(dv){
+ const p=vcPort(dv); if(!p)return;
+ p.n=String(dv.nr||'');
+ p.label=String(dv.name||'');
+}
+const vcSkrevet=dv=>{const p=vcPort(dv);return p?audSkrevet(p):0};
+const vcSporAntal=dv=>{const p=vcPort(dv);return p?audListe(p).length:0};
+const vcBundne=dv=>{const p=vcPort(dv);return p?portGrps(p):[]};
+function vcSporTekster(dv){
+ const p=vcPort(dv); if(!p)return [];
+ return audListe(p).map(a=>((a.n||'')+' '+(a.label||'')).trim());
+}
+/* Biblioteksnavnene der faktisk er i brug i projektet. */
+function vcBiblioteker(){
+ const s=new Set();
+ vcAlle().forEach(dv=>{ if(dv.bib)s.add(dv.bib) });
+ return [...s].sort((a,b)=>a.localeCompare(b,'da'));
+}
+
+/* Næste ledige nummer. Containere nummereres i routeren, så vi gætter kun
+   det næste tal – resten retter man selv. */
+function vcNaesteNr(){
+ let m=0;
+ vcAlle().forEach(dv=>{
+  const n=parseInt(String(dv.nr||'').replace(/[^\d]/g,''),10);
+  if(!isNaN(n)&&n>m)m=n;
+ });
+ return String(m+1);
+}
+function vcNyPort(nr){
+ return {id:id(), n:String(nr||''), label:'', by:'', at:0, audN:VC_SPOR};
+}
+function vcOpret(retning, o){
+ o=o||{};
+ const nr = o.nr!==undefined ? String(o.nr) : vcNaesteNr();
+ const dv={id:id(), type:'Video container', name:o.navn||'', nr:nr,
+   retning:(retning==='ud'?'ud':'ind'), bib:o.bib||'', ins:[], outs:[], mt:Date.now()};
+ const p=vcNyPort(nr);
+ p.label=dv.name;
+ dv[vcSide(dv)].push(p);
+ /* Sporene fylder intet, før der står noget i dem – præcis som lydkanalerne
+    på et videosignal. Kommer der tekster med fra et bibliotek eller et
+    regneark, lægges de ind her. */
+ (o.spor||[]).forEach((t,i)=>{
+  if(!t)return;
+  const r=audRef(p, audId(p,i+1), true);
+  if(r&&r.o){ r.o.label=String(t); touch(r.o) }
+ });
+ ((ensurePlan().vc).devices||[]).push(dv);
+ return dv;
+}
+function vcNy(retning){
+ snap();
+ const dv=vcOpret(retning);
+ vcUde.add(dv.id);
+ autosave(); drawPlan();
+ setTimeout(()=>{
+  const f=document.querySelector('[data-vcnavn="'+CSS.escape(dv.id)+'"]');
+  if(f){f.focus();f.select()}
+ },60);
+}
+/* Ind bliver ud og omvendt: linjen flytter side, så den stadig ligger, hvor
+   planen forventer en ind- eller udgang. */
+function vcVendRetning(dv){
+ snap();
+ const p=vcPort(dv), fra=vcPortSide(dv), til=(fra==='ins'?'outs':'ins');
+ if(p){
+  dv[fra]=(dv[fra]||[]).filter(x=>x!==p);
+  if(!dv[til])dv[til]=[];
+  dv[til].push(p);
+  touch(p);
+ }
+ dv.retning = (til==='ins'?'ind':'ud');
+ autosave(); drawPlan();
+}
+function vcSlet(dv){
+ snap();
+ dv.del=Date.now(); dv.by=meName();
+ vcUde.delete(dv.id);
+ autosave(); drawPlan();
+}
+
+/* ── Søgning og filtre ────────────────────────────────────────
+   Containerne findes ikke ved at bladre – der er for mange. Søgningen
+   leder også i lydsporene, for det er tit dét man kan huske: "hvor ligger
+   KOMM 4 henne?". */
+function vcFiltreret(){
+ const q=vcSoeg.trim().toLowerCase();
+ const ud=vcAlle().filter(dv=>{
+  if(vcF.retning && vcRetning(dv)!==vcF.retning)return false;
+  if(vcF.bib==='egne'){ if(dv.bib)return false }
+  else if(vcF.bib && dv.bib!==vcF.bib)return false;
+  const skrevet=vcSkrevet(dv);
+  if(vcF.lyd==='har' && !skrevet)return false;
+  if(vcF.lyd==='tom' && skrevet)return false;
+  const b=vcBundne(dv).length;
+  if(vcF.bundet==='ja' && !b)return false;
+  if(vcF.bundet==='nej' && b)return false;
+  if(!q)return true;
+  if(String(dv.nr||'').toLowerCase().indexOf(q)>=0)return true;
+  if((dv.name||'').toLowerCase().indexOf(q)>=0)return true;
+  if((dv.bib||'').toLowerCase().indexOf(q)>=0)return true;
+  return vcSporTekster(dv).some(t=>t.toLowerCase().indexOf(q)>=0);
+ });
+ /* Nummeret sorteres som tal, så 9 kommer før 10. Står ind og ud med samme
+    nummer, står de ved siden af hinanden – de hører jo sammen. */
+ return ud.sort((a,b)=>{
+  const c=String(a.nr||'').localeCompare(String(b.nr||''),'da',{numeric:true});
+  if(c!==0)return c;
+  if(vcRetning(a)!==vcRetning(b))return vcRetning(a)==='ind'?-1:1;
+  return (a.name||'').localeCompare(b.name||'','da');
+ });
+}
+const vcFiltrePaa=()=>!!(vcF.retning||vcF.lyd||vcF.bundet||vcF.bib||vcSoeg.trim());
+
+/* ── Listen ───────────────────────────────────────────────────── */
+function vcBindMaerke(dv){
+ const g=vcBundne(dv);
+ const navne=g.map(x=>grpNavn(x)).filter(Boolean);
+ return `<button class="bindknap vcbind ${navne.length?'on':''}" data-vcbind="${dv.id}"
+   title="${navne.length?esc('Hører til '+navne.join(', ')+' – klik for at skifte eller løsne')
+            :'Bind containeren til en gruppe i tegningen'}">⚯</button>`;
+}
+function vcRadHTML(dv){
+ const p=vcPort(dv);
+ const side=vcPortSide(dv);
+ const ret=vcRetning(dv);
+ const ude=vcUde.has(dv.id);
+ const skrevet=vcSkrevet(dv), antal=vcSporAntal(dv);
+ const bundet=vcBundne(dv).length;
+ const rettere=p&&fresh(p)?[p.by||'?']:[];
+ return `<div class="vcrad ${ret} ${ude?'ude':''} ${skrevet?'har':''} ${rettere.length?'rettet':''}"
+      ${rettere.length?`style="--ret:${retFarveNu[rettere[0]]||RET_FARVER[0]}"`:''}
+      data-vcrad="${dv.id}">
+   <button class="vcfold" data-vcfold="${dv.id}"
+     title="${ude?'Fold sporene sammen':'Fold de '+antal+' lydspor ud'}">${ude?'▾':'▸'}</button>
+   <input class="vcnr" value="${esc(dv.nr||'')}" data-vcnr="${dv.id}"
+     title="Containerens nummer i routeren">
+   <button class="vcret" data-vcvend="${dv.id}"
+     title="${ret==='ind'?'Ind-container – klik for at gøre den til en ud-container'
+                         :'Ud-container – klik for at gøre den til en ind-container'}">${ret==='ind'?'IND':'UD'}</button>
+   <input class="vcnavn" value="${esc(dv.name||'')}" list="lbls" placeholder="navn på containeren"
+     data-vcnavn="${dv.id}" title="Hvad containeren hedder">
+   ${dv.bib?`<span class="vcbibm" title="Kommer fra biblioteket ${esc(dv.bib)}">${esc(dv.bib)}</span>`:''}
+   <span class="vcspor ${skrevet?'har':''}" title="${skrevet} af ${antal} lydspor er beskrevet">${skrevet}/${antal}</span>
+   ${vcBindMaerke(dv)}
+   ${ret==='ud'?`<button class="mini vcvej" data-vcvej="${dv.id}"
+     title="Vis signalets vej gennem systemet">⤳</button>`:'<span class="vcslot"></span>'}
+   <button class="mini rowmenu" data-pmenu="${dv.id}|${side}|${p?p.id:''}"
+     title="Muligheder for denne container">⋯</button>
+   <button class="mini" data-vcdel="${dv.id}" title="Fjern containeren">✕</button>
+ </div>
+ ${ude&&p?`<div class="vcspormere">${audBlokKrop(dv,side,p)}</div>`:''}`;
+}
+function vcListeHTML(){
+ const alle=vcAlle();
+ const vist=vcFiltreret();
+ const bibs=vcBiblioteker();
+ const ind=alle.filter(dv=>vcRetning(dv)==='ind').length;
+ /* Står man med en kort liste, skal man kunne se om det er filtrene eller
+    lageret af containere, der er årsagen. */
+ const svar = !alle.length ? ''
+   : (vist.length===alle.length
+      ? alle.length+' containere · '+ind+' ind, '+(alle.length-ind)+' ud'
+      : vist.length+' af '+alle.length);
+ return `<div class="vcbar">
+   <input class="vcsoeg" id="vcSoeg" value="${esc(vcSoeg)}" autocomplete="off"
+     placeholder="Søg nummer, navn eller lydspor…"
+     title="Søger også i lydsporene – skriv fx navnet på en komkanal">
+   <select id="vcFRetning" class="${vcF.retning?'paa':''}" title="Ind- eller ud-containere">
+     <option value="">Ind og ud</option>
+     <option value="ind" ${vcF.retning==='ind'?'selected':''}>Kun ind</option>
+     <option value="ud" ${vcF.retning==='ud'?'selected':''}>Kun ud</option>
+   </select>
+   <select id="vcFLyd" class="${vcF.lyd?'paa':''}" title="Om der er skrevet lydspor på">
+     <option value="">Med og uden lyd</option>
+     <option value="har" ${vcF.lyd==='har'?'selected':''}>Kun med lydspor</option>
+     <option value="tom" ${vcF.lyd==='tom'?'selected':''}>Kun uden lydspor</option>
+   </select>
+   <select id="vcFBundet" class="${vcF.bundet?'paa':''}" title="Om containeren hører til en gruppe i tegningen">
+     <option value="">Bundet og ubundet</option>
+     <option value="ja" ${vcF.bundet==='ja'?'selected':''}>Kun bundet til tegningen</option>
+     <option value="nej" ${vcF.bundet==='nej'?'selected':''}>Kun ubundne</option>
+   </select>
+   ${bibs.length?`<select id="vcFBib" class="${vcF.bib?'paa':''}" title="Hvilket bibliotek containeren kommer fra">
+     <option value="">Alle biblioteker</option>
+     <option value="egne" ${vcF.bib==='egne'?'selected':''}>Kun egne</option>
+     ${bibs.map(b=>`<option value="${esc(b)}" ${vcF.bib===b?'selected':''}>${esc(b)}</option>`).join('')}
+   </select>`:''}
+   ${vcFiltrePaa()?`<button class="sharebtn" data-vcryd="1" title="Vis alle containere igen">Ryd</button>`:''}
+   <span class="vcsvar ${vcFiltrePaa()&&!vist.length?'tom':''}">${esc(
+     vcFiltrePaa()&&!vist.length?'ingen rammer søgningen':svar)}</span>
+   ${guestToken?'':`
+   <button class="sharebtn save" data-vcny="ind" title="Opret en container der kommer ind i systemet">+ Ind</button>
+   <button class="sharebtn save" data-vcny="ud" title="Opret en container der går ud af systemet">+ Ud</button>
+   <button class="sharebtn" data-vcbib="1"
+     title="De faste containere pr. vogn – hent dem ind i stedet for at taste dem">⤓ Bibliotek</button>`}
+   <button class="sharebtn" data-vcfoldalle="1"
+     title="Fold alle de viste containere ud eller sammen">${vcUde.size?'⊟ Fold sammen':'⊞ Fold ud'}</button>
+ </div>
+ ${!alle.length
+   ? `<div class="planempty">Ingen video containere endnu.<br>
+        En container er ét videosignal med op til ${VC_SPOR} lydspor.
+        Tryk <b>+ Ind</b> eller <b>+ Ud</b> for at oprette den første.</div>`
+   : `<div class="vcliste">
+       <div class="vchead"><span class="h-f"></span><span class="h-nr">Nr</span>
+         <span class="h-r">Vej</span><span class="h-n">Navn</span>
+         <span class="h-s">Spor</span><span class="h-b"></span></div>
+       ${vist.map(vcRadHTML).join('')}
+       ${vist.length?'':`<div class="vctom">Ingen containere rammer søgningen eller filtrene.</div>`}
+     </div>`}`;
+}
+
+/* ── Bind containeren til en gruppe i tegningen ────────────────
+   Samme data som håndtrykket i tegningen skriver – bare taget fra den anden
+   ende. Sidder man i containerlisten, skal man ikke først finde gruppen i
+   tegningen for at binde de to sammen. */
+function vcBindVaelg(dvId){
+ const dv=vcAlle().find(x=>x.id===dvId);
+ const p=dv&&vcPort(dv);
+ if(!p)return;
+ const nu=portGrps(p);
+ const grupper=alleGrupper().filter(x=>grpLyd(x.g).length||x.g.layer==='video');
+ const krop = grupper.length
+  ? `<div class="grpliste">${grupper.map(x=>{
+      const paa=nu.indexOf(x.g.id)>=0;
+      const andre=udAlleFor(x.g.id).filter(u=>u.port!==p);
+      return `<button class="grpvalg ${paa?'on':''}" data-vcg="${x.g.id}">
+        <span class="grpnavn">${esc(x.g.label||x.g.feed||'gruppe')}</span>
+        <span class="grpsti">${esc(x.sti+' · '+x.sek)}</span>
+        <span class="grptal">${grpLyd(x.g).length} lydkanaler</span>
+        ${paa?'<span class="grptal">containeren ligger her</span>':''}
+        ${andre.length?`<span class="grptal">bruges også af ${esc(andre.map(u=>
+          (u.dv.name||u.dv.nr||'')+' · '+PLANDOMS[u.dom]).join(', '))}</span>`:''}
+      </button>`}).join('')}</div>`
+  : `<div class="msub" style="text-transform:none;letter-spacing:0;line-height:1.6">
+       Der er ingen grupper i tegningen endnu.<br>
+       Læg en kilde ind under Tegning først.</div>`;
+ openModal('Hvor hører containeren til?',
+  (dv.nr?'Container '+dv.nr+' · ':'')+(dv.name||'uden navn')
+   +' – vælg den gruppe i tegningen, containeren bærer',
+  krop+`<div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-top:12px">
+      Gruppens lydkanaler står som grå skygge i containerens tomme spor –
+      mellemrum eller enter henter teksten over. Din egen tekst bliver
+      stående, så tegningen og containerlisten kan forklare det samme på
+      hver sin måde. En container må godt bære flere grupper.
+    </div>
+    <div class="mrow" style="margin-top:12px">
+      ${nu.length?`<button class="btn" data-vcloes="1">Løsn alle bindinger</button>`:''}
+      <button class="btn" data-annul="1">Luk</button>
+    </div>`,
+  root=>{
+   root.querySelectorAll('[data-vcg]').forEach(b=>b.onclick=()=>{
+    snap();
+    const gid=b.dataset.vcg;
+    const liste=portGrps(p).slice();
+    const i=liste.indexOf(gid);
+    if(i>=0)liste.splice(i,1); else liste.push(gid);
+    portSatGrps(p, liste);
+    touch(p); autosave(); drawPlan(); vcBindVaelg(dvId);
+   });
+   const l=root.querySelector('[data-vcloes]');
+   if(l)l.onclick=()=>{ snap(); portSatGrps(p,[]); touch(p); autosave(); closeModal(); drawPlan() };
+   const a=root.querySelector('[data-annul]');
+   if(a)a.onclick=closeModal;
+  });
+}
+
+/* ── Signalvejen ──────────────────────────────────────────────
+   Hvor kommer signalet i en ud-container fra? Vejen findes gennem
+   bindingen til tegningen: containeren bærer en gruppe, gruppen står på et
+   ark med en afsender og en modtager, og de andre steder, den samme gruppe
+   ligger, er den anden ende – tit en ind-container. Lydsporene stilles op
+   side om side, så man kan se, hvad der faktisk er i hvert spor hele vejen
+   igennem. Intet af det er noget, der skal vedligeholdes: det er de
+   bindinger, der allerede er lavet, læst forlæns. */
+function vcVejData(dv){
+ const p=vcPort(dv);
+ const ud=[];
+ vcBundne(dv).forEach(gid=>{
+  const f=grpFind(gid);
+  if(!f)return;
+  /* Alle andre steder gruppen ligger – den anden ende af vejen. */
+  const andre=udAlleFor(gid).filter(u=>u.port!==p);
+  const kanaler=grpLyd(f.g);
+  const spor=audListe(p).map((a,i)=>{
+   const c=kanaler[i]||null;
+   /* Peger en kanal i tegningen lige på det her spor, er det den, der
+      gælder – ellers står kanalen på samme plads i listen. */
+   const direkte=indAlleFor('vc', dv.id, p.id, a.id);
+   const ch=direkte.length?direkte[0].ch:c;
+   let fra='';
+   if(ch&&ch.ind&&ch.ind.dev)fra=indMaalNavn(ch.ind);
+   return {nr:a.n||String(i+1), min:a.label||'', tegning:ch?(ch.label||''):'', fra:fra,
+           patched:!!a.patched, checked:!!a.checked};
+  });
+  ud.push({g:f.g, sti:f.sti, sek:f.sek, andre:andre, spor:spor});
+ });
+ return ud;
+}
+function vcVejHTML(dv){
+ const veje=vcVejData(dv);
+ const mig=`<span class="vvbox mig">${esc((dv.nr?dv.nr+' · ':'')+(dv.name||'container'))}
+   <em>${vcRetning(dv)==='ind'?'ind-container':'ud-container'}</em></span>`;
+ if(!veje.length){
+  return `<div class="vvtom">Containeren er ikke bundet til nogen gruppe i tegningen,
+    så der er ingen vej at følge endnu.<br>
+    Tryk på knuden <b>⚯</b> i containerens linje og vælg gruppen – så kan vejen vises.</div>`;
+ }
+ return veje.map(v=>{
+  const ind=v.andre.filter(u=>u.dom==='vc'&&vcRetning(u.dv)==='ind');
+  const andet=v.andre.filter(u=>!(u.dom==='vc'&&vcRetning(u.dv)==='ind'));
+  const kasse=u=>`<span class="vvbox">${esc((u.dv.nr?u.dv.nr+' · ':'')+(u.dv.name||'')
+    +(u.dom!=='vc'?' ':'')) || '(uden navn)'}
+    <em>${u.dom==='vc'?(vcRetning(u.dv)==='ind'?'ind-container':'ud-container')
+         :PLANDOMS[u.dom]+' · '+SIDENAVN[u.side].toLowerCase()+' '+esc(u.port.n||'')}</em></span>`;
+  return `<div class="vvvej">
+   <div class="vvkaede">
+     ${ind.length?ind.map(kasse).join('<span class="vvpil">→</span>')
+                 :'<span class="vvbox mangler">ingen ind-container bundet<em>bind den i tegningen eller i listen</em></span>'}
+     <span class="vvpil">→</span>
+     <span class="vvbox gruppe">${esc(v.g.label||v.g.feed||'gruppe')}
+       <em>${esc(v.sek)} · ${esc(v.sti)}${v.g.transport?' · '+esc(v.g.transport):''}</em></span>
+     <span class="vvpil">→</span>
+     ${mig}
+   </div>
+   ${andet.length?`<div class="vvandet">Samme gruppe ligger også på:
+     ${andet.map(u=>esc((u.dv.name||u.dv.nr||'')+' · '+PLANDOMS[u.dom]+' '
+       +SIDENAVN[u.side].toLowerCase()+' '+(u.port.n||''))).join(' · ')}</div>`:''}
+   <table class="vvtab">
+     <tr><th>Spor</th><th>I containeren</th><th>I tegningen</th><th>Kommer fra</th><th>P</th><th>T</th></tr>
+     ${v.spor.map(s=>`<tr class="${s.min||s.tegning?'':'tomspor'}">
+       <td class="vvnr">${esc(s.nr)}</td>
+       <td>${esc(s.min)||'<span class="vvintet">—</span>'}</td>
+       <td>${esc(s.tegning)||'<span class="vvintet">—</span>'}</td>
+       <td class="vvfra">${esc(s.fra)||'<span class="vvintet">—</span>'}</td>
+       <td>${s.min?(s.patched?'✓':'☐'):''}</td>
+       <td>${s.min?(s.checked?'✓':'☐'):''}</td>
+     </tr>`).join('')}
+   </table>
+  </div>`;
+ }).join('');
+}
+function vcVisVej(dvId){
+ const dv=vcAlle().find(x=>x.id===dvId);
+ if(!dv)return;
+ openModal('Signalvej',
+  (dv.nr?'Container '+dv.nr+' · ':'')+(dv.name||'uden navn')
+   +' – fra ind-container gennem tegningen og ud igen',
+  `<div class="vvrude">${vcVejHTML(dv)}</div>
+   <div class="mrow" style="margin-top:12px">
+     <button class="btn" data-vvprint="1">↧ Print vejen</button>
+     <button class="btn" data-annul="1">Luk</button>
+   </div>`,
+  root=>{
+   const a=root.querySelector('[data-annul]'); if(a)a.onclick=closeModal;
+   const pr=root.querySelector('[data-vvprint]');
+   if(pr)pr.onclick=()=>vcVejPrint(dv);
+  });
+}
+function vcVejPrint(dv){
+ document.getElementById('printroot').innerHTML=
+   `<div class="psheet planprint"><div class="sheettitle">${esc(projectName)} · Signalvej · ${
+     esc((dv.nr?dv.nr+' · ':'')+(dv.name||''))}</div>
+    <div class="vvrude">${vcVejHTML(dv)}</div></div>`;
+ document.getElementById('pagestyle').textContent=
+   `@page{size:A4 landscape;margin:0}@media print{.psheet{margin:38px}}`;
+ closeModal();
+ setTimeout(()=>udskriv(projectName+' – Signalvej '+(dv.nr||'')),120);
+}
+
+/* ── Regneark og print ────────────────────────────────────────
+   Containerne skal ud i samme form som resten: én linje pr. lydspor, så
+   det kan sorteres og klistres ind i routerens eget ark. */
+function vcRows(){
+ const rows=[['Nr','Container','Vej','Bibliotek','Gruppe i tegningen','Spor nr','Lydspor',
+   'Står i tegningen','Kommer fra','Patchet','Tjekket','Sat af','Tidspunkt']];
+ vcFiltreret().forEach(dv=>{
+  const p=vcPort(dv); if(!p)return;
+  const grp=vcBundne(dv).map(g=>grpNavn(g)).join(' / ');
+  const veje=vcVejData(dv);
+  const spor=veje.length?veje[0].spor:audListe(p).map((a,i)=>({
+    nr:a.n||String(i+1), min:a.label||'', tegning:'', fra:'',
+    patched:!!a.patched, checked:!!a.checked}));
+  const skrevet=spor.filter(s=>s.min||s.tegning);
+  /* En container uden et eneste spor skal stadig med – ellers mangler den i
+     listen, og man tror den ikke findes. */
+  (skrevet.length?skrevet:[{nr:'',min:'',tegning:'',fra:'',patched:false,checked:false}])
+   .forEach(s=>rows.push([dv.nr||'', dv.name||'', vcRetning(dv)==='ind'?'Ind':'Ud',
+     dv.bib||'', grp, s.nr, s.min, s.tegning, s.fra,
+     s.patched?'ja':'', s.checked?'ja':'', p.by||'',
+     p.at?new Date(p.at).toLocaleString('da-DK'):'']));
+ });
+ return rows;
+}
+function vcCSV(){
+ const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+ dl('﻿'+vcRows().map(r=>r.map(q).join(';')).join('\r\n'),
+    fileName('csv',false,'containere'),'text/csv;charset=utf-8');
+ closeModal();
+}
+function vcPrintHTML(){
+ const vist=vcFiltreret();
+ return `<div class="sheettitle">${esc(projectName)} · Video containere${
+   vcFiltrePaa()?' · udvalg':''}${harJob()?` <span class="ppdage">${esc(jobTekst())}</span>`:''}</div>
+  ${vist.map(dv=>{
+   const p=vcPort(dv); if(!p)return '';
+   const grp=vcBundne(dv).map(g=>grpNavn(g)).join(' / ');
+   const liste=audListe(p);
+   const veje=vcVejData(dv);
+   const spor=veje.length?veje[0].spor:liste.map((a,i)=>({
+     nr:a.n||String(i+1), min:a.label||'', tegning:'',
+     patched:!!a.patched, checked:!!a.checked}));
+   return `<div class="ppdev"><div class="ppname">
+      <span class="ppvcret">${vcRetning(dv)==='ind'?'IND':'UD'}</span>
+      ${esc(dv.nr||'')} · ${esc(dv.name||'uden navn')}${dv.bib?' · '+esc(dv.bib):''}
+      ${grp?'<span class="ppvcgrp">'+esc(grp)+'</span>':''}</div>
+     <div class="ppvcspor">${spor.map(s=>`<div class="ppvcr ${s.min||s.tegning?'':'tom'}">
+        <span class="ppn">${esc(s.nr)}</span>
+        <span class="ppl">${esc(s.min||s.tegning||'')}</span>
+        <span class="ppb">${(s.min||s.tegning)?(s.patched?'✓':'☐'):''}</span>
+        <span class="ppb">${(s.min||s.tegning)?(s.checked?'✓':'☐'):''}</span>
+      </div>`).join('')}</div></div>`;
+  }).join('')}`;
+}
+function vcPrint(){
+ document.getElementById('printroot').innerHTML=
+   `<div class="psheet planprint vcprint">${vcPrintHTML()}</div>`;
+ document.getElementById('pagestyle').textContent=
+   `@page{size:A4 portrait;margin:0}@media print{.psheet{margin:38px}}`;
+ closeModal();
+ setTimeout(()=>udskriv(projectName+' – Video containere'),120);
+}
+
+/* ── Knapperne i listen ───────────────────────────────────────── */
+/* Menuen bag ⋯ i en containerlinje. Den åbnes også, når man trykker på en
+   container på telefonen, hvor knapperne i linjen ikke er fremme. */
+function sheetContainer(dv){
+ const ude=vcUde.has(dv.id);
+ const ret=vcRetning(dv);
+ const grp=vcBundne(dv).map(g=>grpNavn(g)).filter(Boolean);
+ const punkter=[
+  {ikon:ude?'▾':'▸', tekst:ude?'Fold lydsporene sammen':'Fold lydsporene ud',
+   vaerdi:vcSkrevet(dv)+'/'+vcSporAntal(dv),
+   gør:()=>{ if(ude)vcUde.delete(dv.id); else vcUde.add(dv.id); drawPlan() }}
+ ];
+ if(ret==='ud')punkter.push({ikon:'⤳',tekst:'Vis signalvej',
+   under:'følg signalet fra ind-containeren og gennem tegningen',
+   gør:()=>vcVisVej(dv.id)});
+ punkter.push({ikon:'⚯',tekst:'Bind til tegningen',
+   vaerdi:grp.join(', '),
+   under:grp.length?'':'containeren hører ikke til nogen gruppe endnu',
+   gør:()=>vcBindVaelg(dv.id)});
+ punkter.push({skil:1});
+ punkter.push({ikon:'⇄',tekst:ret==='ind'?'Gør den til en ud-container':'Gør den til en ind-container',
+   gør:()=>vcVendRetning(dv)});
+ punkter.push({skil:1});
+ punkter.push({ikon:'✕',tekst:'Fjern containeren',fare:1,gør:()=>vcSlet(dv)});
+ openSheet((dv.nr?dv.nr+'  ·  ':'')+(dv.name||'uden navn'), punkter);
+}
+
+function bindVC(){
+ const el2=document.getElementById('plan');
+ const finddv=i2=>vcAlle().find(x=>x.id===i2);
+ const s=document.getElementById('vcSoeg');
+ if(s){
+  /* Søgefeltet tegner listen om ved hvert tastetryk, så markøren skal
+     sættes tilbage, hvor den stod. */
+  s.oninput=()=>{ const v=s.value, pos=s.selectionStart; vcSoeg=v; drawPlan();
+    const n=document.getElementById('vcSoeg');
+    if(n){ n.focus(); try{ n.setSelectionRange(pos,pos) }catch(e){} } };
+ }
+ [['vcFRetning','retning'],['vcFLyd','lyd'],['vcFBundet','bundet'],['vcFBib','bib']]
+  .forEach(([i2,felt])=>{
+   const e=document.getElementById(i2);
+   if(e)e.onchange=()=>{ vcF[felt]=e.value; drawPlan() };
+  });
+ const r=el2.querySelector('[data-vcryd]');
+ if(r)r.onclick=()=>{ vcSoeg=''; vcF={retning:'',lyd:'',bundet:'',bib:''}; drawPlan() };
+ el2.querySelectorAll('[data-vcny]').forEach(b=>b.onclick=()=>vcNy(b.dataset.vcny));
+ const bib=el2.querySelector('[data-vcbib]');
+ if(bib)bib.onclick=vcbAaben;
+ const fa=el2.querySelector('[data-vcfoldalle]');
+ if(fa)fa.onclick=()=>{
+  if(vcUde.size)vcUde=new Set();
+  else vcFiltreret().forEach(dv=>vcUde.add(dv.id));
+  drawPlan();
+ };
+ el2.querySelectorAll('[data-vcfold]').forEach(b=>b.onclick=()=>{
+  const i2=b.dataset.vcfold;
+  if(vcUde.has(i2))vcUde.delete(i2); else vcUde.add(i2);
+  drawPlan();
+ });
+ el2.querySelectorAll('[data-vcnr]').forEach(inp=>{
+  inp.onchange=()=>{
+   const dv=finddv(inp.dataset.vcnr); if(!dv||dv.nr===inp.value)return;
+   snap(); dv.nr=inp.value; vcSyncPort(dv);
+   const p=vcPort(dv); if(p)touch(p);
+   autosave(); drawPlan();
+  };
+ });
+ el2.querySelectorAll('[data-vcnavn]').forEach(inp=>{
+  inp.onchange=()=>{
+   const dv=finddv(inp.dataset.vcnavn); if(!dv||dv.name===inp.value)return;
+   snap(); dv.name=inp.value; vcSyncPort(dv);
+   const p=vcPort(dv); if(p)touch(p);
+   autosave(); drawPlan();
+  };
+  inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); inp.blur() } };
+ });
+ el2.querySelectorAll('[data-vcvend]').forEach(b=>b.onclick=()=>{
+  const dv=finddv(b.dataset.vcvend); if(dv)vcVendRetning(dv);
+ });
+ el2.querySelectorAll('[data-vcbind]').forEach(b=>b.onclick=()=>vcBindVaelg(b.dataset.vcbind));
+ el2.querySelectorAll('[data-vcvej]').forEach(b=>b.onclick=()=>vcVisVej(b.dataset.vcvej));
+ el2.querySelectorAll('[data-vcdel]').forEach(b=>b.onclick=()=>{
+  const dv=finddv(b.dataset.vcdel); if(!dv)return;
+  const navn=(dv.nr?dv.nr+' · ':'')+(dv.name||'uden navn');
+  if(vcSkrevet(dv) && !confirm('Fjern container '+navn+'? Der er skrevet '
+      +vcSkrevet(dv)+' lydspor på den.'))return;
+  vcSlet(dv);
+ });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BIBLIOTEK OVER CONTAINERE
+   Remote 2 har flere hundrede faste containere, og DNK47 det samme. De
+   skifter ikke fra produktion til produktion, så de skal ikke tastes ind i
+   hvert projekt. De bor i databasen med ét bibliotek pr. vogn, læses ind
+   fra routerens eget regneark, og hentes ind i et projekt med ét tryk.
+
+   Det der hentes ind, er en KOPI. Projektet skal kunne rettes uden at
+   biblioteket følger med – og omvendt skal en rettelse i biblioteket ikke
+   ændre en plan, der er afleveret. Hver kopi husker hvilket bibliotek den
+   kom fra, så man kan filtrere på det bagefter.
+   ══════════════════════════════════════════════════════════════ */
+const VCB_TAB='signalflow_vc_biblioteker';
+const VCC_TAB='signalflow_vc_containere';
+let VCB={liste:null, valgt:null, cont:null, soeg:'', valg:new Set(),
+         ret:'', fejl:'', henter:false};
+
+function vcbAntalAf(r){
+ /* PostgREST svarer på indlejret optælling som [{count:n}] – men ikke alle
+    udgaver gør det. Kan vi ikke få tallet, viser vi ingenting i stedet for
+    at gætte. */
+ const c=r && r[VCC_TAB];
+ if(Array.isArray(c)&&c.length&&typeof c[0].count==='number')return c[0].count;
+ if(typeof c==='number')return c;
+ return null;
+}
+async function vcbHent(){
+ VCB.fejl='';
+ try{
+  VCB.liste=await sbFetch(VCB_TAB+'?select=id,navn,note,opdateret_at,opdateret_af,'
+    +VCC_TAB+'(count)&order=navn.asc') || [];
+ }catch(e){
+  /* Uden tabellen kan man stadig arbejde – man har bare ikke et bibliotek. */
+  VCB.liste=[];
+  VCB.fejl=/findes ikke/i.test(e.message||'')
+    ? 'Biblioteket er ikke sat op i databasen endnu. Kør SQL-koden under ☁ Projekter › Opsætning.'
+    : (e.message||String(e));
+ }
+}
+async function vcbContHent(bibId){
+ VCB.cont=null;
+ try{
+  VCB.cont=await sbFetch(VCC_TAB+'?select=id,nr,navn,retning,spor,sort'
+    +'&bibliotek_id=eq.'+encodeURIComponent(bibId)
+    +'&order=retning.asc,sort.asc,nr.asc&limit=2000') || [];
+ }catch(e){ VCB.cont=[]; VCB.fejl=e.message||String(e) }
+}
+
+/* Hvad ligger allerede i projektet? Henter man det samme bibliotek to gange,
+   skal man ikke få alt i to udgaver. */
+function vcbIProjektet(){
+ const s=new Set();
+ vcAlle().forEach(dv=>s.add(vcRetning(dv)+'|'+String(dv.nr||'').trim().toLowerCase()));
+ return s;
+}
+function vcbFiltreret(){
+ const q=VCB.soeg.trim().toLowerCase();
+ return (VCB.cont||[]).filter(c=>{
+  if(VCB.ret && (c.retning||'ind')!==VCB.ret)return false;
+  if(!q)return true;
+  if(String(c.nr||'').toLowerCase().indexOf(q)>=0)return true;
+  if((c.navn||'').toLowerCase().indexOf(q)>=0)return true;
+  return (c.spor||[]).some(t=>String(t||'').toLowerCase().indexOf(q)>=0);
+ });
+}
+
+function vcbKrop(){
+ if(VCB.henter)return '<div class="hint">Henter …</div>';
+ const bibs=VCB.liste||[];
+ const fejl=VCB.fejl?`<div class="imp-tom">${esc(VCB.fejl)}</div>`:'';
+ if(!VCB.valgt){
+  return fejl+(bibs.length
+   ? `<div class="vcbliste">${bibs.map(r=>{
+       const n=vcbAntalAf(r);
+       return `<button class="grpvalg" data-vcbaab="${r.id}">
+         <span class="grpnavn">${esc(r.navn)}</span>
+         <span class="grpsti">${n===null?'':n+' containere'}${
+           r.note?' · '+esc(r.note):''}</span>
+         ${r.opdateret_at?`<span class="grptal">rettet ${esc(
+            new Date(r.opdateret_at).toLocaleDateString('da-DK'))}${
+            r.opdateret_af?' af '+esc(r.opdateret_af):''}</span>`:''}
+       </button>`}).join('')}</div>`
+   : (VCB.fejl?'':`<div class="imp-tom">Der er ingen biblioteker endnu.<br>
+       Opret ét pr. vogn – fx <b>Remote 2</b> – og læs routerens regneark ind i det.</div>`))
+  +`<div class="mrow" style="margin-top:12px">
+      <button class="btn go" data-vcbnyt="1">+ Nyt bibliotek</button>
+      <button class="btn" data-annul="1">Luk</button>
+    </div>`;
+ }
+ const bib=bibs.find(x=>x.id===VCB.valgt)||{navn:''};
+ if(VCB.cont===null)return '<div class="hint">Henter containerne …</div>';
+ const vist=vcbFiltreret();
+ const har=vcbIProjektet();
+ const valgt=vist.filter(c=>VCB.valg.has(c.id)).length;
+ return fejl+`<div class="vcbtop">
+   <button class="btn" data-vcbtilbage="1">‹ Alle biblioteker</button>
+   <b>${esc(bib.navn)}</b>
+   <span class="vcsvar">${(VCB.cont||[]).length} containere</span>
+ </div>
+ <div class="vcbar" style="margin:10px 0">
+   <input class="vcsoeg" id="vcbSoeg" value="${esc(VCB.soeg)}" autocomplete="off"
+     placeholder="Søg nummer, navn eller lydspor…">
+   <select id="vcbRet" class="${VCB.ret?'paa':''}">
+     <option value="">Ind og ud</option>
+     <option value="ind" ${VCB.ret==='ind'?'selected':''}>Kun ind</option>
+     <option value="ud" ${VCB.ret==='ud'?'selected':''}>Kun ud</option>
+   </select>
+   <button class="sharebtn" data-vcballe="1">${valgt===vist.length&&vist.length?'Fravælg alle viste':'Vælg alle viste'}</button>
+   <span class="vcsvar">${vist.length} vist · ${VCB.valg.size} valgt</span>
+ </div>
+ <div class="vcbcont">${vist.length?vist.map(c=>{
+   const iProj=har.has((c.retning||'ind')+'|'+String(c.nr||'').trim().toLowerCase());
+   const spor=(c.spor||[]).filter(Boolean);
+   return `<label class="vcbrad ${VCB.valg.has(c.id)?'on':''} ${iProj?'iproj':''}">
+     <input type="checkbox" data-vcbvalg="${c.id}" ${VCB.valg.has(c.id)?'checked':''}
+       ${iProj?'disabled':''}>
+     <span class="vcbret ${c.retning||'ind'}">${(c.retning||'ind')==='ind'?'IND':'UD'}</span>
+     <span class="vcbnr">${esc(c.nr||'')}</span>
+     <span class="vcbnavn">${esc(c.navn||'uden navn')}</span>
+     <span class="vcbspor">${spor.length?spor.length+' spor':''}</span>
+     ${iProj?'<span class="vcbhar">ligger i projektet</span>':''}
+   </label>`}).join('')
+  :'<div class="imp-tom">Ingen containere rammer søgningen.</div>'}</div>
+ <div class="mrow" style="margin-top:12px">
+   <button class="btn go" data-vcbind2="1" ${VCB.valg.size?'':'disabled'}>Hent ${
+     VCB.valg.size||''} ind i projektet</button>
+   <button class="btn" data-vcbimp="1">⤒ Læs regneark ind</button>
+   <button class="btn" data-vcbslet="1">Slet biblioteket</button>
+   <button class="btn" data-annul="1">Luk</button>
+ </div>`;
+}
+function vcbTegn(){
+ const r=document.getElementById('vcbKrop');
+ if(!r)return;
+ r.innerHTML=vcbKrop();
+ vcbBind(r);
+}
+function vcbBind(r){
+ const k=(s,f)=>r.querySelectorAll(s).forEach(f);
+ k('[data-annul]',b=>b.onclick=closeModal);
+ k('[data-vcbaab]',b=>b.onclick=async()=>{
+   VCB.valgt=b.dataset.vcbaab; VCB.valg=new Set(); VCB.soeg=''; VCB.ret='';
+   vcbTegn();
+   await vcbContHent(VCB.valgt);
+   vcbTegn();
+ });
+ k('[data-vcbtilbage]',b=>b.onclick=()=>{ VCB.valgt=null; VCB.cont=null; vcbTegn() });
+ k('[data-vcbnyt]',b=>b.onclick=vcbNyt);
+ const s=r.querySelector('#vcbSoeg');
+ if(s)s.oninput=()=>{ const pos=s.selectionStart; VCB.soeg=s.value; vcbTegn();
+   const n=document.getElementById('vcbSoeg');
+   if(n){ n.focus(); try{ n.setSelectionRange(pos,pos) }catch(e){} } };
+ const rt=r.querySelector('#vcbRet');
+ if(rt)rt.onchange=()=>{ VCB.ret=rt.value; vcbTegn() };
+ k('[data-vcbvalg]',b=>b.onchange=()=>{
+   if(b.checked)VCB.valg.add(b.dataset.vcbvalg); else VCB.valg.delete(b.dataset.vcbvalg);
+   vcbTegn();
+ });
+ k('[data-vcballe]',b=>b.onclick=()=>{
+   const vist=vcbFiltreret();
+   const har=vcbIProjektet();
+   const kan=vist.filter(c=>!har.has((c.retning||'ind')+'|'+String(c.nr||'').trim().toLowerCase()));
+   const alle=kan.length&&kan.every(c=>VCB.valg.has(c.id));
+   kan.forEach(c=>{ if(alle)VCB.valg.delete(c.id); else VCB.valg.add(c.id) });
+   vcbTegn();
+ });
+ k('[data-vcbind2]',b=>b.onclick=vcbHentInd);
+ k('[data-vcbimp]',b=>b.onclick=()=>vcbImportAaben(VCB.valgt));
+ k('[data-vcbslet]',b=>b.onclick=vcbSletBib);
+}
+function vcbAaben(){
+ openModal('Bibliotek over containere',
+  'de faste containere pr. vogn – læst ind én gang og hentet ind her',
+  `<div id="vcbKrop"><div class="hint">Henter …</div></div>`,
+  async root=>{
+   VCB.henter=true;
+   VCB.valg=new Set();          // et gammelt udvalg skal ikke hænge ved
+   vcbTegn();
+   await vcbHent();
+   /* Står man med et bibliotek åbent fra sidst, kommer man tilbage til det –
+      men containerne hentes forfra, så en kollegas rettelse er med. Er
+      biblioteket slettet i mellemtiden, falder vi tilbage til listen. */
+   if(VCB.valgt && !(VCB.liste||[]).some(x=>x.id===VCB.valgt)){ VCB.valgt=null; VCB.cont=null }
+   if(VCB.valgt)await vcbContHent(VCB.valgt);
+   VCB.henter=false;
+   vcbTegn();
+  });
+}
+async function vcbNyt(){
+ const navn=prompt('Hvad hedder vognen eller systemet?\n(fx Remote 2 eller DNK47)','');
+ if(navn===null)return;
+ const n=navn.trim();
+ if(!n)return;
+ try{
+  await sbFetch(VCB_TAB,{method:'POST',body:JSON.stringify({navn:n,opdateret_af:meName()})});
+  await vcbHent(); vcbTegn();
+ }catch(e){
+  alert(/duplicate|unique/i.test(e.message||'')
+    ? 'Der findes allerede et bibliotek, der heder "'+n+'".'
+    : 'Kunne ikke oprette biblioteket: '+(e.message||e));
+ }
+}
+async function vcbSletBib(){
+ const bib=(VCB.liste||[]).find(x=>x.id===VCB.valgt);
+ if(!bib)return;
+ if(!confirm('Slet biblioteket "'+bib.navn+'" og alle dets containere?\n'
+   +'De containere, der allerede er hentet ind i projekter, bliver ikke rørt.'))return;
+ try{
+  await sbFetch(VCB_TAB+'?id=eq.'+encodeURIComponent(bib.id),{method:'DELETE'});
+  VCB.valgt=null; VCB.cont=null;
+  await vcbHent(); vcbTegn();
+ }catch(e){ alert('Kunne ikke slette: '+(e.message||e)) }
+}
+
+/* ── Hent ind i projektet ─────────────────────────────────────── */
+function vcbHentInd(){
+ const bib=(VCB.liste||[]).find(x=>x.id===VCB.valgt);
+ const valgte=(VCB.cont||[]).filter(c=>VCB.valg.has(c.id));
+ if(!valgte.length)return;
+ const har=vcbIProjektet();
+ snap();
+ let n=0, sprunget=0;
+ valgte.forEach(c=>{
+  const noegle=(c.retning||'ind')+'|'+String(c.nr||'').trim().toLowerCase();
+  if(har.has(noegle)){ sprunget++; return }
+  har.add(noegle);
+  vcOpret(c.retning==='ud'?'ud':'ind',
+    {nr:c.nr, navn:c.navn||'', spor:(c.spor||[]), bib:(bib?bib.navn:'')});
+  n++;
+ });
+ autosave(); closeModal();
+ /* Hentede man 200 containere, skal listen ikke stå foldet ud – så kan man
+    ikke se noget. De lægger sig sammenfoldede. */
+ drawPlan();
+ if(n||sprunget)
+  alert(n+' container'+(n===1?'':'e')+' hentet ind i projektet.'
+    +(sprunget?'\n'+sprunget+' blev sprunget over – de ligger der allerede.':''));
+}
+
+/* ── Regneark ind i biblioteket ───────────────────────────────
+   Routerens egen liste. Kolonnerne genkendes på overskrifterne, for ingen
+   to routere skriver dem i samme rækkefølge. Sporene kan både stå som
+   "Spor 1 … Spor 16", "Ch 1 …", "Audio 1 …" eller bare "1 … 16". */
+function vcbSoejler(hoved){
+ const p={spor:[]};
+ (hoved||[]).forEach((h,i)=>{
+  const t=String(h||'').trim().toLowerCase().replace(/\./g,'');
+  if(!t)return;
+  const m=/^(?:spor|ch|kanal|channel|audio|lyd|track)\s*(\d{1,2})$/.exec(t)
+        || /^(\d{1,2})$/.exec(t);
+  if(m){ const n=+m[1]; if(n>=1&&n<=VC_SPOR){ p.spor[n-1]=i; return } }
+  if(p.nr===undefined && /^(nr|nummer|container|container\s*nr|id|no)$/.test(t)){p.nr=i;return}
+  if(p.navn===undefined && /^(navn|name|label|beskrivelse|signal|titel)$/.test(t)){p.navn=i;return}
+  if(p.ret===undefined && /^(vej|retning|type|side|in\/out|dir|direction)$/.test(t)){p.ret=i;return}
+ });
+ return p;
+}
+const VCB_UD=/^(ud|out|output|dst|destination|modtager)/i;
+function vcbLaesGitter(gitter){
+ const raekker=(gitter||[]).filter(r=>r&&r.some(c=>String(c||'').trim()));
+ if(raekker.length<2)return {fejl:'Der er ingen rækker at læse. Første række skal være overskrifter.'};
+ const p=vcbSoejler(raekker[0]);
+ if(p.nr===undefined)
+  return {fejl:'Kunne ikke finde en kolonne med containerens nummer. '
+    +'Kald den Nr eller Container, og lad første række være overskrifter.'};
+ const ud=[];
+ const set=new Set();
+ let dub=0;
+ raekker.slice(1).forEach(r=>{
+  const nr=String(r[p.nr]==null?'':r[p.nr]).trim();
+  if(!nr)return;
+  const ret=(p.ret!==undefined && VCB_UD.test(String(r[p.ret]||'')))?'ud':'ind';
+  const noegle=ret+'|'+nr.toLowerCase();
+  if(set.has(noegle)){ dub++; return }
+  set.add(noegle);
+  const spor=[];
+  for(let i=0;i<VC_SPOR;i++){
+   const j=p.spor[i];
+   spor.push(j===undefined?'':String(r[j]==null?'':r[j]).trim());
+  }
+  /* Tomme spor i enden skæres af – de fylder bare i databasen. */
+  while(spor.length&&!spor[spor.length-1])spor.pop();
+  ud.push({nr:nr, navn:p.navn===undefined?'':String(r[p.navn]==null?'':r[p.navn]).trim(),
+           retning:ret, spor:spor});
+ });
+ if(!ud.length)return {fejl:'Der var ingen rækker med et containernummer.'};
+ return {liste:ud, dub:dub, sporSoejler:p.spor.filter(x=>x!==undefined).length,
+         harNavn:p.navn!==undefined, harRet:p.ret!==undefined};
+}
+function vcbImportAaben(bibId){
+ const bib=(VCB.liste||[]).find(x=>x.id===bibId);
+ if(!bib)return;
+ let fundet=null;
+ const html=`
+  <div class="imp-hjaelp" style="font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:10px">
+    Vælg routerens <b>csv</b>- eller <b>Excel</b>-fil, eller sæt rækkerne ind fra et regneark.
+    Første række skal være overskrifter. Kolonnerne genkendes på navnene:
+    <em>Nr</em> (eller Container), <em>Navn</em>, <em>Vej</em> (Ind/Ud) og
+    <em>Spor 1 … Spor ${VC_SPOR}</em> – de må også hedde <em>Ch 1</em>, <em>Audio 1</em> eller bare <em>1</em>.
+    Findes et nummer allerede i biblioteket, bliver det rettet – ikke lagt til to gange.
+  </div>
+  <div class="mf"><label>Fil</label><input type="file" id="vciFil"></div>
+  <div class="mf"><label>… eller sæt ind fra Excel</label>
+    <textarea id="vciTekst" rows="3" placeholder="Sæt rækkerne ind her"></textarea></div>
+  <div id="vciVis"></div>
+  <div class="mrow">
+    <button class="btn go" id="vciOk" disabled>Læs ind i ${esc(bib.navn)}</button>
+    <button class="btn" data-cancel="1">Annullér</button>
+  </div>`;
+ openModal('Læs containere ind','til biblioteket '+bib.navn,html,root=>{
+  root.querySelector('[data-cancel]').onclick=()=>{ vcbAaben() };
+  const vis=root.querySelector('#vciVis');
+  const brug=g=>{
+   const r=vcbLaesGitter(g);
+   if(r.fejl){ vis.innerHTML='<div class="imp-tom">'+esc(r.fejl)+'</div>';
+     root.querySelector('#vciOk').disabled=true; fundet=null; return }
+   fundet=r.liste;
+   const ind=r.liste.filter(x=>x.retning==='ind').length;
+   const medSpor=r.liste.filter(x=>x.spor.some(Boolean)).length;
+   vis.innerHTML=`<div class="imp-status"><b>${r.liste.length}</b> containere · `
+     +`${ind} ind, ${r.liste.length-ind} ud · <b>${medSpor}</b> med lydspor`
+     +(r.sporSoejler?` · ${r.sporSoejler} sporkolonner fundet`
+        :' · <span class="imp-mangler">ingen sporkolonner fundet</span>')
+     +(r.harRet?'':' · <span class="imp-mangler">ingen Vej-kolonne – alle læses som IND</span>')
+     +(r.dub?` · <span class="imp-mangler">${r.dub} dubletter i arket sprunget over</span>`:'')
+     +`</div>
+     <div class="dio-liste">${r.liste.slice(0,40).map(x=>`<div class="dio-side">
+       <b>${x.retning==='ind'?'IND':'UD'} ${esc(x.nr)} · ${esc(x.navn||'uden navn')}</b>
+       <span>${x.spor.filter(Boolean).length} spor${
+         x.spor.filter(Boolean).length?' · '+esc(x.spor.filter(Boolean).slice(0,4).join(', ')):''}</span>
+     </div>`).join('')}${r.liste.length>40
+       ?`<div class="dio-side"><b>… og ${r.liste.length-40} mere</b></div>`:''}</div>`;
+   root.querySelector('#vciOk').disabled=false;
+  };
+  root.querySelector('#vciFil').onchange=async function(){
+   const f=this.files&&this.files[0]; if(!f)return;
+   vis.innerHTML='<div class="hint">Læser filen …</div>';
+   try{
+    if(/\.xlsx?$/i.test(f.name)) brug(await xlsxLaes(await f.arrayBuffer()));
+    else brug(kiDelTekst(await kiFilTekst(f)));
+   }catch(e){ vis.innerHTML='<div class="imp-tom">'+esc(e.message||String(e))+'</div>' }
+  };
+  root.querySelector('#vciTekst').addEventListener('input',function(){
+   if(this.value.trim().length>8) brug(kiDelTekst(this.value));
+  });
+  root.querySelector('#vciOk').onclick=async function(){
+   if(!fundet)return;
+   this.disabled=true; this.textContent='Læser ind …';
+   try{
+    await vcbSkriv(bibId, fundet);
+    vis.innerHTML='<div class="imp-status">'+fundet.length+' containere lagt i biblioteket.</div>';
+    await vcbHent();
+    VCB.valgt=bibId;
+    await vcbContHent(bibId);
+    vcbAaben();
+   }catch(e){
+    this.disabled=false; this.textContent='Læs ind i '+bib.navn;
+    vis.innerHTML='<div class="imp-tom">'+esc(e.message||String(e))+'</div>';
+   }
+  };
+ });
+}
+/* Skrives i bidder: et ark med 600 rækker i ét kald bliver afvist af
+   serveren, og så har man ingenting. Går en bid galt, siger vi hvilken. */
+async function vcbSkriv(bibId, liste){
+ const stk=150;
+ for(let i=0;i<liste.length;i+=stk){
+  const bid=liste.slice(i,i+stk).map((x,j)=>({
+    bibliotek_id:bibId, nr:x.nr, navn:x.navn||null,
+    retning:x.retning, spor:x.spor, sort:i+j,
+    opdateret_af:meName()}));
+  try{
+   await sbFetch(VCC_TAB+'?on_conflict=bibliotek_id,nr,retning',
+     {method:'POST', headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify(bid)});
+  }catch(e){
+   throw new Error('Linje '+(i+1)+'–'+(i+bid.length)+' kunne ikke lægges ind: '
+     +(e.message||e));
+  }
+ }
+ try{
+  await sbFetch(VCB_TAB+'?id=eq.'+encodeURIComponent(bibId),
+    {method:'PATCH', headers:{'Prefer':'return=minimal'},
+     body:JSON.stringify({opdateret_af:meName(), opdateret_at:new Date().toISOString()})});
+ }catch(e){ /* tidsstemplet er pynt – containerne er inde */ }
+}
 
 /* ── Frekvensplan for trådløse mikrofoner ──────────────────────
    Samme datamodel som resten af planen: et kort er et system (rack,
@@ -4614,6 +5717,14 @@ function audListeBlok(dv,side,p){
  if(!p.label && !(side==='ins'&&indFor('video',dv.id,p.id)))return '';
  const noegle=audNoegle(dv,side,p);
  if(audAaben!==noegle)return '';
+ return audBlokKrop(dv,side,p);
+}
+/* Selve rækkerne. De står for sig, fordi video-containerne bruger præcis
+   de samme felter – og flere ad gangen. Videosignalerne i planen åbner ét
+   ad gangen (audAaben), containerne foldes ud hver for sig. Felternes navne
+   er de samme, så bindPlan binder dem begge steder uden at vide forskel. */
+function audBlokKrop(dv,side,p){
+ const noegle=audNoegle(dv,side,p);
  const liste=audListe(p);
  const grps=portGrps(p).map(g=>grpFind(g)).filter(Boolean);
  return `<div class="audlist ${grps.length?'bundet':''}">
@@ -4734,7 +5845,9 @@ function bindPlan(){
  const pp=el2.querySelector('[data-ppdf]');
  if(pp)pp.onclick=printPlan;
  const pc=el2.querySelector('[data-pcsv]');
- if(pc)pc.onclick=()=>exportPlanCSV(planDom);
+ /* Containerne har deres egen form: én linje pr. lydspor, og kun det, der
+    står i listen lige nu – filtrene gælder også for regnearket. */
+ if(pc)pc.onclick=()=>{ if(planDom==='vc')vcCSV(); else exportPlanCSV(planDom) };
  const ar=el2.querySelector('[data-arch]'); if(ar)ar.onclick=()=>openArchive('plan');
  const ip=el2.querySelector('[data-imp]'); if(ip)ip.onclick=()=>importItems('plan');
  const kp=el2.querySelector('[data-kimp]'); if(kp)kp.onclick=()=>kiAaben();
@@ -5545,7 +6658,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.19-c';
+const SF_VERSION='2026.10.19-e';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -6016,10 +7129,23 @@ function bindUdVaelg(gid){
  ((p.video||{}).devices||[]).forEach(dv=>{
   if(dv.del)return;
   sider.forEach(side=>{
-   alive(dv[side]).forEach(o=>{ if(o.label)maal.push({dev:dv.id,port:o.id,side:side,
+   alive(dv[side]).forEach(o=>{ if(o.label)maal.push({dom:'video',dev:dv.id,port:o.id,side:side,
      hoved:dv.name||'', linje:SIDENAVN[side]+' '+(o.n||'')+' · '+o.label,
      grps:portGrps(o)}) });
   });
+ });
+ /* Video containerne er også et sted, en gruppe kan ligge: det er jo
+    containeren, der bærer signalet gennem routeren. De står for sig i
+    listen, så man kan se forskel på en plan-linje og en container. */
+ ((p.vc||{}).devices||[]).forEach(dv=>{
+  if(dv.del)return;
+  const o=vcPort(dv); if(!o)return;
+  const side=vcPortSide(dv);
+  if(sider.indexOf(side)<0)return;
+  maal.push({dom:'vc',dev:dv.id,port:o.id,side:side,
+    hoved:'Video container'+(dv.bib?' · '+dv.bib:''),
+    linje:(vcRetning(dv)==='ind'?'Ind':'Ud')+' '+(dv.nr||'')+' · '+(dv.name||'uden navn'),
+    grps:portGrps(o)});
  });
  const nu=udFor(gid);
  /* Er gruppen bundet på den anden side – fx fordi pilen er vendt om bagefter
@@ -6035,17 +7161,18 @@ function bindUdVaelg(gid){
     </div>`:'')
   + (maal.length
   ? `<div class="grpliste">${maal.map(m=>`
-      <button class="grpvalg ${m.grps.indexOf(gid)>=0?'on':''}" data-ud="${m.dev}|${m.side}|${m.port}">
+      <button class="grpvalg ${m.grps.indexOf(gid)>=0?'on':''}" data-ud="${m.dom}|${m.dev}|${m.side}|${m.port}">
         <span class="grpnavn">${esc(m.linje)}</span>
-        <span class="grpsti">${esc(m.hoved)} · Video</span>
+        <span class="grpsti">${esc(m.hoved)}${m.dom==='vc'?'':' · Video'}</span>
         ${m.grps.indexOf(gid)>=0?`<span class="grptal">gruppen ligger her</span>`:''}
         ${(()=>{const andre=m.grps.filter(x=>x!==gid);
           return andre.length?`<span class="grptal">bruges også af ${
             esc(andre.map(x=>grpNavn(x)).join(', '))}</span>`:''})()}
       </button>`).join('')}</div>`
   : `<div class="msub" style="text-transform:none;letter-spacing:0;line-height:1.6">
-       Der er ingen ${esc(ordet)} med signal på endnu.<br>
-       Læg et kryds ind under Plan › Video først.</div>`);
+       Der er ingen ${esc(ordet)} med signal på endnu, og ingen video containere.<br>
+       Læg et kryds ind under Plan › Video, eller opret en container under
+       Plan › Video containere.</div>`);
  openModal('Hvor ligger gruppens lyd?',
   (g.label||g.feed||'gruppen')+' – '+(g.dir==='rtl'?'pilen er vendt om, så vælg et videoinput i planen'
     :g.dir==='both'?'signalet går begge veje – vælg input eller output i planen'
@@ -6060,8 +7187,8 @@ function bindUdVaelg(gid){
     </div>`,
   root=>{
    root.querySelectorAll('[data-ud]').forEach(b=>b.onclick=()=>{
-    const [did,side,pid]=b.dataset.ud.split('|');
-    const dv=((ensurePlan().video||{}).devices||[]).find(x=>x.id===did);
+    const [d2,did,side,pid]=b.dataset.ud.split('|');
+    const dv=((ensurePlan()[d2]||{}).devices||[]).find(x=>x.id===did);
     const port=dv&&(dv[side]||[]).find(x=>x.id===pid);
     if(!port)return;
     snap();
@@ -6309,6 +7436,10 @@ function sheetPort(ref){
    gør:()=>{audAaben=audNoegle(dv,side,p);drawPlan();
      setTimeout(()=>{const r=document.querySelector('.audlist');
        if(r)r.scrollIntoView({block:'nearest',behavior:'smooth'})},80)}}] : [];
+ /* En container har ÉN linje, så "indsæt linje ovenover" og "flyt op" siger
+    ingenting her. Menuen er containerens egen: fold sporene, følg vejen,
+    bind til tegningen, vend den om, fjern den. */
+ if(planDom==='vc'){ sheetContainer(dv); return }
  openSheet((p.n||'')+'  ·  '+(p.label||'tom linje'),lyd.concat([
   {ikon:'✎',tekst:'Ret signalet',gør:()=>{
     const f=document.querySelector('[data-plabel="'+CSS.escape(ref)+'"]');
@@ -7486,7 +8617,78 @@ grant execute on function sf_plan_get(uuid)              to anon, authenticated;
 grant execute on function sf_plan_set(uuid, jsonb, text) to anon, authenticated;
 grant execute on function sf_plan_ts(uuid)               to anon, authenticated;
 grant execute on function sf_pres_set(uuid, text, text)  to anon, authenticated;
-grant execute on function sf_pres_get(uuid)              to anon, authenticated;`;
+grant execute on function sf_pres_get(uuid)              to anon, authenticated;
+
+-- ===== Bibliotek over video containere =====
+-- Ét bibliotek pr. vogn eller system: Remote 2, DNK47. Containerne i et
+-- bibliotek er de FASTE – dem der står i routeren uanset produktion. De
+-- hentes ind i et projekt som en kopi, så en rettelse i biblioteket ikke
+-- ændrer en plan, der er afleveret, og omvendt.
+-- Kan køres igen uden at ødelægge noget.
+create table if not exists signalflow_vc_biblioteker (
+  id            uuid primary key default gen_random_uuid(),
+  navn          text not null,
+  note          text,
+  opdateret_af  text,
+  opdateret_at  timestamptz not null default now()
+);
+-- Ét bibliotek pr. navn, uanset store og små bogstaver: "Remote 2" og
+-- "remote 2" er den samme vogn.
+create unique index if not exists sfvcb_navn
+  on signalflow_vc_biblioteker (lower(btrim(navn)));
+
+create table if not exists signalflow_vc_containere (
+  id            uuid primary key default gen_random_uuid(),
+  bibliotek_id  uuid not null references signalflow_vc_biblioteker(id) on delete cascade,
+  nr            text not null,
+  navn          text,
+  -- 'ind' eller 'ud'. Samme nummer må findes begge veje.
+  retning       text not null default 'ind',
+  -- op til 16 tekster, én pr. lydspor
+  spor          jsonb not null default '[]'::jsonb,
+  sort          int,
+  opdateret_af  text,
+  opdateret_at  timestamptz not null default now()
+);
+alter table signalflow_vc_containere
+  drop constraint if exists sfvcc_retning;
+alter table signalflow_vc_containere
+  add constraint sfvcc_retning check (retning in ('ind','ud'));
+
+-- Læser man det samme ark ind igen, skal numrene RETTES – ikke lægges ind
+-- en gang til. Derfor en rigtig constraint og ikke bare et indeks: det er
+-- den, on_conflict peger på, når programmet skriver.
+alter table signalflow_vc_containere
+  drop constraint if exists sfvcc_et_pr_nr;
+alter table signalflow_vc_containere
+  add constraint sfvcc_et_pr_nr unique (bibliotek_id, nr, retning);
+create index if not exists sfvcc_bib
+  on signalflow_vc_containere (bibliotek_id, retning, sort, nr);
+
+create or replace function sf_vc_touch() returns trigger as $$
+begin new.opdateret_at = now(); return new; end $$ language plpgsql;
+drop trigger if exists sf_vc_touch_t on signalflow_vc_containere;
+create trigger sf_vc_touch_t before update on signalflow_vc_containere
+  for each row execute function sf_vc_touch();
+
+alter table signalflow_vc_biblioteker enable row level security;
+alter table signalflow_vc_containere  enable row level security;
+drop policy if exists "vcb_laes"  on signalflow_vc_biblioteker;
+drop policy if exists "vcb_opret" on signalflow_vc_biblioteker;
+drop policy if exists "vcb_ret"   on signalflow_vc_biblioteker;
+drop policy if exists "vcb_slet"  on signalflow_vc_biblioteker;
+create policy "vcb_laes"  on signalflow_vc_biblioteker for select using (auth.uid() is not null);
+create policy "vcb_opret" on signalflow_vc_biblioteker for insert with check (auth.uid() is not null);
+create policy "vcb_ret"   on signalflow_vc_biblioteker for update using (auth.uid() is not null);
+create policy "vcb_slet"  on signalflow_vc_biblioteker for delete using (auth.uid() is not null);
+drop policy if exists "vcc_laes"  on signalflow_vc_containere;
+drop policy if exists "vcc_opret" on signalflow_vc_containere;
+drop policy if exists "vcc_ret"   on signalflow_vc_containere;
+drop policy if exists "vcc_slet"  on signalflow_vc_containere;
+create policy "vcc_laes"  on signalflow_vc_containere for select using (auth.uid() is not null);
+create policy "vcc_opret" on signalflow_vc_containere for insert with check (auth.uid() is not null);
+create policy "vcc_ret"   on signalflow_vc_containere for update using (auth.uid() is not null);
+create policy "vcc_slet"  on signalflow_vc_containere for delete using (auth.uid() is not null);`;
 
 /* ---- kald mod databasen ---- */
 /* ── Jobbets dage ──────────────────────────────────────────────
@@ -10203,6 +11405,7 @@ function planPrintHTML(kun,o){
    på kameraplanen; de andre områder har ikke noget at vælge imellem. */
 function printPlan(){
  const o={paper:'A4',orient:'portrait',margin:10,kun:planDom};
+ if(planDom==='vc'){ vcPrint(); return }
  if(planDom!=='kam'){ exportPlanPDF(o); return }
  openSheet('Print kameraplanen',[
   {ikon:'♪',tekst:'Med lydkanaler',under:'hele planen, som den står på skærmen',
