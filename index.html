@@ -974,11 +974,20 @@ body.mobile.guest #app{padding-bottom:12px}
 /* Knuden ⚯ er et almindeligt tegn og ikke en emoji. Den tager tekstfarven,
    så den kan være grå og stilfærdig i stedet for at råbe — håndtrykket
    fyldte for meget på en linje, hvor den står ved siden af teksten. */
-.bindikon{font-size:14px;flex:none;color:#8a9bb0;opacity:.85;line-height:1}
-.audbind.on .bindikon{color:#6fa8c7;opacity:1}
+/* Samme rude som i tegningen – "bundet" skal se ens ud begge steder, og
+   tegnet ⚯ var både bredt og uroligt. Teksten bliver i knappen, den vises
+   bare ikke. */
+.bindikon{flex:none;font-size:0;color:transparent;line-height:0;opacity:.85;
+ width:8px;height:8px;display:inline-flex;align-items:center;justify-content:center}
+.bindikon::before{content:'';display:block;width:6px;height:6px;box-sizing:border-box;
+ border:1.2px solid #8a9bb0;transform:rotate(45deg)}
+.audbind.on .bindikon{opacity:1}
+.audbind.on .bindikon::before{border-color:#6fa8c7;background:#6fa8c7}
 .bindtekst{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.audmaerke{font-size:13px;flex:none;width:13px;text-align:center;
- color:#8a9bb0;opacity:.8;line-height:1}
+.audmaerke{flex:none;width:10px;font-size:0;color:transparent;line-height:0;opacity:.8;
+ display:inline-flex;align-items:center;justify-content:center}
+.audmaerke::before{content:'';display:block;width:5px;height:5px;box-sizing:border-box;
+ border:1.2px solid #8a9bb0;transform:rotate(45deg)}
 /* En plads der skrives fra tegningen kan ikke rettes her – der er kun ét
    sted at skrive teksten, og det er i tegningen. */
 .plabel.fast,.audl.fast{display:flex;align-items:center;gap:6px;cursor:default;
@@ -987,28 +996,44 @@ body.mobile.guest #app{padding-bottom:12px}
  font:12px var(--fb);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .audl.fast{flex:1;min-width:0;border:1px solid #2f4a3d;border-radius:5px;padding:4px 7px;
  font:11.5px var(--fb);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.fastmaerke{font-size:13px;flex:none;color:#8a9bb0;opacity:.8;line-height:1;
- margin-right:2px}
+.fastmaerke{flex:none;width:10px;font-size:0;color:transparent;line-height:0;opacity:.8;
+ margin-right:2px;display:inline-flex;align-items:center;justify-content:center}
+.fastmaerke::before{content:'';display:block;width:5px;height:5px;box-sizing:border-box;
+ border:1.2px solid #8a9bb0;transform:rotate(45deg)}
 /* håndtrykkene i tegningen */
 /* Håndtrykket stod på opacity:0 og dukkede først op, når musen var over
    linjen – så kunne man ikke finde det uden at vide, at det var der.
    Det står nu fremme hele tiden: dæmpet og gråt når intet er bundet,
    fuldt og i farve når det er. */
-/* Knuden tager en smal rende i venstre side af linjen – ikke mere.
+/* ── Knuden ────────────────────────────────────────────────────
+   Mærket TEGNES med css – det er ikke et skrifttegn mere. Tegnet ⚯ er
+   bredere end sin egen skriftstørrelse, så da renden blev smallere, flød
+   det ud over kanten og lagde sig oven i signalprikken ved siden af. En
+   ring, der er tegnet, kan ikke blive bredere end den plads, den får.
+
    Renden står der altid, også når intet er bundet, så linjerne ikke hopper,
-   når man binder eller løsner. Men er der ikke bundet noget, er knuden
-   USYNLIG: den dukker op, når musen er på linjen. Før stod den og lyste på
-   hver eneste kanal og stjal både plads og opmærksomhed fra teksten. */
-.bindknap{background:none;border:none;cursor:pointer;flex:none;width:9px;padding:0;
- font-size:10px;line-height:1;color:#9aa7b4;opacity:0;transition:opacity .1s,color .1s}
-.ch:hover .bindknap,.feed:hover .bindknap{opacity:.85}
-.bindknap:hover{opacity:1!important;color:#4a5a6a}
-/* Bundet: den står fremme hele tiden – ellers kan man ikke se, at linjen
-   hænger sammen med noget. Stilfærdig gråblå, ikke et skilt. */
-.bindknap.on{opacity:.9;color:#5b86a8}
+   når man binder eller løsner. Men er der ikke bundet noget, er ringen
+   usynlig: den dukker op, når musen er på linjen. Teksten i knappen bliver
+   stående for skærmlæsere – den vises bare ikke. */
+.bindknap{background:none;border:none;cursor:pointer;flex:none;padding:0;
+ margin:0 4px 0 0;width:8px;height:8px;font-size:0;line-height:0;color:transparent;
+ display:inline-flex;align-items:center;justify-content:center;
+ opacity:0;transition:opacity .1s}
+/* En RUDE, ikke en ring: signalprikken ved siden af er rund og fyldt, og de
+   to må ikke kunne forveksles – to cirkler ved siden af hinanden lignede
+   bare et dobbelt punkt. */
+.bindknap::before{content:'';display:block;width:6px;height:6px;box-sizing:border-box;
+ border:1.2px solid #8b9aab;transform:rotate(45deg)}
+.ch:hover .bindknap,.feed:hover .bindknap{opacity:.8}
+.bindknap:hover{opacity:1!important}
+.bindknap:hover::before{border-color:#4a5a6a}
+/* Bundet: ruden står fremme hele tiden og er fyldt – ellers kan man ikke
+   se, at linjen hænger sammen med noget. */
+.bindknap.on{opacity:1}
+.bindknap.on::before{border-color:#5b86a8;background:#5b86a8}
 .ch:hover .bindknap.on,.feed:hover .bindknap.on{opacity:1}
-.bindplads{flex:none;width:9px}
-.bindknap.ud{margin-left:4px}
+.bindplads{flex:none;width:8px;margin-right:4px}
+.bindknap.ud{margin:0 0 0 6px}
 /* Sporplanerne står ved siden af gruppenavnet, hvor man er i forvejen.
    Knappen er dæmpet, men synlig – man skal kunne finde den uden at lede. */
 /* En bar ♪ på 10 px kunne ikke findes. Knappen har sit navn med nu – det er
@@ -1122,7 +1147,7 @@ body.mobile.guest #app{padding-bottom:12px}
 .vcspor{width:46px;flex:none;text-align:center;font-family:var(--fm);font-size:9.5px;
  color:var(--faint)}
 .vcspor.har{color:var(--lyd)}
-.vcbind{width:16px;flex:none;opacity:.55}
+.vcbind{width:12px;flex:none;opacity:.55}
 .vcrad:hover .vcbind{opacity:1}
 .vcbind.on{opacity:1}
 .vcvej{flex:none}
@@ -6714,7 +6739,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.20-a';
+const SF_VERSION='2026.10.20-b';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
