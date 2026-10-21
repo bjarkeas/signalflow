@@ -6739,7 +6739,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.20-b';
+const SF_VERSION='2026.10.21-a';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -8368,11 +8368,30 @@ function restoreAuto(){
 }
 
 /* ================= database (Supabase) =================
-   Skriv jeres projekt-URL og publishable-nøgle ind her én gang, og læg filen
-   på GitHub. Så virker det for alle uden opsætning. Nøglen er beregnet til at
-   ligge i en browser – det er login og reglerne på tabellen der styrer adgangen. */
+   ┌─────────────────────────────────────────────────────────┐
+   │  NØGLEN HERUNDER SKIFTES HER — OG KUN HER.              │
+   │  Supabase → Settings → API → publishable key.           │
+   └─────────────────────────────────────────────────────────┘
+
+   Projekt-URL og publishable-nøgle står her, så programmet virker for
+   alle uden opsætning. Nøglen er beregnet til at ligge i en browser og
+   er dermed offentlig – den er IKKE en adgangskode.
+
+   Det betyder, at sikkerheden hviler ét sted og kun ét sted: på
+   adgangsreglerne i databasen (row level security). Hver tabel skal
+   kræve, at man er logget ind. Står der blot én regel uden betingelse
+   på en tabel, er den tabel åben for alle med denne fil i hånden,
+   uanset hvad de andre regler siger – regler lægges sammen med ELLER.
+
+   Tjek derfor adgangsreglerne EFTER enhver ændring i databasen, og
+   efter enhver gendannelse fra backup. Eftersynet står nederst i
+   adgang_luk2.sql: alle tabeller skal vise false i begge de sidste
+   søjler.
+
+   service_role-nøglen går uden om al adgangskontrol. Den må aldrig
+   stå i denne fil, i Git, i en mail eller i en chat. */
 const SUPABASE_URL = 'https://oqfwegzondrsvdbneury.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_blZoSR5idK-yHYwPJTzvxg_Ea6Mbrvq';
+const SUPABASE_KEY = 'sb_publishable_d2b4pWi-2jTYIeCAAUAQcA_0ygShdrH';
 
 const LS_SESSION='signalflow:session';
 let cloudId=null;
