@@ -4,15 +4,60 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SignalFlow</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!-- ══════════════════════════════════════════════════════════════
+     HVEM MÅ DENNE SIDE TALE MED?
+
+     Linjen herunder håndhæves af browseren. connect-src siger, at
+     siden KUN må tale med vores eget Supabase-projekt. Skulle nogen
+     få sprøjtet kode ind i siden, kan den kode ikke sende noget ud
+     af huset.
+
+     default-src 'none': alt andet er forbudt, med mindre det står
+     nævnt. 'unsafe-inline' er nødvendig, fordi hele programmet ER
+     én fil – koden og stilene står i siden selv. Den tillader IKKE
+     kode udefra.
+
+     SKIFTER DATABASEN ADRESSE: ret den i connect-src herunder OG
+     ved SUPABASE_URL længere nede. Begge steder.
+     ══════════════════════════════════════════════════════════════ -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'none';
+  connect-src 'self' https://oqfwegzondrsvdbneury.supabase.co;
+  script-src 'self' 'unsafe-inline';
+  style-src  'self' 'unsafe-inline';
+  img-src    'self' data: blob:;
+  media-src  'self' data: blob:;
+  font-src   'self' data:;
+  worker-src 'self' blob:;
+  form-action 'none';
+  base-uri 'none'">
+<!-- frame-ancestors står IKKE her: den virker kun som HTTP-header, ikke i
+     et meta-mærke, og browseren skriver en advarsel i konsollen hvis man
+     prøver. Den hører til i serverens opsætning, sammen med de øvrige
+     sikkerhedsheadere – se server_headers.txt i sikkerhedsbilagene. -->
+
+<!-- Der hentes INTET fra internettet. Her stod før et link til Google
+     Fonts, som gav et kald til Google ved hvert eneste sideopslag med
+     brugerens IP. Skrifterne er skiftet til dem, maskinen har i forvejen
+     (se --fd/--fb/--fm nedenfor).
+
+     VIL I HAVE DE OPRINDELIGE SKRIFTER TILBAGE: hent woff2-filerne, læg
+     dem ind som base64 i en @font-face herinde i filen, og ret de tre
+     variabler. Så bevares udseendet UDEN at hente noget. -->
 <style>
 :root{
   --bg:#101319; --panel:#171c24; --panel2:#1f2630; --line:#2b3542;
   --text:#e9eef5; --dim:#8d9aab; --faint:#5c6878;
   --video:#ff5252; --lyd:#ffb648; --intercom:#3fd99c; --net:#5ea3ff;
   --ink:#1d1d1d; --paper:#fbfaf6;
-  --fd:'Barlow Condensed',sans-serif; --fb:'IBM Plex Sans',system-ui,sans-serif; --fm:'IBM Plex Mono',monospace;
+  /* Skrifter maskinen har i forvejen – intet hentes. Den smalle først i
+     --fd, så overskrifternes bredde holder sig tæt på den gamle: tegningen
+     regner på tekstbredder, og bredere skrift ville sprænge kasserne. */
+  --fd:'Arial Narrow','Helvetica Neue Condensed','Liberation Sans Narrow',
+       system-ui,-apple-system,'Segoe UI',sans-serif;
+  --fb:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  --fm:ui-monospace,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
@@ -2056,7 +2101,16 @@ function delPage(i){
 
 /* ================= tegn ================= */
 const el=document.getElementById('sheet');
-const esc=s=>String(s===null||s===undefined?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+/* Alt, en bruger har skrevet, går igennem her, før det bliver sat ind i
+   siden — 348 steder. Den dækkede før &, < og ", men ikke ' og >.
+   Det var ikke et hul: der er ingen attributter i programmet, der er
+   afgrænset med enkeltanførselstegn, og uden dem kan ' ikke bryde ud.
+   Men det er ét greb fra at blive et. Skriver nogen en dag
+   title='${esc(x)}', så er hullet der, og det ville ikke se forkert ud.
+   East Production har haft alle fem hele tiden. Nu er de ens. */
+const esc=s=>String(s===null||s===undefined?'':s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const vis=(layer,role)=> on.has(layer)&&(backupOn||role!=='backup');
 
 /* stil-hjælpere: alt er valgfrit, tomt = standardudseende */
@@ -6739,7 +6793,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.21-a';
+const SF_VERSION='2026.10.21-e';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -8449,6 +8503,31 @@ async function refreshSession(){
  }catch(e){setSession(null);return false}
 }
 function signOut(){
+ /* ── Serveren skal også vide det ──────────────────────────────────
+    Logout ryddede før KUN op her på maskinen. Login-nøglen – både den
+    korte og den lange, der kan hente en ny – blev liggende gyldig hos
+    Supabase. Havde nogen kopieret dem ud af browseren, virkede de
+    videre, selv om man havde trykket log ud.
+
+    scope=local: kun DENNE browser logges ud. Arbejder man på to
+    skærme, eller har man East Production åben på iPaden, bliver man
+    ikke smidt ud der. Valgt bevidst 21.10.2026; 'global' ville lukke
+    alle enheder og begge programmer på én gang.
+
+    Kaldet ventes der IKKE på, og en fejl stopper ingenting: er nettet
+    væk, skal den lokale oprydning nedenfor stadig ske. Det værste, der
+    kan ske, er, at nøglen bliver liggende hos Supabase til den udløber
+    af sig selv – og det var situationen før. */
+ try{
+  const s=session(), c=cfg();
+  if(s&&s.access_token&&c.url&&c.key){
+   fetch(baseUrl(c.url)+'/auth/v1/logout?scope=local',
+     {method:'POST',
+      headers:{'apikey':c.key,'Authorization':'Bearer '+s.access_token}})
+    .catch(function(){});
+  }
+ }catch(e){}
+
  setSession(null); cloudId=null;
  /* den lokale kopi ryddes, så næste bruger af maskinen ikke kan se noget */
  try{localStorage.removeItem(LS_DATA)}catch(e){}
@@ -8520,20 +8599,66 @@ drop trigger if exists sf_touch_t on signalflow_projects;
 create trigger sf_touch_t before update on signalflow_projects
   for each row execute function sf_touch();
 
+-- ===== Ryd ALLE adgangsregler først =====
+-- Vigtigt, og lært den hårde vej: adgangsregler lægges sammen med ELLER.
+-- Én gammel regel, der siger "alle må", slår fire nye, der siger "kun den
+-- der er logget ind". Derfor kan man ikke lukke en tabel ved at tilføje
+-- lukkede regler ved siden af de gamle.
+--
+-- "drop policy if exists" på navne, vi selv kender, er ikke nok. Tabellerne
+-- her er år gamle, og der lå regler med navne som "Enable all access for
+-- all users", oprettet dengang tabellen blev lavet. De skal væk, uanset hvad
+-- de hedder. Blokken herunder slår dem op i databasen i stedet for at gætte.
+--
+-- Tabeller, der ikke findes endnu, springes over – de får deres regler
+-- længere nede i filen og har ingen gamle at rydde.
+do $$
+declare
+  t text;
+  p text;
+  n int := 0;
+begin
+  foreach t in array array[
+    'signalflow_projects', 'signalflow_versions', 'signalflow_presence',
+    'signalflow_shares',   'signalflow_vc_biblioteker',
+    'signalflow_vc_containere', 'signalflow_lydplaner',
+    'equipment', 'categories'
+  ] loop
+    if to_regclass('public.' || t) is null then
+      continue;
+    end if;
+    for p in
+      select pol.polname from pg_policy pol
+       where pol.polrelid = to_regclass('public.' || t)
+    loop
+      execute format('drop policy %I on public.%I', p, t);
+      n := n + 1;
+    end loop;
+  end loop;
+  raise notice 'gamle adgangsregler fjernet: %', n;
+end $$;
+
 alter table signalflow_projects enable row level security;
 alter table signalflow_versions enable row level security;
 drop policy if exists "p_laes" on signalflow_projects;
 drop policy if exists "p_opret" on signalflow_projects;
 drop policy if exists "p_ret" on signalflow_projects;
 drop policy if exists "p_slet" on signalflow_projects;
-create policy "p_laes"  on signalflow_projects for select using (auth.uid() is not null);
-create policy "p_opret" on signalflow_projects for insert with check (auth.uid() is not null);
-create policy "p_ret"   on signalflow_projects for update using (auth.uid() is not null);
-create policy "p_slet"  on signalflow_projects for delete using (auth.uid() is not null);
+create policy "p_laes" on public.signalflow_projects for select
+    to authenticated using ((select auth.uid()) is not null);
+create policy "p_opret" on public.signalflow_projects for insert
+    to authenticated with check ((select auth.uid()) is not null);
+create policy "p_ret" on public.signalflow_projects for update
+    to authenticated using ((select auth.uid()) is not null)
+    with check ((select auth.uid()) is not null);
+create policy "p_slet" on public.signalflow_projects for delete
+    to authenticated using ((select auth.uid()) is not null);
 drop policy if exists "v_laes" on signalflow_versions;
 drop policy if exists "v_opret" on signalflow_versions;
-create policy "v_laes"  on signalflow_versions for select using (auth.uid() is not null);
-create policy "v_opret" on signalflow_versions for insert with check (auth.uid() is not null);
+create policy "v_laes" on public.signalflow_versions for select
+    to authenticated using ((select auth.uid()) is not null);
+create policy "v_opret" on public.signalflow_versions for insert
+    to authenticated with check ((select auth.uid()) is not null);
 
 -- Lageret deles med lagerprogrammet (East Production). Vi tilføjer kun én kolonne
 -- til SignalFlows tekniske detaljer – resten af tabellen røres ikke.
@@ -8541,20 +8666,33 @@ alter table equipment add column if not exists tech jsonb;
 alter table equipment add column if not exists custom_fields jsonb;
 alter table equipment add column if not exists image_url text;
 
--- Begge programmer skal kunne læse og skrive lageret
+-- Begge programmer skal kunne læse og skrive lageret – men kun når man er
+-- logget ind. Reglerne her stod før som "using (true)", altså uden nogen
+-- betingelse overhovedet. Da programmet samtidig har databasens adresse og
+-- den offentlige nøgle stående i sig, kunne enhver, der fandt filen, læse
+-- og ændre hele lageret uden login. Det er rettet i databasen 21.10.2026,
+-- og teksten her er rettet med, så en genkørsel ikke åbner det igen.
 alter table equipment enable row level security;
-drop policy if exists "eq_laes" on equipment;
-drop policy if exists "eq_opret" on equipment;
-drop policy if exists "eq_ret" on equipment;
-drop policy if exists "eq_slet" on equipment;
-create policy "eq_laes"  on equipment for select using (true);
-create policy "eq_opret" on equipment for insert with check (true);
-create policy "eq_ret"   on equipment for update using (true);
-create policy "eq_slet"  on equipment for delete using (true);
+create policy "eq_laes" on public.equipment for select
+    to authenticated using ((select auth.uid()) is not null);
+create policy "eq_opret" on public.equipment for insert
+    to authenticated with check ((select auth.uid()) is not null);
+create policy "eq_ret" on public.equipment for update
+    to authenticated using ((select auth.uid()) is not null)
+    with check ((select auth.uid()) is not null);
+create policy "eq_slet" on public.equipment for delete
+    to authenticated using ((select auth.uid()) is not null);
 
 alter table categories enable row level security;
-drop policy if exists "cat_laes" on categories;
-create policy "cat_laes" on categories for select using (true);
+create policy "cat_laes" on public.categories for select
+    to authenticated using ((select auth.uid()) is not null);
+create policy "cat_opret" on public.categories for insert
+    to authenticated with check ((select auth.uid()) is not null);
+create policy "cat_ret" on public.categories for update
+    to authenticated using ((select auth.uid()) is not null)
+    with check ((select auth.uid()) is not null);
+create policy "cat_slet" on public.categories for delete
+    to authenticated using ((select auth.uid()) is not null);
 
 -- ===== Hvem er inde i projektet lige nu =====
 -- Hver bruger skriver en linje om sig selv hvert tiende sekund. Linjer der er
@@ -8571,10 +8709,15 @@ drop policy if exists "pres_laes" on signalflow_presence;
 drop policy if exists "pres_skriv" on signalflow_presence;
 drop policy if exists "pres_ret" on signalflow_presence;
 drop policy if exists "pres_slet" on signalflow_presence;
-create policy "pres_laes"  on signalflow_presence for select using (auth.uid() is not null);
-create policy "pres_skriv" on signalflow_presence for insert with check (auth.uid() is not null);
-create policy "pres_ret"   on signalflow_presence for update using (auth.uid() is not null);
-create policy "pres_slet"  on signalflow_presence for delete using (auth.uid() is not null);
+create policy "pres_laes" on public.signalflow_presence for select
+    to authenticated using ((select auth.uid()) is not null);
+create policy "pres_skriv" on public.signalflow_presence for insert
+    to authenticated with check ((select auth.uid()) is not null);
+create policy "pres_ret" on public.signalflow_presence for update
+    to authenticated using ((select auth.uid()) is not null)
+    with check ((select auth.uid()) is not null);
+create policy "pres_slet" on public.signalflow_presence for delete
+    to authenticated using ((select auth.uid()) is not null);
 
 -- ===== Delelink til planen =====
 -- Gæsten ser KUN planen, og kun for det ene projekt linket hører til.
@@ -8597,9 +8740,12 @@ alter table signalflow_shares enable row level security;
 drop policy if exists "sfs_laes"  on signalflow_shares;
 drop policy if exists "sfs_skriv" on signalflow_shares;
 drop policy if exists "sfs_slet"  on signalflow_shares;
-create policy "sfs_laes"  on signalflow_shares for select using (auth.uid() is not null);
-create policy "sfs_skriv" on signalflow_shares for insert with check (auth.uid() is not null);
-create policy "sfs_slet"  on signalflow_shares for delete using (auth.uid() is not null);
+create policy "sfs_laes" on public.signalflow_shares for select
+    to authenticated using ((select auth.uid()) is not null);
+create policy "sfs_skriv" on public.signalflow_shares for insert
+    to authenticated with check ((select auth.uid()) is not null);
+create policy "sfs_slet" on public.signalflow_shares for delete
+    to authenticated using ((select auth.uid()) is not null);
 
 -- Nøgler der allerede er delt ud, flyttes med, så gamle links bliver ved at virke
 alter table signalflow_projects add column if not exists share_token uuid;
@@ -8638,8 +8784,7 @@ begin
   update signalflow_projects set share_token = tok where id = pid;
   return tok;
 end $$;
-revoke all on function sf_share_make(uuid, text) from public;
-grant execute on function sf_share_make(uuid, text) to authenticated;
+-- (rettighederne på sf_share_make står samlet til sidst i filen)
 
 -- Gæstens funktioner. Returtypen på sf_plan_get er ændret (id er kommet med),
 -- så den skal droppes før den kan laves om.
@@ -8693,14 +8838,39 @@ begin
 end $$;
 
 -- Gæster på et delelink har ikke login, så de melder sig gennem disse to.
+-- ⚠  NAVNET HER ER SELVOPLYST, IKKE VERIFICERET IDENTITET.
+--    Gæsten sender selv 'hvem', og who er primærnøglen. En gæst med
+--    linket kan derfor skrive det samme navn som en kollega og
+--    overskrive den kollegas linje i "hvem er inde nu". Det giver
+--    ikke adgang til andet — tokenet afgør stadig hvilket projekt —
+--    men visningen kan manipuleres, og den må ikke bruges som bevis
+--    for, hvem der har rørt hvad. Det er ændringsloggen på hver
+--    linje, der svarer på det.
+--    Skal det lukkes, skal who være et tilfældigt gæste-id og navnet
+--    et almindeligt felt. Det ændrer presence-modellen og står som
+--    et åbent punkt.
+--
+--  Længderne: who er primærnøgle, og uden en grænse kunne en gæst
+--  skrive vilkårligt lange navne hvert tiende sekund og fylde
+--  tabellen. 80 og 120 tegn er rigeligt til initialer og et stednavn.
+--  Kontroltegn ryddes: de kan ikke ses, og to navne, der ser ens ud,
+--  men ikke er det, giver to linjer for samme person.
 create or replace function sf_pres_set(tok uuid, hvem text, hvor text)
 returns void language plpgsql security definer set search_path = public as $$
-declare pid uuid;
+declare
+  pid uuid;
+  h   text;
+  s   text;
 begin
   pid := sf_share_pid(tok);
   if pid is null then return; end if;
+
+  h := left(btrim(regexp_replace(coalesce(hvem,''), '[[:cntrl:]]', '', 'g')),  80);
+  s := left(btrim(regexp_replace(coalesce(hvor,''), '[[:cntrl:]]', '', 'g')), 120);
+  if h = '' then h := 'gæst'; end if;
+
   insert into signalflow_presence(project_id, who, sted, at)
-  values (pid, coalesce(nullif(hvem,''),'gæst'), hvor, now())
+  values (pid, h, nullif(s,''), now())
   on conflict (project_id, who) do update set sted = excluded.sted, at = now();
 end $$;
 
@@ -8711,15 +8881,9 @@ language sql stable security definer set search_path = public as $$
    where p.project_id = sf_share_pid(tok) and p.at > now() - interval '1 minute';
 $$;
 
-revoke all on function sf_share_pid(uuid) from public;
-revoke all on function sf_plan_get(uuid) from public;
-revoke all on function sf_plan_set(uuid, jsonb, text) from public;
-revoke all on function sf_plan_tom(jsonb) from public;
-grant execute on function sf_plan_get(uuid)              to anon, authenticated;
-grant execute on function sf_plan_set(uuid, jsonb, text) to anon, authenticated;
-grant execute on function sf_plan_ts(uuid)               to anon, authenticated;
-grant execute on function sf_pres_set(uuid, text, text)  to anon, authenticated;
-grant execute on function sf_pres_get(uuid)              to anon, authenticated;
+-- (rettighederne på gæstefunktionerne stod før her OG til sidst i filen.
+--  To steder betyder to steder at vedligeholde, og den dag de ikke passer
+--  sammen, er det svært at se hvilket der gælder. De står nu kun til sidst.)
 
 -- ===== Bibliotek over video containere =====
 -- Ét bibliotek pr. vogn eller system: Remote 2, DNK47. Containerne i et
@@ -8779,18 +8943,187 @@ drop policy if exists "vcb_laes"  on signalflow_vc_biblioteker;
 drop policy if exists "vcb_opret" on signalflow_vc_biblioteker;
 drop policy if exists "vcb_ret"   on signalflow_vc_biblioteker;
 drop policy if exists "vcb_slet"  on signalflow_vc_biblioteker;
-create policy "vcb_laes"  on signalflow_vc_biblioteker for select using (auth.uid() is not null);
-create policy "vcb_opret" on signalflow_vc_biblioteker for insert with check (auth.uid() is not null);
-create policy "vcb_ret"   on signalflow_vc_biblioteker for update using (auth.uid() is not null);
-create policy "vcb_slet"  on signalflow_vc_biblioteker for delete using (auth.uid() is not null);
+create policy "vcb_laes" on public.signalflow_vc_biblioteker for select
+    to authenticated using ((select auth.uid()) is not null);
+create policy "vcb_opret" on public.signalflow_vc_biblioteker for insert
+    to authenticated with check ((select auth.uid()) is not null);
+create policy "vcb_ret" on public.signalflow_vc_biblioteker for update
+    to authenticated using ((select auth.uid()) is not null)
+    with check ((select auth.uid()) is not null);
+create policy "vcb_slet" on public.signalflow_vc_biblioteker for delete
+    to authenticated using ((select auth.uid()) is not null);
 drop policy if exists "vcc_laes"  on signalflow_vc_containere;
 drop policy if exists "vcc_opret" on signalflow_vc_containere;
 drop policy if exists "vcc_ret"   on signalflow_vc_containere;
 drop policy if exists "vcc_slet"  on signalflow_vc_containere;
-create policy "vcc_laes"  on signalflow_vc_containere for select using (auth.uid() is not null);
-create policy "vcc_opret" on signalflow_vc_containere for insert with check (auth.uid() is not null);
-create policy "vcc_ret"   on signalflow_vc_containere for update using (auth.uid() is not null);
-create policy "vcc_slet"  on signalflow_vc_containere for delete using (auth.uid() is not null);`;
+create policy "vcc_laes" on public.signalflow_vc_containere for select
+    to authenticated using ((select auth.uid()) is not null);
+create policy "vcc_opret" on public.signalflow_vc_containere for insert
+    to authenticated with check ((select auth.uid()) is not null);
+create policy "vcc_ret" on public.signalflow_vc_containere for update
+    to authenticated using ((select auth.uid()) is not null)
+    with check ((select auth.uid()) is not null);
+create policy "vcc_slet" on public.signalflow_vc_containere for delete
+    to authenticated using ((select auth.uid()) is not null);
+
+-- ═══════════════════════════════════════════════════════════════
+--  TIL SIDST · RETTIGHEDERNE
+--
+--  Adgangsregler og PostgreSQL-rettigheder er to forskellige lag.
+--  En regel, der kræver login, hjælper ikke, hvis rollen bagved
+--  stadig har select på tabellen. Og en rolle med rettigheden kan
+--  ikke nå noget, hvis der ikke også er en regel. Der skal være
+--  begge.
+--
+--  ⚠  LÆS DENNE FØR DU KØRER FILEN I EN ANDEN DATABASE
+--
+--  Sætningerne "on all tables in schema public" rammer SAMTLIGE
+--  tabeller i public — ikke kun SignalFlows. I vores opsætning er
+--  det med vilje: SignalFlow og East Production deler database, og
+--  begge kræver login overalt. Men kører nogen filen i en database,
+--  hvor en anden løsning bevidst har anonym adgang til en tabel,
+--  lukker den den løsning ned.
+--
+--  Står til SIDST med vilje: sætningerne rammer kun de tabeller,
+--  der findes, når de kører. Stod de midt i filen, ville de
+--  tabeller, der oprettes nedenfor, få rettighederne igen.
+-- ═══════════════════════════════════════════════════════════════
+
+-- ── Den, der ikke er logget ind, skal ingenting kunne ───────────
+revoke all on all tables    in schema public from anon;
+revoke all on all sequences in schema public from anon;
+
+-- ── Den, der ER logget ind, skal kunne arbejde ──────────────────
+--
+--  Hvorfor det står her: filen tilbagekaldte før kun fra anon og
+--  regnede med, at Supabase af sig selv havde givet authenticated
+--  rettighederne. Det gør Supabase, men filen var dermed afhængig
+--  af en standard, den ikke selv satte — og en prøve, der har den
+--  standard bygget ind, beviser ingenting om filen. Nu sætter den
+--  det selv.
+--
+--  Hvorfor det er bredt og ikke tabel for tabel: afgrænsningen
+--  ligger i ADGANGSREGLERNE ovenfor, ikke her. Uden en tillladende
+--  regel er en kommando spærret, uanset rettigheden — derfor kan
+--  signalflow_versions ikke slettes i, selv med delete-rettighed:
+--  den har kun en regel for select og insert. Skriver man
+--  afgrænsningen begge steder, skal den vedligeholdes begge steder,
+--  og den dag de to ikke passer sammen, er det reglerne, der
+--  gælder. Så står der noget i filen, der ikke er sandt.
+--
+--  Og det ville give et forkert indtryk: alle, der er logget ind,
+--  kan i dag alt. Det står som et åbent punkt i gennemgangen. Skal
+--  der skelnes — fx så kun få kan slette udstyr — er det reglerne
+--  ovenfor, der skal ændres, og så kan denne linje snævres ind
+--  samtidig.
+grant usage on schema public to authenticated;
+grant select, insert, update, delete
+  on all tables in schema public to authenticated;
+grant usage, select on all sequences in schema public to authenticated;
+
+-- ── Funktionerne ────────────────────────────────────────────────
+--
+--  PostgreSQL giver execute til PUBLIC af sig selv på hver ny
+--  funktion, og anon er en del af PUBLIC. Rettigheden følger med,
+--  hvis man ikke tager den — og et eftersyn, der kun spørger "må
+--  anon kalde den?", svarer ja på alt og lyder beroligende.
+--
+--  Filen tog den før kun fra fire af dem. sf_plan_ts, sf_pres_set,
+--  sf_pres_get, sf_touch og sf_vc_touch stod tilbage med nedarvet
+--  PUBLIC. For de tre første var gæsteadgang tilsigtet, så det
+--  virkede — men rettigheden var ikke givet, den fulgte med, og en
+--  rettighed ingen har givet, er ikke til at forsvare.
+--
+--  Blokken herunder gætter ikke på navne: den tager PUBLIC fra
+--  ALLE funktioner i public, der ikke tilhører en udvidelse.
+--  Udvidelserne springes over gennem pg_depend — pg_trgm,
+--  pgcrypto og uuid-ossp lægger deres egne funktioner i samme
+--  skema, og tager man PUBLIC-rettigheden fra dem, holder
+--  indekser og almindelige forespørgsler op med at virke.
+--
+--  ⚠  OG KUN SIGNALFLOWS EGNE. Denne blok tog 21.10.2026 kl. 23
+--     rettigheden fra ALLE funktioner i public og gav kun
+--     SignalFlows fem tilbage. East Productions fire
+--     pakkeliste-funktioner blev liggende lukkede, og linket til en
+--     pakkeliste holdt op med at virke, til de blev givet igen.
+--
+--     Derfor 'sf\_%' herunder: filen rører kun det, den selv har
+--     lavet. Hvert program rydder op efter sig selv. Skal hele
+--     databasen gennemgås — også funktioner, ingen af programmerne
+--     ejer — er det funktioner_luk.sql, der gør det, og den kender
+--     alle ni gæstefunktioner.
+do $$
+declare
+  f record;
+  n int := 0;
+begin
+  for f in
+    select p.proname, pg_get_function_identity_arguments(p.oid) as args
+      from pg_proc p
+      join pg_namespace nn on nn.oid = p.pronamespace
+     where nn.nspname = 'public'
+       -- kun vores egne. 'sf\_' med escape, ellers er _ et jokertegn
+       -- der matcher ét vilkårligt tegn — og så rammer den ep_pack også.
+       and p.proname like 'sf\_%'
+       and not exists (select 1 from pg_depend d
+                        where d.objid = p.oid
+                          and d.classid = 'pg_proc'::regclass
+                          and d.deptype = 'e')
+  loop
+    execute format('revoke all on function public.%I(%s) from public',
+                   f.proname, f.args);
+    execute format('revoke all on function public.%I(%s) from anon',
+                   f.proname, f.args);
+    execute format('grant execute on function public.%I(%s) to authenticated',
+                   f.proname, f.args);
+    n := n + 1;
+  end loop;
+  raise notice 'SignalFlows egne funktioner: PUBLIC fjernet fra %', n;
+end $$;
+
+-- Og så DE FEM, gæsten skal kunne kalde — og kun de fem.
+-- Gæstelinket går ikke gennem tabellerne, men gennem disse, der
+-- hver især slår op gennem tokenet og kun kan nå det ene projekt,
+-- nøglen hører til.
+--
+-- ⚠  LINKET ER ET PASSWORD. sf_plan_set kan SKRIVE. Den, der har
+--    linket, kan rette planen uden at logge ind. Det er med vilje —
+--    det er sådan det bruges — men det betyder, at et delt link
+--    skal behandles som en adgangskode, og at det bør have udløb og
+--    en knap til at trække det tilbage. Begge står som åbne punkter.
+grant execute on function public.sf_plan_get(uuid)              to anon;
+grant execute on function public.sf_plan_set(uuid, jsonb, text) to anon;
+grant execute on function public.sf_plan_ts(uuid)               to anon;
+grant execute on function public.sf_pres_get(uuid)              to anon;
+grant execute on function public.sf_pres_set(uuid, text, text)  to anon;
+
+-- Disse skal gæsten IKKE kunne kalde. sf_share_make laver et
+-- gæstelink; den spørger selv om login, men nu er den dækket af to
+-- spærringer i stedet for én. sf_share_pid og sf_plan_tom kaldes
+-- kun af de andre funktioner. sf_touch og sf_vc_touch er
+-- triggerfunktioner — de fyrer uanset rettigheden, for den tjekkes
+-- når triggeren oprettes, ikke når den fyrer. Det er efterprøvet.
+--   (de har allerede mistet PUBLIC i blokken ovenfor; her står kun,
+--    at de ikke får anon tilbage)
+
+-- ── Fremtidige tabeller ─────────────────────────────────────────
+--  Sætningerne ovenfor rammer det, der findes NU. En tabel, der
+--  oprettes i morgen, får Supabases standardrettigheder, og dem
+--  har anon del i. Det kan ændres med
+--
+--    alter default privileges in schema public revoke all on tables from anon;
+--
+--  men den gælder kun objekter, der fremover oprettes af DEN ROLLE,
+--  kommandoen køres som. Derfor står den ikke her: den skal
+--  afstemmes med den rolle, der faktisk opretter tabellerne i
+--  Supabase, og det skal gøres vidende. Find rollen med
+--
+--    select tableowner, count(*) from pg_tables
+--     where schemaname='public' group by 1;
+--
+--  Indtil da er værnet princippet: enhver ny tabel får
+--  adgangskontrol og fire regler i samme ændring, som tabellen
+--  oprettes.`;
 
 /* ---- kald mod databasen ---- */
 /* ── Jobbets dage ──────────────────────────────────────────────
@@ -11380,7 +11713,6 @@ function exportHTML(o){
     ${renderPageHTML(i,o.allLayers)}</div>`).join('');
  const doc2=`<!DOCTYPE html><html lang="da"><head><meta charset="utf-8">
 <title>${esc(pages[activePage].title)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>${css}
 body{background:#f0efe9;overflow:auto;height:auto}
 #printroot{display:block}
