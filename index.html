@@ -2781,7 +2781,7 @@ function sideAndet(){
         ${planDom==='freq'?'Frekvensplanen advarer selv, hvis den samme MHz står to gange på samme system.':''}
       </div>`;
     s.querySelectorAll('[data-sdom]').forEach(r=>r.onclick=()=>{
-      planDom=r.dataset.sdom; drawPlan();   // samme som fanerne øverst
+      planDom=r.dataset.sdom; gemView(); drawPlan();   // samme som fanerne øverst
     });
     return;
   }
@@ -5955,7 +5955,7 @@ function bindPlan(){
   return [dv, dv[side].find(p=>p.id===pid), side];
  };
 
- el2.querySelectorAll('[data-dom]').forEach(b=>b.onclick=()=>{planDom=b.dataset.dom;drawPlan()});
+ el2.querySelectorAll('[data-dom]').forEach(b=>b.onclick=()=>{planDom=b.dataset.dom;gemView();drawPlan()});
  const seen=el2.querySelector('[data-seen]'); if(seen)seen.onclick=markSeen;
  const wb=el2.querySelector('#whoBox');
  if(wb)wb.onchange=()=>{const c=cfg();setCfg({url:c.url,key:c.key,who:wb.value.trim()});drawPlan()};
@@ -6793,7 +6793,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.21-e';
+const SF_VERSION='2026.10.22-a';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -7658,8 +7658,26 @@ function sheetKort(did){
 
 /* ---- skift mellem tegning og plan ---- */
 let view='flow';
+/* ── Hvilken side var man på? ──────────────────────────────────
+   Trykkede man opdater i browseren, startede programmet altid på
+   Tegning, fordi view er en variabel i filen og ikke noget, der
+   huskes. Står man og patcher i Plan og genindlæser for at hente
+   en kollegas rettelser, er det en ærgerlig vej tilbage.
+
+   Samme mønster som sidepanelet og mobilvalget lige ovenfor: én
+   nøgle i localStorage, try/catch om både skrivning og læsning.
+   Fejler det — privat vindue, spærret lagring — sker der ingenting,
+   og programmet starter som før.
+
+   planDom gemmes med, for ellers lander man i Plan men på lyd, når
+   man stod på video. Det er halvvejs hjem og lige så irriterende. */
+const LS_VIEW='signalflow:side-view';
+function gemView(){
+ try{ localStorage.setItem(LS_VIEW, JSON.stringify({v:view, d:planDom})); }catch(e){}
+}
 function setView(v){
  view=v;
+ gemView();
  /* Låsen gælder kun tegningens ark. I plan, blokdiagram og lager skal
     hverken banneret eller den grå sidebar være der. */
  document.body.classList.toggle('arklaast', v==='flow' && typeof arkLaast==='function' && arkLaast());
@@ -13069,6 +13087,25 @@ document.getElementById('sideknap').onclick=()=>
 (function(){
  let v=null; try{v=localStorage.getItem(LS_SIDE)}catch(e){}
  sidePanel(v!=='skjul',false);
+})();
+
+/* Den side, man sidst var på. Køres HER, efter at alt er tegnet én
+   gang – setView tegner selv, og den skal kunne nå at finde de
+   elementer, den slår op.
+
+   Værdien kontrolleres mod listen af kendte sider. Det, der står i
+   localStorage, er ikke noget, vi har skrevet denne gang: det kan
+   være en gammel udgave af programmet, en anden fane eller noget
+   nogen har rettet i hånden. Står der noget ukendt, starter vi som
+   før i stedet for at kalde setView med noget, den ikke kender. */
+(function(){
+ let o=null;
+ try{ o=JSON.parse(localStorage.getItem(LS_VIEW)||'null'); }catch(e){ o=null; }
+ if(!o||typeof o!=='object')return;
+ if(o.d && Object.prototype.hasOwnProperty.call(PLANDOMS,o.d)) planDom=o.d;
+ const kendte=['flow','plan','blocks','arch'];
+ if(o.v && kendte.indexOf(o.v)>=0 && o.v!==view) setView(o.v);
+ else if(o.d && view==='plan') drawPlan();
 })();
 
 document.getElementById('bMode').onclick=()=>setMode(!mobil,true);
