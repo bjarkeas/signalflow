@@ -1197,6 +1197,28 @@ body.mobile.guest #app{padding-bottom:12px}
 .vcbind.on{opacity:1}
 .vcvej{flex:none}
 .vcslot{width:22px;flex:none}
+/* .mini står som opacity:0 og vises kun ved at holde musen over en gruppe,
+   en kanal eller en sektion i TEGNINGEN. Containerlisten stod ikke i den
+   regel, og derfor var kopiér, slet og signalvej usynlige her – de virkede,
+   men man kunne ikke se dem. En liste er ikke en tegning: her er knapperne
+   hovedsagen, så de står fremme hele tiden og lyser op, når man er henne
+   ved rækken. */
+.vcrad .mini{opacity:.5}
+.vcrad:hover .mini{opacity:1}
+.vcrad .mini:hover{background:var(--panel2);color:var(--text)}
+.vcrad .vcx:hover{background:#3a1c1c;color:var(--video)}
+/* På telefonen er rækken for smal til fem knapper. Dér er det ⋯-arket,
+   der bærer dem – præcis som på resten af planen. */
+body.mobile .vcrad .mini:not(.rowmenu){display:none!important}
+/* To pile oven på hinanden. De skal kunne RAMMES – derfor polstring
+   omkring en lille skrift i stedet for en stor skrift, som ville gøre
+   rækken højere. */
+.vcflyt{display:inline-flex;flex-direction:column;gap:1px;flex:none;line-height:0}
+.vcflyt .mini{font-size:8px;padding:2px 5px;line-height:1;border-radius:2px}
+.vcflyt .mini:hover{color:var(--lyd);background:var(--panel2)}
+/* Knappen tilbage til routerens nummerorden. Den står kun fremme, når man
+   faktisk har flyttet noget – ellers er den bare støj. */
+.vcorden{border-color:var(--lyd)!important;color:var(--lyd)!important}
 /* Sporene hænger under rækken, så man kan se at de hører til den */
 .vcspormere{margin:0 0 6px}
 .vcspormere .audlist{margin:0;width:100%;border-radius:0 0 7px 7px;
@@ -5031,16 +5053,67 @@ function vcFiltreret(){
      husker en container. */
   return e.tekster.some(x=>x.toLowerCase().indexOf(q)>=0);
  });
- /* Nummeret sorteres som tal, så 9 kommer før 10. Står ind og ud med samme
-    nummer, står de ved siden af hinanden – de hører jo sammen. */
- return ud.sort((a,b)=>{
+ return vcSorter(ud);
+}
+const vcFiltrePaa=()=>!!(vcF.retning||vcF.lyd||vcF.bundet||vcF.bib||vcSoeg.trim());
+
+/* ── Rækkefølgen ──────────────────────────────────────────────
+   Containerne står efter routerens eget nummer. Det er rigtigt det
+   meste af tiden – man leder efter 1041, ikke efter "den tredje".
+
+   Men vil man samle nogle stykker, der hører sammen, skal man kunne
+   flytte dem. Derfor kan en container få et ordenstal (dv.sort), og
+   så gælder dét. Første gang man flytter noget, får ALLE containere et
+   ordenstal efter den rækkefølge, de står i nu – ellers ville de uden
+   tal falde ned i bunden, og hele listen ville springe rundt, fordi
+   man flyttede én linje. Vejen tilbage til nummerorden står som en
+   knap i bjælken, så man aldrig kan male sig op i et hjørne. */
+const vcEgenOrden = () => vcAlle().some(d=>typeof d.sort==='number');
+function vcSorter(liste){
+ const egen=vcEgenOrden();
+ /* Nummeret sorteres som tal, så 9 kommer før 10. Står ind og ud med
+    samme nummer, står de ved siden af hinanden – de hører jo sammen. */
+ const efterNr=(a,b)=>{
   const c=String(a.nr||'').localeCompare(String(b.nr||''),'da',{numeric:true});
   if(c!==0)return c;
   if(vcRetning(a)!==vcRetning(b))return vcRetning(a)==='ind'?-1:1;
   return (a.name||'').localeCompare(b.name||'','da');
+ };
+ return liste.sort((a,b)=>{
+  if(egen){
+   const x=typeof a.sort==='number'?a.sort:Infinity;
+   const y=typeof b.sort==='number'?b.sort:Infinity;
+   if(x!==y)return x-y;
+  }
+  return efterNr(a,b);
  });
 }
-const vcFiltrePaa=()=>!!(vcF.retning||vcF.lyd||vcF.bundet||vcF.bib||vcSoeg.trim());
+/* Alle containere i den rækkefølge, de står i nu – uden filtrene. */
+const vcIOrden = () => vcSorter(vcAlle().slice());
+function vcFlyt(dvId, ned){
+ snap();
+ /* Har ingen et ordenstal endnu, får alle ét efter den rækkefølge de
+    står i NU. Så flytter man kun den ene plads, man bad om. */
+ if(!vcEgenOrden()) vcIOrden().forEach((d,i)=>{ d.sort=(i+1)*10 });
+ /* Der flyttes i den liste, man KAN SE. Står der et filter, betyder
+    "op" over den, der står ovenover på skærmen – ikke over en skjult
+    container, man ikke kan se noget til. */
+ const vist=vcFiltreret();
+ const i=vist.findIndex(d=>d.id===dvId);
+ if(i<0)return;
+ const j=i+(ned?1:-1);
+ if(j<0||j>=vist.length)return;
+ const a=vist[i], b=vist[j];
+ const t=a.sort; a.sort=b.sort; b.sort=t;
+ a.mt=Date.now(); b.mt=Date.now();
+ a.by=meName(); b.by=meName();
+ autosave(); drawPlan();
+}
+function vcNulstilOrden(){
+ snap();
+ vcAlle().forEach(d=>{ if(typeof d.sort==='number'){ delete d.sort; d.mt=Date.now() } });
+ autosave(); drawPlan();
+}
 
 /* ── Listen ───────────────────────────────────────────────────── */
 function vcBindMaerke(dv){
@@ -5669,6 +5742,12 @@ function vcRadHTML(dv){
    ${vcKaedeHTML(dv)}
    ${vcTalHTML(dv)}
    ${vcBindMaerke(dv)}
+   <span class="vcflyt">
+     <button class="mini vcop" data-vcflyt="${dv.id}|op"
+       title="Flyt containeren én plads op i listen">▲</button>
+     <button class="mini vcned" data-vcflyt="${dv.id}|ned"
+       title="Flyt containeren én plads ned i listen">▼</button>
+   </span>
    <button class="mini vcvej" data-vcvej="${dv.id}"
      title="${ret==='ud'?'Vis signalets vej – fra videokilden gennem ind-containeren og ud igen'
                         :'Vis signalets vej – hvor det kommer fra, og hvem der bærer det videre'}">⤳</button>
@@ -5676,7 +5755,7 @@ function vcRadHTML(dv){
      title="Kopiér containeren med hele opsætningen – kopien kan rettes for sig">⧉</button>
    <button class="mini rowmenu" data-pmenu="${dv.id}|${side}|${p?p.id:''}"
      title="Muligheder for denne container">⋯</button>
-   <button class="mini" data-vcdel="${dv.id}" title="Fjern containeren">✕</button>
+   <button class="mini vcx" data-vcdel="${dv.id}" title="Fjern containeren">✕</button>
  </div>
  ${ude&&p?`<div class="vcspormere">${vcSporBlok(dv,side,p)}</div>`:''}`;
 }
@@ -5805,6 +5884,8 @@ function vcListeHTML(){
      title="De faste containere pr. vogn – hent dem ind i stedet for at taste dem">⤓ Bibliotek</button>`}
    <button class="sharebtn" data-vcfoldalle="1"
      title="Fold alle de viste containere ud eller sammen">${vcUde.size?'⊟ Fold sammen':'⊞ Fold ud'}</button>
+   ${(!guestToken && vcEgenOrden())?`<button class="sharebtn vcorden" data-vcorden="1"
+     title="Containerne står i din egen rækkefølge. Sæt dem tilbage i routerens nummerorden.">⇅ Nummerorden</button>`:''}
  </div>
  ${!alle.length
    ? `<div class="planempty">Ingen video containere endnu.<br>
@@ -6214,6 +6295,17 @@ function sheetContainer(dv){
    under:grp.length?'':'containeren hører ikke til nogen gruppe endnu',
    gør:()=>vcBindVaelg(dv.id)});
  punkter.push({skil:1});
+ /* Flyt, kopiér og slet skal kunne nås fra telefonen også – der er
+    ingen knapper i linjen dér. */
+ const vist=vcFiltreret();
+ const nr2=vist.findIndex(x=>x.id===dv.id);
+ if(nr2>0)punkter.push({ikon:'▲',tekst:'Flyt op',
+   vaerdi:(nr2+1)+' af '+vist.length, gør:()=>vcFlyt(dv.id,false)});
+ if(nr2>=0&&nr2<vist.length-1)punkter.push({ikon:'▼',tekst:'Flyt ned',
+   vaerdi:(nr2+1)+' af '+vist.length, gør:()=>vcFlyt(dv.id,true)});
+ if(vcEgenOrden())punkter.push({ikon:'⇅',tekst:'Tilbage til nummerorden',
+   under:'containerne stilles op efter routerens numre igen',
+   gør:()=>vcNulstilOrden()});
  punkter.push({ikon:'⧉',tekst:'Kopiér containeren',
    under:'hele opsætningen med – kopien kan rettes for sig',
    gør:()=>vcKopier(dv.id)});
@@ -6301,6 +6393,15 @@ function bindVC(){
  });
  el2.querySelectorAll('[data-vckopi]').forEach(b=>b.onclick=()=>
    vcKopier(b.dataset.vckopi));
+ el2.querySelectorAll('[data-vcflyt]').forEach(b=>b.onclick=()=>{
+  const [did,vej]=b.dataset.vcflyt.split('|');
+  vcFlyt(did, vej==='ned');
+ });
+ const or=el2.querySelector('[data-vcorden]');
+ if(or)or.onclick=()=>{
+  if(confirm('Sæt containerne tilbage i routerens nummerorden?\\n'
+    +'Din egen rækkefølge forsvinder.')) vcNulstilOrden();
+ };
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -7815,7 +7916,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.25-a';
+const SF_VERSION='2026.10.25-b';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
