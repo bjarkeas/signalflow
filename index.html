@@ -1165,7 +1165,7 @@ body.mobile.guest #app{padding-bottom:12px}
 .vchead .h-r{width:38px;flex:none;text-align:center}
 .vchead .h-n{flex:1}
 .vchead .h-s{width:46px;flex:none;text-align:center}
-.vchead .h-b{width:92px;flex:none}
+.vchead .h-b{width:114px;flex:none}
 .vcrad{display:flex;align-items:center;gap:7px;padding:4px 10px;
  background:var(--panel);border:1px solid var(--line);border-radius:7px}
 .vcrad:hover{border-color:var(--dim)}
@@ -1202,9 +1202,134 @@ body.mobile.guest #app{padding-bottom:12px}
 .vcspormere .audlist{margin:0;width:100%;border-radius:0 0 7px 7px;
  border:1px solid var(--line);border-top:none;border-left:2px solid var(--lyd);
  padding:5px 10px 7px}
+/* ── Vejen i containerrækken ─────────────────────────────────────
+   Pilen peger den vej, signalet går: ind-containeren har kilden til
+   venstre, ud-containeren har målet til højre. Det er med vilje det
+   samme billede som i signalvejen – så man ikke skal lære det to
+   gange. */
+.vckaede{display:flex;align-items:center;gap:4px;flex:none;max-width:290px;min-width:0}
+.vckaede.ud{max-width:330px}
+.vcpil{font-family:var(--fm);font-size:10px;color:var(--faint);flex:none}
+.vcpil.ind{color:var(--net)}
+.vcsrc{flex:1 1 auto;min-width:0;max-width:170px;background:var(--bg);
+ border:1px dashed var(--line);color:var(--faint);font-family:var(--fm);font-size:9.5px;
+ padding:3px 6px;border-radius:4px;cursor:pointer;text-align:left;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vcsrc:hover{border-color:var(--dim);color:var(--text)}
+.vcsrc.har{border-style:solid;border-color:#24384f;color:var(--net);background:#121821}
+.vcrad.ud .vcsrc.har{border-color:#4a3f2b;color:var(--lyd);background:#1a1711}
+/* Silent er en tilstand – den skal se ud som et VALG, ikke som et tomt
+   felt. Derfor fuld ramme og egen farve, ikke grå streg. */
+.vcsrc.silent{border-style:solid;border-color:#3a3f48;color:var(--dim);
+ background:#15181e;font-style:normal}
+/* Peger kilden på noget, der er slettet, skal det kunne ses uden at man
+   åbner den. Ellers står der et navn, der ikke findes mere. */
+.vcsrc.brudt{border-style:solid;border-color:#5a2a2a;color:var(--video);background:#1b1314}
+/* Arvet fra ind-containeren: det STÅR der, men det er ikke sat her. Derfor
+   en stiplet, dæmpet ramme – man skal kunne se at det ikke er ens eget
+   valg, uden at det ser ud som om der mangler noget. */
+.vcsrc.arvet{border-style:dotted;border-color:#2f4a3d;color:#7fae98;background:#121a16}
+.vcsrc.arvet.silent{border-style:solid}
+.vcsporrad.arvet .audl{border-style:dashed}
+.vckopi{flex:none}
+
+/* Tælleren: kilder foran, Silent for sig. De to ting betyder ikke det
+   samme, og derfor står de ikke i samme tal. */
+.vcspor em{font-style:normal;color:var(--dim);margin-left:3px}
+.vcspor.brudt{color:var(--video)}
+.vchead .h-k{width:290px;flex:none;text-align:left;padding-left:14px}
+.vchead .h-s{width:58px;flex:none;text-align:center}
+
+/* ── De 16 lydspor ───────────────────────────────────────────────
+   Egen liste, ikke den fælles lydblok: containerne har brug for en
+   kilde pr. spor, og de har ingen hak. Lyd- og videoplanen bruger den
+   fælles blok videre, uændret. */
+.vcsporliste{margin:0;width:100%;border-radius:0 0 7px 7px;
+ border:1px solid var(--line);border-top:none;border-left:2px solid var(--lyd);
+ padding:5px 10px 7px;display:flex;flex-direction:column;gap:1px;position:relative}
+.vcsporliste.bundet{border-left-color:var(--intercom)}
+.vcsporhoved{display:flex;align-items:center;gap:6px;padding:2px 0 4px;
+ font-family:var(--fm);font-size:9px;color:var(--faint);letter-spacing:.08em;
+ text-transform:uppercase}
+.vcsporrad{display:flex;align-items:center;gap:6px;padding:1px 0;position:relative}
+.vcsporrad.fresh .audl{border-color:var(--ret,var(--lyd));
+ box-shadow:0 0 0 1px var(--ret,var(--lyd))}
+.vcsporrad .s-n{width:74px;flex:none}
+.vcsporrad .s-l{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:4px}
+.vcsporhoved .s-n{width:74px;flex:none}
+.vcsporhoved .s-l{flex:1 1 auto;min-width:0}
+.vcsporhoved .s-k{width:180px;flex:none}
+.vcsporhoved .s-by{width:34px;flex:none}
+.vcsporrad .s-k{width:180px;flex:none;max-width:180px}
+.vcsporrad .s-by{width:34px;flex:none;position:static;display:block;
+ font-family:var(--fm);font-size:9px;color:var(--faint);text-align:right;
+ white-space:nowrap;overflow:hidden;transform:none;right:auto;top:auto}
+.vcsporrad .audn{width:74px;background:var(--bg);border:1px solid var(--line);
+ color:var(--dim);font-family:var(--fm);font-size:10px;padding:2px 5px;border-radius:3px}
+.vcsporrad .audl{flex:1 1 auto;min-width:0;background:var(--bg);
+ border:1px solid var(--line);color:var(--text);font-size:12px;padding:2px 6px;
+ border-radius:3px}
+.vcsporrad .audn:focus,.vcsporrad .audl:focus{outline:none;border-color:var(--intercom)}
+.vcsporrad.har .audl{border-color:#2f4a3d;background:#141c18}
+.vcsporrad.silent .audl{color:var(--faint)}
+
+/* ── Vælgeren ────────────────────────────────────────────────────
+   Søgefeltet øverst, Silent lige under – det er det hurtigste valg og
+   det mest brugte på de spor der ikke bruges. Fri tekst nederst: den
+   er udvejen, ikke førstevalget. */
+.srcsoeg{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);
+ font-size:13px;padding:7px 9px;border-radius:5px;margin:0 0 10px}
+.srcsoeg:focus{outline:none;border-color:var(--intercom)}
+.srcsilent{margin:0 0 10px;align-items:center}
+.srcforklar{font-family:var(--fm);font-size:9.5px;color:var(--faint);line-height:1.5;
+ flex:1 1 180px}
+.srcliste{max-height:42vh}
+.srchoved{font-family:var(--fm);font-size:9px;color:var(--faint);letter-spacing:.1em;
+ text-transform:uppercase;padding:8px 2px 2px;position:sticky;top:0;
+ background:var(--panel);z-index:1}
+.srcliste .grpvalg.on{border-color:var(--net)}
+.srcintet{font-size:12.5px;color:var(--dim);line-height:1.7;padding:10px 2px}
+.srcfri{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.srcfri label{display:block;font-family:var(--fm);font-size:9px;color:var(--faint);
+ letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+/* .btn er width:100% – i en flexrække æder den hele bredden, og
+   skrivefeltet bliver 20 px bredt. Derfor får knappen sin egen bredde
+   tilbage her. */
+.srcfri .mrow{margin-top:0}
+.srcfri .mrow .btn,.srcsilent .btn{width:auto;flex:none;white-space:nowrap;
+ padding:7px 14px}
+.srcfritekst{flex:1 1 auto;background:var(--bg);border:1px solid var(--line);color:var(--text);
+ font-size:13px;padding:6px 9px;border-radius:5px;min-width:0}
+.srcfritekst:focus{outline:none;border-color:var(--intercom)}
+.srcnu{font-family:var(--fm);font-size:9.5px;color:var(--dim);align-self:center;
+ margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40%}
+.srcnu b{color:var(--net)}
+
+/* På telefonen er der ikke plads til kæden inde i rækken. Den lægger
+   sig under navnet i stedet for at presse alt andet sammen. */
+@media(max-width:860px){
+ .vcrad{flex-wrap:wrap}
+ .vckaede,.vckaede.ud{max-width:none;flex:1 1 100%;order:9;padding-left:22px}
+ .vcsrc{max-width:none}
+ .vchead .h-k{display:none}
+ .vcsporrad .s-k,.vcsporhoved .s-k{width:120px;max-width:120px}
+ .vcsporrad .s-n,.vcsporhoved .s-n{width:56px}
+ .vcsporrad .audn{width:56px}
+}
+
 .vctom{font-size:12.5px;color:var(--faint);padding:18px 4px;line-height:1.6}
 
 /* ── Signalvejen ───────────────────────────────────────────────── */
+/* Silent i signalvejen og paa papiret: en tilstand, ikke et tomt felt */
+.vvled{display:inline-flex;align-items:center;gap:8px}
+.vvsilent{color:var(--dim);font-family:var(--fm);font-size:10.5px}
+.vvbrudt{color:var(--video)}
+.vvuenig{color:var(--lyd)}
+.ppvcvej{font-family:var(--fm);font-size:8.5px;color:#555;padding:1px 0 3px;
+ border-bottom:1px solid #e4e0d6;margin-bottom:3px}
+.ppvcr .ppk{width:88px;flex:none;font-family:var(--fm);font-size:8px;color:#666;
+ text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ppvcr .ppk.silent{color:#999}
 .vvrude{max-height:62vh;overflow-y:auto}
 .vvtom{font-size:12.5px;color:var(--dim);line-height:1.7;padding:6px 2px 2px}
 .vvvej{margin:0 0 18px}
@@ -2773,12 +2898,19 @@ function sideAndet(){
         <b>Sådan arbejder man</b>
         <div class="symliste">
           <div><span class="ikon">✎</span><span>klik i et felt og skriv · <kbd>Enter</kbd> går til næste linje</span></div>
-          <div><span class="ikon">P</span><span>patchet · <b>T</b> tjekket – initialerne viser hvem der satte hakket</span></div>
+          ${planDom==='vc'
+            /* Containerne har ingen hak – de har en vej. Stod den gamle
+               linje her, ville hjælpen forklare noget, der ikke findes. */
+            ? `<div><span class="ikon">←</span><span>klik på vejen og vælg hvor signalet kommer fra – eller <b>Silent</b></span></div>
+               <div><span class="ikon">⧉</span><span>kopiér containeren med hele opsætningen</span></div>
+               <div><span class="ikon">⤳</span><span>følg signalets vej gennem systemet</span></div>`
+            : `<div><span class="ikon">P</span><span>patchet · <b>T</b> tjekket – initialerne viser hvem der satte hakket</span></div>`}
           <div><span class="ikon">⋯</span><span>muligheder for linjen</span></div>
-          <div><span class="ikon">⠿</span><span>træk linjen op eller ned</span></div>
+          ${planDom==='vc'?'':`<div><span class="ikon">⠿</span><span>træk linjen op eller ned</span></div>`}
           <div><span class="ikon">🔗</span><span>Del link: modtageren kan rette i planen uden at logge ind</span></div>
         </div>
         ${planDom==='freq'?'Frekvensplanen advarer selv, hvis den samme MHz står to gange på samme system.':''}
+        ${planDom==='vc'?'En ud-container arver lyden fra den ind-container, den bærer – den skal ikke sættes op to gange.':''}
       </div>`;
     s.querySelectorAll('[data-sdom]').forEach(r=>r.onclick=()=>{
       planDom=r.dataset.sdom; gemView(); drawPlan();   // samme som fanerne øverst
@@ -4561,7 +4693,7 @@ function drawPlan(){
  const labels=usedLabels();
  /* én farve pr. kollega, tildelt samlet for hele planen */
  retFarveNu=retFarver();
- grpNulstil(); indNulstil();      // opslagene hentes forfra ved hver optegning
+ grpNulstil(); indNulstil(); srcNulstil();   // opslagene hentes forfra ved hver optegning
 
  let h=`<div class="planbar">
    <div class="domtabs">${Object.keys(PLANDOMS).map(k=>
@@ -4754,6 +4886,43 @@ function vcSporTekster(dv){
  const p=vcPort(dv); if(!p)return [];
  return audListe(p).map(a=>((a.n||'')+' '+(a.label||'')).trim());
 }
+/* Alt det, søgningen skal lede i, OG om containeren er sat op – i ÉT
+   gennemløb af sporene.
+
+   Først stod de tre ting hver for sig: tælleren, sportekster og vejen
+   hentede hver sin audListe. Tre gennemløb pr. container, og med 400
+   containere kostede det 80 ms ekstra pr. tastetryk i søgefeltet. Målt,
+   ikke gættet: 57 ms før, 137 ms efter. Nu er det ét gennemløb, og det
+   køres kun når der faktisk søges eller filtreres på lyd.
+
+   "Sat op" tæller arven med: bærer en ud-container en ind-container med
+   kilder på sporene, ER dens lyd sat op – det var netop meningen, at den
+   ikke skulle sættes op igen. */
+function vcSoegEmne(dv){
+ const p=vcPort(dv);
+ if(!p) return {sat:false, tekster:[]};
+ const ind=vcArvKilde(dv);
+ const ip=ind?vcPort(ind):null;
+ const iL=ip?audListe(ip):null;
+ const tekster=[];
+ let sat=false;
+ [vcKilde(dv), vcBaerer(dv), vcMaal(dv)].forEach(s=>{
+  if(srcEr(s)) tekster.push(srcNavn(s));
+ });
+ audListe(p).forEach((a,i)=>{
+  const t=((a.n||'')+' '+(a.label||'')).trim();
+  if(t) tekster.push(t);
+  if(String(a.label||'').trim()) sat=true;
+  const egen=vcSporSrc(a);
+  if(srcEr(egen)){ tekster.push(srcNavn(egen)); sat=true; return }
+  const ia=iL?iL[i]:null;
+  if(!ia) return;
+  const arvS=vcSporSrc(ia);
+  if(srcEr(arvS)){ tekster.push(srcNavn(arvS)); sat=true }
+  if(String(ia.label||'').trim()) sat=true;
+ });
+ return {sat:sat, tekster:tekster};
+}
 /* Biblioteksnavnene der faktisk er i brug i projektet. */
 function vcBiblioteker(){
  const s=new Set();
@@ -4834,17 +5003,33 @@ function vcFiltreret(){
   if(vcF.retning && vcRetning(dv)!==vcF.retning)return false;
   if(vcF.bib==='egne'){ if(dv.bib)return false }
   else if(vcF.bib && dv.bib!==vcF.bib)return false;
-  const skrevet=vcSkrevet(dv);
-  if(vcF.lyd==='har' && !skrevet)return false;
-  if(vcF.lyd==='tom' && skrevet)return false;
   const b=vcBundne(dv).length;
   if(vcF.bundet==='ja' && !b)return false;
   if(vcF.bundet==='nej' && b)return false;
+  /* De billige tjek først. Nummer, navn og bibliotek koster ingenting,
+     og de rammer langt de fleste søgninger – så slipper vi for at gå
+     sporene igennem overhovedet. */
+  if(q){
+   if(String(dv.nr||'').toLowerCase().indexOf(q)>=0)return true;
+   if((dv.name||'').toLowerCase().indexOf(q)>=0)return true;
+   if((dv.bib||'').toLowerCase().indexOf(q)>=0)return true;
+  }
+  /* Sporene hentes KUN hvis der faktisk er brug for dem. Uden søgning
+     og uden lydfilter koster listen ingenting ekstra. */
+  if(!q && !vcF.lyd)return true;
+  const e=vcSoegEmne(dv);
+  /* "Sat op" er ikke det samme som "skrevet i". Et spor med en kilde
+     eller et Silent ER sat op, også uden en tekst – og det var netop
+     meningen med at kilden kan vælges i stedet for at skrives. Før
+     talte filteret kun tekster, og en færdig container kunne stå under
+     "uden lyd". */
+  if(vcF.lyd==='har' && !e.sat)return false;
+  if(vcF.lyd==='tom' && e.sat)return false;
   if(!q)return true;
-  if(String(dv.nr||'').toLowerCase().indexOf(q)>=0)return true;
-  if((dv.name||'').toLowerCase().indexOf(q)>=0)return true;
-  if((dv.bib||'').toLowerCase().indexOf(q)>=0)return true;
-  return vcSporTekster(dv).some(t=>t.toLowerCase().indexOf(q)>=0);
+  /* Der ledes også i vejen. "Hvor ligger Komm rack 2 henne?" er et
+     spørgsmål om en KILDE, ikke om en tekst – og det er tit sådan man
+     husker en container. */
+  return e.tekster.some(x=>x.toLowerCase().indexOf(q)>=0);
  });
  /* Nummeret sorteres som tal, så 9 kommer før 10. Står ind og ud med samme
     nummer, står de ved siden af hinanden – de hører jo sammen. */
@@ -4865,19 +5050,614 @@ function vcBindMaerke(dv){
    title="${navne.length?esc('Hører til '+navne.join(', ')+' – klik for at skifte eller løsne')
             :'Bind containeren til en gruppe i tegningen'}">⚯</button>`;
 }
+/* ══ KILDER, MÅL OG SILENT ═════════════════════════════════════
+   Hvad en container gjorde før: den havde ét nummer, ét navn og 16
+   lydspor, der hver kun var en TEKST. Den vidste ikke hvor videoen kom
+   fra, og den vidste ikke hvor et lydspor kom fra. Ville man se vejen,
+   måtte vcVejData lede BAGLÆNS gennem tegningen efter en kanal, der
+   tilfældigvis pegede ind på containerens spor. Det var den forkerte
+   vej, og derfor kunne den heller ikke svare på det simpleste
+   spørgsmål: "hvor kommer spor 7 fra?"
+
+   Nu peger containeren selv. Og "ingen lyd" er en TILSTAND, ikke et
+   tomt felt:
+
+     Ind-container:  videokilde → containeren → 16 spor, hver med
+                     sin egen kilde eller Silent
+     Ud-container:   hvilken ind-container den bærer → containeren →
+                     videomål. Lydsporene er dens EGNE: ind- og
+                     ud-containere hænger ikke sammen i routeren, og
+                     derfor må de godt være forskellige.
+
+   Ét felt, seks slags. Routing-logikken har ét sted at spørge:
+
+     {slags:'silent'}                 der ER ingen lyd. Et valg.
+     {slags:'port', dom, dev, port}   en linje i en plan
+     {slags:'kanal', gid, chid}       én lydkanal i en gruppe i tegningen
+     {slags:'grp', gid}               en hel gruppe i tegningen
+     {slags:'vc', dv}                 en anden container
+     {slags:'fri', tekst}             skrevet i hånden
+
+   Intet felt er IKKE det samme som Silent. Et tomt spor er "ikke
+   udfyldt endnu"; Silent er "her kommer der med vilje ingenting".
+   Det er hele pointen i at gøre den til en rigtig tilstand.
+   ══════════════════════════════════════════════════════════════ */
+
+const srcEr      = s => !!(s && s.slags);
+const srcSilent  = s => !!(s && s.slags === 'silent');
+const SRC_SILENT = () => ({slags:'silent'});
+
+/* Opslagene koster, og en container har 16 spor. Står der 300
+   containere i en vogn, er det 4.800 opslag pr. optegning, hvis vi
+   leder forfra hver gang. Derfor et indeks, der ryddes sammen med de
+   to andre ved hver optegning. */
+let srcCache = null;
+/* Containerne slås også op ved id – en ud-container skal finde den
+   ind-container, den bærer. Uden et opslag er det vcAlle().find() pr.
+   container pr. optegning, og det er 300 × 300 gennemløb i en vogn som
+   Remote 2. Ryddes sammen med de to andre ved hver optegning. */
+let vcIdCache = null;
+const srcNulstil = () => { srcCache = null; vcIdCache = null };
+function vcById(dvId){
+ if(!dvId) return null;
+ if(!vcIdCache){ vcIdCache={}; vcAlle().forEach(d=>{ vcIdCache[d.id]=d }) }
+ return vcIdCache[dvId] || null;
+}
+function srcPortIndeks(){
+ if(srcCache) return srcCache;
+ srcCache = {};
+ const p = ensurePlan();
+ Object.keys(PLANDOMS).forEach(dom2=>{
+  ((p[dom2]||{}).devices||[]).forEach(dv=>{
+   if(dv.del) return;
+   ['ins','outs'].forEach(side=>{
+    alive(dv[side]).forEach(o=>{
+     srcCache[dom2+'|'+dv.id+'|'+o.id] = {dom:dom2, dv:dv, port:o, side:side};
+    });
+   });
+  });
+ });
+ return srcCache;
+}
+
+/* ── Hvad hedder kilden? ───────────────────────────────────────
+   Ét navn, der bruges i rækken, i vælgeren, i signalvejen, i
+   regnearket og i printet. Står de fem steder ikke det samme, kan man
+   ikke stole på nogen af dem.
+
+   Er kilden væk – udstyret slettet, gruppen fjernet – siger vi det
+   lige ud. Et tomt felt ville se ud som om der ikke var valgt noget,
+   og så ville man tro at der manglede et valg i stedet for at der var
+   forsvundet noget. */
+function srcNavn(s){
+ if(!srcEr(s)) return '';
+ if(s.slags === 'silent') return 'Silent';
+ if(s.slags === 'fri')    return String(s.tekst||'');
+ if(s.slags === 'grp'){
+  const n = grpNavn(s.gid);
+  return n || 'gruppe der ikke findes længere';
+ }
+ if(s.slags === 'kanal'){
+  const f = grpFind(s.gid);
+  if(!f) return 'kanal i en gruppe der ikke findes længere';
+  const ch = (f.g.channels||[]).find(c=>c.id===s.chid);
+  if(!ch) return 'kanal der ikke findes længere';
+  return ((ch.nr||'')+' '+(ch.label||'')).trim()
+       + ' · ' + (f.g.label||f.g.feed||'gruppe');
+ }
+ if(s.slags === 'port'){
+  const f = srcPortIndeks()[s.dom+'|'+s.dev+'|'+s.port];
+  if(!f) return 'linje der ikke findes længere';
+  return PLANDOMS[f.dom] + ' · ' + (f.dv.name||f.dv.type||'')
+       + ' · ' + SIDENAVN[f.side].toLowerCase() + ' ' + (f.port.n||'')
+       + (f.port.label ? ' (' + f.port.label + ')' : '');
+ }
+ if(s.slags === 'vc'){
+  const dv = vcById(s.dv);
+  if(!dv) return 'container der ikke findes længere';
+  return (dv.nr ? dv.nr + ' · ' : '') + (dv.name || 'uden navn');
+ }
+ return '';
+}
+/* Den korte udgave til containerrækken og til navnet på et spor, hvor
+   der ikke er plads til en hel sti. Vælgeren, signalvejen og printet
+   viser det fulde navn.
+
+   Hver slags har sin egen korte form. At skære det fulde navn af ved
+   første " · " duer ikke: på en kanal giver det "Ch. 1 KOMM 1 · KAM 1"
+   (for langt), og på en linje giver det "Lyd" (ubrugeligt). */
+function srcKort(s){
+ if(!srcEr(s)) return '';
+ if(s.slags === 'silent') return 'Silent';
+ if(s.slags === 'fri')    return String(s.tekst||'');
+ if(s.slags === 'grp'){
+  const f = grpFind(s.gid);
+  return f ? (f.g.label||f.g.feed||'gruppe') : srcNavn(s);
+ }
+ if(s.slags === 'kanal'){
+  const f = grpFind(s.gid);
+  if(!f) return srcNavn(s);
+  const ch = (f.g.channels||[]).find(c=>c.id===s.chid);
+  if(!ch) return srcNavn(s);
+  /* Navnet først – det er det, man kender kanalen på. Står der intet
+     navn endnu, er nummeret det bedste vi har. */
+  return String(ch.label||'').trim() || String(ch.nr||'kanal');
+ }
+ if(s.slags === 'port'){
+  const f = srcPortIndeks()[s.dom+'|'+s.dev+'|'+s.port];
+  if(!f) return srcNavn(s);
+  return (f.dv.name||f.dv.type||'') + ' '
+       + (f.side==='ins'?'ind':'ud') + ' ' + (f.port.n||'');
+ }
+ if(s.slags === 'vc'){
+  const dv = vcById(s.dv);
+  return dv ? ((dv.nr?dv.nr+' · ':'')+(dv.name||'uden navn')) : srcNavn(s);
+ }
+ return srcNavn(s);
+}
+/* Peger kilden på noget, der ikke findes mere? Det skal kunne ses i
+   rækken uden at man åbner vælgeren.
+
+   Her bliver der SLÅET OP, ikke læst i teksten. Første udgave ledte
+   efter "findes ikke længere" i navnet – og navnet siger "der ikke
+   findes længere". Ordstillingen var byttet om, så den svarede nej til
+   alt. Et tjek, der hviler på en sætning, holder kun til sætningen
+   bliver omskrevet. */
+function srcFindes(s){
+ if(!srcEr(s)) return true;          // intet valgt – så mangler der heller intet
+ if(s.slags === 'silent' || s.slags === 'fri') return true;
+ if(s.slags === 'grp')   return !!grpFind(s.gid);
+ if(s.slags === 'kanal'){
+  const f = grpFind(s.gid);
+  return !!(f && (f.g.channels||[]).some(c=>c.id===s.chid));
+ }
+ if(s.slags === 'port')  return !!srcPortIndeks()[s.dom+'|'+s.dev+'|'+s.port];
+ if(s.slags === 'vc')    return !!vcById(s.dv);
+ return true;
+}
+const srcBrudt = s => srcEr(s) && !srcFindes(s);
+
+/* ── Containerens videokilde og videomål ───────────────────────
+   Gamle containere har ingen af felterne. De havde til gengæld tit en
+   binding til en gruppe i tegningen (⚯-knappen), og DET var i
+   praksis deres videokilde. Den læses derfor som kilden, så et gammelt
+   projekt viser det rigtige med det samme – uden at vi skriver om i
+   nogens data. Vælger man siden en anden kilde, overtager den. */
+function vcKilde(dv){
+ if(!dv) return null;
+ if(srcEr(dv.kilde)) return dv.kilde;
+ const g = vcBundne(dv);
+ return g.length ? {slags:'grp', gid:g[0]} : null;
+}
+/* Vælger man en gruppe som videokilde, skal tegningen vide det: det er
+   den samme binding, ⚯-knappen sætter, og spøgelsesteksterne læser.
+   Vælger man noget ANDET, slippes gruppen – ellers ville containeren
+   stå med to kilder, der kunne være uenige. */
+function vcSaetKilde(dv, src){
+ const p = vcPort(dv);
+ snap();
+ if(srcEr(src)) dv.kilde = src; else delete dv.kilde;
+ if(p){
+  if(src && src.slags === 'grp') portSatGrps(p, [src.gid]);
+  else                           portSatGrps(p, []);
+  touch(p);
+ }
+ dv.mt = Date.now();
+ autosave(); drawPlan();
+}
+/* Hvilken ind-container bærer ud-containeren? Før GÆTTEDE vcVejHTML
+   det: den ledte efter en vilkårlig anden container bundet til samme
+   gruppe, og skrev ellers "ingen ind-container bundet". Nu står det
+   som et valg. */
+function vcBaerer(dv){ return srcEr(dv&&dv.baerer) ? dv.baerer : null }
+function vcSaetBaerer(dv, src){
+ snap();
+ if(srcEr(src)) dv.baerer = src; else delete dv.baerer;
+ dv.mt = Date.now();
+ autosave(); drawPlan();
+}
+function vcMaal(dv){ return srcEr(dv&&dv.maal) ? dv.maal : null }
+function vcSaetMaal(dv, src){
+ snap();
+ if(srcEr(src)) dv.maal = src; else delete dv.maal;
+ dv.mt = Date.now();
+ autosave(); drawPlan();
+}
+
+/* ── Sporets kilde ─────────────────────────────────────────────
+   På en ind-container peger hvert spor selv: lyden følger ikke
+   videoen. Det er hele grunden til at sporene skal kunne linkes
+   individuelt – en kamerakanal og en komkanal kan ligge i samme
+   container uden at komme fra samme sted.
+
+   På en ud-container er der ingen manuel linkning: containeren bærer
+   den lyd, der ligger i den. Men Silent skal kunne vælges, for de
+   spor der med vilje ikke bruges. Derfor er det samme felt – kun
+   vælgeren er kortere. */
+function vcSporSrc(a){ return srcEr(a&&a.src) ? a.src : null }
+/* FÆLDE: audListe giver et MIDLERTIDIGT objekt for de spor, der aldrig
+   er skrevet i – de ligger ikke i p.aud endnu. Skriver man på det, er
+   valget væk ved næste optegning. Første udgave af denne funktion gjorde
+   netop det, og Silent kunne ikke slås til på et tomt spor.
+   Derfor hentes det RIGTIGE spor her med audFind(..., true), som laver
+   det i p.aud, hvis det ikke er der. Samme greb som de felter, der
+   skriver teksten, bruger. */
+function vcSaetSporSrc(dv, p, aIdent, src){
+ const ident = (typeof aIdent === 'string') ? aIdent : (aIdent && aIdent.id);
+ if(!ident) return;
+ snap();
+ const a = audFind(p, ident, true);
+ if(!a) return;
+ if(srcEr(src)) a.src = src; else delete a.src;
+ /* Vælger man en kilde til et spor, der ikke har et navn endnu, får
+    det kildens navn. Ellers skulle man skrive det samme to gange –
+    og så gør folk det ikke, og sporet står tomt i printet. */
+ if(srcEr(src) && src.slags !== 'silent' && !String(a.label||'').trim()){
+  a.label = srcKort(src);
+ }
+ touch(a);
+ if(p) touch(p);
+ dv.mt = Date.now();
+ autosave(); drawPlan();
+}
+/* Hvor mange spor er sat til Silent, og hvor mange har en kilde?
+   Tælleren i rækken skal kunne sige "8 kilder · 4 Silent" i stedet for
+   bare "12/16 beskrevet", for de to ting betyder ikke det samme. */
+function vcSporTal(dv){
+ const p = vcPort(dv);
+ if(!p) return {ialt:0, kilde:0, silent:0, tekst:0, brudt:0, arvet:0};
+ const liste = audListe(p);
+ /* Arven hentes ÉN gang, ikke pr. spor. Tælleren står i hver række i
+    listen, og med flere hundrede containere bliver et opslag pr. spor
+    16 gange for mange. */
+ const ind = vcArvKilde(dv);
+ const ip  = ind ? vcPort(ind) : null;
+ const iL  = ip ? audListe(ip) : null;
+ let kilde=0, silent=0, tekst=0, brudt=0, arvet=0;
+ liste.forEach((a,i)=>{
+  const egen = vcSporSrc(a);
+  const ia   = iL ? iL[i] : null;
+  const arvS = ia ? vcSporSrc(ia) : null;
+  const arvT = ia ? String(ia.label||'').trim() : '';
+  const s    = srcEr(egen) ? egen : arvS;
+  const minT = String(a.label||'').trim();
+  if(!srcEr(egen) && (srcEr(arvS) || arvT)) arvet++;
+  if(srcSilent(s)) silent++;
+  else if(srcEr(s)){ kilde++; if(srcBrudt(s)) brudt++ }
+  if(minT || arvT) tekst++;
+ });
+ return {ialt:liste.length, kilde:kilde, silent:silent, tekst:tekst,
+         brudt:brudt, arvet:arvet};
+}
+
+/* ── Hvad kan man vælge imellem? ───────────────────────────────
+   Tre steder at hente fra, og fri tekst oveni. Fri tekst er med med
+   vilje: skal man kunne oprette containere FØR tegningen er lavet,
+   må vælgeren ikke kunne stå i vejen. Vælger man derimod en linje
+   eller en kanal, bliver det en rigtig henvisning, som signalvejen
+   kan følge – og som opdaterer sig selv, hvis udstyret får et nyt
+   navn. */
+const SRC_VIDEO_DOMS = ['video','kam'];
+const SRC_LYD_DOMS   = ['lyd','kam','net'];
+
+function srcMuligheder(slags){
+ const ud = [];
+ const doms = slags === 'video' ? SRC_VIDEO_DOMS : SRC_LYD_DOMS;
+ const p = ensurePlan();
+ /* 1. Linjerne i planerne. Dem med et navn først – det er dem man
+       leder efter. De navnløse er tit bare ledige numre. */
+ doms.forEach(dom2=>{
+  ((p[dom2]||{}).devices||[]).forEach(dv=>{
+   if(dv.del) return;
+   ['outs','ins'].forEach(side=>{
+    alive(dv[side]).forEach(o=>{
+     ud.push({src:{slags:'port', dom:dom2, dev:dv.id, port:o.id},
+              gruppe:PLANDOMS[dom2],
+              navn:(dv.name||dv.type||'')+' · '+SIDENAVN[side].toLowerCase()+' '+(o.n||''),
+              under:o.label||'', vaegt:o.label?0:1});
+    });
+   });
+  });
+ });
+ /* 2. Tegningen. Til video de hele grupper, til lyd de enkelte
+       kanaler – det er netop det individuelle, der mangler. */
+ alleGrupper().forEach(x=>{
+  if(slags === 'video'){
+   if((x.g.layer||'video') !== 'video') return;
+   ud.push({src:{slags:'grp', gid:x.g.id}, gruppe:'Tegningen',
+            navn:(x.g.label||x.g.feed||'gruppe'), under:x.sti, vaegt:0});
+  }else{
+   (x.g.channels||[]).forEach(ch=>{
+    const lag = ch.layer||'lyd';
+    if(lag !== 'lyd' && lag !== 'intercom') return;
+    ud.push({src:{slags:'kanal', gid:x.g.id, chid:ch.id}, gruppe:'Tegningen',
+             navn:((ch.nr||'')+' '+(ch.label||'')).trim() || 'kanal',
+             under:(x.g.label||x.g.feed||'')+' · '+x.sti,
+             vaegt:ch.label?0:1});
+   });
+  }
+ });
+ /* 3. De andre containere. En ud-container bærer en ind-container –
+       det er den henvisning, der manglede helt. */
+ if(slags === 'vc'){
+  vcAlle().filter(d=>vcRetning(d)==='ind').forEach(d=>{
+   ud.push({src:{slags:'vc', dv:d.id}, gruppe:'Ind-containere',
+            navn:(d.nr?d.nr+' · ':'')+(d.name||'uden navn'),
+            under:srcNavn(vcKilde(d)), vaegt:0});
+  });
+ }
+ ud.sort((a,b)=> a.gruppe.localeCompare(b.gruppe,'da') || a.vaegt-b.vaegt
+                 || a.navn.localeCompare(b.navn,'da'));
+ return ud;
+}
+
+/* ── Vælgeren ──────────────────────────────────────────────────
+   Samme vindue til videokilden, til videomålet, til hvilken
+   ind-container en ud-container bærer, og til hvert enkelt lydspor.
+   Ét vindue, så de fire ting opfører sig ens – og så der kun er ét
+   sted, en fejl kan sidde.
+
+   Rækkefølgen i vinduet er den rækkefølge, man vælger i: først
+   Silent, for det er det hurtigste og det mest brugte på de spor der
+   ikke bruges. Så søgefeltet. Så listen. Fri tekst nederst, for den
+   er udvejen – ikke førstevalget. */
+let srcSoeg='';
+function srcVaelg(o){
+ /* o = {titel, under, slags:'video'|'lyd'|'vc', nu, silent, gem} */
+ const slags = o.slags||'lyd';
+ const alle = srcMuligheder(slags);
+ const q = srcSoeg.trim().toLowerCase();
+ const vist = q ? alle.filter(m=>
+        (m.navn+' '+m.under+' '+m.gruppe).toLowerCase().indexOf(q)>=0) : alle;
+ const nuNavn = srcEr(o.nu) ? srcNavn(o.nu) : '';
+
+ let sidsteGruppe='';
+ const krop = vist.length
+  ? `<div class="grpliste srcliste">${vist.map(m=>{
+      const paa = srcEr(o.nu) && JSON.stringify(m.src)===JSON.stringify(o.nu);
+      const hoved = m.gruppe!==sidsteGruppe ? (sidsteGruppe=m.gruppe,
+         `<div class="srchoved">${esc(m.gruppe)}</div>`) : '';
+      return hoved+`<button class="grpvalg ${paa?'on':''}" data-srcv="${esc(JSON.stringify(m.src))}">
+        <span class="grpnavn">${esc(m.navn)}</span>
+        ${m.under?`<span class="grpsti">${esc(m.under)}</span>`:''}
+        ${paa?'<span class="grptal">valgt nu</span>':''}
+      </button>`}).join('')}</div>`
+  : `<div class="srcintet">${q
+      ? 'Ingen linjer eller kanaler rammer søgningen.'
+      : (slags==='vc'
+         ? 'Der er ingen ind-containere i projektet endnu.'
+         : 'Der er ingen '+(slags==='video'?'videolinjer':'lydlinjer')
+           +' i planerne og ingen kanaler i tegningen endnu.'
+           +'<br>Du kan skrive kilden i hånden nedenfor – den kan altid'
+           +' byttes til en rigtig linje senere.')}</div>`;
+
+ openModal(o.titel, o.under||'',
+  `<input class="srcsoeg" id="srcSoeg" value="${esc(srcSoeg)}" autocomplete="off"
+     placeholder="Søg navn, nummer eller kanal…">
+   ${o.silent?`<div class="mrow srcsilent">
+     <button class="btn ${srcSilent(o.nu)?'save':''}" data-srcsilent="1"
+       title="Der kommer med vilje ingen lyd på dette spor">◌ Silent</button>
+     <span class="srcforklar">Silent er et valg, ikke et tomt felt – den står
+       med i signalvejen, i regnearket og i printet.</span>
+   </div>`:''}
+   ${krop}
+   <div class="srcfri">
+     <label>Eller skriv den i hånden</label>
+     <div class="mrow">
+       <input class="srcfritekst" id="srcFri" autocomplete="off"
+         value="${esc(o.nu&&o.nu.slags==='fri'?(o.nu.tekst||''):'')}"
+         placeholder="fx MN5 ud 12 eller Komm rack 4">
+       <button class="btn" data-srcfri="1">Brug teksten</button>
+     </div>
+   </div>
+   <div class="mrow" style="margin-top:12px">
+     ${srcEr(o.nu)?`<button class="btn" data-srcryd="1">Ryd valget</button>`:''}
+     <button class="btn" data-annul="1">Luk</button>
+     ${nuNavn?`<span class="srcnu">Valgt nu: <b>${esc(nuNavn)}</b></span>`:''}
+   </div>`,
+  root=>{
+   const gem = src => { srcSoeg=''; closeModal(); o.gem(src) };
+   const s = root.querySelector('#srcSoeg');
+   if(s){
+    s.oninput = () => {
+     const v=s.value, pos=s.selectionStart;
+     srcSoeg=v; srcVaelg(o);
+     /* Vinduet tegnes forfra ved hvert bogstav. Uden dette står
+        markøren tilbage i starten af feltet, og man skriver baglæns. */
+     const n=document.getElementById('srcSoeg');
+     if(n){ n.focus(); try{ n.setSelectionRange(pos,pos) }catch(e){} }
+    };
+    s.onkeydown = e => {
+     if(e.key==='Enter'){
+      const f=root.querySelector('[data-srcv]');
+      if(f) f.click();
+     }
+     if(e.key==='Escape'){ srcSoeg=''; closeModal() }
+    };
+   }
+   root.querySelectorAll('[data-srcv]').forEach(b=>b.onclick=()=>{
+    try{ gem(JSON.parse(b.dataset.srcv)) }catch(e){}
+   });
+   const si = root.querySelector('[data-srcsilent]');
+   if(si) si.onclick = () => gem(SRC_SILENT());
+   const fr = root.querySelector('[data-srcfri]');
+   const ft = root.querySelector('#srcFri');
+   const brugFri = () => {
+    const t=(ft&&ft.value||'').trim();
+    gem(t ? {slags:'fri', tekst:t} : null);
+   };
+   if(fr) fr.onclick = brugFri;
+   if(ft) ft.onkeydown = e => { if(e.key==='Enter'){ e.preventDefault(); brugFri() } };
+   const ry = root.querySelector('[data-srcryd]');
+   if(ry) ry.onclick = () => gem(null);
+   const a = root.querySelector('[data-annul]');
+   if(a) a.onclick = () => { srcSoeg=''; closeModal() };
+  });
+}
+
+/* De fire indgange til vælgeren. De står her samlet, så man kan se med
+   ét blik hvad en container kan pege på – og hvad den IKKE kan: en
+   ud-container har ingen lydkilder at vælge, kun Silent. */
+function vcVaelgKilde(dvId){
+ const dv=vcAlle().find(x=>x.id===dvId); if(!dv)return;
+ srcVaelg({titel:'Hvor kommer videoen fra?',
+  under:(dv.nr?'Container '+dv.nr+' · ':'')+(dv.name||'uden navn'),
+  slags:'video', nu:vcKilde(dv), silent:false,
+  gem:src=>vcSaetKilde(dv,src)});
+}
+function vcVaelgBaerer(dvId){
+ const dv=vcAlle().find(x=>x.id===dvId); if(!dv)return;
+ srcVaelg({titel:'Hvilken container bærer den?',
+  under:(dv.nr?'Container '+dv.nr+' · ':'')+(dv.name||'uden navn')
+    +' – ud-containeren leverer signalet fra en ind-container',
+  slags:'vc', nu:vcBaerer(dv), silent:false,
+  gem:src=>vcSaetBaerer(dv,src)});
+}
+function vcVaelgMaal(dvId){
+ const dv=vcAlle().find(x=>x.id===dvId); if(!dv)return;
+ srcVaelg({titel:'Hvor skal videoen hen?',
+  under:(dv.nr?'Container '+dv.nr+' · ':'')+(dv.name||'uden navn'),
+  slags:'video', nu:vcMaal(dv), silent:false,
+  gem:src=>vcSaetMaal(dv,src)});
+}
+function vcVaelgSpor(dvId, audIdent){
+ const dv=vcAlle().find(x=>x.id===dvId); if(!dv)return;
+ const p=vcPort(dv); if(!p)return;
+ const a=audListe(p).find(x=>x.id===audIdent); if(!a)return;
+ const ud = vcRetning(dv)==='ud';
+ if(ud){
+  /* Ingen manuel linkning på en ud-container: den bærer den lyd, der
+     ligger i den. Silent er det eneste valg – og det slås til og fra
+     med ét tryk i stedet for at åbne et vindue med én knap i. */
+  vcSaetSporSrc(dv, p, a, srcSilent(vcSporSrc(a)) ? null : SRC_SILENT());
+  return;
+ }
+ srcVaelg({titel:'Hvor kommer lyden fra?',
+  under:(dv.nr?'Container '+dv.nr+' · ':'')+(dv.name||'uden navn')
+    +' · spor '+(a.n||''),
+  slags:'lyd', nu:vcSporSrc(a), silent:true,
+  gem:src=>vcSaetSporSrc(dv,p,a,src)});
+}
+
+/* ── Kopiér container ──────────────────────────────────────────
+   En RIGTIG kopi, ikke en henvisning. Kanalopsætning, videolink,
+   lydlinks, Silent-valg og navne skrives over i NYE objekter, så de to
+   containere kan rettes hver for sig.
+
+   Nye id'er på containeren, på linjen OG på hvert lydspor. Der er en
+   fælde i det: et lydspors id er udregnet af linjens id
+   (audId = p.id+'~a'+nr). Får linjen et nyt id uden at sporene gør,
+   kan audListe ikke finde dem igen, og kopien står med 16 tomme spor,
+   selvom teksterne ligger i data. Derfor regnes sporenes id'er om med
+   det NYE linje-id og det SAMME spornummer.
+
+   Hakkene nulstilles: at den gamle container var patchet og tjekket
+   siger intet om kopien. */
+function vcKopier(dvId){
+ const dv=vcAlle().find(x=>x.id===dvId); if(!dv)return;
+ snap();
+ const c=JSON.parse(JSON.stringify(dv));
+ c.id=id();
+ c.nr=vcNaesteNr();
+ c.name=((dv.name||'')+' (kopi)').trim();
+ c.mt=Date.now();
+ c.by=meName();
+ delete c.del;
+ ['ins','outs'].forEach(side=>{
+  (c[side]||[]).forEach(p=>{
+   const gammel=p.id;
+   p.id=id();
+   p.patched=false; p.checked=false; p.pby=''; p.cby='';
+   p.n=String(c.nr||''); p.label=c.name;
+   touch(p);
+   (p.aud||[]).forEach(a=>{
+    const nr=audNr(a.id);
+    /* Spor med et fast nummer beholder nummeret og får linjens nye id.
+       Spor uden nummer (de kan forekomme i gamle projekter) får bare et
+       nyt, så de ikke deler id med originalens. */
+    a.id = nr ? (p.id+'~a'+nr) : id();
+    a.patched=false; a.checked=false; a.pby=''; a.cby='';
+   });
+   /* Bindingen til tegningen følger IKKE med. To containere, der bærer
+      den samme gruppe, er lovligt – men det er ikke noget man beder om
+      ved at trykke kopiér, og det ville give en falsk "bruges også af"
+      i signalvejen med det samme. Kilden følger med som den står. */
+   portSatGrps(p, []);
+  });
+ });
+ /* Var kilden en gruppe i tegningen, kan kopien ikke arve den (se
+    ovenfor). Den beholder navnet som fri tekst, så man kan se hvad den
+    var tænkt som, og selv binde den. */
+ const k=vcKilde(dv);
+ if(k && k.slags==='grp') c.kilde={slags:'fri', tekst:srcNavn(k)};
+ const liste=(ensurePlan().vc).devices||[];
+ liste.splice(liste.indexOf(dv)+1, 0, c);
+ vcUde.add(c.id);
+ autosave(); drawPlan();
+ setTimeout(()=>{
+  const f=document.querySelector('[data-vcnavn="'+CSS.escape(c.id)+'"]');
+  if(f){f.focus();f.select()}
+ },60);
+ return c;
+}
+
+/* ── Rækken ────────────────────────────────────────────────────
+   Hakkene er væk. Det, der stod i deres plads, er nu det, en container
+   faktisk skal kunne svare på:
+
+     Ind:  ← hvor videoen kommer fra
+     Ud:   hvilken container den bærer  →  hvor videoen skal hen
+
+   Vejen står i rækken, ikke inde bag en fold. Det er det, man leder
+   efter, når man bladrer gennem flere hundrede containere. */
+function vcKaedeHTML(dv){
+ const ret=vcRetning(dv);
+ const knap=(src, hvad, titel, tom) => {
+  const brudt=srcBrudt(src);
+  return `<button class="vcsrc ${srcEr(src)?'har':''} ${brudt?'brudt':''}"
+    data-vcs${hvad}="${dv.id}"
+    title="${esc(brudt ? srcNavn(src)+' – vælg en ny' : (srcEr(src)?titel+': '+srcNavn(src):titel))}"
+    >${esc(srcEr(src)?srcKort(src):tom)}</button>`;
+ };
+ if(ret==='ind'){
+  return `<span class="vckaede">
+    <span class="vcpil ind">←</span>
+    ${knap(vcKilde(dv),'kilde','Videoen kommer fra','vælg videokilde')}
+  </span>`;
+ }
+ return `<span class="vckaede ud">
+   ${knap(vcBaerer(dv),'baerer','Bærer signalet fra','vælg container')}
+   <span class="vcpil">→</span>
+   ${knap(vcMaal(dv),'maal','Videoen skal til','vælg videomål')}
+ </span>`;
+}
+/* Tælleren. "12/16" sagde ikke hvad de 12 var. Nu siger den hvor mange
+   spor der har en kilde, og Silent står for sig – for et Silent-spor er
+   færdigt, ikke manglende. */
+function vcTalHTML(dv){
+ const t=vcSporTal(dv);
+ const dele=[];
+ if(t.kilde) dele.push(t.kilde+' med kilde');
+ if(t.silent) dele.push(t.silent+' Silent');
+ if(t.arvet) dele.push(t.arvet+' arvet fra ind-containeren');
+ if(t.tekst) dele.push(t.tekst+' med tekst');
+ if(t.brudt) dele.push(t.brudt+' peger på noget der er væk');
+ return `<span class="vcspor ${t.kilde||t.silent?'har':''} ${t.brudt?'brudt':''}"
+   title="${esc(dele.length?dele.join(' · ')+' af '+t.ialt+' spor':'Ingen af de '+t.ialt+' spor er sat op endnu')}"
+   >${t.kilde}/${t.ialt}${t.silent?'<em>◌'+t.silent+'</em>':''}</span>`;
+}
 function vcRadHTML(dv){
  const p=vcPort(dv);
  const side=vcPortSide(dv);
  const ret=vcRetning(dv);
  const ude=vcUde.has(dv.id);
- const skrevet=vcSkrevet(dv), antal=vcSporAntal(dv);
- const bundet=vcBundne(dv).length;
+ const t=vcSporTal(dv);
  const rettere=p&&fresh(p)?[p.by||'?']:[];
- return `<div class="vcrad ${ret} ${ude?'ude':''} ${skrevet?'har':''} ${rettere.length?'rettet':''}"
+ return `<div class="vcrad ${ret} ${ude?'ude':''} ${t.kilde||t.silent||t.tekst?'har':''} ${rettere.length?'rettet':''}"
       ${rettere.length?`style="--ret:${retFarveNu[rettere[0]]||RET_FARVER[0]}"`:''}
       data-vcrad="${dv.id}">
    <button class="vcfold" data-vcfold="${dv.id}"
-     title="${ude?'Fold sporene sammen':'Fold de '+antal+' lydspor ud'}">${ude?'▾':'▸'}</button>
+     title="${ude?'Fold sporene sammen':'Fold de '+t.ialt+' lydspor ud'}">${ude?'▾':'▸'}</button>
    <input class="vcnr" value="${esc(dv.nr||'')}" data-vcnr="${dv.id}"
      title="Containerens nummer i routeren">
    <button class="vcret" data-vcvend="${dv.id}"
@@ -4886,16 +5666,99 @@ function vcRadHTML(dv){
    <input class="vcnavn" value="${esc(dv.name||'')}" list="lbls" placeholder="navn på containeren"
      data-vcnavn="${dv.id}" title="Hvad containeren hedder">
    ${dv.bib?`<span class="vcbibm" title="Kommer fra biblioteket ${esc(dv.bib)}">${esc(dv.bib)}</span>`:''}
-   <span class="vcspor ${skrevet?'har':''}" title="${skrevet} af ${antal} lydspor er beskrevet">${skrevet}/${antal}</span>
+   ${vcKaedeHTML(dv)}
+   ${vcTalHTML(dv)}
    ${vcBindMaerke(dv)}
-   ${ret==='ud'?`<button class="mini vcvej" data-vcvej="${dv.id}"
-     title="Vis signalets vej gennem systemet">⤳</button>`:'<span class="vcslot"></span>'}
+   <button class="mini vcvej" data-vcvej="${dv.id}"
+     title="${ret==='ud'?'Vis signalets vej – fra videokilden gennem ind-containeren og ud igen'
+                        :'Vis signalets vej – hvor det kommer fra, og hvem der bærer det videre'}">⤳</button>
+   <button class="mini vckopi" data-vckopi="${dv.id}"
+     title="Kopiér containeren med hele opsætningen – kopien kan rettes for sig">⧉</button>
    <button class="mini rowmenu" data-pmenu="${dv.id}|${side}|${p?p.id:''}"
      title="Muligheder for denne container">⋯</button>
    <button class="mini" data-vcdel="${dv.id}" title="Fjern containeren">✕</button>
  </div>
- ${ude&&p?`<div class="vcspormere">${audBlokKrop(dv,side,p)}</div>`:''}`;
+ ${ude&&p?`<div class="vcspormere">${vcSporBlok(dv,side,p)}</div>`:''}`;
 }
+
+/* ── De 16 lydspor ─────────────────────────────────────────────
+   Her lå den fælles lydblok før, og det var dén, der havde P/T-hakkene.
+   Lyd- og videoplanen bruger den stadig – den er ikke rørt. Containerne
+   har deres egen, fordi de har brug for noget andet: en kilde pr. spor.
+
+   Spøgelsesteksten er beholdt. Står der noget i tegningen, og er
+   sporet tomt, vises tegningens tekst som grå skygge, og mellemrum
+   eller enter henter den over. Felterne hedder det samme som før
+   (data-audn, data-audl), så de bindes af bindPlan som hidtil. */
+function vcSporBlok(dv, side, p){
+ const noegle=audNoegle(dv,side,p);
+ const liste=audListe(p);
+ const ud=vcRetning(dv)==='ud';
+ const grps=vcBundne(dv).map(g=>grpFind(g)).filter(Boolean);
+ return `<div class="vcsporliste ${grps.length?'bundet':''}">
+   ${grps.length?`<div class="audbind on"
+     title="Teksten herovre er din egen. Står feltet tomt, viser den hvad der står i tegningen – tryk mellemrum eller enter for at hente den over.">
+     <span class="bindikon">⚯</span>
+     <span class="bindtekst">${esc(grps.map(f=>grpNavn(f.g.id)).join(', '))}</span></div>`:''}
+   <div class="vcsporhoved">
+     <span class="s-n">Nr</span>
+     <span class="s-l">Lydspor</span>
+     <span class="s-k">${ud?(vcArvKilde(dv)?'Følger ind-containeren':'Lyd på vejen ud')
+                           :'Kommer fra'}</span>
+     <span class="s-by"></span>
+   </div>
+   ${liste.map((a,ai)=>{
+     const s=vcSporSrc(a);                       // sporets EGET valg
+     const arv=vcArv(dv,ai);                     // ind-containerens, hvis der er en
+     const vist=srcEr(s)?s:(arv?arv.src:null);   // eget valg slår arven
+     const silent=srcSilent(vist), egetSilent=srcSilent(s);
+     const brudt=srcBrudt(vist);
+     const arvetKilde=!srcEr(s)&&!!(arv&&srcEr(arv.src));
+     /* Skyggen i det tomme navnefelt: på en ud-container er det
+        ind-containerens tekst, ellers tegningens. Det er den samme
+        maskine, bare med en anden anden-side. */
+     const sp=spoegelsePlan('vc',dv,p,a.id,ai);
+     const skygge=(arv&&arv.tekst)?{tekst:arv.tekst, fra:arv.fra}:sp;
+     return `<div class="vcsporrad ${a.label||(arv&&arv.tekst)?'har':''} ${silent?'silent':''}
+            ${srcEr(vist)&&!silent?'kildet':''} ${arvetKilde?'arvet':''} ${fresh(a)?'fresh':''}"
+          ${fresh(a)?`style="--ret:${retFarveNu[a.by||'?']||RET_FARVER[0]}"`:''}>
+       <input class="audn s-n" value="${esc(a.n)}" data-audn="${noegle}|${a.id}"
+         title="Nummer eller navn på lydsporet">
+       <span class="s-l">
+         ${skygge?`<span class="audmaerke" title="${esc('Hænger sammen med '+skygge.fra
+            +' – teksten der er: '+skygge.tekst)}">⚯</span>`:''}
+         <input class="audl${(!a.label&&skygge)?' harspoeg':''}" value="${esc(a.label)}"
+           list="lbls" placeholder="${skygge?esc(skygge.tekst):'—'}"
+           title="${skygge&&!a.label?esc('Står i '+skygge.fra+': '+skygge.tekst+' — mellemrum eller enter henter den over')
+                   :esc(a.label)}"
+           ${skygge?`data-spoeg="${esc(skygge.tekst)}"`:''}
+           data-audl="${noegle}|${a.id}"></span>
+       ${ud
+         ? `<button class="vcsrc s-k ${egetSilent?'silent':''} ${arvetKilde?'arvet':''}"
+              data-vcsspor="${dv.id}|${a.id}"
+              title="${esc(egetSilent
+                ? 'Silent – sporet bærer med vilje ingen lyd. Klik for at slå det fra igen.'
+                : (arvetKilde
+                   ? 'Arvet fra '+arv.fra+': '+srcNavn(arv.src)
+                     +' — lyden følger ind-containeren, så du ikke skal sætte den op to gange.'
+                     +' Klik for at sætte dette spor til Silent på vejen ud.'
+                   : (arv
+                      ? 'Ind-containeren har ingen kilde på dette spor. Klik for at sætte det til Silent.'
+                      : 'Vælg først hvilken container den bærer, så følger lyden med. Klik for at sætte sporet til Silent.')))}"
+              >${egetSilent?'◌ Silent':(arvetKilde?esc(srcKort(arv.src)):'—')}</button>`
+         : `<button class="vcsrc s-k ${srcEr(s)?'har':''} ${silent?'silent':''} ${brudt?'brudt':''}"
+              data-vcsspor="${dv.id}|${a.id}"
+              title="${esc(brudt?srcNavn(s)+' – vælg en ny'
+                          :(srcEr(s)?'Kommer fra '+srcNavn(s):'Vælg hvor lyden i dette spor kommer fra, eller sæt den til Silent'))}"
+              >${esc(silent?'◌ Silent':(srcKort(s)||'vælg kilde'))}</button>`}
+       <span class="pby s-by" title="${a.by?esc(a.by)+' · '+new Date(a.at).toLocaleString('da-DK'):''}"
+         >${a.by?esc(a.by):''}</span>
+     </div>`}).join('')}
+   <button class="add audadd" data-audadd="${noegle}"
+     title="Giv containeren et lydspor mere">+ lydspor</button>
+ </div>`;
+}
+
 function vcListeHTML(){
  const alle=vcAlle();
  const vist=vcFiltreret();
@@ -4916,10 +5779,11 @@ function vcListeHTML(){
      <option value="ind" ${vcF.retning==='ind'?'selected':''}>Kun ind</option>
      <option value="ud" ${vcF.retning==='ud'?'selected':''}>Kun ud</option>
    </select>
-   <select id="vcFLyd" class="${vcF.lyd?'paa':''}" title="Om der er skrevet lydspor på">
+   <select id="vcFLyd" class="${vcF.lyd?'paa':''}"
+     title="Om lyden er sat op – en kilde, et Silent eller en tekst tæller">
      <option value="">Med og uden lyd</option>
-     <option value="har" ${vcF.lyd==='har'?'selected':''}>Kun med lydspor</option>
-     <option value="tom" ${vcF.lyd==='tom'?'selected':''}>Kun uden lydspor</option>
+     <option value="har" ${vcF.lyd==='har'?'selected':''}>Kun med lyd sat op</option>
+     <option value="tom" ${vcF.lyd==='tom'?'selected':''}>Kun uden lyd</option>
    </select>
    <select id="vcFBundet" class="${vcF.bundet?'paa':''}" title="Om containeren hører til en gruppe i tegningen">
      <option value="">Bundet og ubundet</option>
@@ -4948,7 +5812,8 @@ function vcListeHTML(){
         Tryk <b>+ Ind</b> eller <b>+ Ud</b> for at oprette den første.</div>`
    : `<div class="vcliste">
        <div class="vchead"><span class="h-f"></span><span class="h-nr">Nr</span>
-         <span class="h-r">Vej</span><span class="h-n">Navn</span>
+         <span class="h-r">I/U</span><span class="h-n">Navn</span>
+         <span class="h-k">Vej · kilde og mål</span>
          <span class="h-s">Spor</span><span class="h-b"></span></div>
        ${vist.map(vcRadHTML).join('')}
        ${vist.length?'':`<div class="vctom">Ingen containere rammer søgningen eller filtrene.</div>`}
@@ -5010,87 +5875,194 @@ function vcBindVaelg(dvId){
   });
 }
 
-/* ── Signalvejen ──────────────────────────────────────────────
-   Hvor kommer signalet i en ud-container fra? Vejen findes gennem
-   bindingen til tegningen: containeren bærer en gruppe, gruppen står på et
-   ark med en afsender og en modtager, og de andre steder, den samme gruppe
-   ligger, er den anden ende – tit en ind-container. Lydsporene stilles op
-   side om side, så man kan se, hvad der faktisk er i hvert spor hele vejen
-   igennem. Intet af det er noget, der skal vedligeholdes: det er de
-   bindinger, der allerede er lavet, læst forlæns. */
-function vcVejData(dv){
- const p=vcPort(dv);
- const ud=[];
- vcBundne(dv).forEach(gid=>{
-  const f=grpFind(gid);
-  if(!f)return;
-  /* Alle andre steder gruppen ligger – den anden ende af vejen. */
-  const andre=udAlleFor(gid).filter(u=>u.port!==p);
-  const kanaler=grpLyd(f.g);
-  const spor=audListe(p).map((a,i)=>{
-   const c=kanaler[i]||null;
-   /* Peger en kanal i tegningen lige på det her spor, er det den, der
-      gælder – ellers står kanalen på samme plads i listen. */
-   const direkte=indAlleFor('vc', dv.id, p.id, a.id);
-   const ch=direkte.length?direkte[0].ch:c;
-   let fra='';
-   if(ch&&ch.ind&&ch.ind.dev)fra=indMaalNavn(ch.ind);
-   return {nr:a.n||String(i+1), min:a.label||'', tegning:ch?(ch.label||''):'', fra:fra,
-           patched:!!a.patched, checked:!!a.checked};
-  });
-  ud.push({g:f.g, sti:f.sti, sek:f.sek, andre:andre, spor:spor});
+/* ── Sporene ud af programmet ──────────────────────────────────
+   Regneark, print og signalvej byggede hver sin udgave af de samme
+   sporlinjer. Tre udgaver bliver uenige – og de VAR uenige: printet
+   skjulte et spor, regnearket viste det. Nu er der ét sted.
+
+   Et Silent-spor regnes som SAT OP. Det er et valg, og det skal stå på
+   papiret – ellers kan man ikke se forskel på "her kommer der med
+   vilje ingenting" og "det har ingen taget stilling til". */
+/* ── Ud-containeren arver layoutet ─────────────────────────────
+   "Jeg vil undgå, at vi skal konfigurere den samme audio-routing både
+   på input- og outputsiden." Derfor skrives lyden ikke igen på en
+   ud-container: den VISER ind-containerens kanalopsætning, så snart man
+   har valgt hvilken container den bærer.
+
+   Og fordi ind- og ud-containere ikke hænger sammen i routeren, må en
+   ud-container godt afvige: skriver man alligevel sin egen tekst i et
+   spor, er den ens egen og bliver stående. Man SKAL bare ikke.
+
+   Det er samme greb, som programmet i forvejen bruger mellem tegningen
+   og kanalplanen: hver side ejer sin tekst, og den anden sides står som
+   grå skygge i et tomt felt. Her er den anden side ind-containeren. */
+function vcArvKilde(dv){
+ if(vcRetning(dv)!=='ud') return null;
+ const b=vcBaerer(dv);
+ if(!b || b.slags!=='vc') return null;
+ return vcById(b.dv);
+}
+function vcArv(dv, i){
+ const ind=vcArvKilde(dv);
+ if(!ind) return null;
+ const p=vcPort(ind); if(!p) return null;
+ const a=audListe(p)[i];
+ if(!a) return null;
+ const s=vcSporSrc(a);
+ return {tekst:String(a.label||''), src:s||null,
+         fra:(ind.nr?ind.nr+' · ':'')+(ind.name||'ind-containeren')};
+}
+
+function vcSporRader(dv){
+ const p=vcPort(dv); if(!p)return [];
+ return audListe(p).map((a,i)=>{
+  const s=vcSporSrc(a);
+  const sp=spoegelsePlan('vc',dv,p,a.id,i);
+  const arv=vcArv(dv,i);
+  const egen=String(a.label||'');
+  /* Eget valg slår arven. Et Silent sat på ud-containeren gælder, også
+     hvis ind-containeren har en kilde på det spor. */
+  const arvetTekst = !egen.trim() && !!(arv && arv.tekst);
+  const arvetKilde = !srcEr(s)  && !!(arv && arv.src);
+  const vist = srcEr(s) ? s : (arv ? arv.src : null);
+  return {nr:a.n||String(i+1),
+          egen:egen,
+          tekst: egen || (arv ? arv.tekst : ''),
+          arvetTekst:arvetTekst, arvetKilde:arvetKilde,
+          arvFra: arv ? arv.fra : '',
+          kilde: srcEr(vist) ? srcNavn(vist) : '',
+          kort:  srcEr(vist) ? srcKort(vist) : '',
+          silent: srcSilent(vist), brudt: srcBrudt(vist),
+          tegning:sp?sp.tekst:'', by:a.by||'', at:a.at||0};
  });
- return ud;
+}
+/* Sat op = der er taget stilling. Et arvet spor ER sat op: layoutet er
+   defineret på ind-containeren, og det er netop meningen at man ikke
+   skal gøre det om. */
+const vcSporSat = r => !!(String(r.tekst||'').trim() || r.kilde || r.silent);
+
+/* ── Signalvejen ──────────────────────────────────────────────
+   Før blev vejen GÆTTET: man ledte efter en vilkårlig anden container,
+   der var bundet til samme gruppe i tegningen, og skrev ellers "ingen
+   ind-container bundet". Det kunne ikke andet end gætte, for der var
+   ingen henvisning at følge.
+
+   Nu følges vejen forlæns, fordi containerne selv peger:
+
+     videokilde → ind-container → (gruppen i tegningen) → ud-container → mål
+
+   Og fordi ind- og ud-containere ikke hænger sammen i routeren, stilles
+   deres lydspor op SIDE OM SIDE. Står der noget forskelligt, er det ikke
+   en fejl – men man skal kunne se det. */
+function vcVejData(dv){
+ const ud = vcRetning(dv)==='ud';
+ const b  = ud ? vcBaerer(dv) : null;
+ const ind = (b && b.slags==='vc') ? vcById(b.dv) : null;
+ const p = vcPort(dv);
+ return {
+  dv:dv, ud:ud,
+  baerer:b, indDv:ind||null,
+  kilde: ud ? (ind ? vcKilde(ind) : null) : vcKilde(dv),
+  maal:  ud ? vcMaal(dv) : null,
+  grupper: vcBundne(dv).map(g=>grpFind(g)).filter(Boolean),
+  /* Hvor ellers ligger de samme grupper? Det er tit den anden ende. */
+  andre: vcBundne(dv).reduce((liste,gid)=>
+    liste.concat(udAlleFor(gid).filter(u=>u.port!==p)), []),
+  /* Hvilke ud-containere bærer DENNE? Det kunne man slet ikke se før. */
+  baeresAf: ud ? [] : vcAlle().filter(x=>{
+    const bb=vcBaerer(x);
+    return bb && bb.slags==='vc' && bb.dv===dv.id;
+  }),
+  spor: vcSporRader(dv),
+  indSpor: ind ? vcSporRader(ind) : null
+ };
 }
 function vcVejHTML(dv){
- const veje=vcVejData(dv);
- const mig=`<span class="vvbox mig">${esc((dv.nr?dv.nr+' · ':'')+(dv.name||'container'))}
-   <em>${vcRetning(dv)==='ind'?'ind-container':'ud-container'}</em></span>`;
- if(!veje.length){
-  return `<div class="vvtom">Containeren er ikke bundet til nogen gruppe i tegningen,
-    så der er ingen vej at følge endnu.<br>
-    Tryk på knuden <b>⚯</b> i containerens linje og vælg gruppen – så kan vejen vises.</div>`;
+ const v=vcVejData(dv);
+ const kasse=(tekst, under, kl) =>
+   `<span class="vvbox ${kl||''}">${esc(tekst)}${under?`<em>${esc(under)}</em>`:''}</span>`;
+ const mangler=t=>`<span class="vvbox mangler">${esc(t)}<em>vælg den i containerens linje</em></span>`;
+ /* Pilene sættes IND MELLEM kasserne til sidst. Lagde man en pil efter
+    hver kasse, hang der en løs pil i enden – og når kæden brød linjen,
+    stod den pil alene nederst til højre. */
+ const pil='<span class="vvpil">→</span>';
+
+ const led=[];
+ led.push(srcEr(v.kilde)
+   ? kasse(srcNavn(v.kilde), v.ud?'videokilden på ind-containeren':'videokilde')
+   : mangler(v.ud ? 'ingen videokilde' : 'ingen videokilde valgt'));
+ if(v.ud){
+  led.push(v.indDv
+    ? kasse((v.indDv.nr?v.indDv.nr+' · ':'')+(v.indDv.name||'uden navn'), 'ind-container')
+    : (srcEr(v.baerer)
+       ? kasse(srcNavn(v.baerer), 'bærer – skrevet i hånden')
+       : mangler('ingen ind-container')));
  }
- return veje.map(v=>{
-  const ind=v.andre.filter(u=>u.dom==='vc'&&vcRetning(u.dv)==='ind');
-  const andet=v.andre.filter(u=>!(u.dom==='vc'&&vcRetning(u.dv)==='ind'));
-  const kasse=u=>`<span class="vvbox">${esc((u.dv.nr?u.dv.nr+' · ':'')+(u.dv.name||'')
-    +(u.dom!=='vc'?' ':'')) || '(uden navn)'}
-    <em>${u.dom==='vc'?(vcRetning(u.dv)==='ind'?'ind-container':'ud-container')
-         :PLANDOMS[u.dom]+' · '+SIDENAVN[u.side].toLowerCase()+' '+esc(u.port.n||'')}</em></span>`;
-  return `<div class="vvvej">
-   <div class="vvkaede">
-     ${ind.length?ind.map(kasse).join('<span class="vvpil">→</span>')
-                 :'<span class="vvbox mangler">ingen ind-container bundet<em>bind den i tegningen eller i listen</em></span>'}
-     <span class="vvpil">→</span>
-     <span class="vvbox gruppe">${esc(v.g.label||v.g.feed||'gruppe')}
-       <em>${esc(v.sek)} · ${esc(v.sti)}${v.g.transport?' · '+esc(v.g.transport):''}</em></span>
-     <span class="vvpil">→</span>
-     ${mig}
-   </div>
-   ${andet.length?`<div class="vvandet">Samme gruppe ligger også på:
-     ${andet.map(u=>esc((u.dv.name||u.dv.nr||'')+' · '+PLANDOMS[u.dom]+' '
-       +SIDENAVN[u.side].toLowerCase()+' '+(u.port.n||''))).join(' · ')}</div>`:''}
-   <table class="vvtab">
-     <tr><th>Spor</th><th>I containeren</th><th>I tegningen</th><th>Kommer fra</th><th>P</th><th>T</th></tr>
-     ${v.spor.map(s=>`<tr class="${s.min||s.tegning?'':'tomspor'}">
-       <td class="vvnr">${esc(s.nr)}</td>
-       <td>${esc(s.min)||'<span class="vvintet">—</span>'}</td>
-       <td>${esc(s.tegning)||'<span class="vvintet">—</span>'}</td>
-       <td class="vvfra">${esc(s.fra)||'<span class="vvintet">—</span>'}</td>
-       <td>${s.min?(s.patched?'✓':'☐'):''}</td>
-       <td>${s.min?(s.checked?'✓':'☐'):''}</td>
-     </tr>`).join('')}
-   </table>
-  </div>`;
- }).join('');
+ v.grupper.forEach(f=>{
+  led.push(kasse(f.g.label||f.g.feed||'gruppe',
+    f.sek+' · '+f.sti+(f.g.transport?' · '+f.g.transport:''), 'gruppe'));
+ });
+ led.push(kasse((dv.nr?dv.nr+' · ':'')+(dv.name||'container'),
+   v.ud?'ud-container · den du står i':'ind-container · den du står i', 'mig'));
+ if(v.ud){
+  led.push(srcEr(v.maal) ? kasse(srcNavn(v.maal),'videoen skal hertil')
+                         : mangler('intet videomål valgt'));
+ }
+
+ /* Sporene. På en ud-container med en bærer står ind-containerens spor
+    ved siden af, så man kan se hvor de to er forskellige. */
+ const medInd = v.ud && !!v.indSpor;
+ const rad=(r,i)=>{
+  const ir = medInd ? (v.indSpor[i]||null) : null;
+  /* Uenighed måles på ud-containerens EGEN tekst. Falder sporet tilbage
+     på arven, er de to pr. definition enige – og så skal der ikke stå
+     en advarsel om noget, der ikke er sket. */
+  const uenig = medInd && ir
+    && String(ir.tekst||'').trim() && String(r.egen||'').trim()
+    && ir.tekst !== r.egen;
+  return `<tr class="${vcSporSat(r)||(ir&&vcSporSat(ir))?'':'tomspor'}">
+    <td class="vvnr">${esc(r.nr)}</td>
+    ${medInd?`<td class="${ir&&ir.silent?'vvsilent':''}">${
+      ir ? (ir.silent?'◌ Silent':(esc(ir.tekst)||'<span class="vvintet">—</span>'))
+         : '<span class="vvintet">—</span>'}</td>`:''}
+    <td class="${r.silent?'vvsilent':''} ${uenig?'vvuenig':''}">${
+      r.silent?'◌ Silent':(esc(r.tekst)||'<span class="vvintet">—</span>')}</td>
+    <td class="vvfra ${r.brudt?'vvbrudt':''}">${
+      r.silent?'<span class="vvintet">ingen kilde – Silent</span>'
+             :(esc(r.kilde)||'<span class="vvintet">—</span>')}</td>
+    <td>${esc(r.tegning)||'<span class="vvintet">—</span>'}</td>
+  </tr>`;
+ };
+ const hoved = `<tr><th>Spor</th>${medInd?'<th>I ind-containeren</th>':''}
+   <th>I ${v.ud?'ud-containeren':'containeren'}</th><th>Kommer fra</th>
+   <th>Står i tegningen</th></tr>`;
+
+ return `<div class="vvvej">
+   <div class="vvkaede">${led.map((x,i)=>
+     /* Pilen bor INDE i det led, den peger paa. Ellers haenger der en
+        loes pil i enden, naar kaeden bryder linjen - og det saa ud som
+        om der manglede et led. */
+     `<span class="vvled">${i?pil:''}${x}</span>`).join('')}</div>
+   ${v.andre.length?`<div class="vvandet">Samme gruppe i tegningen ligger også på:
+     ${esc(v.andre.map(u=>(u.dv.name||u.dv.nr||'')+' · '+PLANDOMS[u.dom]+' '
+       +SIDENAVN[u.side].toLowerCase()+' '+(u.port.n||'')).join(' · '))}</div>`:''}
+   ${v.baeresAf.length?`<div class="vvandet">Bæres af:
+     ${esc(v.baeresAf.map(x=>(x.nr?x.nr+' · ':'')+(x.name||'uden navn')).join(' · '))}</div>`:''}
+   ${(!v.ud&&!v.baeresAf.length)?`<div class="vvandet">Ingen ud-container bærer
+     denne endnu – vælg den i ud-containerens linje.</div>`:''}
+   ${medInd?`<div class="vvandet">Ind- og ud-containere hænger ikke sammen i
+     routeren. Står der forskellige tekster herunder, er det ikke en fejl –
+     men nu kan man se det.</div>`:''}
+   <table class="vvtab">${hoved}${v.spor.map(rad).join('')}</table>
+ </div>`;
 }
 function vcVisVej(dvId){
  const dv=vcAlle().find(x=>x.id===dvId);
  if(!dv)return;
  openModal('Signalvej',
   (dv.nr?'Container '+dv.nr+' · ':'')+(dv.name||'uden navn')
-   +' – fra ind-container gennem tegningen og ud igen',
+   +(vcRetning(dv)==='ud' ? ' – fra videokilden gennem ind-containeren og ud igen'
+                          : ' – fra videokilden og videre ud i systemet'),
   `<div class="vvrude">${vcVejHTML(dv)}</div>
    <div class="mrow" style="margin-top:12px">
      <button class="btn" data-vvprint="1">↧ Print vejen</button>
@@ -5115,25 +6087,33 @@ function vcVejPrint(dv){
 
 /* ── Regneark og print ────────────────────────────────────────
    Containerne skal ud i samme form som resten: én linje pr. lydspor, så
-   det kan sorteres og klistres ind i routerens eget ark. */
+   det kan sorteres og klistres ind i routerens eget ark.
+
+   Patchet og Tjekket er VÆK – også her. De hak hørte til den fælles
+   lydblok, som containerne ikke bruger mere. I deres plads står det,
+   en container nu faktisk ved: hvor signalet kommer fra og hvor det
+   skal hen. */
 function vcRows(){
- const rows=[['Nr','Container','Vej','Bibliotek','Gruppe i tegningen','Spor nr','Lydspor',
-   'Står i tegningen','Kommer fra','Patchet','Tjekket','Sat af','Tidspunkt']];
+ const rows=[['Nr','Container','Ind/ud','Bibliotek','Videokilde','Bærer',
+   'Videomål','Gruppe i tegningen','Spor nr','Lydspor','Sporets kilde',
+   'Står i tegningen','Sat af','Tidspunkt']];
+ const tid=t=>t?new Date(t).toLocaleString('da-DK'):'';
  vcFiltreret().forEach(dv=>{
   const p=vcPort(dv); if(!p)return;
+  const ud=vcRetning(dv)==='ud';
   const grp=vcBundne(dv).map(g=>grpNavn(g)).join(' / ');
-  const veje=vcVejData(dv);
-  const spor=veje.length?veje[0].spor:audListe(p).map((a,i)=>({
-    nr:a.n||String(i+1), min:a.label||'', tegning:'', fra:'',
-    patched:!!a.patched, checked:!!a.checked}));
-  const skrevet=spor.filter(s=>s.min||s.tegning);
-  /* En container uden et eneste spor skal stadig med – ellers mangler den i
-     listen, og man tror den ikke findes. */
-  (skrevet.length?skrevet:[{nr:'',min:'',tegning:'',fra:'',patched:false,checked:false}])
-   .forEach(s=>rows.push([dv.nr||'', dv.name||'', vcRetning(dv)==='ind'?'Ind':'Ud',
-     dv.bib||'', grp, s.nr, s.min, s.tegning, s.fra,
-     s.patched?'ja':'', s.checked?'ja':'', p.by||'',
-     p.at?new Date(p.at).toLocaleString('da-DK'):'']));
+  const kilde = ud ? '' : srcNavn(vcKilde(dv));
+  const baerer= ud ? srcNavn(vcBaerer(dv)) : '';
+  const maal  = ud ? srcNavn(vcMaal(dv))   : '';
+  const alle=vcSporRader(dv);
+  const sat=alle.filter(vcSporSat);
+  /* En container uden et eneste spor skal stadig med – ellers mangler
+     den i listen, og man tror den ikke findes. */
+  (sat.length?sat:[{nr:'',tekst:'',kilde:'',silent:false,tegning:'',by:'',at:0}])
+   .forEach(r=>rows.push([dv.nr||'', dv.name||'', ud?'Ud':'Ind', dv.bib||'',
+     kilde, baerer, maal, grp, r.nr, r.tekst,
+     r.silent?'Silent':r.kilde, r.tegning,
+     r.by||p.by||'', tid(r.at)||tid(p.at)]));
  });
  return rows;
 }
@@ -5143,43 +6123,45 @@ function vcCSV(){
     fileName('csv',false,'containere'),'text/csv;charset=utf-8');
  closeModal();
 }
-/* Sporene på papir: KUN dem der står noget i, og de står ned ad –
+/* Sporene på papir: KUN dem der er sat op, og de står ned ad –
    1, 2, 3, 4, 5 – ikke på skift til venstre og højre. Papiret bruges i
    stedet til at stille to containere ved siden af hinanden, så en liste på
    seksten containere ikke bliver til seksten sider med luft på. */
 function vcPrintSpor(dv){
- const p=vcPort(dv); if(!p)return [];
- const veje=vcVejData(dv);
- const alle=veje.length?veje[0].spor:audListe(p).map((a,i)=>({
-   nr:a.n||String(i+1), min:a.label||'', tegning:'',
-   patched:!!a.patched, checked:!!a.checked}));
- return alle.filter(s=>(s.min||'').trim()||(s.tegning||'').trim());
+ return vcSporRader(dv).filter(vcSporSat);
 }
 function vcPrintHTML(){
  const vist=vcFiltreret();
  const kort=vist.map(dv=>{
   const p=vcPort(dv); if(!p)return '';
+  const ud=vcRetning(dv)==='ud';
   const grp=vcBundne(dv).map(g=>grpNavn(g)).join(' / ');
   const spor=vcPrintSpor(dv);
+  /* Vejen skal stå på papiret. Det er den, man står med i hånden ved
+     routeren – ikke to afkrydsningsfelter. */
+  const vej = ud
+   ? [srcNavn(vcBaerer(dv)), srcNavn(vcMaal(dv))].filter(Boolean).join('  →  ')
+   : srcNavn(vcKilde(dv));
   return `<div class="ppdev vckort"><div class="ppname">
-     <span class="ppvcret">${vcRetning(dv)==='ind'?'IND':'UD'}</span>
+     <span class="ppvcret">${ud?'UD':'IND'}</span>
      ${esc(dv.nr||'')} · ${esc(dv.name||'uden navn')}${dv.bib?' · '+esc(dv.bib):''}
      ${grp?'<span class="ppvcgrp">'+esc(grp)+'</span>':''}</div>
+    ${vej?`<div class="ppvcvej">${ud?'':'← '}${esc(vej)}${ud?'':''}</div>`:''}
     ${spor.length
       ? `<div class="ppvcspor">${spor.map(s=>`<div class="ppvcr">
           <span class="ppn">${esc(s.nr)}</span>
-          <span class="ppl">${esc(s.min||s.tegning||'')}</span>
-          <span class="ppb">${s.patched?'✓':'☐'}</span>
-          <span class="ppb">${s.checked?'✓':'☐'}</span>
+          <span class="ppl">${esc(s.tekst||s.tegning||'')}</span>
+          <span class="ppk ${s.silent?'silent':''}">${
+            s.silent?'◌ Silent':esc(s.kort||'')}</span>
         </div>`).join('')}</div>`
-      : `<div class="ppvctom">ingen lydspor skrevet</div>`}
+      : `<div class="ppvctom">ingen lydspor sat op</div>`}
    </div>`;
  }).filter(Boolean);
- const skrevet=vist.reduce((n,dv)=>n+vcPrintSpor(dv).length,0);
+ const sat=vist.reduce((n,dv)=>n+vcPrintSpor(dv).length,0);
  return `<div class="sheettitle">${esc(projectName)} · Video containere${
    vcFiltrePaa()?' · udvalg':''}${harJob()?` <span class="ppdage">${esc(jobTekst())}</span>`:''}</div>
   <div class="ppvcsum">${vist.length} container${vist.length===1?'':'e'} · ${
-    skrevet} lydspor skrevet</div>
+    sat} lydspor sat op</div>
   <div class="ppvcpar">${kort.join('')}</div>`;
 }
 function vcPrint(){
@@ -5198,19 +6180,43 @@ function sheetContainer(dv){
  const ude=vcUde.has(dv.id);
  const ret=vcRetning(dv);
  const grp=vcBundne(dv).map(g=>grpNavn(g)).filter(Boolean);
+ const t=vcSporTal(dv);
  const punkter=[
   {ikon:ude?'▾':'▸', tekst:ude?'Fold lydsporene sammen':'Fold lydsporene ud',
-   vaerdi:vcSkrevet(dv)+'/'+vcSporAntal(dv),
+   vaerdi:t.kilde+'/'+t.ialt+(t.silent?' · ◌'+t.silent:''),
    gør:()=>{ if(ude)vcUde.delete(dv.id); else vcUde.add(dv.id); drawPlan() }}
  ];
- if(ret==='ud')punkter.push({ikon:'⤳',tekst:'Vis signalvej',
-   under:'følg signalet fra ind-containeren og gennem tegningen',
+ /* Vejen skal kunne sættes op fra telefonen også – der er ingen knapper
+    i linjen dér. Punkterne står i den rækkefølge, signalet går. */
+ if(ret==='ind'){
+  punkter.push({ikon:'←',tekst:'Hvor kommer videoen fra?',
+    vaerdi:srcKort(vcKilde(dv)),
+    under:srcEr(vcKilde(dv))?srcNavn(vcKilde(dv)):'ingen videokilde valgt endnu',
+    gør:()=>vcVaelgKilde(dv.id)});
+ }else{
+  punkter.push({ikon:'⇤',tekst:'Hvilken container bærer den?',
+    vaerdi:srcKort(vcBaerer(dv)),
+    under:srcEr(vcBaerer(dv))
+      ? 'lydens kanalopsætning følger denne container'
+      : 'vælg den, så følger lyden med – den skal ikke sættes op igen',
+    gør:()=>vcVaelgBaerer(dv.id)});
+  punkter.push({ikon:'→',tekst:'Hvor skal videoen hen?',
+    vaerdi:srcKort(vcMaal(dv)),
+    under:srcEr(vcMaal(dv))?srcNavn(vcMaal(dv)):'intet videomål valgt endnu',
+    gør:()=>vcVaelgMaal(dv.id)});
+ }
+ punkter.push({ikon:'⤳',tekst:'Vis signalvej',
+   under:ret==='ud' ? 'følg signalet fra videokilden gennem ind-containeren og ud igen'
+                    : 'se hvor signalet kommer fra, og hvem der bærer det videre',
    gør:()=>vcVisVej(dv.id)});
  punkter.push({ikon:'⚯',tekst:'Bind til tegningen',
    vaerdi:grp.join(', '),
    under:grp.length?'':'containeren hører ikke til nogen gruppe endnu',
    gør:()=>vcBindVaelg(dv.id)});
  punkter.push({skil:1});
+ punkter.push({ikon:'⧉',tekst:'Kopiér containeren',
+   under:'hele opsætningen med – kopien kan rettes for sig',
+   gør:()=>vcKopier(dv.id)});
  punkter.push({ikon:'⇄',tekst:ret==='ind'?'Gør den til en ud-container':'Gør den til en ind-container',
    gør:()=>vcVendRetning(dv)});
  punkter.push({skil:1});
@@ -5279,6 +6285,22 @@ function bindVC(){
       +vcSkrevet(dv)+' lydspor på den.'))return;
   vcSlet(dv);
  });
+
+ /* Vejen: kilden, baereren, maalet og hvert enkelt spor. Alle fire gaar
+    gennem den samme vaelger, saa de fire ting opfoerer sig ens - og saa
+    en fejl kun kan sidde ét sted. */
+ el2.querySelectorAll('[data-vcskilde]').forEach(b=>b.onclick=()=>
+   vcVaelgKilde(b.dataset.vcskilde));
+ el2.querySelectorAll('[data-vcsbaerer]').forEach(b=>b.onclick=()=>
+   vcVaelgBaerer(b.dataset.vcsbaerer));
+ el2.querySelectorAll('[data-vcsmaal]').forEach(b=>b.onclick=()=>
+   vcVaelgMaal(b.dataset.vcsmaal));
+ el2.querySelectorAll('[data-vcsspor]').forEach(b=>b.onclick=()=>{
+  const d=b.dataset.vcsspor, i=d.indexOf('|');
+  vcVaelgSpor(d.slice(0,i), d.slice(i+1));
+ });
+ el2.querySelectorAll('[data-vckopi]').forEach(b=>b.onclick=()=>
+   vcKopier(b.dataset.vckopi));
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -6793,7 +7815,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.22-a';
+const SF_VERSION='2026.10.25-a';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
