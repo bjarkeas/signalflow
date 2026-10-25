@@ -1289,11 +1289,10 @@ body.mobile .vcrad .mini:not(.rowmenu){display:none!important}
 .vcsporrad .s-i{width:150px;flex:none;max-width:150px;font-family:var(--fm);
  font-size:10px;color:var(--faint);white-space:nowrap;overflow:hidden;
  text-overflow:ellipsis;padding:0 4px}
-/* Har man døbt sporet om, lyser teksten på linjen op – så kan man se med
-   det samme, hvor de to ikke siger det samme. Er de ens, står den
-   dæmpet: der er ikke noget at tage stilling til. */
-.vcsporrad .s-i.har{color:var(--intercom)}
-.vcsporrad .s-i.har.ens{color:var(--faint)}
+/* Normalt står teksten dæmpet – den er en oplysning, ikke en advarsel.
+   Den lyser KUN op, hvis du selv har skrevet noget andet i sporet. */
+.vcsporrad .s-i.har{color:var(--dim)}
+.vcsporrad .s-i.har.andet{color:var(--intercom)}
 .vcsporrad .s-k{width:180px;flex:none;max-width:180px}
 .vcsporrad .s-by{width:34px;flex:none;position:static;display:block;
  font-family:var(--fm);font-size:9px;color:var(--faint);text-align:right;
@@ -5419,18 +5418,19 @@ function vcSaetSporSrc(dv, p, aIdent, src){
  const a = audFind(p, ident, true);
  if(!a) return;
  if(srcEr(src)) a.src = src; else delete a.src;
- /* Vælger man en kilde til et spor, der ikke har et navn endnu, får
-    det navn efter kilden. Ellers skulle man skrive det samme to gange –
-    og så gør folk det ikke, og sporet står tomt i printet.
+ /* Her blev teksten FØR skrevet ind i sporet, når man valgte en kilde.
+    Det gav et rod, der ikke var til at gennemskue:
 
-    Det er TEKSTEN PÅ LINJEN, der bruges – "Vært" – ikke linjens eget
-    navn. Første udgave tog linjens navn, og så stod der "Wisycom rack
-    Remote2 ind 1" både i sporet og i kilden ved siden af: to kolonner
-    med det samme. Har linjen ingen tekst, er dens navn stadig bedre
-    end ingenting. */
- if(srcEr(src) && src.slags !== 'silent' && !String(a.label||'').trim()){
-  a.label = srcIndhold(src) || srcKort(src);
- }
+      · Stod der ingen tekst på linjen, da man valgte den, tog sporet
+        linjens NAVN i stedet ("Rio 1608-D ind 3"). Kom teksten på
+        linjen bagefter, sad sporet fast med den gamle kopi.
+      · Nogle spor havde altså hentet et navn, andre ikke, og man kunne
+        ikke se hvorfor. Det afhang af, hvornår man havde valgt.
+
+    Derfor kopieres der ikke længere. Sporet ejer sin egen tekst – og
+    har det ingen, VISES linjens tekst som grå skygge og følger med, når
+    den rettes. Vil man have den som sin egen, henter man den over med
+    mellemrum eller enter, ligesom alle andre steder i programmet. */
  touch(a);
  if(p) touch(p);
  dv.mt = Date.now();
@@ -5460,7 +5460,10 @@ function vcSporTal(dv){
   if(!srcEr(egen) && (srcEr(arvS) || arvT)) arvet++;
   if(srcSilent(s)) silent++;
   else if(srcEr(s)){ kilde++; if(srcBrudt(s)) brudt++ }
-  if(minT || arvT) tekst++;
+  /* Et spor HAR en tekst, også når den kommer fra linjen i stedet for at
+     være skrevet her. Ellers ville en container, hvor alt er hentet fra
+     kilderne, stå som "uden tekst" – og det er netop den, der er færdig. */
+  if(minT || arvT || srcIndhold(s)) tekst++;
  });
  return {ialt:liste.length, kilde:kilde, silent:silent, tekst:tekst,
          brudt:brudt, arvet:arvet};
@@ -5934,11 +5937,10 @@ function vcSporBlok(dv, side, p){
      const silent=srcSilent(vist), egetSilent=srcSilent(s);
      const brudt=srcBrudt(vist);
      const arvetKilde=!srcEr(s)&&!!(arv&&srcEr(arv.src));
-     /* Skyggen i det tomme navnefelt: på en ud-container er det
-        ind-containerens tekst, ellers tegningens. Det er den samme
-        maskine, bare med en anden anden-side. */
-     const sp=spoegelsePlan('vc',dv,p,a.id,ai);
-     const skygge=(arv&&arv.tekst)?{tekst:arv.tekst, fra:arv.fra}:sp;
+     /* Skyggen i det tomme navnefelt. Samme opslag som regnearket og
+        printet bruger – ét sted, så de tre aldrig kan sige noget
+        forskelligt om det samme spor. */
+     const skygge=vcSkygge(dv,p,a,ai,vist);
      return `<div class="vcsporrad ${a.label||(arv&&arv.tekst)?'har':''} ${silent?'silent':''}
             ${srcEr(vist)&&!silent?'kildet':''} ${arvetKilde?'arvet':''} ${fresh(a)?'fresh':''}"
           ${fresh(a)?`style="--ret:${retFarveNu[a.by||'?']||RET_FARVER[0]}"`:''}>
@@ -5954,20 +5956,18 @@ function vcSporBlok(dv, side, p){
            ${skygge?`data-spoeg="${esc(skygge.tekst)}"`:''}
            data-audl="${noegle}|${a.id}"></span>
        ${(()=>{
-         /* Hvad der står PÅ linjen – altid, også når sporet hedder det
-            samme. Første udgave satte en lille streg, når de to var ens,
-            for ikke at skrive det samme to gange. Men sporet døbes jo
-            efter linjen, så de ER ens fra starten, og så stod der en
-            streg i hele kolonnen – præcis dér hvor man gerne ville læse
-            teksten. At de to står ens er i sig selv en oplysning: så er
-            sporet ikke døbt om. */
+         /* Hvad der står PÅ linjen – altid. Kolonnen lyser KUN op, når
+            du selv har skrevet noget andet i sporet, og mellemrum og
+            store bogstaver tæller ikke med. Så betyder farven én ting:
+            "her siger de to ikke det samme", og det er noget, du selv
+            har gjort med vilje. */
          const ind=srcIndhold(vist);
          const egen=String(a.label||'').trim();
-         const ens=!!ind && ind===egen;
-         return `<span class="s-i ${ind?'har':''} ${ens?'ens':''}"
+         const doebtOm=!!ind && !!egen && !vcEnsTekst(ind,egen);
+         return `<span class="s-i ${ind?'har':''} ${doebtOm?'andet':''}"
            title="${esc(ind
-             ? (ens ? 'På linjen står der: '+ind+' – og sporet hedder det samme'
-                    : 'På linjen står der: '+ind+' – sporet er døbt om til "'+egen+'"')
+             ? (doebtOm ? 'På linjen står der "'+ind+'" – sporet er døbt om til "'+egen+'"'
+                        : 'På linjen står der: '+ind)
              : (srcEr(vist)?'Der står ingen tekst på den linje endnu':''))}"
            >${esc(ind)||''}</span>`})()}
        ${ud
@@ -6148,9 +6148,44 @@ function vcArv(dv, i){
  const a=audListe(p)[i];
  if(!a) return null;
  const s=vcSporSrc(a);
- return {tekst:String(a.label||''), src:s||null,
+ /* Arvens tekst er ind-containerens EGEN tekst, og ellers det, der står
+    på den linje, den henter fra. Ellers ville arven kun virke, hvis
+    kollegaen havde skrevet sporene om i hånden. */
+ const egen=String(a.label||'').trim();
+ return {tekst: egen || srcIndhold(s), src:s||null,
          fra:(ind.nr?ind.nr+' · ':'')+(ind.name||'ind-containeren')};
 }
+
+/* ── Skyggen i et tomt spor ────────────────────────────────────
+   ÉT sted, så rækken, regnearket, printet og signalvejen aldrig kan
+   blive uenige om, hvad der står i et spor, man ikke selv har navngivet.
+
+   Rækkefølgen er den, signalet kommer ad:
+     1. bærer ud-containeren en ind-container, er det DENS tekst
+     2. ellers teksten på den linje, sporet kommer fra
+     3. ellers en kanal i tegningen, der peger ind på sporet
+   Intet af det kopieres – det LÆSES, hver gang. Retter nogen teksten på
+   linjen, står den rigtige her med det samme. */
+function vcSkygge(dv, p, a, i, vist){
+ const arv=vcArv(dv,i);
+ if(arv && arv.tekst) return {tekst:arv.tekst, fra:arv.fra};
+ /* Teksten på linjen – og står der ingen, linjens eget navn. Ellers
+    stod et spor tomt, netop fordi man havde valgt en kilde til det.
+    Og det er dét, der gør, at kanal 9 retter sig selv: skriver nogen
+    siden en tekst på linjen, står den her i stedet for navnet. */
+ if(srcEr(vist) && vist.slags!=='silent'){
+  const ind=srcIndhold(vist);
+  if(ind || srcKort(vist)) return {tekst: ind || srcKort(vist), fra:srcNavn(vist)};
+ }
+ return spoegelsePlan('vc', dv, p, a.id, i);
+}
+/* Mellemrum, store og små bogstaver skal ikke gøre to ens tekster
+   forskellige. Første udgave sammenlignede den ene side trimmet og den
+   anden rå, og så lyste et spor op, fordi der stod ét mellemrum for
+   meget på linjen. Det så tilfældigt ud – og det var det. */
+const vcEnsTekst = (a2,b2) =>
+  String(a2||'').trim().replace(/\s+/g,' ').toLowerCase()
+  === String(b2||'').trim().replace(/\s+/g,' ').toLowerCase();
 
 function vcSporRader(dv){
  const p=vcPort(dv); if(!p)return [];
@@ -6161,14 +6196,17 @@ function vcSporRader(dv){
   const egen=String(a.label||'');
   /* Eget valg slår arven. Et Silent sat på ud-containeren gælder, også
      hvis ind-containeren har en kilde på det spor. */
-  const arvetTekst = !egen.trim() && !!(arv && arv.tekst);
   const arvetKilde = !srcEr(s)  && !!(arv && arv.src);
   const vist = srcEr(s) ? s : (arv ? arv.src : null);
+  /* Teksten LÆSES, den kopieres ikke. Har sporet ingen egen, står
+     skyggens – og den følger med, hvis nogen retter den ved kilden. */
+  const sk = vcSkygge(dv,p,a,i,vist);
+  const arvetTekst = !egen.trim() && !!(sk && sk.tekst);
   return {nr:a.n||String(i+1),
           egen:egen,
-          tekst: egen || (arv ? arv.tekst : ''),
+          tekst: egen || (sk ? sk.tekst : ''),
           arvetTekst:arvetTekst, arvetKilde:arvetKilde,
-          arvFra: arv ? arv.fra : '',
+          arvFra: arv ? arv.fra : (sk ? sk.fra : ''),
           kilde: srcEr(vist) ? srcNavn(vist) : '',
           kort:  srcEr(vist) ? srcKort(vist) : '',
           indhold: srcIndhold(vist),
@@ -8075,7 +8113,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.25-c';
+const SF_VERSION='2026.10.25-d';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
