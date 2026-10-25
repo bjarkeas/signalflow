@@ -1280,8 +1280,20 @@ body.mobile .vcrad .mini:not(.rowmenu){display:none!important}
 .vcsporrad .s-l{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:4px}
 .vcsporhoved .s-n{width:74px;flex:none}
 .vcsporhoved .s-l{flex:1 1 auto;min-width:0}
+.vcsporhoved .s-i{width:150px;flex:none}
 .vcsporhoved .s-k{width:180px;flex:none}
 .vcsporhoved .s-by{width:34px;flex:none}
+/* Teksten PÅ linjen. Den kan ikke rettes her – den bor på linjen i
+   Lydplanen eller på kanalen i tegningen, og det ville være to
+   sandheder at kunne skrive den to steder. */
+.vcsporrad .s-i{width:150px;flex:none;max-width:150px;font-family:var(--fm);
+ font-size:10px;color:var(--faint);white-space:nowrap;overflow:hidden;
+ text-overflow:ellipsis;padding:0 4px}
+/* Har man døbt sporet om, lyser teksten på linjen op – så kan man se med
+   det samme, hvor de to ikke siger det samme. Er de ens, står den
+   dæmpet: der er ikke noget at tage stilling til. */
+.vcsporrad .s-i.har{color:var(--intercom)}
+.vcsporrad .s-i.har.ens{color:var(--faint)}
 .vcsporrad .s-k{width:180px;flex:none;max-width:180px}
 .vcsporrad .s-by{width:34px;flex:none;position:static;display:block;
  font-family:var(--fm);font-size:9px;color:var(--faint);text-align:right;
@@ -1302,6 +1314,16 @@ body.mobile .vcrad .mini:not(.rowmenu){display:none!important}
 .srcsoeg{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--text);
  font-size:13px;padding:7px 9px;border-radius:5px;margin:0 0 10px}
 .srcsoeg:focus{outline:none;border-color:var(--intercom)}
+/* Filterbjælken i vælgeren – samme udseende som den over containerlisten,
+   så de to steder ikke skal læres hver for sig. */
+.srcbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:0 0 10px}
+.srcbar select{background:var(--bg);border:1px solid var(--line);color:var(--dim);
+ font-family:var(--fm);font-size:10.5px;padding:4px 6px;border-radius:5px;cursor:pointer}
+.srcbar select.paa{border-color:var(--lyd);color:var(--lyd)}
+.srcsvar{font-family:var(--fm);font-size:10px;color:var(--faint);white-space:nowrap;
+ margin-left:auto}
+.srcsvar.tom{color:var(--lyd)}
+.srcbar .sharebtn{flex:none}
 .srcsilent{margin:0 0 10px;align-items:center}
 .srcforklar{font-family:var(--fm);font-size:9.5px;color:var(--faint);line-height:1.5;
  flex:1 1 180px}
@@ -1335,6 +1357,7 @@ body.mobile .vcrad .mini:not(.rowmenu){display:none!important}
  .vcsrc{max-width:none}
  .vchead .h-k{display:none}
  .vcsporrad .s-k,.vcsporhoved .s-k{width:120px;max-width:120px}
+ .vcsporrad .s-i,.vcsporhoved .s-i{display:none}
  .vcsporrad .s-n,.vcsporhoved .s-n{width:56px}
  .vcsporrad .audn{width:56px}
 }
@@ -5268,6 +5291,40 @@ function srcKort(s){
  }
  return srcNavn(s);
 }
+/* ── Hvad står der PÅ linjen? ──────────────────────────────────
+   Kilden siger hvor signalet kommer fra – "Kamera 1 · input 3". Men
+   det, man skal bruge, når man står med planen, er hvad der ER på den
+   linje: "Vært". Den tekst står allerede på linjen i Lydplanen eller på
+   kanalen i tegningen; den er bare aldrig blevet vist her.
+
+   Det er også den, et spor skal døbes efter. Autonavngivningen skrev
+   linjens navn ("Wisycom rack Remote2 ind 1"), og så stod der det samme
+   i to kolonner ved siden af hinanden. */
+function srcIndhold(s){
+ if(!srcEr(s)) return '';
+ if(s.slags === 'port'){
+  const f = srcPortIndeks()[s.dom+'|'+s.dev+'|'+s.port];
+  return f ? String(f.port.label||'') : '';
+ }
+ if(s.slags === 'kanal'){
+  const f = grpFind(s.gid);
+  if(!f) return '';
+  const ch = (f.g.channels||[]).find(c=>c.id===s.chid);
+  return ch ? String(ch.label||'') : '';
+ }
+ if(s.slags === 'grp'){
+  const f = grpFind(s.gid);
+  return f ? String(f.g.feed||'') : '';
+ }
+ if(s.slags === 'vc'){
+  const dv = vcById(s.dv);
+  /* En ud-container, der bærer en ind-container: det, der er "på
+     linjen", er dét ind-containeren selv kommer fra. */
+  return dv ? srcNavn(vcKilde(dv)) : '';
+ }
+ return '';
+}
+
 /* Peger kilden på noget, der ikke findes mere? Det skal kunne ses i
    rækken uden at man åbner vælgeren.
 
@@ -5363,10 +5420,16 @@ function vcSaetSporSrc(dv, p, aIdent, src){
  if(!a) return;
  if(srcEr(src)) a.src = src; else delete a.src;
  /* Vælger man en kilde til et spor, der ikke har et navn endnu, får
-    det kildens navn. Ellers skulle man skrive det samme to gange –
-    og så gør folk det ikke, og sporet står tomt i printet. */
+    det navn efter kilden. Ellers skulle man skrive det samme to gange –
+    og så gør folk det ikke, og sporet står tomt i printet.
+
+    Det er TEKSTEN PÅ LINJEN, der bruges – "Vært" – ikke linjens eget
+    navn. Første udgave tog linjens navn, og så stod der "Wisycom rack
+    Remote2 ind 1" både i sporet og i kilden ved siden af: to kolonner
+    med det samme. Har linjen ingen tekst, er dens navn stadig bedre
+    end ingenting. */
  if(srcEr(src) && src.slags !== 'silent' && !String(a.label||'').trim()){
-  a.label = srcKort(src);
+  a.label = srcIndhold(src) || srcKort(src);
  }
  touch(a);
  if(p) touch(p);
@@ -5415,6 +5478,21 @@ const SRC_LYD_DOMS   = ['lyd','kam','net'];
 
 function srcMuligheder(slags){
  const ud = [];
+ /* En ud-container bærer en ind-container – og INTET andet. Første
+    udgave faldt igennem til lydlinjerne og tegningens kanaler her,
+    fordi doms blev valgt med en ternær, der kun kendte 'video'. Så stod
+    der "Komm rack 1 · input 1" som svar på "hvilken container bærer
+    den?". Mine egne prøver skrev listen ud, og jeg læste den ikke. */
+ if(slags === 'vc'){
+  vcAlle().filter(d=>vcRetning(d)==='ind').forEach(d=>{
+   ud.push({src:{slags:'vc', dv:d.id},
+            noegle:'vc', side:'',
+            gruppe:'Ind-containere',
+            navn:(d.nr?d.nr+' · ':'')+(d.name||'uden navn'),
+            under:srcNavn(vcKilde(d)), vaegt:0});
+  });
+  return ud.sort((a,b)=>a.navn.localeCompare(b.navn,'da',{numeric:true}));
+ }
  const doms = slags === 'video' ? SRC_VIDEO_DOMS : SRC_LYD_DOMS;
  const p = ensurePlan();
  /* 1. Linjerne i planerne. Dem med et navn først – det er dem man
@@ -5425,6 +5503,7 @@ function srcMuligheder(slags){
    ['outs','ins'].forEach(side=>{
     alive(dv[side]).forEach(o=>{
      ud.push({src:{slags:'port', dom:dom2, dev:dv.id, port:o.id},
+              noegle:dom2, side:side,
               gruppe:PLANDOMS[dom2],
               navn:(dv.name||dv.type||'')+' · '+SIDENAVN[side].toLowerCase()+' '+(o.n||''),
               under:o.label||'', vaegt:o.label?0:1});
@@ -5437,13 +5516,17 @@ function srcMuligheder(slags){
  alleGrupper().forEach(x=>{
   if(slags === 'video'){
    if((x.g.layer||'video') !== 'video') return;
-   ud.push({src:{slags:'grp', gid:x.g.id}, gruppe:'Tegningen',
+   ud.push({src:{slags:'grp', gid:x.g.id},
+            noegle:'tegning', side:'',
+            gruppe:'Tegningen',
             navn:(x.g.label||x.g.feed||'gruppe'), under:x.sti, vaegt:0});
   }else{
    (x.g.channels||[]).forEach(ch=>{
     const lag = ch.layer||'lyd';
     if(lag !== 'lyd' && lag !== 'intercom') return;
-    ud.push({src:{slags:'kanal', gid:x.g.id, chid:ch.id}, gruppe:'Tegningen',
+    ud.push({src:{slags:'kanal', gid:x.g.id, chid:ch.id},
+             noegle:'tegning', side:'',
+             gruppe:'Tegningen',
              navn:((ch.nr||'')+' '+(ch.label||'')).trim() || 'kanal',
              under:(x.g.label||x.g.feed||'')+' · '+x.sti,
              vaegt:ch.label?0:1});
@@ -5452,17 +5535,18 @@ function srcMuligheder(slags){
  });
  /* 3. De andre containere. En ud-container bærer en ind-container –
        det er den henvisning, der manglede helt. */
- if(slags === 'vc'){
-  vcAlle().filter(d=>vcRetning(d)==='ind').forEach(d=>{
-   ud.push({src:{slags:'vc', dv:d.id}, gruppe:'Ind-containere',
-            navn:(d.nr?d.nr+' · ':'')+(d.name||'uden navn'),
-            under:srcNavn(vcKilde(d)), vaegt:0});
-  });
- }
- ud.sort((a,b)=> a.gruppe.localeCompare(b.gruppe,'da') || a.vaegt-b.vaegt
-                 || a.navn.localeCompare(b.navn,'da'));
+ /* Grupperne står i fanernes orden – Lyd, Video, Kameraer, Netværk,
+    Frekvenser, og tegningen til sidst. Alfabetisk ville sætte
+    Kameraer før Lyd og Tegningen midt imellem, og så skal man lede
+    efter den rækkefølge, man kender i forvejen fra båndet foroven. */
+ ud.sort((a,b)=> srcRang(a.noegle)-srcRang(b.noegle)
+                 || a.vaegt-b.vaegt
+                 || a.navn.localeCompare(b.navn,'da',{numeric:true}));
  return ud;
 }
+/* Fanernes orden, med tegningen og containerne sidst. */
+const SRC_ORDEN = Object.keys(PLANDOMS).concat(['vc','tegning']);
+const srcRang = n => { const i=SRC_ORDEN.indexOf(n); return i<0?99:i };
 
 /* ── Vælgeren ──────────────────────────────────────────────────
    Samme vindue til videokilden, til videomålet, til hvilken
@@ -5475,14 +5559,61 @@ function srcMuligheder(slags){
    ikke bruges. Så søgefeltet. Så listen. Fri tekst nederst, for den
    er udvejen – ikke førstevalget. */
 let srcSoeg='';
+/* Filtrene i vælgeren. Et kamerarack har fire linjer pr. kamera, og med
+   ti kameraer er listen fyrre linjer lang, før tegningen overhovedet
+   begynder. Derfor skal man kunne skære den ned – på hvor den kommer
+   fra, og på om det er en ind- eller en udgang. */
+let srcF={kilde:'', side:''};
+const srcFiltrePaa = () => !!(srcF.kilde || srcF.side || srcSoeg.trim());
 function srcVaelg(o){
  /* o = {titel, under, slags:'video'|'lyd'|'vc', nu, silent, gem} */
  const slags = o.slags||'lyd';
  const alle = srcMuligheder(slags);
+
+ /* Kun de steder, der FAKTISK er noget fra. Et valg der giver en tom
+    liste er ikke et valg – det er en blindgyde. */
+ const steder=[];
+ alle.forEach(m=>{ if(!steder.some(x=>x.n===m.noegle))steder.push({n:m.noegle,t:m.gruppe}) });
+ /* Sidevælgeren måles på det, stedvælgeren har ladet stå tilbage. Vælger
+    man "Tegningen", er der ingen ind- og udgange at skille – og så skal
+    vælgeren væk, i stedet for at stå og kunne tømme listen helt. */
+ const efterSted = srcF.kilde ? alle.filter(m=>m.noegle===srcF.kilde) : alle;
+ const harSider = efterSted.some(m=>m.side==='ins') && efterSted.some(m=>m.side==='outs');
+ /* Filtrene bliver stående, når vinduet lukkes: sætter man seksten spor
+    op fra det samme rack, skal man ikke vælge rack igen for hvert spor.
+    Men åbner man så et vindue, hvor dét sted ikke findes – videokilden
+    har ingen lydlinjer – ville filteret tømme listen, og man ville tro
+    der ikke var noget at vælge. Derfor slippes et filter, der ikke
+    passer her. */
+ if(srcF.kilde && !steder.some(x=>x.n===srcF.kilde)) srcF.kilde='';
+ if(srcF.side && !harSider) srcF.side='';
+
  const q = srcSoeg.trim().toLowerCase();
- const vist = q ? alle.filter(m=>
-        (m.navn+' '+m.under+' '+m.gruppe).toLowerCase().indexOf(q)>=0) : alle;
+ const vist = alle.filter(m=>
+    (!srcF.kilde || m.noegle===srcF.kilde)
+ && (!srcF.side  || m.side===srcF.side)
+ && (!q || (m.navn+' '+m.under+' '+m.gruppe).toLowerCase().indexOf(q)>=0));
  const nuNavn = srcEr(o.nu) ? srcNavn(o.nu) : '';
+ const bjaelke = (steder.length>1 || harSider) ? `<div class="srcbar">
+   ${steder.length>1?`<select id="srcFKilde" class="${srcF.kilde?'paa':''}"
+     title="Hvor kilden kommer fra">
+     <option value="">Alle steder</option>
+     ${steder.map(s=>`<option value="${esc(s.n)}" ${srcF.kilde===s.n?'selected':''}
+       >${esc(s.t)}</option>`).join('')}
+   </select>`:''}
+   ${harSider?`<select id="srcFSide" class="${srcF.side?'paa':''}"
+     title="Om det er en indgang eller en udgang på udstyret">
+     <option value="">Ind og ud</option>
+     <option value="ins" ${srcF.side==='ins'?'selected':''}>Kun inputlinjer</option>
+     <option value="outs" ${srcF.side==='outs'?'selected':''}>Kun outputlinjer</option>
+   </select>`:''}
+   <span class="srcsvar ${!vist.length?'tom':''}">${esc(
+     !vist.length ? 'ingen rammer'
+     : (vist.length===alle.length ? vist.length+' at vælge imellem'
+                                  : vist.length+' af '+alle.length))}</span>
+   ${srcFiltrePaa()?`<button class="sharebtn" data-srcryd2="1"
+     title="Vis alle muligheder igen">Ryd</button>`:''}
+ </div>` : '';
 
  let sidsteGruppe='';
  const krop = vist.length
@@ -5495,8 +5626,8 @@ function srcVaelg(o){
         ${m.under?`<span class="grpsti">${esc(m.under)}</span>`:''}
         ${paa?'<span class="grptal">valgt nu</span>':''}
       </button>`}).join('')}</div>`
-  : `<div class="srcintet">${q
-      ? 'Ingen linjer eller kanaler rammer søgningen.'
+  : `<div class="srcintet">${srcFiltrePaa()
+      ? 'Ingen linjer eller kanaler rammer søgningen eller filtrene.'
       : (slags==='vc'
          ? 'Der er ingen ind-containere i projektet endnu.'
          : 'Der er ingen '+(slags==='video'?'videolinjer':'lydlinjer')
@@ -5507,6 +5638,7 @@ function srcVaelg(o){
  openModal(o.titel, o.under||'',
   `<input class="srcsoeg" id="srcSoeg" value="${esc(srcSoeg)}" autocomplete="off"
      placeholder="Søg navn, nummer eller kanal…">
+   ${bjaelke}
    ${o.silent?`<div class="mrow srcsilent">
      <button class="btn ${srcSilent(o.nu)?'save':''}" data-srcsilent="1"
        title="Der kommer med vilje ingen lyd på dette spor">◌ Silent</button>
@@ -5548,6 +5680,14 @@ function srcVaelg(o){
      if(e.key==='Escape'){ srcSoeg=''; closeModal() }
     };
    }
+   /* Filtrene. Vinduet tegnes forfra, og så ligger valget allerede i
+      srcF – derfor skal der ikke gøres mere end at skrive det ned. */
+   [['srcFKilde','kilde'],['srcFSide','side']].forEach(([id2,felt])=>{
+    const e=root.querySelector('#'+id2);
+    if(e)e.onchange=()=>{ srcF[felt]=e.value; srcVaelg(o) };
+   });
+   const ry2 = root.querySelector('[data-srcryd2]');
+   if(ry2) ry2.onclick = () => { srcSoeg=''; srcF={kilde:'',side:''}; srcVaelg(o) };
    root.querySelectorAll('[data-srcv]').forEach(b=>b.onclick=()=>{
     try{ gem(JSON.parse(b.dataset.srcv)) }catch(e){}
    });
@@ -5782,6 +5922,7 @@ function vcSporBlok(dv, side, p){
    <div class="vcsporhoved">
      <span class="s-n">Nr</span>
      <span class="s-l">Lydspor</span>
+     <span class="s-i" title="Teksten der står på den linje, sporet kommer fra">Signalet</span>
      <span class="s-k">${ud?(vcArvKilde(dv)?'Følger ind-containeren':'Lyd på vejen ud')
                            :'Kommer fra'}</span>
      <span class="s-by"></span>
@@ -5812,6 +5953,23 @@ function vcSporBlok(dv, side, p){
                    :esc(a.label)}"
            ${skygge?`data-spoeg="${esc(skygge.tekst)}"`:''}
            data-audl="${noegle}|${a.id}"></span>
+       ${(()=>{
+         /* Hvad der står PÅ linjen – altid, også når sporet hedder det
+            samme. Første udgave satte en lille streg, når de to var ens,
+            for ikke at skrive det samme to gange. Men sporet døbes jo
+            efter linjen, så de ER ens fra starten, og så stod der en
+            streg i hele kolonnen – præcis dér hvor man gerne ville læse
+            teksten. At de to står ens er i sig selv en oplysning: så er
+            sporet ikke døbt om. */
+         const ind=srcIndhold(vist);
+         const egen=String(a.label||'').trim();
+         const ens=!!ind && ind===egen;
+         return `<span class="s-i ${ind?'har':''} ${ens?'ens':''}"
+           title="${esc(ind
+             ? (ens ? 'På linjen står der: '+ind+' – og sporet hedder det samme'
+                    : 'På linjen står der: '+ind+' – sporet er døbt om til "'+egen+'"')
+             : (srcEr(vist)?'Der står ingen tekst på den linje endnu':''))}"
+           >${esc(ind)||''}</span>`})()}
        ${ud
          ? `<button class="vcsrc s-k ${egetSilent?'silent':''} ${arvetKilde?'arvet':''}"
               data-vcsspor="${dv.id}|${a.id}"
@@ -6013,6 +6171,7 @@ function vcSporRader(dv){
           arvFra: arv ? arv.fra : '',
           kilde: srcEr(vist) ? srcNavn(vist) : '',
           kort:  srcEr(vist) ? srcKort(vist) : '',
+          indhold: srcIndhold(vist),
           silent: srcSilent(vist), brudt: srcBrudt(vist),
           tegning:sp?sp.tekst:'', by:a.by||'', at:a.at||0};
  });
@@ -6176,8 +6335,8 @@ function vcVejPrint(dv){
    skal hen. */
 function vcRows(){
  const rows=[['Nr','Container','Ind/ud','Bibliotek','Videokilde','Bærer',
-   'Videomål','Gruppe i tegningen','Spor nr','Lydspor','Sporets kilde',
-   'Står i tegningen','Sat af','Tidspunkt']];
+   'Videomål','Gruppe i tegningen','Spor nr','Lydspor','Signalet på linjen',
+   'Sporets kilde','Står i tegningen','Sat af','Tidspunkt']];
  const tid=t=>t?new Date(t).toLocaleString('da-DK'):'';
  vcFiltreret().forEach(dv=>{
   const p=vcPort(dv); if(!p)return;
@@ -6192,7 +6351,7 @@ function vcRows(){
      den i listen, og man tror den ikke findes. */
   (sat.length?sat:[{nr:'',tekst:'',kilde:'',silent:false,tegning:'',by:'',at:0}])
    .forEach(r=>rows.push([dv.nr||'', dv.name||'', ud?'Ud':'Ind', dv.bib||'',
-     kilde, baerer, maal, grp, r.nr, r.tekst,
+     kilde, baerer, maal, grp, r.nr, r.tekst, r.indhold,
      r.silent?'Silent':r.kilde, r.tegning,
      r.by||p.by||'', tid(r.at)||tid(p.at)]));
  });
@@ -7916,7 +8075,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.25-b';
+const SF_VERSION='2026.10.25-c';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
