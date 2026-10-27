@@ -551,6 +551,11 @@ body.arklaast #side button{pointer-events:none;opacity:.45}
 .ppfr{display:grid;grid-template-columns:44px 86px 1fr 84px 22px 22px;gap:8px;
  padding:4px 7px;border-bottom:1px solid #ececec;font-size:11.5px;color:#111}
 .ppfr:last-child{border-bottom:none}
+/* Patchtabellen saetter selv sine kolonner inline - antallet skifter med
+   korttypen. Her nulstilles bare de farveregler, der er skrevet til
+   frekvenstabellens faste kolonnenumre, saa de ikke rammer de forkerte. */
+.pppatch .ppfr>span:nth-child(4){color:inherit;font-size:inherit}
+.pppatch .ppkilde{color:#666;font-size:9.5px}
 .ppfh{background:#f3f3f3;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:#666}
 .ppfr>span:first-child{color:#555;font-family:var(--fm);font-size:10px}
 .ppfr>span:nth-child(4){color:#555;font-size:10px}
@@ -989,6 +994,33 @@ body.mobile.guest #app{padding-bottom:12px}
 .plabel{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--text);
  border-radius:5px;padding:5px 7px;font:12px var(--fb)}
 .plabel:focus,.pnum:focus{outline:none;border-color:var(--intercom)}
+/* ── Patchplanens kolonner ─────────────────────────────────────
+   .port er flex, så felterne er bare børn med fast bredde. Tre bredder
+   rækker: et nummer (56), et lille tal som MADI-kanalen (46) og et navn
+   som et flow eller et slot (108). Flere bredder ville bare være flere
+   tal at holde ens med overskrifterne. */
+.pf-n{width:56px;flex:none;text-align:center}
+.pf-s{width:46px;flex:none;text-align:center}
+.pf-m{width:108px;flex:none;text-align:left}
+.porthead.patchhead .pf-n,.porthead.patchhead .pf-s,.porthead.patchhead .pf-m{
+  text-align:center;color:var(--dim)}
+.porthead.patchhead .ph-src{width:132px;flex:none;text-align:left;color:var(--dim)}
+.patchcol .portitle em.patchunder{font-style:normal;color:var(--dim);font-weight:400;
+  font-size:11px;margin-left:8px}
+/* Kildeknappen er bred nok til at man kan LÆSE hvor signalet kommer fra.
+   En knap, der kun viser et ikon, tvinger en til at åbne vinduet for at
+   se, hvad der står i den — og så er kolonnen ikke en oplysning. */
+.psrcbtn{width:132px;flex:none;background:var(--bg);border:1px solid var(--line);
+  color:var(--dim);border-radius:5px;padding:5px 6px;font:inherit;font-size:11.5px;
+  cursor:pointer;text-align:left;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.psrcbtn:hover{border-color:var(--dim);color:var(--text)}
+.psrcbtn.har{color:var(--text);border-color:#2f4a3d}
+/* Peger linjen på noget, der er slettet, skal det kunne SES i rækken —
+   ikke først når man åbner vælgeren. */
+.psrcbtn.brudt,.port.patch.brudt .psrcbtn{color:var(--video);border-color:var(--video)}
+body.mobile .psrcbtn,body.mobile .porthead.patchhead .ph-src{width:auto;flex:1;min-width:0}
+body.mobile .pf-m{width:76px}
 .port.set .plabel{border-color:#2f4a3d;background:#141c18}
 /* ── Lydkanaler i et videosignal ───────────────────────────────
    Knappen sidder i linjen, listen folder ud under den. */
@@ -1545,7 +1577,11 @@ body.mobile .laasknap{min-height:34px}
 .dev.narrow .portcol.ins{border-right:none;border-bottom:1px solid var(--line)}
 .dev{position:absolute}
 /* kortene glider på plads, når et kort foldes ud – de hopper ikke */
-#plan .dev{transition:transform .14s ease}
+/* top er med, saa et kort der bliver skubbet vaek glider paa plads i
+   stedet for at hoppe. .moving slaar det fra: ellers ville det kort man
+   traekker i halte efter musen. */
+#plan .dev{transition:transform .14s ease, top .14s ease}
+#plan .dev.moving{transition:none}
 #plan .dev.moving{transition:none}
 .dev.moving{opacity:.75;z-index:50;box-shadow:0 14px 34px rgba(0,0,0,.5)}
 .dev .rs{right:-5px;bottom:-5px;opacity:0}
@@ -3522,8 +3558,12 @@ let lastBox=null;
 /* ================= planer ================= */
 /* Én plan pr. domæne. Hvert stykke udstyr har inputs og outputs med hver sin
    tekst, og hver linje husker hvem der har rettet den og hvornår. */
+/* Patch står efter Frekvenser og før containerne: det er en lydting, og
+   containerne er en liste og ikke kort, så de hører til i enden.
+   ensurePlan() lægger selv et tomt patch-område i gamle projekter, så de
+   ikke skal rettes. */
 const PLANDOMS={lyd:'Lyd',video:'Video',kam:'Kameraer',net:'Netværk',freq:'Frekvenser',
- vc:'Video containere'};
+ patch:'Patch', vc:'Video containere'};
 /* almindelige stiktyper – kun forslag, man kan skrive hvad som helst */
 const CONNECTORS=['XLR han','XLR hun','XLR 3-pol','XLR 5-pol','Jack 6,3 mm','Minijack 3,5 mm',
  'BNC','SDI BNC','HDMI','RJ45','etherCON','SMPTE 311M','LC fiber','SC fiber','opticalCON',
@@ -4765,7 +4805,18 @@ function drawPlan(){
      :`<button class="sharebtn" data-foldall="1" title="Fold alle kort sammen, så kun linjer med signal vises – tryk igen for at folde ud">⊟ Fold tomme</button>`}
    ${(mobil||planDom==='vc')?''/* På telefonen står kortene i én kolonne i forvejen – der er intet at rette op */
      :`<button class="sharebtn ${planSnap?'on':''}" data-psnap="1" title="Lås til gitter: kortene falder på plads i lige rækker, og der vises hjælpelinjer når de flugter">⊞ Ret op</button>`}
-   ${(guestToken||planDom==='vc')?'':`
+   ${(guestToken||planDom==='vc')?''
+     /* Patchkort hentes ikke fra lageret: et Dante-flow eller en MADI-port
+        er ikke et stykke udstyr, man pakker i en kasse. De tre knapper
+        opretter kortet direkte med den rigtige type, så typen er valgt
+        FOER der står linjer i kortet — og ikke noget man skal huske at
+        rette bagefter. */
+     :planDom==='patch'?`
+     <div class="planadd">
+       ${Object.keys(PATCHTYPER).map(k=>`<button class="sharebtn save" data-patchny="${k}"
+         title="${esc('Nyt '+PATCHTYPER[k].navn+'-kort – '+PATCHTYPER[k].under)}">+ ${esc(PATCHTYPER[k].navn)}</button>`).join('')}
+     </div>`
+     :`
      <div class="planadd">
        <button class="sharebtn save" data-arch="1" title="Hent udstyr fra lageret">+ Udstyr</button>
      </div>`}
@@ -4843,7 +4894,8 @@ function drawPlan(){
         <button class="mini" data-ddel="${dv.id}" title="Slet kortet og alle dets linjer">✕</button>
       </div>
     </div>
-    ${planDom==='freq' ? `<div class="ports enkelt">${freqListe(dv)}</div>`
+    ${planDom==='patch' ? `<div class="ports enkelt">${patchListe(dv)}</div>`
+     : planDom==='freq' ? `<div class="ports enkelt">${freqListe(dv)}</div>`
      : planDom==='kam' ? `<div class="ports ${ports(dv,'outs').length?'':'enkelt'}">${kamListe(dv)}
          ${ports(dv,'outs').length?portList(dv,'outs','Retur'):''}</div>` : `
     <div class="ports ${(ports(dv,'ins').length&&ports(dv,'outs').length)?'':'enkelt'}">
@@ -5477,7 +5529,11 @@ function vcSporTal(dv){
    kan følge – og som opdaterer sig selv, hvis udstyret får et nyt
    navn. */
 const SRC_VIDEO_DOMS = ['video','kam'];
-const SRC_LYD_DOMS   = ['lyd','kam','net'];
+/* 'patch' er med: en MADI-linje skal kunne pege på en Dante-kanal, og en
+   lydlinje på et inputkort. Uden den kunne patchplanen kun pege udad og
+   aldrig indad, og så var halvdelen af den intern viden, intet andet kan
+   læse. */
+const SRC_LYD_DOMS   = ['lyd','kam','net','patch'];
 
 function srcMuligheder(slags){
  const ud = [];
@@ -7217,6 +7273,153 @@ function audBlokKrop(dv,side,p){
  </div>`;
 }
 
+/* ══ PATCH ═══════════════════════════════════════════════════════════
+   Den interne vej fra et stik til en kanal: Dante ude på lydnetværket,
+   MADI på en koaks, og det fysiske inputkort nede i udstyret. Tre
+   forskellige ting — men det samme spørgsmål hver gang: hvilket nummer,
+   hvad ligger der på det, hvor kommer det fra, er det patchet, er det
+   tjekket.
+
+   Derfor ÉT kort med ÉN tabel, hvor korttypen afgør hvilke nummerfelter
+   der står foran signalet. Tre selvstændige korttyper ville give tre
+   renderere, tre bindinger, tre eksporter — og tre steder at rette den
+   samme fejl, hvoraf man ville finde de to.
+
+   Typen bor på KORTET (dv.ptype), ikke på linjen: et Dante-kort har
+   Dante-linjer hele vejen ned. Den kan skiftes bagefter i kortmenuen, og
+   teksterne bliver stående — et kort, der blev oprettet som det forkerte,
+   koster ikke en omskrivning.                                         */
+const PATCHTYPER={
+ dante:{navn:'Dante', under:'kanaler og flows på lydnetværket',
+   felter:[{k:'n',    t:'Kanal', kl:'pf-n', ph:'1',
+            hj:'Kanalnummeret på enheden'},
+           {k:'flow', t:'Flow',  kl:'pf-m', ph:'flow-navn',
+            hj:'Navnet på Dante-flowet, som det står i Controller'},
+           {k:'til',  t:'Til',   kl:'pf-m', ph:'modtager',
+            hj:'Hvem abonnerer på kanalen'}]},
+ madi:{navn:'MADI', under:'port og kanal 1-64 i porten',
+   felter:[{k:'n',    t:'Port',  kl:'pf-n', ph:'1',
+            hj:'MADI-porten på udstyret'},
+           {k:'kan',  t:'Ch',    kl:'pf-s', ph:'1-64',
+            hj:'Kanalen inde i MADI-strømmen, 1-64'}]},
+ kort:{navn:'Input-kort', under:'slot i udstyret og kanal på kortet',
+   felter:[{k:'slot', t:'Kort',  kl:'pf-m', ph:'slot 3',
+            hj:'Hvilket kort eller slot i udstyret'},
+           {k:'n',    t:'Kanal', kl:'pf-n', ph:'1',
+            hj:'Kanalen på selve kortet'}]}
+};
+const PATCH_STD='dante';
+/* Et kort uden type læses som Dante — det er der mest af, og et gæt er
+   bedre end en tom tabel. Typen skrives IKKE ned under læsningen: så
+   ville et kort, ingen har rørt, blive sendt ud til kollegerne som
+   "rettet", og den slags støj får man til at holde op med at se på
+   markeringerne. */
+const patchType=dv=>(dv&&PATCHTYPER[dv.ptype])?dv.ptype:PATCH_STD;
+const patchDef =dv=>PATCHTYPER[patchType(dv)];
+
+/* ── Hvad arver linjen? ─────────────────────────────────────────
+   Samme kæde som video containerne: er der valgt en kilde, og står
+   navnefeltet tomt, vises kildens egen tekst som grå skygge, og
+   mellemrum eller enter henter den over.
+
+   Rækkefølgen er srcIndhold før srcKort, og det er med vilje. srcIndhold
+   er hvad der STÅR på linjen ("Vært"); srcKort er hvor den KOMMER FRA
+   ("Komm rack · ind 3"). Det man skal bruge, når man står med planen i
+   hånden, er det første. Stod kilden først, ville navnekolonnen og
+   kommer-fra-kolonnen sige det samme to gange — den fejl har vi lavet
+   før, i containerne. */
+function patchSkygge(p){
+ const sr=p&&p.src;
+ if(!srcEr(sr)) return null;
+ const indhold=String(srcIndhold(sr)||'').trim();
+ const kort=String(srcKort(sr)||'').trim();
+ const tekst=indhold||kort;
+ if(!tekst) return null;
+ return {tekst:tekst, fra:kort||'kilden'};
+}
+
+function patchRad(dv,p){
+ const d=patchDef(dv);
+ const sr=p.src;
+ const skygge=patchSkygge(p);
+ const brudt=srcBrudt(sr);
+ const kilde=srcEr(sr)?(srcKort(sr)||'kilde'):'';
+ return `<div class="port patch ${p.label||skygge?'set':''} ${fresh(p)?'fresh':''}
+        ${p.label&&p.patched&&p.checked?'ok':''} ${brudt?'brudt':''}"
+      ${fresh(p)?`style="--ret:${retFarveNu[p.by||'?']||RET_FARVER[0]}"`:''}
+      data-port="${dv.id}|ins|${p.id}">
+   ${d.felter.map(f=>`<input class="pnum ${f.kl}" value="${esc(p[f.k]||'')}"
+      placeholder="${esc(f.ph)}" title="${esc(f.hj)}"
+      data-pfelt="${dv.id}|ins|${p.id}|${f.k}">`).join('')}
+   ${skygge?`<span class="fastmaerke" title="${esc('Hænger sammen med '+skygge.fra
+      +' – teksten der er: '+skygge.tekst)}">⚯</span>`:''}
+   <input class="plabel${(!p.label&&skygge)?' harspoeg':''}" value="${esc(p.label||'')}"
+     list="lbls" placeholder="${skygge?esc(skygge.tekst):'—'}"
+     title="${skygge&&!p.label?esc('Står i '+skygge.fra+': '+skygge.tekst
+        +' — mellemrum eller enter henter den over'):esc(p.label||'')}"
+     ${skygge?`data-spoeg="${esc(skygge.tekst)}"`:''}
+     data-plabel="${dv.id}|ins|${p.id}">
+   <button class="psrcbtn ${srcEr(sr)?'har':''} ${brudt?'brudt':''}"
+     data-psrc="${dv.id}|ins|${p.id}"
+     title="${brudt?esc('Kilden «'+kilde+'» findes ikke længere – klik for at vælge en anden')
+             :srcEr(sr)?esc('Kommer fra '+kilde+' – klik for at skifte eller løsne')
+             :'Vælg hvor kanalen kommer fra'}">${srcEr(sr)?(brudt?'⚠ ':'')+esc(kilde):'⚯'}</button>
+   ${(p.label||skygge)?`
+    <label class="tick" title="Patchet${p.pby?' · sat af '+esc(p.pby):''}">
+      <input type="checkbox" data-tick="${dv.id}|ins|${p.id}|patched" ${p.patched?'checked':''}></label>
+    <label class="tick t2" title="Tjekket${p.cby?' · sat af '+esc(p.cby):''}">
+      <input type="checkbox" data-tick="${dv.id}|ins|${p.id}|checked" ${p.checked?'checked':''}></label>`
+    :`<span class="tickgap"></span><span class="tickgap"></span>`}
+   <span class="pby" title="${p.by?esc(p.by)+' · '+new Date(p.at).toLocaleString('da-DK'):''}">${p.by?esc(p.by):''}</span>
+   <button class="mini rowmenu" data-pmenu="${dv.id}|ins|${p.id}" title="Muligheder for denne linje">⋯</button>
+   <button class="mini grip" data-pgrip="${dv.id}|ins|${p.id}" title="Træk for at flytte linjen op eller ned">⠿</button>
+   <button class="mini" data-pins="${dv.id}|ins|${p.id}" title="Indsæt en ny linje lige over denne">⤒</button>
+   <button class="mini" data-pdel="${dv.id}|ins|${p.id}" title="Fjern denne linje fra kortet">✕</button>
+ </div>`;
+}
+
+function patchListe(dv){
+ const d=patchDef(dv);
+ const alle=ports(dv,'ins');
+ const {vis:arr, skjult}=synligePorte(dv,'ins');
+ const n=alle.filter(p=>p.label||patchSkygge(p)).length;
+ return `<div class="portcol ins patchcol">
+   <div class="portitle">${esc(d.navn)} <span>${n}/${alle.length}</span>
+     <em class="patchunder">${esc(d.under)}</em></div>
+   <div class="porthead patchhead">
+     ${d.felter.map(f=>`<span class="${f.kl}">${esc(f.t)}</span>`).join('')}
+     <span class="ph-l">Signal</span>
+     <span class="ph-src">Kommer fra</span>
+     <span class="ph-c" title="Patchet">P</span><span class="ph-c" title="Tjekket">T</span>
+     <span class="ph-by"></span><span class="ph-x"></span></div>
+   ${arr.map(p=>patchRad(dv,p)).join('')}
+   ${foldRest(dv,skjult)}
+   <button class="addrow" data-padd="${dv.id}|ins" title="Tilføj en ${esc(d.navn)}-linje">+ ${esc(d.navn.toLowerCase())}</button>
+ </div>`;
+}
+
+/* Et nyt patchkort. Antallet er ikke tilfældigt: Dante-enheder tælles tit
+   i 16, en MADI-port bærer 64 kanaler, og et inputkort har som regel 8. */
+const PATCH_NYT={dante:{t:'Dante-enhed', i:16}, madi:{t:'MADI-port', i:64},
+                 kort:{t:'Inputkort', i:8}};
+function patchNytKort(slags){
+ const d=PATCHTYPER[slags]; if(!d)return;
+ const std=PATCH_NYT[slags];
+ const navn=prompt('Hvad hedder det? ('+d.navn+')', std.t);
+ if(navn===null)return;
+ const n=parseInt(prompt('Hvor mange '+(slags==='madi'?'kanaler i porten':'kanaler')+'?',
+   String(std.i)),10);
+ if(isNaN(n))return;
+ snap();
+ const dv={id:id(), type:d.navn, name:navn||std.t, place:'', ptype:slags,
+   ins:mkPorts(Math.max(1,Math.min(512,n))), outs:[]};
+ /* MADI: kanalnummeret inde i porten er det, man slår op på — så står det
+    der fra starten i stedet for at skulle skrives 64 gange i hånden. */
+ if(slags==='madi') dv.ins.forEach((o,i2)=>{ o.kan=String(i2+1); o.n='1' });
+ ensurePlan()['patch'].devices.push(dv);
+ drawPlan();
+}
+
 function portList(dv,side,title){
  const alle=ports(dv,side);
  const {vis:arr, skjult}=synligePorte(dv,side);
@@ -7302,7 +7505,8 @@ function bindPlan(){
  const pc=el2.querySelector('[data-pcsv]');
  /* Containerne har deres egen form: én linje pr. lydspor, og kun det, der
     står i listen lige nu – filtrene gælder også for regnearket. */
- if(pc)pc.onclick=()=>{ if(planDom==='vc')vcCSV(); else exportPlanCSV(planDom) };
+ if(pc)pc.onclick=()=>{ if(planDom==='vc')vcCSV();
+   else if(planDom==='patch')patchCSV(); else exportPlanCSV(planDom) };
  const ar=el2.querySelector('[data-arch]'); if(ar)ar.onclick=()=>openArchive('plan');
  const ip=el2.querySelector('[data-imp]'); if(ip)ip.onclick=()=>importItems('plan');
  const kp=el2.querySelector('[data-kimp]'); if(kp)kp.onclick=()=>kiAaben();
@@ -7423,6 +7627,34 @@ function bindPlan(){
    }
   };
  });
+ /* ---- patchlinjens egne nummerfelter ----
+    Ét felt pr. type-kolonne, bundet af ÉN handler. Hvert felt sit eget
+    data-pnum-agtige navn ville give tre handlere, der skulle holdes ens. */
+ el2.querySelectorAll('[data-pfelt]').forEach(inp=>{
+  inp.onchange=()=>{
+   const [did,side,pid,noegle]=inp.dataset.pfelt.split('|');
+   const [dv,pp]=find(did+'|'+side+'|'+pid);
+   if(!pp)return;
+   if(String(pp[noegle]||'')===inp.value)return;
+   snap(); pp[noegle]=inp.value; touch(pp); autosave();
+  };
+ });
+ /* ---- hvor kommer kanalen fra ----
+    Samme vælger som video containerne bruger. Klikker man paa en linje,
+    der ALLEREDE har en kilde, kan man ogsaa loesne den igen - ellers
+    sad en forkert binding fast for altid. */
+ el2.querySelectorAll('[data-psrc]').forEach(b=>b.onclick=()=>{
+  const [did,side,pid]=b.dataset.psrc.split('|');
+  const [dv,pp]=find(did+'|'+side+'|'+pid);
+  if(!pp||!dv)return;
+  const d=patchDef(dv);
+  srcVaelg({titel:'Hvor kommer kanalen fra?',
+   under:(dv.name||d.navn)+' · '+d.felter.map(f=>(pp[f.k]||'')).filter(Boolean).join(' '),
+   slags:'lyd', nu:pp.src||null, silent:false,
+   gem:src=>{ snap(); if(src)pp.src=src; else delete pp.src; touch(pp); autosave(); drawPlan(); }});
+ });
+ el2.querySelectorAll('[data-patchny]').forEach(b=>b.onclick=()=>patchNytKort(b.dataset.patchny));
+
  el2.querySelectorAll('[data-pnum]').forEach(inp=>{
   inp.onchange=()=>{const [dv,p]=find(inp.dataset.pnum);
    if(p){snap();p.n=inp.value;touch(p);autosave()}};
@@ -7563,6 +7795,7 @@ function bindPlan(){
  });
 
  bindDevDrag(el2);
+ planRydOp(el2);
  skubForLydliste(el2);
 }
 
@@ -7606,6 +7839,96 @@ function skubForLydliste(el2){
  if(canvas)canvas.style.paddingBottom=delta+'px';
 }
 
+/* ── Kortene skubber hinanden væk ─────────────────────────────
+   Et nyt kort får sin plads ud fra et GÆT på højden (estH længere oppe:
+   74 + antal linjer × 30 + 46). Gættet holder, lige til kortet får en
+   linje mere, et foldet kort bliver foldet ud, eller nogen gør kortet
+   smallere, så teksten bryder. Så lægger kortet sig oven i det
+   nedenunder. Det kan ikke ses på tallene, kun på skærmen — og derfor
+   stod det uopdaget.
+
+   Her måles kortenes VIRKELIGE højde i browseren, og de kort, der ligger
+   for tæt, skubbes nedad, til der er luft. Gættet bruges stadig til at
+   placere et NYT kort, det er godt nok til det — men det er ikke længere
+   det sidste ord.
+
+   Tre valg gør den brugbar frem for irriterende:
+
+   · Den retter kun, når der FAKTISK er for lidt luft. Er planen i orden,
+     skrives ingenting. Ellers ville hver optegning sende en «ændring» ud
+     til kollegerne og støje i deres plan.
+   · Den er deterministisk. Rækkefølgen afgøres af y, så x, så id —
+     aldrig af hvilket kort browseren fandt først. To maskiner med samme
+     plan når samme resultat, så de ikke skubber hver sin vej og retter i
+     hinanden i ring.
+   · Den skubber kun NEDAD, og kun kort der står under. Det kort, man selv
+     har lagt øverst, bliver liggende, og et skubbet kort trækker ikke
+     naboen med sig til siden.
+
+   Kører ikke på telefonen: der står kortene i én kolonne efter hinanden
+   (position:relative), og så er der ingenting at skubbe. */
+const PLAN_LUFT=24;          // mindste afstand mellem to kort, i px
+
+function planRydOp(el2){
+ if(typeof mobil!=='undefined' && mobil)return 0;
+ el2=el2||document.getElementById('plan');
+ if(!el2)return 0;
+ const canvas=el2.querySelector('#devcanvas');
+ if(!canvas)return 0;
+ /* Står en lydliste åben, er kortet midlertidigt højere end det er.
+    skubForLydliste nedenfor skubber for den slags med transform, netop
+    for at der ikke bliver noget at gemme. Målte vi her, ville vi gemme
+    en luft, der forsvinder i samme øjeblik listen lukkes. */
+ if(el2.querySelector('.audlist'))return 0;
+
+ /* Målene tages fra offsetWidth/offsetHeight, ikke fra
+    getBoundingClientRect. En transform flytter billedet, ikke layoutet,
+    så offset-tallene er de rigtige — rect-tallene ville være løgn på et
+    kort, der står skubbet. */
+ const kort=[];
+ (dom().devices||[]).forEach(d=>{
+  if(d.del)return;
+  const n=canvas.querySelector('.dev[data-dev="'+CSS.escape(String(d.id))+'"]');
+  if(!n)return;
+  kort.push({d:d, x:+d.x||0, y:+d.y||0, b:n.offsetWidth, h:n.offsetHeight, n:n});
+ });
+ if(kort.length<2)return 0;
+
+ kort.sort((a,b)=> a.y-b.y || a.x-b.x
+   || String(a.d.id).localeCompare(String(b.d.id)));
+
+ let flyttet=0;
+ for(let i=1;i<kort.length;i++){
+  const k=kort[i];
+  let mindstY=k.y;
+  for(let j=0;j<i;j++){
+   const o=kort[j];
+   /* står de slet ikke over for hinanden vandret, generer de ikke */
+   if(k.x+k.b<=o.x+1 || o.x+o.b<=k.x+1)continue;
+   mindstY=Math.max(mindstY, o.y+o.h+PLAN_LUFT);
+  }
+  if(mindstY>k.y+0.5){
+   k.y=Math.round(mindstY);
+   k.d.y=k.y; k.d.mt=Date.now();
+   k.n.style.top=k.y+'px';      // flyttes på skærmen med det samme, uden
+   flyttet++;                   // en ny optegning – den ville kalde os igen
+  }
+ }
+
+ /* Lærredet er 2600px højt i stilarket. Skubbes et kort længere ned end
+    det, kan man ikke rulle ned til det. Så får lærredet den højde, der
+    skal til. */
+ let bund=0;
+ kort.forEach(k=>{ bund=Math.max(bund, k.y+k.h) });
+ canvas.style.minHeight=(bund+120)+'px';
+
+ if(flyttet){
+  if(typeof markDirty==='function')markDirty();
+  if(typeof autosave==='function')autosave();
+ }
+ return flyttet;
+}
+
 /* ---- kortene ligger hvor du lægger dem ---- */
 function bindDevDrag(el2){
  const canvas=el2.querySelector('#devcanvas');
@@ -7636,6 +7959,11 @@ function bindDevDrag(el2){
     dv.x=Math.round(parseFloat(card.style.left)||0);
     dv.y=Math.round(parseFloat(card.style.top)||0);
     dv.mt=Date.now(); autosave();
+    /* Lagde man kortet oven i et andet, skal de ordne sig selv — ikke
+       ligge og dække for hinanden, til nogen opdager det. Den der ligger
+       ØVERST beholder sin plads, så det kort man lige har sluppet, bliver
+       liggende der, hvor man slap det. */
+    planRydOp(el2);
    };
    document.addEventListener('mousemove',move);
    document.addEventListener('mouseup',up);
@@ -8113,7 +8441,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.25-d';
+const SF_VERSION='2026.10.27-a';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -8936,6 +9264,85 @@ function flytPort(dv,side,i,ret){
  drawPlan();
 }
 
+/* ── Hvad peger på dette kort? ─────────────────────────────────
+   Tegningens håndtryk (ch.ind) og planernes og containernes kilder
+   ({slags:'port', dom, dev, port}) har de samme tre felter: område,
+   kort, linje. Derfor ledes der efter FORMEN og ikke efter stederne.
+
+   En liste over steder bliver forældet i samme øjeblik, nogen lægger en
+   binding et nyt sted — og så knækker den lydløst, hvilket er præcis den
+   slags fejl, man først opdager ude på et job. Formen kan ikke blive
+   forældet uden at bindingen samtidig holder op med at virke, og så er
+   den til at finde.
+
+   Der holdes regnskab med de objekter, der er set (Set), fordi
+   datastrukturen har henvisninger på kryds: et underark kan pege tilbage,
+   og uden det løber gennemgangen i ring. */
+function refsTilKort(fraDom, devId){
+ const fundet=[], set=new Set();
+ const gaa=o=>{
+  if(!o||typeof o!=='object'||set.has(o))return;
+  set.add(o);
+  if(Array.isArray(o)){ o.forEach(gaa); return }
+  if(typeof o.dev==='string' && typeof o.port==='string'
+     && o.dom===fraDom && o.dev===devId) fundet.push(o);
+  Object.keys(o).forEach(k=>{ const v=o[k]; if(v&&typeof v==='object')gaa(v) });
+ };
+ gaa(pages); gaa(ensurePlan());
+ return fundet;
+}
+
+/* ── Flyt et kort til en anden fane ────────────────────────────
+   Kortet skal ikke bare fjernes fra den gamle fane: gjorde vi det, ville
+   kollegaens kopi lægge det tilbage ved næste synkronisering — det var
+   derfor slettede kort plejede at dukke op igen. Derfor får originalen et
+   sletningstidspunkt, og en RIGTIG kopi med SAMME id lægges i den nye
+   fane. Flettningen kører pr. område, så det samme id godt kan ligge to
+   steder: det ene dødt, det andet levende, og de to maskiner når samme
+   resultat.
+
+   Bindingerne skrives MED over. En kilde peger på område|kort|linje, og
+   kun området skifter — det er stadig den samme linje, man har peget på.
+   At advare og lade dem knække ville være at gøre brugeren til den, der
+   skal rydde op efter en flytning, programmet selv har foretaget. */
+function kortFlyt(did, tilDom){
+ const fraDom=planDom;
+ if(!PLANDOMS[tilDom]||tilDom===fraDom||tilDom==='vc')return;
+ const dv=(ensurePlan()[fraDom].devices||[]).find(x=>x.id===did);
+ if(!dv)return;
+ const refs=refsTilKort(fraDom,did);
+ const nu=Date.now();
+ snap();
+ const kopi=JSON.parse(JSON.stringify(dv));
+ kopi.del=0; kopi.mt=nu;
+ /* Lander kortet i patchplanen uden en type, bliver det et Dante-kort.
+    Så er typen VALGT i stedet for gættet hver gang kortet tegnes. */
+ if(tilDom==='patch' && !PATCHTYPER[kopi.ptype]) kopi.ptype=PATCH_STD;
+ ensurePlan()[tilDom].devices.push(kopi);
+ dv.del=nu; dv.mt=nu;
+ refs.forEach(r=>{ r.dom=tilDom });
+ indNulstil(); srcNulstil(); grpNulstil();
+ markDirty(); autosave();
+ planDom=tilDom; gemView(); drawPlan();
+ setSync('«'+(kopi.name||kopi.type||'kortet')+'» ligger nu i '+PLANDOMS[tilDom]
+   +(refs.length?' · '+refs.length+(refs.length===1?' binding':' bindinger')+' fulgte med':''));
+}
+
+function kortFlytSheet(did){
+ const dv=(dom().devices||[]).find(x=>x.id===did);
+ if(!dv)return;
+ const refs=refsTilKort(planDom,did);
+ openSheet('Flyt «'+(dv.name||dv.type||'kortet')+'»',
+  Object.keys(PLANDOMS).filter(k=>k!==planDom&&k!=='vc').map(k=>({
+   ikon:'⇥', tekst:PLANDOMS[k],
+   under:(k==='patch'&&!PATCHTYPER[dv.ptype])?'kortet bliver et Dante-kort':'',
+   gør:()=>{ closeModal(); kortFlyt(did,k) }
+  })).concat(refs.length?[{skil:1},{ikon:'⚯',
+    tekst:refs.length+(refs.length===1?' binding':' bindinger')+' peger på kortet',
+    under:'de følger med over — intet knækker',
+    gør:()=>{}}]:[]));
+}
+
 /* ---- kortmenu i planen ---- */
 function sheetKort(did){
  const dv=dom().devices.find(x=>x.id===did);
@@ -8969,6 +9376,24 @@ function sheetKort(did){
   {ikon:'⤓',tekst:'Skriv kanaler på lageret',
    under:'på et stykke udstyr der findes i forvejen',
    gør:()=>lagerSaveFromDevice(dv)},
+  {skil:1},
+  /* Korttypen kan skiftes bagefter. Teksterne bliver staaende: har man
+     skrevet tredive linjer i et Dante-kort, der skulle have vaeret MADI,
+     skal man ikke skrive dem igen. De felter, den nye type ikke viser,
+     bliver liggende i data og kommer frem igen, hvis man skifter
+     tilbage - de slettes ikke bag ryggen af nogen. */
+  ...(planDom==='patch'?[{ikon:'⇄',tekst:'Skift korttype',
+    vaerdi:patchDef(dv).navn,
+    under:'teksterne bliver stående',
+    gør:()=>openSheet('Korttype for «'+(dv.name||'kortet')+'»',
+      Object.keys(PATCHTYPER).map(k=>({
+        ikon:patchType(dv)===k?'●':'○', tekst:PATCHTYPER[k].navn,
+        under:PATCHTYPER[k].under,
+        gør:()=>{ snap(); dv.ptype=k; dv.mt=Date.now(); closeModal(); autosave(); drawPlan() }
+      })))}]:[]),
+  {ikon:'⇥',tekst:'Flyt til en anden fane',
+   under:'bindinger følger med',
+   gør:()=>kortFlytSheet(dv.id)},
   {skil:1},
   {ikon:'✕',tekst:'Slet kortet',fare:1,gør:()=>{
     if(!confirm('Slet "'+dv.name+'" med alle linjer?'))return;
@@ -13237,6 +13662,41 @@ function planRows(kun){
  }));
  return rows;
 }
+/* ── Patchplanen som regneark ──────────────────────────────────
+   Planens faelles CSV har faste kolonner (Nr, MHz, Signal, Type ...), og
+   patchplanens felter passer ikke ind i dem. At presse dem sammen i én
+   kolonne - "Flow: x · Til: y" - ville give et regneark, man ikke kan
+   sortere eller filtrere i, og det er hele pointen med et regneark.
+
+   Derfor sin egen tabel, praecis som containerne har deres (vcCSV).
+   Korttypen staar i en kolonne, og hvert felt i sin egen, saa de tre
+   typer kan ligge i samme fil uden at skulle have ens felter. */
+function patchRows(){
+ const rows=[['Korttype','Kort','Placering','Kanal / port','Kanal i porten',
+   'Flow','Kort / slot','Signal','Arvet fra','Kommer fra',
+   'Patchet','Tjekket','Sat af','Tidspunkt']];
+ alive(ensurePlan()['patch'].devices||[]).forEach(d=>{
+  const pd=patchDef(d);
+  alive(d.ins).forEach(pp=>{
+   const sk=patchSkygge(pp);
+   rows.push([pd.navn, d.name||'', d.place||'',
+     pp.n||'', pp.kan||'', pp.flow||'', pp.slot||'',
+     pp.label||(sk?sk.tekst:''),
+     (!pp.label&&sk)?sk.fra:'',                 /* tom naar teksten er din egen */
+     srcEr(pp.src)?srcKort(pp.src):'',
+     pp.patched?'ja':'', pp.checked?'ja':'', pp.by||'',
+     pp.at?new Date(pp.at).toLocaleString('da-DK'):'']);
+  });
+ });
+ return rows;
+}
+function patchCSV(){
+ const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+ dl('\ufeff'+patchRows().map(r=>r.map(q).join(';')).join('\r\n'),
+    fileName('csv',false,'patch'),'text/csv;charset=utf-8');
+ closeModal();
+}
+
 function exportPlanCSV(kun){
  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
  const navn=fileName('csv',false,'plan'+(kun?'_'+kun:''));
@@ -13270,6 +13730,36 @@ function planPrintHTML(kun,o){
         <span class="ppl">${esc(tx)}</span>
         <span class="ppb">${tx?(p.patched?'✓':'☐'):''}</span>
         <span class="ppb">${tx?(p.checked?'✓':'☐'):''}</span></div>`}).join('')+`</div>`;
+   if(k==='patch'){
+    /* En patchplan er netop én, man PRINTER og har med i hånden ude ved
+       racket. Kolonnerne kommer fra korttypen, så Dante-kortet får Flow
+       og Til, og MADI-kortet får porten og kanalen - samme tabel som på
+       skaermen, og ikke en anden sandhed paa papiret.
+
+       Bredderne saettes inline, fordi antallet af kolonner skifter med
+       typen. Ét fast gitter ville klemme Dante-kortets tre felter ind i
+       plads til to. */
+    const pd=patchDef(d);
+    const kol=pd.felter.map(f=>f.kl==='pf-m'?'84px':'48px').join(' ')
+      +' 1fr 110px 22px 22px';
+    h+=`<div class="ppdev"><div class="ppname">${esc(d.name)} · ${esc(pd.navn)}${d.place?' · '+esc(d.place):''}</div>
+      ${udstyrPrint(k,d)}
+      <div class="ppfreq pppatch">
+        <div class="ppfr ppfh" style="grid-template-columns:${kol}">
+          ${pd.felter.map(f=>`<span>${esc(f.t)}</span>`).join('')}
+          <span>Signal</span><span>Kommer fra</span><span>P</span><span>T</span></div>
+        ${alive(d.ins).map(pp=>{
+          const sk=patchSkygge(pp);
+          const tx=pp.label||(sk?sk.tekst:'');
+          return `<div class="ppfr" style="grid-template-columns:${kol}">
+            ${pd.felter.map(f=>`<span>${esc(pp[f.k]||'')}</span>`).join('')}
+            <span>${esc(tx)}</span>
+            <span class="ppkilde">${esc(srcEr(pp.src)?srcKort(pp.src):'')}</span>
+            <span>${tx?(pp.patched?'✓':'☐'):''}</span>
+            <span>${tx?(pp.checked?'✓':'☐'):''}</span></div>`}).join('')}
+      </div></div>`;
+    return;
+   }
    if(k==='freq'){
     /* frekvensplanen står bedre som én tabel med MHz og bruger */
     h+=`<div class="ppdev"><div class="ppname">${esc(d.name)}${d.place?' · '+esc(d.place):''}</div>
