@@ -7661,7 +7661,7 @@ function bindPlan(){
   ev.stopPropagation();
   const id2=b.dataset.dfold;
   if(planFold.has(id2))planFold.delete(id2); else planFold.add(id2);
-  gemFold(); drawPlan();
+  gemFold(); planRyk=true; drawPlan();
  });
  /* fold dem alle */
  const k1=el2.querySelector('[data-kol1]'); if(k1)k1.onclick=()=>planStilOp(1);
@@ -7671,7 +7671,7 @@ function bindPlan(){
   const ds=alive(dom().devices||[]);
   const nogleAabne=ds.some(d=>!planFold.has(d.id));
   ds.forEach(d=>{ if(nogleAabne)planFold.add(d.id); else planFold.delete(d.id) });
-  gemFold(); drawPlan();
+  gemFold(); planRyk=true; drawPlan();
  };
  const sh2=el2.querySelector('[data-share]');
  if(sh2)sh2.onclick=function(){
@@ -7993,12 +7993,31 @@ function skubForLydliste(el2){
    (position:relative), og så er der ingenting at skubbe. */
 const PLAN_LUFT=24;          // mindste afstand mellem to kort, i px
 
-function planRydOp(el2){
+/* ── Hvornaar skal de RYKKE SAMMEN? ────────────────────────────
+   Til daglig skubber vi kun NEDAD. Det er med vilje: et kort, man selv
+   har lagt et sted, skal blive liggende, og en luft man selv har lavet
+   er ikke en fejl.
+
+   Men folder man kortene sammen, forsvinder der hundredvis af pixels
+   inde i hvert kort, og tilbage staar hullerne, hvor linjerne var. Dét
+   er ikke en luft, nogen har lavet — den er en rest. Derfor saettes det
+   her flag, naar man folder, og saa kommer kortene op og lukker hullet.
+
+   Flaget er et ENGANGS-flag: det bruges op ved naeste optegning. Ellers
+   ville enhver optegning bagefter — en kollegas rettelse, et tryk paa
+   opdater — ogsaa rykke kortene, og saa kunne man aldrig lægge et kort,
+   hvor man ville have det. */
+let planRyk=false;
+
+function planRydOp(el2,valg){
  if(typeof mobil!=='undefined' && mobil)return 0;
  el2=el2||document.getElementById('plan');
  if(!el2)return 0;
  const canvas=el2.querySelector('#devcanvas');
  if(!canvas)return 0;
+ /* ryk kommer enten fra kaldet eller fra engangsflaget */
+ const ryk = !!(valg&&valg.ryk) || planRyk;
+ planRyk=false;
  /* Står en lydliste åben, er kortet midlertidigt højere end det er.
     skubForLydliste nedenfor skubber for den slags med transform, netop
     for at der ikke bliver noget at gemme. Målte vi her, ville vi gemme
@@ -8016,22 +8035,25 @@ function planRydOp(el2){
   if(!n)return;
   kort.push({d:d, x:+d.x||0, y:+d.y||0, b:n.offsetWidth, h:n.offsetHeight, n:n});
  });
- if(kort.length<2)return 0;
+ if(!kort.length)return 0;
 
  kort.sort((a,b)=> a.y-b.y || a.x-b.x
    || String(a.d.id).localeCompare(String(b.d.id)));
 
  let flyttet=0;
- for(let i=1;i<kort.length;i++){
+ for(let i=0;i<kort.length;i++){
   const k=kort[i];
-  let mindstY=k.y;
+  /* Skal der rykkes sammen, er maalet toppen af kolonnen og ikke der,
+     hvor kortet tilfaeldigvis staar. Ellers er maalet kortets egen plads,
+     og saa kan den kun gaa nedad. Det er hele forskellen paa de to. */
+  let mindstY = ryk ? 20 : k.y;
   for(let j=0;j<i;j++){
    const o=kort[j];
    /* står de slet ikke over for hinanden vandret, generer de ikke */
    if(k.x+k.b<=o.x+1 || o.x+o.b<=k.x+1)continue;
    mindstY=Math.max(mindstY, o.y+o.h+PLAN_LUFT);
   }
-  if(mindstY>k.y+0.5){
+  if(ryk ? Math.abs(mindstY-k.y)>0.5 : mindstY>k.y+0.5){
    k.y=Math.round(mindstY);
    k.d.y=k.y; k.d.mt=Date.now();
    k.n.style.top=k.y+'px';      // flyttes på skærmen med det samme, uden
@@ -8565,7 +8587,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.27-f';
+const SF_VERSION='2026.10.27-g';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -9493,7 +9515,8 @@ function sheetKort(did){
     drawPlan()}},
   {ikon:erFoldet(dv)?'⊞':'⊟',tekst:erFoldet(dv)?'Vis alle linjer':'Skjul tomme linjer',
    under:erFoldet(dv)?'':'kun linjer med signal vises',
-   gør:()=>{ if(planFold.has(dv.id))planFold.delete(dv.id); else planFold.add(dv.id); gemFold(); drawPlan(); }},
+   gør:()=>{ if(planFold.has(dv.id))planFold.delete(dv.id); else planFold.add(dv.id);
+     gemFold(); planRyk=true; drawPlan(); }},
   {ikon:'⤓',tekst:'Skriv kanaler på lageret',
    under:'på et stykke udstyr der findes i forvejen',
    gør:()=>lagerSaveFromDevice(dv)},
