@@ -8628,7 +8628,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.28-c';
+const SF_VERSION='2026.10.28-d';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -9579,8 +9579,18 @@ function kortplanKanaler(dv){
    Linjer ud over planens laengde faar et sletningstidspunkt i stedet for
    at blive fjernet — ellers ville en kollegas kopi laegge dem tilbage
    ved naeste synkronisering. Samme regel som alle andre sletninger. */
-function kortplanSaet(dv,kanaler){
+function kortplanSaet(dv,kanaler,navn){
  const nu=Date.now(), hvem=meName()==='?'?'':meName();
+ /* Overskriften foelger med. Planens navn ER kortets navn: gemmevinduet
+    skriver kortets navn ind som forslag, saa de to er ens, medmindre man
+    selv aendrer det. Uden det her hed kortet stadig «Dante-enhed» efter
+    man havde hentet 128 faerdige linjer ind i det, og saa skulle det
+    skrives af i haanden hver gang.
+
+    PLACERINGEN foelger IKKE med. «Studie 4» hoerer til ét job, ikke til
+    opstillingen — og en gammel placering, der dukker op paa et nyt job,
+    er vaerre end et tomt felt, fordi den ser rigtig ud. */
+ if(navn && String(navn).trim()) dv.name=String(navn).trim();
  ['ins','outs'].forEach(side=>{
   const levende=ports(dv,side);
   const doede=(dv[side]||[]).filter(x=>x.del);
@@ -9607,6 +9617,9 @@ function gemKortplan(dv){
   `<div class="mf"><label>Navn på planen</label>
      <input type="text" name="navn" value="${esc(dv.name||dv.type||'')}"
        placeholder="fx Dante 64 kanaler"></div>
+   <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11px;
+     line-height:1.5;margin:-4px 0 10px">Navnet bliver også kortets
+     overskrift, når planen hentes ind et andet sted.</div>
    <div class="mf"><label>Note (valgfri)</label>
      <input type="text" name="note" placeholder="hvornår bruges den?"></div>
    <div class="lydvis">${kanaler.slice(0,40).map(k=>
@@ -9635,9 +9648,10 @@ function hentKortplan(dv){
  openModal('Hent kortplan','Henter ind på "'+(dv.name||dv.type||'kortet')+'"',
   `<div id="lydListe" class="grpliste"><div class="msub">henter …</div></div>
    <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-top:12px">
-     Planen erstatter kortets linjer. Linje nr. 3 lander på linje nr. 3, så
-     bindinger til tegningen bliver siddende, hvor de peger. Fortryd med
-     ⟲ hvis det ikke blev som ventet.
+     Planen erstatter kortets linjer <b>og kortets navn</b>. Linje nr. 3
+     lander på linje nr. 3, så bindinger til tegningen bliver siddende,
+     hvor de peger. Placeringen bliver stående — den hører til jobbet, ikke
+     til opstillingen. Fortryd med ⟲ hvis det ikke blev som ventet.
    </div>`,
   async root=>{
    const ud=root.querySelector('#lydListe');
@@ -9671,10 +9685,11 @@ function hentKortplan(dv){
     const refs=(typeof refsTilKort==='function')?refsTilKort(planDom,dv.id).length:0;
     if(harTekst && !confirm('Kortet har allerede tekst på sine linjer.\n\n'
         +'Erstat dem med "'+pl.name+'"?'
+        +'\n\nKortet kommer også til at hedde "'+pl.name+'".'
         +(refs?'\n\n'+refs+(refs===1?' binding peger':' bindinger peger')
            +' på kortets linjer. De bliver siddende på deres linjenummer.':'')))return;
     snap();
-    kortplanSaet(dv,pl.kanaler||[]);
+    kortplanSaet(dv,pl.kanaler||[],pl.name);
     indNulstil(); srcNulstil();
     closeModal(); markDirty(); autosave(); drawPlan();
     setSync('«'+pl.name+'» hentet ind på '+(dv.name||'kortet'));
