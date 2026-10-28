@@ -1571,7 +1571,11 @@ body.mobile .laasknap{min-height:34px}
 
 
 /* fri placering af kortene */
-.devcanvas{position:relative;width:3400px;height:2600px}
+/* min-height og ikke height. Med en fast hoejde kan et kort, der ligger
+   neden for kanten, slet ikke naas med en rulning — og saa ser fanen tom
+   ud, selvom alt staar i databasen. Det skete 28.10.2026: tre kort paa
+   2040px laa paa y=1583, 3870 og 6157 i et laerred paa 2600. */
+.devcanvas{position:relative;width:3400px;min-height:2600px}
 /* smalt kort: input og output under hinanden, så teksten stadig kan ses */
 .dev.narrow .ports{grid-template-columns:1fr}
 .dev.narrow .portcol.ins{border-right:none;border-bottom:1px solid var(--line)}
@@ -8009,6 +8013,19 @@ const PLAN_LUFT=24;          // mindste afstand mellem to kort, i px
    hvor man ville have det. */
 let planRyk=false;
 
+/* Lærredet skal altid kunne rumme det nederste kort. Står den som en
+   selvstændig lille funktion, fordi den også skal køre i de tilfælde,
+   hvor vi IKKE flytter noget. */
+function planLaerredHoejde(el2){
+ const canvas=el2&&el2.querySelector('#devcanvas');
+ if(!canvas)return;
+ let bund=0;
+ canvas.querySelectorAll('.dev').forEach(n=>{
+  bund=Math.max(bund, n.offsetTop+n.offsetHeight);
+ });
+ if(bund)canvas.style.minHeight=(bund+120)+'px';
+}
+
 function planRydOp(el2,valg){
  if(typeof mobil!=='undefined' && mobil)return 0;
  el2=el2||document.getElementById('plan');
@@ -8021,8 +8038,12 @@ function planRydOp(el2,valg){
  /* Står en lydliste åben, er kortet midlertidigt højere end det er.
     skubForLydliste nedenfor skubber for den slags med transform, netop
     for at der ikke bliver noget at gemme. Målte vi her, ville vi gemme
-    en luft, der forsvinder i samme øjeblik listen lukkes. */
- if(el2.querySelector('.audlist'))return 0;
+    en luft, der forsvinder i samme øjeblik listen lukkes.
+
+    Men lærredets højde sættes ALLIGEVEL. Sprang vi helt over, ville et
+    kort neden for kanten være uden for rækkevidde, så længe en liste
+    stod åben — og det er netop dér, man har brug for at kunne rulle. */
+ if(el2.querySelector('.audlist')){ planLaerredHoejde(el2); return 0 }
 
  /* Målene tages fra offsetWidth/offsetHeight, ikke fra
     getBoundingClientRect. En transform flytter billedet, ikke layoutet,
@@ -8061,9 +8082,29 @@ function planRydOp(el2,valg){
   }
  }
 
- /* Lærredet er 2600px højt i stilarket. Skubbes et kort længere ned end
-    det, kan man ikke rulle ned til det. Så får lærredet den højde, der
-    skal til. */
+ /* ── Dødt rum over det øverste kort ────────────────────────────
+    Sletter man et kort, der fyldte 1500px, bliver hullet stående: vi
+    skubber kun nedad, og så er der ingenting, der lukker det. Åbner man
+    så fanen, kigger man på halvanden tusind pixels tomhed og tror, at
+    alt er væk. Det skete 28.10.2026 — tre fulde planer stod der hele
+    tiden, det første kort begyndte bare på y=1583.
+
+    Her flyttes ALLE kort lige langt op, så det øverste lander på 20.
+    Det er en ren forskydning: ingen kort bytter plads, ingen afstand
+    ændrer sig, billedet er det samme — det er bare rullet til tops.
+    Derfor kan den ikke ødelægge en opstilling, nogen har lavet. */
+ let top=Infinity;
+ kort.forEach(k=>{ top=Math.min(top,k.y) });
+ if(isFinite(top) && top>20){
+  const op=top-20;
+  kort.forEach(k=>{
+   k.y-=op; k.d.y=k.y; k.d.mt=Date.now(); k.n.style.top=k.y+'px';
+  });
+  flyttet+=kort.length;
+ }
+
+ /* Og lærredet skal være højt nok til det nederste kort, ellers kan man
+    ikke rulle hen til det. */
  let bund=0;
  kort.forEach(k=>{ bund=Math.max(bund, k.y+k.h) });
  canvas.style.minHeight=(bund+120)+'px';
@@ -8587,7 +8628,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.27-g';
+const SF_VERSION='2026.10.28-c';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -9151,8 +9192,17 @@ function bindUdVaelg(gid){
    bruge det med det samme, og det siger selv til, at SQL'en mangler. */
 const SPORLAG={
  lyd:      {navn:'lydsporplan',       Navn:'Lydsporplan',       hvad:'lydkanaler'},
- intercom: {navn:'intercomsporplan',  Navn:'Intercomsporplan',  hvad:'intercomkanaler'}
+ intercom: {navn:'intercomsporplan',  Navn:'Intercomsporplan',  hvad:'intercomkanaler'},
+ /* Kortplaner er linjeopstillingen paa et KORT i planen — ind og ud,
+    numre og tekster. De har ikke noget med lageret at goere: et Dante-kort
+    med 64 linjer er en opstilling, man bruger igen og igen, og den skal
+    kunne gemmes uden foerst at skulle findes som et stykke udstyr paa
+    lageret. Samme tabel som de to andre, bare et andet type-felt — der er
+    ingen begraensning paa det i basen, saa der skal ingen SQL koeres. */
+ kort:     {navn:'kortplan',          Navn:'Kortplan',          hvad:'linjer'}
 };
+const SPORFANE={lyd:'♪ Lydsporplaner', intercom:'☎ Intercomsporplaner',
+                kort:'▤ Kortplaner'};
 const LS_SPOR='signalflow:sporplaner';
 let sporArkivLokalt=false;           // kører vi på reserven?
 function sporplanerLokalt(){
@@ -9247,14 +9297,16 @@ function lagerTilbage(){
 function openSporarkiv(lag){
  lag=lag||'lyd';
  const fane=k=>`<button class="arkfane ${k===lag?'on':''}" data-arkfane="${k}">
-   ${k==='lyd'?'♪ Lydsporplaner':'☎ Intercomsporplaner'}</button>`;
+   ${SPORFANE[k]||k}</button>`;
  openModal('Sporplaner', 'Gemte opstillinger, der kan hentes ind på en gruppe', `
-  <div class="arkfaner">${fane('lyd')}${fane('intercom')}</div>
+  <div class="arkfaner">${fane('lyd')}${fane('intercom')}${fane('kort')}</div>
   <div id="arkListe" class="grpliste"><div class="msub">henter …</div></div>
   <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-top:12px">
-    Du henter og gemmer en sporplan <b>på en gruppe</b> i tegningen:
-    tryk <b>♪ Sporplan</b> ude ved gruppens navn. Her kan du se, hvad arkivet
-    indeholder, og rydde op i det.
+    <b>Lyd- og intercomsporplaner</b> henter og gemmer du <b>på en gruppe</b>
+    i tegningen: tryk <b>♪ Sporplan</b> ude ved gruppens navn.<br>
+    <b>Kortplaner</b> henter og gemmer du <b>på et kort</b> i planen: tryk
+    <b>⋯</b> i kortets hoved. De har ikke noget med lageret at gøre.<br>
+    Her kan du se, hvad arkivet indeholder, og rydde op i det.
   </div>
   <div class="mrow"><button class="btn" data-arkluk="1">Luk</button></div>`,
   async root=>{
@@ -9486,6 +9538,157 @@ function kortFlytSheet(did){
     gør:()=>{}}]:[]));
 }
 
+/* ══ KORTPLANER ══════════════════════════════════════════════════════
+   En opstilling af linjer paa et kort — ind og ud, numre og tekster —
+   gemt under et navn, saa den kan hentes ind paa et andet kort.
+
+   Den bor i det SAMME arkiv som lyd- og intercomsporplanerne, bare med
+   et andet type-felt. Et selvstaendigt arkiv ville betyde en tabel mere,
+   et saet regler mere, en reserve mere naar basen ikke svarer, og et
+   sted mere at rydde op. Det er den samme ting: en gemt opstilling.
+
+   Den har INTET med lageret at goere, og det er hele pointen. «Skriv
+   kanaler paa lageret» skriver linjerne ind paa et stykke udstyr, der
+   findes i forvejen — det er en anden handling med et andet formaal.
+   Et Dante-kort med 64 linjer er en opstilling, man bruger igen og igen,
+   og den skal kunne gemmes uden foerst at skulle vaere en kasse paa et
+   lager.                                                               */
+
+/* Linjerne ud af et kort. Siden skrives med, saa ind og ud ikke blandes
+   sammen, naar planen hentes ind igen. De aeldre lagene (lyd, intercom)
+   har ingen side paa deres kanaler, og det goer ingenting: de laeses af
+   grupperne i tegningen, som ikke har to sider. */
+function kortplanKanaler(dv){
+ const ud=[];
+ ['ins','outs'].forEach(side=>{
+  ports(dv,side).forEach(p=>{
+   ud.push({nr:p.n||'', label:p.label||'', side:side});
+  });
+ });
+ return ud;
+}
+
+/* Laeg planen ind paa kortet.
+
+   Linje nr. 3 i planen lander paa linje nr. 3 paa kortet og BEHOLDER
+   linjens id. Det er med vilje: peger tegningen eller en anden plan paa
+   den linje, bliver bindingen siddende, hvor den peger. Lavede vi nye
+   id'er hele vejen ned, ville hver eneste binding knaekke lydloest, hver
+   gang man hentede en plan ind.
+
+   Linjer ud over planens laengde faar et sletningstidspunkt i stedet for
+   at blive fjernet — ellers ville en kollegas kopi laegge dem tilbage
+   ved naeste synkronisering. Samme regel som alle andre sletninger. */
+function kortplanSaet(dv,kanaler){
+ const nu=Date.now(), hvem=meName()==='?'?'':meName();
+ ['ins','outs'].forEach(side=>{
+  const levende=ports(dv,side);
+  const doede=(dv[side]||[]).filter(x=>x.del);
+  const nye=(kanaler||[]).filter(k=>(k.side||'ins')===side);
+  const ud=[];
+  nye.forEach((k,i)=>{
+   const g=levende[i];
+   if(g){ g.n=k.nr||''; g.label=k.label||''; g.by=hvem; g.at=nu; ud.push(g) }
+   else ud.push({id:id(), n:k.nr||'', label:k.label||'', by:hvem, at:nu});
+  });
+  levende.slice(nye.length).forEach(g=>{ g.del=nu; g.at=nu; ud.push(g) });
+  dv[side]=ud.concat(doede);
+ });
+ dv.mt=nu;
+}
+
+function gemKortplan(dv){
+ const kanaler=kortplanKanaler(dv);
+ if(!kanaler.length)return alert('Kortet har ingen linjer at gemme.');
+ const ind=kanaler.filter(k=>k.side==='ins').length;
+ const ud =kanaler.length-ind;
+ openModal('Gem som kortplan',
+  ind+' ind og '+ud+' ud fra "'+(dv.name||dv.type||'kortet')+'"',
+  `<div class="mf"><label>Navn på planen</label>
+     <input type="text" name="navn" value="${esc(dv.name||dv.type||'')}"
+       placeholder="fx Dante 64 kanaler"></div>
+   <div class="mf"><label>Note (valgfri)</label>
+     <input type="text" name="note" placeholder="hvornår bruges den?"></div>
+   <div class="lydvis">${kanaler.slice(0,40).map(k=>
+     `<span><em>${esc(k.nr)}</em>${esc(k.label||'—')}</span>`).join('')}${
+     kanaler.length>40?'<span><em></em>… og '+(kanaler.length-40)+' mere</span>':''}</div>
+   <div id="lydMsg" class="msub" style="text-transform:none;letter-spacing:0;min-height:15px"></div>
+   <div class="mrow"><button class="btn go" data-ok="1" style="width:100%">Gem i arkivet</button></div>`,
+  root=>{
+   const navn=root.querySelector('[name="navn"]'), note=root.querySelector('[name="note"]');
+   const msg=root.querySelector('#lydMsg');
+   root.querySelector('[data-ok]').onclick=async function(){
+    const n=navn.value.trim();
+    if(n.length<2){msg.textContent='Giv planen et navn først.';navn.focus();return}
+    this.textContent='Gemmer …'; this.disabled=true;
+    try{
+     const hvor=await sporplanGem('kort',n,note.value.trim(),kanaler);
+     closeModal();
+     setSync('«'+n+'» ligger i arkivet · '+kanaler.length+' linjer');
+     if(hvor==='lokal')alert('Planen er gemt på denne maskine.\n\nFor at dele den med kollegerne skal SQL\'en for signalflow_lydplaner køres i databasen.');
+    }catch(e){ this.textContent='Gem i arkivet'; this.disabled=false; msg.textContent=e.message }
+   };
+  });
+}
+
+function hentKortplan(dv){
+ openModal('Hent kortplan','Henter ind på "'+(dv.name||dv.type||'kortet')+'"',
+  `<div id="lydListe" class="grpliste"><div class="msub">henter …</div></div>
+   <div class="msub" style="text-transform:none;letter-spacing:0;font-size:11.5px;line-height:1.6;margin-top:12px">
+     Planen erstatter kortets linjer. Linje nr. 3 lander på linje nr. 3, så
+     bindinger til tegningen bliver siddende, hvor de peger. Fortryd med
+     ⟲ hvis det ikke blev som ventet.
+   </div>`,
+  async root=>{
+   const ud=root.querySelector('#lydListe');
+   let liste=[];
+   try{ liste=await sporplanerHent('kort') }
+   catch(e){ ud.innerHTML='<div class="msub">'+esc(e.message)+'</div>'; return }
+   if(!liste.length){
+    ud.innerHTML='<div class="msub" style="text-transform:none;letter-spacing:0;line-height:1.6">'
+     +'Der er ingen kortplaner i arkivet endnu.<br>'
+     +'Gem et korts linjer som kortplan, så står den her næste gang.</div>';
+    return;
+   }
+   ud.innerHTML=liste.map(x=>{
+    const k=x.kanaler||[];
+    const ind=k.filter(c=>(c.side||'ins')==='ins').length;
+    return `<div class="grpvalg lydvalg" data-lyd="${x.id}">
+      <span class="grpnavn">${esc(x.name)}</span>
+      <span class="grpsti">${ind} ind · ${k.length-ind} ud${x.note?' · '+esc(x.note):''}${x.created_by?' · '+esc(x.created_by):''}</span>
+      <span class="grptal">${k.slice(0,4).map(c=>esc(c.label||c.nr)).join(' · ')}${k.length>4?' …':''}</span>
+      <button class="mini lydslet" data-slet="${x.id}" title="Fjern planen fra arkivet">✕</button>
+    </div>`;
+   }).join('')+(sporArkivLokalt?'<div class="msub" style="text-transform:none;letter-spacing:0;margin-top:8px">Arkivet ligger kun på denne maskine – kør SQL\'en for at dele det.</div>':'');
+   ud.querySelectorAll('[data-lyd]').forEach(n=>n.onclick=ev=>{
+    if(ev.target.closest('[data-slet]'))return;
+    const pl=liste.find(x=>x.id===n.dataset.lyd);
+    if(!pl)return;
+    const harTekst=ports(dv,'ins').concat(ports(dv,'outs')).some(p=>p.label);
+    /* Hvor mange bindinger peger paa kortet? De bliver siddende paa deres
+       linjenummer, men peger de paa en linje, planen er for kort til,
+       knaekker de — og det skal staa der FOER man trykker. */
+    const refs=(typeof refsTilKort==='function')?refsTilKort(planDom,dv.id).length:0;
+    if(harTekst && !confirm('Kortet har allerede tekst på sine linjer.\n\n'
+        +'Erstat dem med "'+pl.name+'"?'
+        +(refs?'\n\n'+refs+(refs===1?' binding peger':' bindinger peger')
+           +' på kortets linjer. De bliver siddende på deres linjenummer.':'')))return;
+    snap();
+    kortplanSaet(dv,pl.kanaler||[]);
+    indNulstil(); srcNulstil();
+    closeModal(); markDirty(); autosave(); drawPlan();
+    setSync('«'+pl.name+'» hentet ind på '+(dv.name||'kortet'));
+   });
+   ud.querySelectorAll('[data-slet]').forEach(n=>n.onclick=async ev=>{
+    ev.stopPropagation();
+    const pl=liste.find(x=>x.id===n.dataset.slet);
+    if(!pl||!confirm('Fjern "'+pl.name+'" fra arkivet?'))return;
+    await sporplanSlet(pl.id);
+    closeModal(); setTimeout(()=>hentKortplan(dv),40);
+   });
+  });
+}
+
 /* ---- kortmenu i planen ---- */
 function sheetKort(did){
  const dv=dom().devices.find(x=>x.id===did);
@@ -9517,6 +9720,12 @@ function sheetKort(did){
    under:erFoldet(dv)?'':'kun linjer med signal vises',
    gør:()=>{ if(planFold.has(dv.id))planFold.delete(dv.id); else planFold.add(dv.id);
      gemFold(); planRyk=true; drawPlan(); }},
+  {ikon:'⇪',tekst:'Gem kortets linjer som kortplan',
+   under:'i arkivet – uden at røre lageret',
+   gør:()=>gemKortplan(dv)},
+  {ikon:'⇩',tekst:'Hent en kortplan ind',
+   under:'erstatter kortets linjer',
+   gør:()=>hentKortplan(dv)},
   {ikon:'⤓',tekst:'Skriv kanaler på lageret',
    under:'på et stykke udstyr der findes i forvejen',
    gør:()=>lagerSaveFromDevice(dv)},
@@ -9802,11 +10011,37 @@ function mergePages(mine,theirs){
  return ud.length?ud:(mine||theirs||[]);          // aldrig et tomt resultat
 }
 
+/* ── Flettningen maa ALDRIG tabe et omraade, den ikke kender ────
+   ⚠ RETTET 28.10.2026 efter et tab af data.
+
+   Her stod Object.keys(PLANDOMS) alene. Flettningen byggede altsaa en
+   HELT NY plan af kun de omraader, DENNE udgave af programmet kendte —
+   og alt andet faldt paa gulvet og blev sendt op som en tom plads.
+
+   Det ramte, da patchplanen kom til: enhver aeldre udgave, der stadig
+   koerte et sted — en fane fra i gaar, telefonen, en kollega der ikke
+   havde hentet filen endnu — flettede, tabte hele patch-omraadet og
+   skrev resultatet op i databasen. Tre planers arbejde forsvandt, og
+   ingen kunne se hvorfor: gemningen virkede, kortene var der, og saa
+   var de der ikke.
+
+   Reglen er vendt om. Der flettes over alle omraader, der findes i
+   NOGEN af de to kopier, og ikke kun dem denne udgave har hoert om.
+   Et omraade, programmet ikke kender, baeres uaendret igennem i stedet
+   for at blive slettet. Det koster ingenting og gaelder ogsaa forlaens:
+   det naeste omraade, vi finder paa, kan ikke rives ud af en gammel
+   fane paa den her maade.
+
+   Samme grund til at mergeDev arbejder paa ins og outs generisk: en
+   flettning skal kunne baere data, den ikke forstaar. */
 function mergePlan(mine,theirs){
  if(!theirs)return mine;
  if(!mine)return theirs;
  const out={};
- Object.keys(PLANDOMS).forEach(k=>{
+ const omraader=[];
+ Object.keys(PLANDOMS).concat(Object.keys(mine||{}),Object.keys(theirs||{}))
+   .forEach(k=>{ if(omraader.indexOf(k)<0)omraader.push(k) });
+ omraader.forEach(k=>{
   const a=planDevices(mine,k), b=planDevices(theirs,k);
   const byId={}; const order=[];
   const put=d=>{if(!byId[d.id]){byId[d.id]=JSON.parse(JSON.stringify(d));order.push(d.id)}
