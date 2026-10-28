@@ -648,7 +648,12 @@ body.mobile .ph-n,body.mobile .ph-c,body.mobile .ph-a{width:auto}
 body.mobile .audslot{width:30px}
 
 /* kameraets kanaler */
-.port.kam{display:grid;grid-template-columns:54px 62px 1fr 22px 22px 34px 22px 22px;gap:5px;align-items:center}
+/* Ni spor til ni boern. Det tredje er maerkets, og det er der ogsaa naar
+   linjen ikke er bundet — saa staar numre og felter samme sted i alle
+   raekker, bundne som ubundne. */
+.port.kam{display:grid;grid-template-columns:54px 62px 14px 1fr 22px 22px 34px 22px 22px;gap:5px;align-items:center}
+.port.kam>.fastmaerke,.port.freq>.fastmaerke{width:14px;text-align:center}
+.fastmaerke.tom{visibility:hidden}
 .kamtype{font:9.5px var(--fm);color:var(--faint);text-transform:uppercase;letter-spacing:.06em;
  background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:4px 0;
  text-align:center;cursor:pointer;-webkit-appearance:none;appearance:none}
@@ -660,12 +665,12 @@ body.mobile .audslot{width:30px}
 .kamnote{margin:2px 8px 6px;padding:5px 9px;border-radius:7px;font-size:11px;
  background:rgba(90,140,190,.12);border:1px solid #2b4a63;color:#9fc4e4}
 /* kameraet har også typen (mic/line eller AES) ved siden af nummeret */
-body.mobile .port.kam{grid-template-columns:34px 48px minmax(0,1fr) 34px 34px 32px;gap:3px}
+body.mobile .port.kam{grid-template-columns:34px 48px 14px minmax(0,1fr) 34px 34px 32px;gap:3px}
 body.mobile .port.kam>.plabel{min-width:0}
 body.mobile .port.kam .pby,body.mobile .port.kam [data-pdel]{display:none}
 
 /* frekvensplanen */
-.freqcol .porthead.freqhead,.port.freq{grid-template-columns:52px 80px 1fr 76px 22px 22px 0 22px 22px 22px 22px}
+.freqcol .porthead.freqhead,.port.freq{grid-template-columns:52px 80px 14px 1fr 76px 22px 22px 0 22px 22px 22px 22px}
 /* Klikker man i et felt, foldes det ud over naboerne, så hele teksten kan
    læses – man skulle ellers holde musen stille og vente på en boble. */
 .port.freq .plabel:focus,.port.kam .plabel:focus,.port .plabel:focus{
@@ -684,7 +689,7 @@ body.mobile .port.kam .pby,body.mobile .port.kam [data-pdel]{display:none}
 /* På telefonen står nummer, MHz og hakkene øverst – og navnet på sin egen
    linje nedenunder, så hele teksten kan ses. */
 body.mobile .port.freq,body.mobile .freqcol .porthead.freqhead{
- grid-template-columns:36px 64px minmax(0,1fr) 34px 34px 32px;gap:3px;padding:4px 0}
+ grid-template-columns:36px 64px 14px minmax(0,1fr) 34px 34px 32px;gap:3px;padding:4px 0}
 body.mobile .port.freq>.plabel{min-width:0}
 body.mobile .port.freq .pfreq{font-size:13px}
 body.mobile .port.freq .plabel{font-size:14.5px}
@@ -2743,8 +2748,25 @@ function planLabelMaerke(dom2,dv,p,side){
  return sp?`<span class="fastmaerke" title="${esc('Hænger sammen med '+sp.fra
    +' – teksten der er: '+sp.tekst)}">⚯</span>`:'';
 }
+/* ⚠ RETTET 28.10.2026.
+   Bindingsmaerket ⚯ kom kun med, NAAR linjen var bundet. I en raekke, der
+   er et gitter med faste spor — kameraplanen og frekvensplanen — betoed
+   det, at raekken skiftede fra otte til ni boern i samme oejeblik nogen
+   bandt den til tegningen. Alt rykkede én kolonne: maerket fik 1fr og al
+   pladsen, og signalfeltet endte i et spor paa 22px, hvor der kun var
+   plads til ét bogstav. Det saa ud, som om feltet var VAEK.
+
+   Nu kan de raekker bede om, at pladsen altid er der (ekstra.plads), saa
+   antallet af boern er det samme, uanset om linjen er bundet. De raekker,
+   der er flex (lyd, video, net, patch), roeres ikke — der gaar et barn
+   mere ingen steder hen. */
 function planLabelFelt(dom2,dv,p,side,ekstra){
  const sp=plabelSpoeg(dom2,dv,p,side);
+ if(!sp && ekstra && ekstra.plads)
+   return `<span class="fastmaerke tom"></span><input class="plabel" value="${esc(p.label)}"
+     data-forslag="1" placeholder="${(ekstra&&ekstra.ph)?esc(ekstra.ph):'—'}"
+     title="${esc(p.label)}"${(ekstra&&ekstra.disabled)?' disabled':''}
+     data-plabel="${dv.id}|${side}|${p.id}">`;
  const ph=sp?esc(sp.tekst):(ekstra&&ekstra.ph?esc(ekstra.ph):'—');
  const t=(sp&&!p.label)
    ? esc('Står i '+sp.fra+': '+sp.tekst+' — mellemrum eller enter henter den over'
@@ -7094,7 +7116,7 @@ function freqRad(dv,p,i){
     <input class="pnum" value="${esc(p.n)}" data-pnum="${dv.id}|ins|${p.id}" title="Kanal eller nummer på senderen">
     <input class="pfreq" value="${esc(p.freq||'')}" placeholder="MHz" inputmode="decimal"
            data-pfreq="${dv.id}|ins|${p.id}" title="Frekvens i MHz">
-    ${planLabelFelt('freq',dv,p,'ins')}
+    ${planLabelFelt('freq',dv,p,'ins',{plads:1})}
     <input class="pfreqt" value="${esc(p.ftype||'')}" list="freqtyper" placeholder="type"
            data-pftype="${dv.id}|ins|${p.id}" title="Håndholdt, bodypack, IEM …">
     ${p.label?`
@@ -7154,7 +7176,7 @@ function kamRad(dv,p,udgaaet){
     <button class="kamtype ${aes?'aes':''}" data-kamtype="${dv.id}|ins|${p.id}"
       title="Klik for at skifte mellem mic/line og AES">${aes?'AES':'mic/line'}</button>
     ${planLabelFelt('kam',dv,p,'ins',
-        {ph:(udgaaet?'udgår – AES bruger kanal 2':''), disabled:udgaaet})}
+        {ph:(udgaaet?'udgår – AES bruger kanal 2':''), disabled:udgaaet, plads:1})}
     ${p.label&&!udgaaet?`
      <label class="tick" title="Patchet${p.pby?' · af '+esc(p.pby):''}">
        <input type="checkbox" data-tick="${dv.id}|ins|${p.id}|patched" ${p.patched?'checked':''}></label>
@@ -8628,7 +8650,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.28-d';
+const SF_VERSION='2026.10.28-e';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
