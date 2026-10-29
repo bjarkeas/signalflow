@@ -565,6 +565,26 @@ body.arklaast #side button{pointer-events:none;opacity:.45}
 .ppfr{display:grid;grid-template-columns:44px 86px 1fr 84px 22px 22px;gap:8px;
  padding:4px 7px;border-bottom:1px solid #ececec;font-size:11.5px;color:#111}
 .ppfr:last-child{border-bottom:none}
+/* ── Lydspor i printet ────────────────────────────────────────
+   Rykket ind og i mindre skrift, så man kan se med ét blik, at sporet
+   hører til linjen ovenover og ikke er en linje for sig. */
+.ppr.ppspor{background:#fafafa}
+.ppr.ppspor .ppn{padding-left:14px;color:#888;font-size:9px}
+.ppr.ppspor .ppl{color:#444;font-size:10.5px}
+/* ── Kortvælgeren i printvinduet ──────────────────────────────
+   Fluebenskasser i en .mf bliver 100% brede af «.mf input{width:100%}».
+   Derfor står listen uden for en .mf — samme grund som udstyrslisten i
+   East Production. */
+.prvaelg{display:flex;align-items:center;gap:8px;margin:2px 0 8px}
+.prtal{margin-left:auto;font-family:var(--fm);font-size:11px;color:var(--dim)}
+.prliste{max-height:46vh;overflow:auto;display:flex;flex-direction:column;gap:4px;
+  border:1px solid var(--line);border-radius:8px;padding:6px}
+.prkort{display:grid;grid-template-columns:auto 1fr;gap:4px 9px;align-items:center;
+  padding:7px 9px;border-radius:7px;cursor:pointer;background:var(--bg)}
+.prkort:hover{background:var(--panel2)}
+.prkort input{width:auto!important;margin:0;grid-row:span 2}
+.prnavn{font-weight:600;font-size:13px}
+.prunder{font-family:var(--fm);font-size:10.5px;color:var(--dim)}
 .ppfh{background:#f3f3f3;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:#666}
 .ppfr>span:first-child{color:#555;font-family:var(--fm);font-size:10px}
 .ppfr>span:nth-child(4){color:#555;font-size:10px}
@@ -8650,7 +8670,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.28-e';
+const SF_VERSION='2026.10.29-a';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -14083,20 +14103,41 @@ function planPrintHTML(kun,o){
  /* Kameraplanen kan printes på to måder: hele listen med lydkanalerne, eller
     kun kameraerne med deres udstyr. Det sidste er pakkesedlen. */
  const medLyd = !o || o.lyd!==false;
+ const udvalg = (o && o.kort && o.kort.length) ? o.kort.length : 0;
  let h=`<div class="sheettitle">${esc(projectName)} · Plan${kun?' · '+PLANDOMS[kun]:''}${
+   udvalg?` <span class="ppdage">${udvalg===1?'ét kort':udvalg+' kort'} af planen</span>`:''}${
    medLyd?'':' · uden lydkanaler'}${
    harJob()?` <span class="ppdage">${esc(jobTekst())}</span>`:''}</div>`;
  Object.keys(PLANDOMS).filter(k=>!kun||k===kun).forEach(k=>{
-  const ds=alive(ensurePlan()[k].devices||[]);
+  let ds=alive(ensurePlan()[k].devices||[]);
+  /* Har man valgt bestemte kort, er det KUN dem. Uden valget er det hele
+     planen, som det altid har været — så gamle kald og printet fra
+     gæstelinket virker uændret. */
+  if(o && o.kort && o.kort.length) ds=ds.filter(d=>o.kort.indexOf(d.id)>=0);
   if(!ds.length)return;
   h+=`<h2 class="pph">${PLANDOMS[k]}</h2>`;
   ds.forEach(d=>{
+   /* Lydsporene pakket ud under linjen. Det er dem, kollegaen skal
+      patche — linjens navn alene er ikke nok til at sætte en mikrofon
+      i det rigtige hul. Vises kun, når der er bedt om det, og kun på
+      den plan, der HAR spor. */
+   const spor=(p,side)=>{
+     if(!o || !o.spor || o.spor==='uden' || k!=='video') return '';
+     const liste=(typeof printSpor==='function')?printSpor(d,p,o.spor):[];
+     if(!liste.length) return '';
+     return liste.map(a=>`<div class="ppr ppspor">
+        <span class="ppn">${esc(a.n)}</span>
+        <span class="ppl">${esc(a.tekst||'—')}</span>
+        <span class="ppb">${a.tekst?(a.p?'✓':'☐'):'☐'}</span>
+        <span class="ppb">${a.tekst?(a.c?'✓':'☐'):'☐'}</span></div>`).join('');
+   };
    const col=(arr,t,side)=>`<div class="ppcol"><div class="ppt">${t}<span class="ppk">P T</span></div>`
      +alive(arr).map(p=>{const tx=portTekst(k,d,p,side);
        return `<div class="ppr"><span class="ppn">${esc(p.n)}</span>
         <span class="ppl">${esc(tx)}</span>
         <span class="ppb">${tx?(p.patched?'✓':'☐'):''}</span>
-        <span class="ppb">${tx?(p.checked?'✓':'☐'):''}</span></div>`}).join('')+`</div>`;
+        <span class="ppb">${tx?(p.checked?'✓':'☐'):''}</span></div>`
+        + spor(p,side)}).join('')+`</div>`;
    if(k==='freq'){
     /* frekvensplanen står bedre som én tabel med MHz og bruger */
     h+=`<div class="ppdev"><div class="ppname">${esc(d.name)}${d.place?' · '+esc(d.place):''}</div>
@@ -14130,17 +14171,107 @@ function planPrintHTML(kun,o){
 /* Kameraplanen printes til to formål: den fulde plan med lydkanalerne, og
    pakkesedlen med kameraerne og deres udstyr. Derfor spørger vi – men kun
    på kameraplanen; de andre områder har ikke noget at vælge imellem. */
-function printPlan(){
- const o={paper:'A4',orient:'portrait',margin:10,kun:planDom};
- if(planDom==='vc'){ vcPrint(); return }
- if(planDom!=='kam'){ exportPlanPDF(o); return }
- openSheet('Print kameraplanen',[
-  {ikon:'♪',tekst:'Med lydkanaler',under:'hele planen, som den står på skærmen',
-   gør:()=>exportPlanPDF(Object.assign({},o,{lyd:true}))},
-  {ikon:'⌸',tekst:'Uden lydkanaler',under:'kun kameraerne og deres udstyr – til pakning',
-   gør:()=>exportPlanPDF(Object.assign({},o,{lyd:false}))}
- ]);
+/* ══ PRINT: VÆLG HVILKE KORT, OG PAK SPORENE UD ══════════════════════
+   En plan til en kollega er sjældent HELE planen. Han skal se de fire
+   kort, der angår ham, og han skal kunne se lydsporene — ikke bare
+   linjens navn, for det er sporene, han skal patche.
+
+   Indtil nu printede knappen hele planen uden spor. Det gav et ark, man
+   skulle forklare i telefonen bagefter.                                */
+
+/* Hvad står der PÅ et lydspor? Det, der er skrevet i planen — og ellers
+   det, der står i tegningen. Samme opslag som skærmen bruger, så arket
+   og skærmen ikke kan sige hver sit om det samme spor. */
+function printSporTekst(dv,p,a,ai){
+ const egen=(a.label||'').trim();
+ if(egen) return egen;
+ const sp=(typeof spoegelsePlan==='function')?spoegelsePlan(planDom,dv,p,a.id,ai):null;
+ return sp?String(sp.tekst||''):'';
 }
+
+function printSpor(dv,p,hvor){
+ if(hvor==='uden') return [];
+ const liste=(typeof audListe==='function')?audListe(p):[];
+ const ud=[];
+ liste.forEach(function(a,ai){
+  const t=printSporTekst(dv,p,a,ai);
+  /* «med» = kun de spor, der står noget på. Otte tomme linjer under
+     hvert signal er ikke en oplysning, det er papir. «alle» er til den,
+     der skal patche hele vejen igennem og vil krydse af undervejs. */
+  if(hvor==='med' && !t) return;
+  ud.push({n:String(a.n||('Kanal '+(ai+1))), tekst:t,
+           p:!!a.patched, c:!!a.checked});
+ });
+ return ud;
+}
+
+/* ── Vinduet ───────────────────────────────────────────────────
+   Alle kort er valgt fra start. Man fravælger dem, kollegaen ikke skal
+   se — det er færre klik end at vælge fire ud af tredive, og det er
+   sjældent, man kun skal bruge ét. */
+function printPlan(){
+ if(planDom==='vc'){ vcPrint(); return }
+ const liste=devs();
+ if(!liste.length){ alert('Der er ingen kort på '+PLANDOMS[planDom]+'-planen at printe.'); return }
+
+ const harSpor = planDom==='video';
+ const raekke=dv=>{
+  const n=ports(dv,'ins').length+ports(dv,'outs').length;
+  const brugt=labelled(dv,'ins').concat(labelled(dv,'outs')).length;
+  return `<label class="prkort">
+    <input type="checkbox" data-prkort="${dv.id}" checked>
+    <span class="prnavn">${esc(dv.name||dv.type||'uden navn')}</span>
+    <span class="prunder">${dv.place?esc(dv.place)+' · ':''}${brugt} af ${n} linjer i brug</span>
+  </label>`;
+ };
+ openModal('Print '+PLANDOMS[planDom]+'-planen',
+  'Vælg de kort, kollegaen skal se',
+  `<div class="prvaelg">
+     <button class="add" data-pralle="1">Vælg alle</button>
+     <button class="add" data-pringen="1">Fravælg alle</button>
+     <span class="prtal" id="prTal"></span>
+   </div>
+   <div class="prliste">${liste.map(raekke).join('')}</div>
+   ${harSpor?`<div class="mf" style="margin-top:12px">
+     <label>Lydspor</label>
+     <select name="spor">
+       <option value="med">Kun spor der står noget på</option>
+       <option value="alle">Alle spor — også de tomme, til afkrydsning</option>
+       <option value="uden">Ingen spor — kun linjerne</option>
+     </select></div>`:''}
+   <div class="mf"><label>Papir</label>
+     <select name="orient">
+       <option value="portrait">Stående A4</option>
+       <option value="landscape">Liggende A4 — mere plads til sporene</option>
+     </select></div>
+   <div class="mrow"><button class="btn go" data-prok="1" style="width:100%">Print</button></div>`,
+  root=>{
+   const tael=()=>{
+    const n=root.querySelectorAll('[data-prkort]:checked').length;
+    const t=root.querySelector('#prTal');
+    if(t)t.textContent=n+' af '+liste.length+' kort';
+    const k=root.querySelector('[data-prok]');
+    if(k){ k.disabled=!n; k.textContent=n?('Print '+n+(n===1?' kort':' kort')):'Vælg mindst ét kort'; }
+   };
+   root.querySelectorAll('[data-prkort]').forEach(c=>c.addEventListener('change',tael));
+   root.querySelector('[data-pralle]').onclick=()=>{
+    root.querySelectorAll('[data-prkort]').forEach(c=>{c.checked=true}); tael(); };
+   root.querySelector('[data-pringen]').onclick=()=>{
+    root.querySelectorAll('[data-prkort]').forEach(c=>{c.checked=false}); tael(); };
+   tael();
+   root.querySelector('[data-prok]').onclick=()=>{
+    const valgte=[...root.querySelectorAll('[data-prkort]:checked')]
+      .map(c=>c.getAttribute('data-prkort'));
+    if(!valgte.length)return;
+    const sp=root.querySelector('[name="spor"]');
+    const or=root.querySelector('[name="orient"]');
+    closeModal();
+    exportPlanPDF({paper:'A4', orient:(or?or.value:'portrait'), margin:10,
+                   kun:planDom, kort:valgte, spor:(sp?sp.value:'uden')});
+   };
+  });
+}
+
 
 function exportPlanPDF(o){
  document.getElementById('printroot').innerHTML=`<div class="psheet planprint">${planPrintHTML(o.kun,o)}</div>`;
