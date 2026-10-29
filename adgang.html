@@ -17,7 +17,7 @@
      Aftrykkene dækker stilarket og scriptet tegn for tegn.
      Rettes der ét komma i dem, skal aftrykket regnes om — ellers
      bliver siden sort. Testen fanger det med det samme. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https://oqfwegzondrsvdbneury.supabase.co; style-src 'sha256-vzZpmYc8ABueQ+XsPufFbAjLPNQ0vHVy/Dcw7jH/1HI='; script-src 'sha256-NaB12palWsdUCds2WFWXCd/n/4bekZwjMaGyVn+HKSc='; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https://oqfwegzondrsvdbneury.supabase.co; style-src 'sha256-vzZpmYc8ABueQ+XsPufFbAjLPNQ0vHVy/Dcw7jH/1HI='; script-src 'sha256-za4uYTS+/rMt2OSxoHewVN07YXUcM6vZsaNKGu2uiB4='; form-action 'none'; base-uri 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Adgang · East Production &amp; SignalFlow</title>
 <!--
@@ -151,9 +151,18 @@ var SUPABASE_KEY = 'sb_publishable_d2b4pWi-2jTYIeCAAUAQcA_0ygShdrH';
      .../adgang.html?til=east          → East Production
      .../adgang.html?til=signalflow    → SignalFlow
    Står der ingenting, får de begge knapper og vælger selv. */
+/* Adresserne er regnet ud fra, at denne fil ligger ved siden af
+   SignalFlows index.html — altså .../signalflow/adgang.html.
+
+   Ligger East Production i et andet repo under det samme
+   bjarkeas.github.io, passer '../' foran. Hedder repoet noget andet
+   end 'eastproduction', er det den ene linje der skal rettes.
+
+   De to mål kan KUN komme herfra, aldrig fra adressen. Ellers kunne
+   et link sende folk videre til en side, der ikke er din. */
 var MAAL = {
-  east:       {navn:'East Production', fil:'EastProduction.html'},
-  signalflow: {navn:'SignalFlow',      fil:'SignalFlow.html'}
+  east:       {navn:'East Production', fil:'../eastproduction/'},
+  signalflow: {navn:'SignalFlow',      fil:'./'}
 };
 
 var session = null;      // {access_token, refresh_token, expires_at, user}
