@@ -2063,7 +2063,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <button class="hbtn" id="bExport" title="Gem som PDF, CSV, draw.io, HTML eller projektfil">Eksportér</button>
     <button class="hbtn" id="bFoldAll" title="Fold alle grupper sammen eller ud – giver overblik på store ark">⇕</button>
     <button class="hbtn" id="bNew" title="Start forfra med et tomt projekt">Nyt</button>
-    <span class="gastmark" title="Du er inde via et delelink og ser kun planen">delt plan</span>
+    <span class="gastmark" title="Du er inde via et delelink. Du kan se OG rette planen — men intet andet i programmet.">delt plan</span>
     <span id="autoStatus" title="Autogem i browseren"></span>
     <button class="hbtn" id="bSpor" title="Arkivet over sporplaner – gemte opstillinger af lyd- og intercomkanaler">♪ Sporplaner</button>
     <button class="hbtn" id="bCloud" title="Projekter, mapper og versionshistorik">☁ Projekter</button>
@@ -4888,7 +4888,7 @@ function drawPlan(){
    ${mobil?''/* planen henter selv hvert sjette sekund */
      :`<button class="sharebtn" data-refresh="1" title="Hent kollegernes ændringer nu">↻ Opdatér</button>`}
    ${guestToken?''/* en gæst deler ikke linket videre – han har det jo */
-     :`<button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan – modtageren skal ikke logge ind">🔗 Del link</button>`}
+     :`<button class="sharebtn" data-share="1" title="Kopiér et link der åbner denne plan. Modtageren skal ikke logge ind — og kan rette i planen. Send det kun til nogen, der må det.">🔗 Del link</button>`}
    <button class="sharebtn" data-ppdf="1" title="Print ${PLANDOMS[planDom]}-planen eller gem den som PDF">↧ PDF</button>
    ${mobil?'':`
    <button class="sharebtn" data-pcsv="1" title="Hent ${PLANDOMS[planDom]}-planen som regneark til Excel">↧ CSV</button>`}
@@ -8670,7 +8670,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.29-a';
+const SF_VERSION='2026.10.29-b';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();

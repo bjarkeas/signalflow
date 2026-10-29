@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Regelsæt for hvad siden overhovedet må.
+     default-src 'none'  siden må som udgangspunkt ingenting
+     connect-src …       den må kun tale med vores eget Supabase-projekt
+     script-src 'sha256' kun NETOP det script der står i filen må køre.
+                         Bliver der sprøjtet kode ind — i en ramme, gennem
+                         en udvidelse, eller fordi filen bliver ændret
+                         undervejs — passer aftrykket ikke, og browseren
+                         nægter at køre den.
+     form-action 'none'  kodeordet kan ikke afsendes til nogen adresse
+     base-uri 'none'     og ingen kan flytte sidens grundadresse
+
+     Aftrykkene dækker stilarket og scriptet tegn for tegn.
+     Rettes der ét komma i dem, skal aftrykket regnes om — ellers
+     bliver siden sort. Testen fanger det med det samme. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https://oqfwegzondrsvdbneury.supabase.co; style-src 'sha256-vzZpmYc8ABueQ+XsPufFbAjLPNQ0vHVy/Dcw7jH/1HI='; script-src 'sha256-NaB12palWsdUCds2WFWXCd/n/4bekZwjMaGyVn+HKSc='; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Adgang · East Production &amp; SignalFlow</title>
+<!--
+  ════════════════════════════════════════════════════════════════
+   ADGANG · sæt dit kodeord
+
+   Her lander man, når man har fået en invitation fra Supabase eller
+   har bedt om et nyt kodeord. Linket i mailen bærer en NØGLE, der
+   gælder én gang og i kort tid. Siden bruger den til at sætte
+   kodeordet, logger brugeren ind og sender ham videre til programmet.
+
+   ── HVORFOR DER IKKE HENTES ET BIBLIOTEK ────────────────────────
+   Programmerne henter intet fremmed ved kørsel, og det gør den her
+   heller ikke. Supabases auth-api er to almindelige kald:
+
+     POST /auth/v1/verify   bytter nøglen fra mailen til en session
+     PUT  /auth/v1/user     sætter kodeordet
+
+   Et bibliotek på 100 kB for to fetch-kald ville være en afhængighed
+   mere at holde øje med på den side, der håndterer kodeord.
+
+   ── NØGLER ──────────────────────────────────────────────────────
+   Den publicerbare nøgle herunder er offentlig med vilje: den kan
+   ikke andet end det, adgangsreglerne i databasen tillader. Den er
+   den samme, som står i East Production og SignalFlow.
+
+   service_role-nøglen går uden om AL adgangskontrol. Den må aldrig
+   stå i denne fil, i Git, i en mail eller i en chat.
+  ════════════════════════════════════════════════════════════════
+-->
+<style>
+:root{
+  --bg:#14161b; --panel:#1c1f26; --panel2:#23262e; --line:#2e323c;
+  --text:#e9eaee; --dim:#8b8f9c; --amber:#e8a33d; --green:#5fb88a;
+  --red:#e2685f;
+  --fm:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  --fs:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--fs);
+  display:flex;align-items:center;justify-content:center;min-height:100dvh;padding:20px}
+.kort{width:100%;max-width:440px;background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:26px 24px 22px}
+h1{margin:0 0 4px;font-size:19px;letter-spacing:.01em}
+.under{color:var(--dim);font-size:13px;line-height:1.5;margin:0 0 20px}
+.hvem{font-family:var(--fm);font-size:12.5px;color:var(--text);background:var(--panel2);
+  border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin:0 0 18px;
+  overflow:hidden;text-overflow:ellipsis}
+label{display:block;font-size:11px;font-family:var(--fm);text-transform:uppercase;
+  letter-spacing:.06em;color:var(--dim);margin:0 0 6px}
+input[type=password]{width:100%;background:var(--bg);border:1px solid var(--line);
+  color:var(--text);border-radius:9px;padding:12px 13px;font:15px var(--fs);margin:0 0 14px}
+input[type=password]:focus{outline:none;border-color:var(--amber)}
+button{width:100%;background:var(--amber);color:#1a1407;border:none;border-radius:9px;
+  padding:13px;font:700 15px var(--fs);cursor:pointer}
+button:disabled{opacity:.45;cursor:default}
+button.anden{background:none;border:1px solid var(--line);color:var(--text);
+  font-weight:600;margin-top:9px}
+.krav{list-style:none;padding:0;margin:0 0 16px;font-size:12px;color:var(--dim)}
+.krav li{display:flex;align-items:center;gap:7px;padding:2px 0}
+.krav li::before{content:'○';font-family:var(--fm)}
+.krav li.ok{color:var(--green)}
+.krav li.ok::before{content:'●'}
+.besked{font-size:13px;line-height:1.55;border-radius:9px;padding:11px 13px;margin:0 0 16px}
+.besked.fejl{background:rgba(226,104,95,.12);border:1px solid rgba(226,104,95,.4);
+  color:#f0a39c}
+.besked.ok{background:rgba(95,184,138,.12);border:1px solid rgba(95,184,138,.4);
+  color:#9fd9bb}
+.skjul{display:none}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);
+  border-top-color:var(--amber);border-radius:50%;animation:s .7s linear infinite;
+  vertical-align:-2px;margin-right:7px}
+@keyframes s{to{transform:rotate(360deg)}}
+.fod{margin-top:18px;font-size:11px;color:var(--dim);line-height:1.5}
+</style>
+</head>
+<body>
+<div class="kort">
+  <h1 id="titel">Et øjeblik …</h1>
+  <p class="under" id="under"><span class="spin"></span>Tjekker dit link.</p>
+
+  <div id="beskedBoks" class="besked fejl skjul"></div>
+
+  <div id="hvem" class="hvem skjul"></div>
+
+  <form id="form" class="skjul" autocomplete="off">
+    <label for="kode1">Vælg et kodeord</label>
+    <input type="password" id="kode1" autocomplete="new-password" spellcheck="false">
+    <label for="kode2">Skriv det igen</label>
+    <input type="password" id="kode2" autocomplete="new-password" spellcheck="false">
+    <ul class="krav">
+      <li id="kravLaengde">Mindst 10 tegn</li>
+      <li id="kravEns">De to felter er ens</li>
+    </ul>
+    <button type="submit" id="gem" disabled>Sæt kodeord</button>
+  </form>
+
+  <div id="faerdig" class="skjul">
+    <button id="videre">Videre til programmet</button>
+    <button id="andet" class="anden skjul">Det andet program</button>
+  </div>
+
+  <div class="fod" id="fod"></div>
+</div>
+
+<script>
+/* ── Ingen fremmed ramme ──────────────────────────────────────
+   En kodeordsside hører ikke hjemme i en ramme på en fremmed side:
+   der kan man lægge noget gennemsigtigt ovenpå, så folk tror de
+   trykker ét sted og i virkeligheden trykker et andet. Rammer spærres
+   normalt med et svarhoved fra webserveren — det kan en <meta> ikke —
+   så siden sørger selv for det. */
+if(window.top !== window.self){
+  document.documentElement.innerHTML = '<body></body>';
+  var _b = document.body;
+  _b.textContent = 'Denne side skal åbnes i sit eget vindue. '
+                 + 'Luk den her og tryk på linket i mailen igen.';
+  _b.style.background = '#14161b'; _b.style.color = '#e9eaee';
+  _b.style.font = '15px sans-serif'; _b.style.padding = '28px';
+  _b.style.lineHeight = '1.5';
+  throw new Error('siden er lagt i en ramme');
+}
+
+/* ── Opsætning ────────────────────────────────────────────────
+   Samme projekt og samme publicerbare nøgle som programmerne. */
+var SUPABASE_URL = 'https://oqfwegzondrsvdbneury.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_d2b4pWi-2jTYIeCAAUAQcA_0ygShdrH';
+
+/* Hvor skal de hen bagefter? Styres af ?til= i det link, du sætter som
+   Redirect URL i Supabase:
+     .../adgang.html?til=east          → East Production
+     .../adgang.html?til=signalflow    → SignalFlow
+   Står der ingenting, får de begge knapper og vælger selv. */
+var MAAL = {
+  east:       {navn:'East Production', fil:'EastProduction.html'},
+  signalflow: {navn:'SignalFlow',      fil:'SignalFlow.html'}
+};
+
+var session = null;      // {access_token, refresh_token, expires_at, user}
+var valgtMaal = null;
+
+function vis(id, paa){ document.getElementById(id).classList.toggle('skjul', !paa); }
+function saet(id, tekst){ document.getElementById(id).textContent = tekst; }
+function besked(tekst, slags){
+  var b = document.getElementById('beskedBoks');
+  b.className = 'besked ' + (slags||'fejl');
+  b.textContent = tekst;
+  b.classList.remove('skjul');
+}
+
+/* ── Nøglen fra mailen ────────────────────────────────────────
+   Supabase sender den på to måder, afhængigt af projektets
+   indstillinger, og et link fra en gammel mail kan være af den ene og
+   et nyt af den anden. Derfor læses BEGGE:
+
+     #access_token=...&refresh_token=...   færdig session i adressen
+     ?token_hash=...&type=invite           en nøgle der skal byttes
+
+   Og fejl kan også stå begge steder — fx når linket er brugt før
+   eller er for gammelt. */
+function fraAdressen(){
+  var h = {}, q = {};
+  (location.hash||'').replace(/^#/,'').split('&').forEach(function(d){
+    if(!d) return; var i=d.indexOf('='); if(i<0) return;
+    h[decodeURIComponent(d.slice(0,i))] = decodeURIComponent(d.slice(i+1).replace(/\+/g,' '));
+  });
+  new URLSearchParams(location.search).forEach(function(v,k){ q[k]=v; });
+  return {hash:h, query:q};
+}
+
+/* Nøglen må ikke blive liggende i adresselinjen: den er et login, og
+   den følger med, hvis nogen kopierer adressen eller deler skærm. */
+function ryddAdressen(){
+  try{
+    var rent = location.origin + location.pathname
+             + (valgtMaal ? '?til='+encodeURIComponent(valgtMaal) : '');
+    history.replaceState(null, '', rent);
+  }catch(e){}
+}
+
+async function auth(sti, opts){
+  var o = opts || {};
+  var r = await fetch(SUPABASE_URL + '/auth/v1/' + sti, {
+    method: o.method || 'POST',
+    headers: Object.assign({
+      'apikey': SUPABASE_KEY,
+      'Content-Type': 'application/json'
+    }, o.headers || {}),
+    body: o.body ? JSON.stringify(o.body) : undefined
+  });
+  var svar = null;
+  try{ svar = await r.json(); }catch(e){}
+  if(!r.ok){
+    var m = (svar && (svar.msg || svar.error_description || svar.message || svar.error))
+            || ('Serveren svarede ' + r.status + '.');
+    throw new Error(m);
+  }
+  return svar;
+}
+
+/* ── Logget ind i BEGGE programmer ────────────────────────────
+   De to programmer gemmer deres login hvert sit sted: East Production
+   bruger supabase-js, der har sit eget navn på pladsen, og SignalFlow
+   har sit eget. Vi skriver begge, så man er inde, uanset hvilket
+   program man bliver sendt videre til — og slipper for at skrive
+   kodeordet igen i det andet.
+
+   Fejler skrivningen — privat vindue, spærret lagring — sker der
+   ingenting her; man bliver bare bedt om at logge ind i programmet. */
+function gemSession(s){
+  var ref = (SUPABASE_URL.split('//')[1]||'').split('.')[0];
+  var udloeb = s.expires_at || (Math.floor(Date.now()/1000) + (s.expires_in||3600));
+  try{
+    localStorage.setItem('sb-'+ref+'-auth-token', JSON.stringify({
+      access_token: s.access_token, token_type: 'bearer',
+      expires_in: s.expires_in || 3600, expires_at: udloeb,
+      refresh_token: s.refresh_token, user: s.user || null
+    }));
+  }catch(e){}
+  try{
+    var mail = (s.user && s.user.email) || '';
+    localStorage.setItem('signalflow:session', JSON.stringify({
+      access_token: s.access_token, refresh_token: s.refresh_token,
+      email: mail, who: (mail.split('@')[0]||'').toUpperCase().slice(0,5)
+    }));
+  }catch(e){}
+}
+
+/* ── Start ────────────────────────────────────────────────── */
+(async function(){
+  var a = fraAdressen();
+  valgtMaal = a.query.til && MAAL[a.query.til] ? a.query.til : null;
+
+  /* Supabase lægger type i hash'en, når linket bærer en færdig session,
+     og i query'en, når det bærer en nøgle der skal byttes. Begge er i
+     brug, så den udledes ét sted og læses kun derfra. */
+  var art = a.query.type || a.hash.type || 'invite';
+
+  var fejl = a.hash.error_description || a.hash.error
+           || a.query.error_description || a.query.error;
+  if(fejl){
+    saet('titel','Linket virker ikke');
+    saet('under','');
+    /* VIGTIGT: teksten i adressen er skrevet af den, der lavede linket
+       — ikke af os. Viste vi den ordret, kunne hvem som helst sende et
+       link med «Ring til 12 34 56 78 og oplys dit kodeord», og det ville
+       stå på en side, der ser ud som vores. Derfor er det altid VORES
+       egen tekst, der vises. Af det fremmede bruges kun selve koden —
+       otp_expired, access_denied — og kun bogstaver, tal og _ fra den,
+       så den kan slås op uden at kunne bruges til at skrive en besked. */
+    var t = String(fejl);
+    var kode = String(a.hash.error_code || a.query.error_code
+                   || a.hash.error || a.query.error || '')
+               .toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,40);
+    var hale = kode ? ' (' + kode + ')' : '';
+    if(/expired/i.test(t) || /expired/.test(kode))
+      besked('Linket er udløbet. Bed Bjarke om at sende en ny invitation — '
+           + 'de holder kun kort tid.' + hale);
+    else if(/used|already/i.test(t))
+      besked('Linket er brugt én gang før og kan ikke bruges igen. '
+           + 'Har du allerede sat et kodeord, så log ind i programmet. '
+           + 'Ellers bed om en ny invitation.' + hale);
+    else
+      besked('Linket kunne ikke bruges. Bed Bjarke om at sende et nyt.' + hale);
+    ryddAdressen();
+    return;
+  }
+
+  try{
+    if(a.hash.access_token){
+      /* Sessionen stod færdig i adressen. */
+      /* expires_in står i adressen og kan altså sættes udefra. Den
+         bruges kun til at regne ud, hvornår programmet skal forny
+         nøglen, så en overdreven værdi ville få det til at lade være.
+         Serveren bestemmer alligevel — så den skæres til og må kun
+         gøre fornyelsen tidligere, aldrig senere. */
+      session = {access_token:a.hash.access_token, refresh_token:a.hash.refresh_token,
+                 expires_in: Math.min(3600, Math.max(60, +a.hash.expires_in || 3600))};
+      var bruger = await auth('user', {method:'GET',
+        headers:{'Authorization':'Bearer '+session.access_token}});
+      session.user = bruger;
+    }else if(a.query.token_hash){
+      /* Nøglen skal byttes. type styrer, hvad Supabase gør med den. */
+      session = await auth('verify', {body:{
+        type: art, token_hash: a.query.token_hash}});
+    }else{
+      saet('titel','Her kommer du ikke ind');
+      saet('under','');
+      besked('Siden skal åbnes gennem linket i den mail, du har fået. '
+           + 'Åbner du den direkte, er der ingen nøgle at bruge.');
+      return;
+    }
+  }catch(e){
+    saet('titel','Linket virker ikke');
+    saet('under','');
+    besked('Linket kunne ikke bruges: ' + e.message
+         + '\n\nEr det gammelt, eller har du trykket på det før, '
+         + 'så bed om en ny invitation.');
+    ryddAdressen();
+    return;
+  }
+
+  ryddAdressen();
+  var mail = (session.user && session.user.email) || '';
+  saet('titel', (art==='recovery') ? 'Vælg et nyt kodeord' : 'Velkommen');
+  saet('under', (art==='recovery')
+      ? 'Skriv et nyt kodeord, så er du inde igen.'
+      : 'Du er inviteret til ' + (valgtMaal ? MAAL[valgtMaal].navn
+          : 'East Production og SignalFlow') + '. Vælg et kodeord, så er du klar.');
+  if(mail){ saet('hvem', mail); vis('hvem', true); }
+  vis('form', true);
+  document.getElementById('kode1').focus();
+})();
+
+/* ── Kodeordet ───────────────────────────────────────────────
+   Ti tegn og to ens felter. Ikke en liste af tegnkrav: de gør folk til
+   at vælge «Sommer2026!» og skrive det på en seddel. Længden er det,
+   der faktisk betyder noget. */
+var k1 = document.getElementById('kode1'),
+    k2 = document.getElementById('kode2'),
+    gem = document.getElementById('gem');
+
+function tjekKrav(){
+  var langNok = k1.value.length >= 10;
+  var ens = k1.value.length > 0 && k1.value === k2.value;
+  document.getElementById('kravLaengde').classList.toggle('ok', langNok);
+  document.getElementById('kravEns').classList.toggle('ok', ens);
+  gem.disabled = !(langNok && ens);
+}
+k1.addEventListener('input', tjekKrav);
+k2.addEventListener('input', tjekKrav);
+
+document.getElementById('form').addEventListener('submit', async function(e){
+  e.preventDefault();
+  if(gem.disabled) return;
+  gem.disabled = true;
+  gem.innerHTML = '<span class="spin"></span>Gemmer …';
+  document.getElementById('beskedBoks').classList.add('skjul');
+  try{
+    await auth('user', {method:'PUT',
+      headers:{'Authorization':'Bearer ' + session.access_token},
+      body:{password: k1.value}});
+    gemSession(session);
+    vis('form', false);
+    vis('hvem', false);
+    saet('titel','Dit kodeord er sat');
+    saet('under','Du er logget ind. ' + (valgtMaal
+        ? 'Tryk for at komme ind i ' + MAAL[valgtMaal].navn + '.'
+        : 'Vælg hvilket program du vil ind i.'));
+    var v = document.getElementById('videre');
+    if(valgtMaal){
+      v.textContent = 'Videre til ' + MAAL[valgtMaal].navn;
+      v.onclick = function(){ location.href = MAAL[valgtMaal].fil; };
+    }else{
+      v.textContent = 'East Production';
+      v.onclick = function(){ location.href = MAAL.east.fil; };
+      var an = document.getElementById('andet');
+      an.textContent = 'SignalFlow';
+      an.onclick = function(){ location.href = MAAL.signalflow.fil; };
+      an.classList.remove('skjul');
+    }
+    vis('faerdig', true);
+    document.getElementById('fod').textContent =
+      'Næste gang logger du ind med ' + ((session.user&&session.user.email)||'din mail')
+      + ' og det kodeord, du lige har valgt.';
+  }catch(err){
+    gem.disabled = false;
+    gem.textContent = 'Sæt kodeord';
+    /* «New password should be different» betyder, at man har skrevet
+       det kodeord, man allerede har. Det er ikke en fejl, man skal
+       slå op — det er en sætning, man skal kunne forstå. */
+    var m = err.message || '';
+    if(/different from the old/i.test(m))
+      besked('Det er det kodeord, du har i forvejen. Vælg et andet.');
+    else if(/weak|pwned|short/i.test(m))
+      besked('Kodeordet blev afvist som for svagt. Prøv et længere, '
+           + 'eller en sætning du kan huske.');
+    else besked('Kunne ikke sætte kodeordet: ' + m);
+  }
+});
+</script>
+</body>
+</html>
