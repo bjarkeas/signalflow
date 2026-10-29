@@ -17,7 +17,7 @@
      Aftrykkene dækker stilarket og scriptet tegn for tegn.
      Rettes der ét komma i dem, skal aftrykket regnes om — ellers
      bliver siden sort. Testen fanger det med det samme. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https://oqfwegzondrsvdbneury.supabase.co; style-src 'sha256-vzZpmYc8ABueQ+XsPufFbAjLPNQ0vHVy/Dcw7jH/1HI='; script-src 'sha256-fD+rbpEXJngM83Bgt2rd80ACqSxoXKKTQcaXA05hvuA='; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https://oqfwegzondrsvdbneury.supabase.co; style-src 'sha256-vzZpmYc8ABueQ+XsPufFbAjLPNQ0vHVy/Dcw7jH/1HI='; script-src 'sha256-vwutgVvQn1Pv0tp6pGSeGytKgWLdbJY/DafkaYFh5FA='; form-action 'none'; base-uri 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Adgang · East Production &amp; SignalFlow</title>
 <!--
@@ -114,6 +114,10 @@ button.anden{background:none;border:1px solid var(--line);color:var(--text);
     </ul>
     <button type="submit" id="gem" disabled>Sæt kodeord</button>
   </form>
+
+  <div id="port" class="skjul">
+    <button id="portknap" type="button">Fortsæt</button>
+  </div>
 
   <div id="faerdig" class="skjul">
     <button id="videre">Videre til programmet</button>
@@ -257,6 +261,33 @@ function gemSession(s){
   }catch(e){}
 }
 
+/* ── Et menneske, ikke en scanner ─────────────────────────────
+   Nøglen i linket kan kun bruges én gang. Virksomheders mailfiltre
+   åbner indgående links for at tjekke dem, og hvis den handling i sig
+   selv bruger nøglen, er den opbrugt, før modtageren overhovedet har
+   set mailen. Det var det, der skete med @tv2.dk.
+
+   Derfor peger mailen nu på DENNE side i stedet for på Supabases
+   kontroladresse: at hente siden koster ingenting. Nøglen bruges
+   først, når der bliver trykket — og et filter trykker ikke.
+
+   Det gælder kun ?token_hash. Kommer nøglen som en færdig session i
+   adressen, er den allerede brugt undervejs, og så er der intet at
+   beskytte. */
+function ventPaaKlik(){
+  return new Promise(function(videre){
+    saet('titel', 'Et skridt til');
+    saet('under', 'Tryk for at fortsætte — så vælger du dit kodeord.');
+    vis('port', true);
+    document.getElementById('portknap').onclick = function(){
+      vis('port', false);
+      saet('titel', 'Et øjeblik …');
+      saet('under', 'Tjekker dit link.');
+      videre();
+    };
+  });
+}
+
 /* ── Start ────────────────────────────────────────────────── */
 (async function(){
   var a = fraAdressen();
@@ -311,7 +342,9 @@ function gemSession(s){
         headers:{'Authorization':'Bearer '+session.access_token}});
       session.user = bruger;
     }else if(a.query.token_hash){
-      /* Nøglen skal byttes. type styrer, hvad Supabase gør med den. */
+      /* Nøglen skal byttes. type styrer, hvad Supabase gør med den.
+         Først når et menneske har trykket. */
+      await ventPaaKlik();
       session = await auth('verify', {body:{
         type: art, token_hash: a.query.token_hash}});
     }else{
