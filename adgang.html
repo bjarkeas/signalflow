@@ -17,7 +17,7 @@
      Aftrykkene dækker stilarket og scriptet tegn for tegn.
      Rettes der ét komma i dem, skal aftrykket regnes om — ellers
      bliver siden sort. Testen fanger det med det samme. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https://oqfwegzondrsvdbneury.supabase.co; style-src 'sha256-vzZpmYc8ABueQ+XsPufFbAjLPNQ0vHVy/Dcw7jH/1HI='; script-src 'sha256-za4uYTS+/rMt2OSxoHewVN07YXUcM6vZsaNKGu2uiB4='; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https://oqfwegzondrsvdbneury.supabase.co; style-src 'sha256-vzZpmYc8ABueQ+XsPufFbAjLPNQ0vHVy/Dcw7jH/1HI='; script-src 'sha256-fD+rbpEXJngM83Bgt2rd80ACqSxoXKKTQcaXA05hvuA='; form-action 'none'; base-uri 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Adgang · East Production &amp; SignalFlow</title>
 <!--
@@ -154,14 +154,16 @@ var SUPABASE_KEY = 'sb_publishable_d2b4pWi-2jTYIeCAAUAQcA_0ygShdrH';
 /* Adresserne er regnet ud fra, at denne fil ligger ved siden af
    SignalFlows index.html — altså .../signalflow/adgang.html.
 
-   Ligger East Production i et andet repo under det samme
-   bjarkeas.github.io, passer '../' foran. Hedder repoet noget andet
-   end 'eastproduction', er det den ene linje der skal rettes.
+   East Production ligger i repoet 'booking' under det samme
+   bjarkeas.github.io, altså ../booking/. Flytter et af programmerne
+   til et andet repo, er det de to linjer herunder der skal rettes —
+   og derefter skal genberegn.py køres, ellers nægter browseren at
+   køre siden.
 
    De to mål kan KUN komme herfra, aldrig fra adressen. Ellers kunne
    et link sende folk videre til en side, der ikke er din. */
 var MAAL = {
-  east:       {navn:'East Production', fil:'../eastproduction/'},
+  east:       {navn:'East Production', fil:'../booking/'},
   signalflow: {navn:'SignalFlow',      fil:'./'}
 };
 
