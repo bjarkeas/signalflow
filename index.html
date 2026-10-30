@@ -8670,7 +8670,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.29-b';
+const SF_VERSION='2026.10.30-a';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -9247,6 +9247,30 @@ const SPORFANE={lyd:'♪ Lydsporplaner', intercom:'☎ Intercomsporplaner',
                 kort:'▤ Kortplaner'};
 const LS_SPOR='signalflow:sporplaner';
 let sporArkivLokalt=false;           // kører vi på reserven?
+let sporSidsteFejl='';               // hvorfor, hvis det ikke er tabellen
+
+/* ── Hvorfor gik det galt? ─────────────────────────────────────
+   Reserven — arkivet på denne maskine — er KUN til det tilfælde, at
+   tabellen ikke findes i databasen. Alt andet er noget, du skal have
+   at vide: at du er logget ud, at din rolle ikke må rette, at nettet
+   er væk.
+
+   Før fangede vi alt med ét catch og konkluderede «så findes tabellen
+   nok ikke». Beskeden bad om at få kørt en SQL, der for længst var
+   kørt — og sendte dermed folk ud at lede det forkerte sted, mens den
+   rigtige årsag blev smidt væk. sbFetch kender forskellen; den skal
+   bare ikke tabes her. */
+function sporFejlErTabellen(e){
+  return /Tabellen findes ikke/i.test((e && e.message) || '');
+}
+/* Én linje der siger, hvorfor arkivet ikke er fælles lige nu. */
+function sporArkivGrund(){
+  if(sporSidsteFejl) return sporSidsteFejl
+    + ' Planerne ligger indtil videre kun på denne maskine.';
+  if(sporArkivLokalt) return 'Arkivet ligger kun på denne maskine — '
+    + 'kør SQL\'en for at dele det med kollegerne.';
+  return '';
+}
 function sporplanerLokalt(){
  try{ return JSON.parse(load(LS_SPOR)||'[]') }catch(e){ return [] }
 }
@@ -9257,7 +9281,11 @@ async function sporplanerHent(lag){
   sporArkivLokalt=false;
   return r||[];
  }catch(e){
-  sporArkivLokalt=true;
+  /* Kun en manglende tabel sætter os på reserven for altid. En udløbet
+     adgang eller et kort netværksudfald må ikke afskære arkivet
+     permanent — næste forsøg skal prøve databasen igen. */
+  if(sporFejlErTabellen(e)){ sporArkivLokalt=true; sporSidsteFejl=''; }
+  else sporSidsteFejl=(e&&e.message)||'Ukendt fejl.';
   return sporplanerLokalt().filter(x=>(x.type||'lyd')===lag)
     .sort((a,b)=>(a.name||'').localeCompare(b.name||'','da'));
  }
@@ -9277,19 +9305,29 @@ async function sporplanGem(lag,navn,note,kanaler){
     await sbFetch('signalflow_lydplaner',{method:'POST',
       body:JSON.stringify({name:navn,note:note,type:lag,kanaler:kanaler,created_by:who,updated_at:nu})});
    }
+   sporSidsteFejl='';
    return 'db';
-  }catch(e){ sporArkivLokalt=true; }
+  }catch(e){
+   if(sporFejlErTabellen(e)){ sporArkivLokalt=true; sporSidsteFejl=''; }
+   else sporSidsteFejl=(e&&e.message)||'Ukendt fejl.';
+   /* Planen gemmes stadig lokalt herunder — intet arbejde må gå tabt,
+      fordi databasen sagde nej. Men du får den rigtige grund at vide. */
+  }
  }
  const liste=sporplanerLokalt().filter(x=>
    !((x.type||'lyd')===lag && (x.name||'').toLowerCase()===navn.toLowerCase()));
  liste.push({id:'l'+Date.now(),name:navn,note:note,type:lag,kanaler:kanaler,created_by:who,updated_at:nu});
  store(LS_SPOR,JSON.stringify(liste));
- return 'lokal';
+ return sporSidsteFejl ? 'lokal-fejl' : 'lokal';
 }
 async function sporplanSlet(pid){
  if(!sporArkivLokalt){
-  try{ await sbFetch('signalflow_lydplaner?id=eq.'+pid,{method:'DELETE'}); return }
-  catch(e){ sporArkivLokalt=true; }
+  try{ await sbFetch('signalflow_lydplaner?id=eq.'+pid,{method:'DELETE'});
+       sporSidsteFejl=''; return }
+  catch(e){
+   if(sporFejlErTabellen(e)){ sporArkivLokalt=true; sporSidsteFejl=''; }
+   else { sporSidsteFejl=(e&&e.message)||'Ukendt fejl.'; throw e; }
+  }
  }
  store(LS_SPOR,JSON.stringify(sporplanerLokalt().filter(x=>x.id!==pid)));
 }
@@ -9318,7 +9356,13 @@ function gemSporplan(g,lag){
     try{
      const hvor=await sporplanGem(lag,n,note.value.trim(),kanaler);
      closeModal();
-     if(hvor==='lokal')alert('Planen er gemt på denne maskine.\n\nFor at dele den med kollegerne skal SQL\'en for signalflow_lydplaner køres i databasen.');
+     if(hvor==='lokal-fejl')
+       alert('Planen kunne ikke gemmes i databasen.\n\n'+sporSidsteFejl
+            +'\n\nDen ligger gemt på denne maskine, så intet er tabt.');
+     else if(hvor==='lokal')
+       alert('Planen er gemt på denne maskine.\n\n'
+            +'For at dele den med kollegerne skal SQL\'en for '
+            +'signalflow_lydplaner køres i databasen.');
     }catch(e){ this.textContent='Gem i arkivet'; this.disabled=false; msg.textContent=e.message }
    };
   });
@@ -9383,9 +9427,9 @@ function openSporarkiv(lag){
      closeModal(); setTimeout(()=>openSporarkiv(lag),40);
     });
    }
-   if(sporArkivLokalt)
+   if(sporArkivGrund())
     ud.insertAdjacentHTML('beforeend','<div class="msub" style="text-transform:none;letter-spacing:0;margin-top:8px">'
-      +'Arkivet ligger kun på denne maskine – kør SQL\'en for at dele det med kollegerne.</div>');
+      +esc(sporArkivGrund())+'</div>');
   });
 }
 
@@ -9414,7 +9458,7 @@ function hentSporplan(g,lag){
       <span class="grptal">${k.slice(0,4).map(c=>esc(c.label||c.nr)).join(' · ')}${k.length>4?' …':''}</span>
       <button class="mini lydslet" data-slet="${x.id}" title="Fjern planen fra arkivet">✕</button>
     </div>`;
-   }).join('')+(sporArkivLokalt?'<div class="msub" style="text-transform:none;letter-spacing:0;margin-top:8px">Arkivet ligger kun på denne maskine – kør SQL\'en for at dele det.</div>':'');
+   }).join('')+(sporArkivGrund()?'<div class="msub" style="text-transform:none;letter-spacing:0;margin-top:8px">'+esc(sporArkivGrund())+'</div>':'');
    ud.querySelectorAll('[data-lyd]').forEach(n=>n.onclick=ev=>{
     if(ev.target.closest('[data-slet]'))return;
     const plan=liste.find(x=>x.id===n.dataset.lyd);
@@ -9680,7 +9724,13 @@ function gemKortplan(dv){
      const hvor=await sporplanGem('kort',n,note.value.trim(),kanaler);
      closeModal();
      setSync('«'+n+'» ligger i arkivet · '+kanaler.length+' linjer');
-     if(hvor==='lokal')alert('Planen er gemt på denne maskine.\n\nFor at dele den med kollegerne skal SQL\'en for signalflow_lydplaner køres i databasen.');
+     if(hvor==='lokal-fejl')
+       alert('Planen kunne ikke gemmes i databasen.\n\n'+sporSidsteFejl
+            +'\n\nDen ligger gemt på denne maskine, så intet er tabt.');
+     else if(hvor==='lokal')
+       alert('Planen er gemt på denne maskine.\n\n'
+            +'For at dele den med kollegerne skal SQL\'en for '
+            +'signalflow_lydplaner køres i databasen.');
     }catch(e){ this.textContent='Gem i arkivet'; this.disabled=false; msg.textContent=e.message }
    };
   });
@@ -9715,7 +9765,7 @@ function hentKortplan(dv){
       <span class="grptal">${k.slice(0,4).map(c=>esc(c.label||c.nr)).join(' · ')}${k.length>4?' …':''}</span>
       <button class="mini lydslet" data-slet="${x.id}" title="Fjern planen fra arkivet">✕</button>
     </div>`;
-   }).join('')+(sporArkivLokalt?'<div class="msub" style="text-transform:none;letter-spacing:0;margin-top:8px">Arkivet ligger kun på denne maskine – kør SQL\'en for at dele det.</div>':'');
+   }).join('')+(sporArkivGrund()?'<div class="msub" style="text-transform:none;letter-spacing:0;margin-top:8px">'+esc(sporArkivGrund())+'</div>':'');
    ud.querySelectorAll('[data-lyd]').forEach(n=>n.onclick=ev=>{
     if(ev.target.closest('[data-slet]'))return;
     const pl=liste.find(x=>x.id===n.dataset.lyd);
