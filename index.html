@@ -3634,23 +3634,34 @@ function addBlockText(kind){
  bp().nodes.push(nt);
  blokVisNy(nt.id);
 }
-function addItem(kind,key,label){
- snap();
- const s0=freeSpot(120,120);
- const n={id:id(),t:'item',x:s0.x,y:s0.y,w:110,label:label||'Udstyr'};
- if(kind==='img')n.img=key; else if(kind==='sym')n.sym=key; else if(kind==='own')n.src=key;
+/* ── Hvor lægges en ny ting? ───────────────────────────────────
+   ÉN regel ét sted. Der er tre veje ind i blokdiagrammet —
+   billedvælgeren, import fra planen og import fra lageret — og de
+   skal opføre sig ens. Reglen stod før kun i den ene af dem, så de
+   to andre blev ved at stuve ting ned under kassernes bund. */
+function blokPlacer(n){
+ const s0=freeSpot(n.w||120,120);
+ n.x=s0.x; n.y=s0.y;
  /* Læg den inde i den kasse man sidst rørte — men KUN hvis der er
     plads. Før blev den stablet videre nedad uanset kassens højde, og
-    så sad den under bunden og så ud til at være forsvundet. */
+    så sad den under bunden og så ud til at være forsvundet.
+    Højden regnes ud af billedet: et symbol fylder mindre end et
+    foto, og ét fast tal ville enten afvise kasser med plads eller
+    stuve ting under bunden af de lave. */
  const box=bp().nodes.find(b=>b.t==='box'&&b.id===lastBox);
  if(box){
-  /* Hvor højt fylder det? Billedet plus mærkat og luft. Et symbol er
-     lavere end et billede, så ét fast tal ville enten afvise kasser
-     med plads eller stuve ting under bunden af de lave. */
   const ph=(n.sym?44:74), hoejde=ph+46;
   const y=46+(bp().nodes.filter(x=>x.parent===box.id).length*(hoejde+16));
   if(y+hoejde<=(box.h||240)){ n.parent=box.id; n.x=18; n.y=y; }
  }
+ return n;
+}
+function addItem(kind,key,label){
+ snap();
+ const n={id:id(),t:'item',w:110,label:label||'Udstyr'};
+ if(kind==='img')n.img=key; else if(kind==='sym')n.sym=key; else if(kind==='own')n.src=key;
+ n.id=id();
+ blokPlacer(n);
  bp().nodes.push(n); blokVisNy(n.id);
 }
 let lastBox=null;
@@ -4531,6 +4542,9 @@ function bindBlocks(){
    grund som ved én enkelt ting: ellers taler nogle af dem kassens
    sprog og andre lærredets, og så skrider de fra hinanden. */
 let bmarq=null;
+/* Hvilken af flere indsatte skal ringen vise? Den sidste — så man kan
+   se, hvor bunken endte. */
+let sidstIndsat=null;
 function bvalgRyd(){ if(bvalgt.size){ bvalgt.clear(); drawBlocks(); } }
 function bvalgtNoder(){
  return bp().nodes.filter(n=>bvalgt.has(n.id));
@@ -4824,7 +4838,7 @@ function importItems(target){
    root.querySelector('[data-ok]').onclick=()=>{
     const picked=[...root.querySelectorAll('[data-imp]:checked')].map(c=>c.dataset.imp);
     if(!picked.length)return closeModal();
-    snap();
+    snap(); sidstIndsat=null;
     picked.forEach(k=>{
      const arkiv = k.startsWith('a:') ? arch.find(x=>x.id===k.slice(2)) : null;
      if(tilBlok){
@@ -4836,11 +4850,10 @@ function importItems(target){
        const d=((ensurePlan()[dm]||{}).devices||[]).find(x=>x.id===did);
        if(!d)return; navn=d.name;
       }
-      const s0=freeSpot(130,120);
-      const n={id:id(),t:'item',x:s0.x,y:s0.y,w:120,label:navn};
+      const n={id:id(),t:'item',w:120,label:navn};
       if(img)n.src=img; else n.sym='rack';
-      if(lastBox){n.parent=lastBox;n.x=18;n.y=46+bp().nodes.filter(x=>x.parent===lastBox).length*126}
-      bp().nodes.push(n);
+      blokPlacer(n);
+      bp().nodes.push(n); sidstIndsat=n.id;
      }else{
       /* ind i planen som et kort */
       if(arkiv){dom().devices.push(lagerToDevice(arkiv));return}
@@ -4853,7 +4866,8 @@ function importItems(target){
      }
     });
     closeModal();
-    if(tilBlok)drawBlocks(); else drawPlan();
+    if(tilBlok){ if(sidstIndsat)blokVisNy(sidstIndsat); else drawBlocks(); }
+    else drawPlan();
    };
  });
 }
@@ -8873,7 +8887,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.31-b';
+const SF_VERSION='2026.10.31-c';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -12688,19 +12702,19 @@ function openArchive(mode){
    if(ins)ins.onclick=()=>{
     const picked=[...root.querySelectorAll('[data-asel]:checked')].map(c=>rows.find(r=>r.id===c.dataset.asel));
     if(!picked.length)return closeModal();
-    snap();
+    snap(); sidstIndsat=null;
     if(forPlan){
      picked.forEach(e=>dom().devices.push(lagerToDevice(e)));
      closeModal(); drawPlan();
     }else{
      picked.forEach(e=>{
-      const s0=freeSpot(130,120);
-      const n={id:id(),t:'item',x:s0.x,y:s0.y,w:120,label:e.name};
+      const n={id:id(),t:'item',w:120,label:e.name};
       if(e.image_url)n.src=e.image_url; else n.sym='rack';
-      if(lastBox){n.parent=lastBox;n.x=18;n.y=46+bp().nodes.filter(x=>x.parent===lastBox).length*126}
-      bp().nodes.push(n);
+      blokPlacer(n);
+      bp().nodes.push(n); sidstIndsat=n.id;
      });
-     closeModal(); drawBlocks();
+     closeModal();
+     if(sidstIndsat)blokVisNy(sidstIndsat); else drawBlocks();
     }
    };
  });
