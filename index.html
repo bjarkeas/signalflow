@@ -913,15 +913,24 @@ body.blockview #stage{grid-column:1/2;background:#0b0e13;padding:14px}
 .bitem{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 8px 6px;
  text-align:center;cursor:move}
 .bpic{display:flex;align-items:center;justify-content:center;min-height:44px}
-.bpic img{max-width:100%;max-height:74px;object-fit:contain}
-.bsym svg{width:52px;height:44px;fill:var(--dim);color:var(--dim)}
+/* Billedets højde følger --pic, som sættes pr. node. Før stod den fast
+   på 74px, så et kort kunne kun blive bredere — aldrig større. */
+.bpic img{max-width:100%;max-height:var(--pic,74px);object-fit:contain}
+.bsym svg{width:calc(var(--pic,44px)*1.18);height:var(--pic,44px);
+  fill:var(--dim);color:var(--dim)}
 .blabel{font-size:11.5px;color:var(--text);margin-top:5px;line-height:1.3;overflow-wrap:anywhere}
 .btext{color:var(--text);cursor:move;line-height:1.4}
 .btxt{cursor:text;border-radius:4px;padding:0 2px}
 .btxt:hover{background:rgba(10,91,211,.22)}
 .btextedit{font:inherit;color:#111;background:#fff;border:1.5px solid #0a5bd3;border-radius:4px;padding:1px 5px;min-width:120px}
-.bbox .rs{opacity:0}
-.bbox:hover .rs{opacity:.85}
+.bbox .rs,.bitem .rs,.btext .rs{opacity:0}
+.bbox:hover .rs,.bitem:hover .rs,.btext:hover .rs{opacity:.85}
+/* Lige lagt ind: en ring der fortæller hvor den landede, og så væk
+   igen. Man skal ikke lede efter noget, man selv har trykket på. */
+.bnode.nyss{outline:2px solid var(--accent);outline-offset:4px;border-radius:10px}
+.bnode.valgt{outline:2px solid var(--accent);outline-offset:3px;border-radius:10px}
+.bmarq{position:absolute;border:1px solid var(--accent);background:rgba(232,163,61,.12);
+  pointer-events:none;z-index:98;border-radius:3px}
 
 .picks{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
 .pick{position:relative;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 6px;
@@ -3512,6 +3521,10 @@ function copySection(secId){
 let blocks=null, blockPage=0, linkFrom=null, blockTool=null;
 /* Gitter og hjælpelinjer, så kasser og symboler kan stilles lige op. */
 let snapOn=true;
+/* Står her og ikke nede ved trækkekoden: drawBlocks kan nå at køre,
+   før en erklæring længere nede i filen er udført, og så ville
+   bvalgt.has() kaste. Samme fælde som KOERETOEJER i East Production. */
+let bvalgt=new Set();
 const GRID=10;
 const snapTo=v=>snapOn?Math.round(v/GRID)*GRID:Math.round(v);
 
@@ -3576,37 +3589,69 @@ function ensureBlocks(){
 const bp=()=>ensureBlocks().pages[blockPage];
 const bnode=nid=>bp().nodes.find(n=>n.id===nid);
 
-/* find et sted hvor der ikke allerede står noget */
+/* ── Hvor lander en ny ting? ───────────────────────────────────
+   Før: yderst til højre for alt, der allerede stod der. Jo større
+   diagrammet blev, jo længere ude i ingenmandsland landede nye ting —
+   og så skulle man ud at lede efter dem.
+
+   Nu: samme sted hver gang, i det hjørne af lærredet man kigger på.
+   En lille trappe på 26px, så fem symboler i træk ikke ligger oven i
+   hinanden, og nulstillet efter seks, så de ikke vandrer væk. */
+let nyTrappe=0;
+function synligtFelt(){
+ const wrap=document.getElementById('bcanvas');
+ const sc=wrap&&wrap.parentElement;          /* .canvaswrap er den der ruller */
+ if(!sc)return {x:0,y:0,w:900,h:600};
+ return {x:sc.scrollLeft||0, y:sc.scrollTop||0,
+         w:sc.clientWidth||900, h:sc.clientHeight||600};
+}
 function freeSpot(w,h){
- const top=bp().nodes.filter(n=>!n.parent);
- if(!top.length)return {x:60,y:110};
- const right=Math.max(...top.map(n=>n.x+(n.w||160)));
- if(right+w+40<2100)return {x:right+40,y:110};
- const bottom=Math.max(...top.map(n=>n.y+(n.h||90)));
- return {x:60,y:bottom+40};
+ const v=synligtFelt();
+ const trin=26*(nyTrappe%6); nyTrappe++;
+ return {x:Math.round(v.x+60+trin), y:Math.round(v.y+90+trin)};
+}
+/* Tegn op og vis hvor den landede. Ringen forsvinder af sig selv. */
+function blokVisNy(nid){
+ drawBlocks();
+ const el=document.querySelector('#bcanvas [data-bn="'+CSS.escape(nid)+'"]');
+ if(!el)return;
+ try{ el.scrollIntoView({block:'center',inline:'center'}) }catch(e){}
+ el.classList.add('nyss');
+ setTimeout(()=>{ if(el&&el.classList)el.classList.remove('nyss') },1400);
 }
 function addBox(){
  snap();
  const s0=freeSpot(340,240);
- bp().nodes.push({id:id(),t:'box',x:s0.x,y:s0.y,w:340,h:240,label:'Ny kasse',color:'#1e7a55'});
- drawBlocks();
+ const nb={id:id(),t:'box',x:s0.x,y:s0.y,w:340,h:240,label:'Ny kasse',color:'#1e7a55'};
+ bp().nodes.push(nb);
+ blokVisNy(nb.id);
 }
 function addBlockText(kind){
  snap();
  const s0=freeSpot(320,40);
- bp().nodes.push({id:id(),t:'text',x:s0.x,y:s0.y,w:320,label:kind==='h'?'Overskrift':'Tekst',
-   size:kind==='h'?22:13,bold:kind==='h'});
- drawBlocks();
+ const nt={id:id(),t:'text',x:s0.x,y:s0.y,w:320,label:kind==='h'?'Overskrift':'Tekst',
+   size:kind==='h'?22:13,bold:kind==='h'};
+ bp().nodes.push(nt);
+ blokVisNy(nt.id);
 }
 function addItem(kind,key,label){
  snap();
  const s0=freeSpot(120,120);
  const n={id:id(),t:'item',x:s0.x,y:s0.y,w:110,label:label||'Udstyr'};
  if(kind==='img')n.img=key; else if(kind==='sym')n.sym=key; else if(kind==='own')n.src=key;
- /* læg den inde i den kasse man sidst rørte, hvis der er en */
+ /* Læg den inde i den kasse man sidst rørte — men KUN hvis der er
+    plads. Før blev den stablet videre nedad uanset kassens højde, og
+    så sad den under bunden og så ud til at være forsvundet. */
  const box=bp().nodes.find(b=>b.t==='box'&&b.id===lastBox);
- if(box){n.parent=box.id;n.x=18;n.y=46+(bp().nodes.filter(x=>x.parent===box.id).length*126)}
- bp().nodes.push(n); drawBlocks();
+ if(box){
+  /* Hvor højt fylder det? Billedet plus mærkat og luft. Et symbol er
+     lavere end et billede, så ét fast tal ville enten afvise kasser
+     med plads eller stuve ting under bunden af de lave. */
+  const ph=(n.sym?44:74), hoejde=ph+46;
+  const y=46+(bp().nodes.filter(x=>x.parent===box.id).length*(hoejde+16));
+  if(y+hoejde<=(box.h||240)){ n.parent=box.id; n.x=18; n.y=y; }
+ }
+ bp().nodes.push(n); blokVisNy(n.id);
 }
 let lastBox=null;
 
@@ -4164,12 +4209,13 @@ function drawBlocks(){
  const kids=id2=>p.nodes.filter(n=>n.parent===id2);
  const nodeHTML=n=>{
   if(n.t==='text'){
-   return `<div class="bnode btext ${linkFrom===n.id?'linking':''}" data-bn="${n.id}"
+   return `<div class="bnode btext ${linkFrom===n.id?'linking':''} ${bvalgt.has(n.id)?'valgt':''}" data-bn="${n.id}"
      style="left:${n.x}px;top:${n.y}px;width:${n.w}px;font-size:${n.size||13}px;font-weight:${n.bold?700:400}">
-     <span class="btxt" data-btext="${n.id}">${esc(n.label)}</span>${nodeTools(n)}</div>`;
+     <span class="btxt" data-btext="${n.id}">${esc(n.label)}</span>${nodeTools(n)}
+     <span class="rs" data-brs="${n.id}" title="Træk for at ændre bredden"></span></div>`;
   }
   if(n.t==='box'){
-   return `<div class="bnode bbox ${linkFrom===n.id?'linking':''}" data-bn="${n.id}"
+   return `<div class="bnode bbox ${linkFrom===n.id?'linking':''} ${bvalgt.has(n.id)?'valgt':''}" data-bn="${n.id}"
      style="left:${n.x}px;top:${n.y}px;width:${n.w}px;height:${n.h}px;border-color:${n.color||'#1e7a55'}">
      <div class="bboxhead" style="background:${n.color||'#1e7a55'}">
        <span class="btxt" data-btext="${n.id}">${esc(n.label)}</span>${nodeTools(n)}</div>
@@ -4179,16 +4225,24 @@ function drawBlocks(){
   const pic=n.img?`<img src="${IMGLIB[n.img]?IMGLIB[n.img].src:''}" alt="">`
         :n.src?`<img src="${esc(n.src)}" alt="">`
         :n.sym?`<span class="bsym">${SYMLIB[n.sym]||''}</span>`:'';
-  return `<div class="bnode bitem ${linkFrom===n.id?'linking':''}" data-bn="${n.id}"
-    style="left:${n.x}px;top:${n.y}px;width:${n.w||110}px">
+  return `<div class="bnode bitem ${linkFrom===n.id?'linking':''} ${bvalgt.has(n.id)?'valgt':''}" data-bn="${n.id}"
+    style="left:${n.x}px;top:${n.y}px;width:${n.w||110}px;--pic:${n.pic||(n.sym?44:74)}px">
     <div class="bpic">${pic}</div>
-    <div class="blabel btxt" data-btext="${n.id}">${esc(n.label)}</div>${nodeTools(n)}</div>`;
+    <div class="blabel btxt" data-btext="${n.id}">${esc(n.label)}</div>${nodeTools(n)}
+    <span class="rs" data-brs="${n.id}" title="Træk for at gøre den større eller mindre"></span></div>`;
  };
  p.nodes.filter(n=>!n.parent).forEach(n=>{h+=nodeHTML(n)});
  h+=`</div></div>`;
  /* tidsstempel på siden, så to maskiner kan flette hver sin blokside */
  if(blokRettet!==null){const bs=ensureBlocks().pages[blokRettet]; if(bs)bs.mt=Date.now(); blokRettet=null}
+ /* innerHTML bygger hele lærredet om, og så ruller det tilbage til
+    hjørnet. Det kostede ens plads hver gang noget blev tegnet op —
+    og gjorde det umuligt at lægge noget nyt «dér hvor man kigger». */
+ const sc0=el2.querySelector('.canvaswrap');
+ const sx=sc0?sc0.scrollLeft:0, sy=sc0?sc0.scrollTop:0;
  el2.innerHTML=h;
+ const sc1=el2.querySelector('.canvaswrap');
+ if(sc1&&(sx||sy)){ sc1.scrollLeft=sx; sc1.scrollTop=sy; }
  drawLinks();
  bindBlocks();
  if(typeof mobilTitel==='function')mobilTitel();
@@ -4384,8 +4438,56 @@ function bindBlocks(){
    const n=bnode(node.dataset.bn); if(!n)return;
    if(n.t==='box')lastBox=n.id;
    e.preventDefault(); e.stopPropagation();
+   /* Shift lægger til eller trækker fra markeringen.
+      Uden shift: tager man fat i noget, der allerede er valgt,
+      flytter hele markeringen med. Ellers bliver den ting den
+      eneste valgte — som at klikke et sted i en tekst. */
+   if(e.shiftKey){
+    if(bvalgt.has(n.id))bvalgt.delete(n.id); else bvalgt.add(n.id);
+    drawBlocks(); return;
+   }
+   if(!bvalgt.has(n.id)){
+    bvalgt.clear();
+    document.querySelectorAll('#bcanvas .bnode.valgt')
+      .forEach(x=>x.classList.remove('valgt'));
+   }
    const r=node.getBoundingClientRect();
-   bdrag={n:n,el:node,gx:e.clientX-r.left,gy:e.clientY-r.top};
+   /* ── Løft op på lærredet ────────────────────────────────────
+      Ligger tingen i en kasse, regnes dens plads i KASSENS
+      koordinater — men hjælpelinjerne regner i lærredets. At blande
+      de to fik tingen til at hoppe kassens afstand væk, hver gang
+      ret op fandt en flugt. Og Math.max(0,…) pinnede den fast ved
+      kassens venstre og øverste kant, så den kun kunne komme ud til
+      højre og nedad.
+      Under trækket hører den til lærredet og ingenting andet. Hvilken
+      kasse den havner i, afgøres når den slippes. */
+   const wrap0=document.getElementById('bcanvas');
+   const wr0=wrap0?wrap0.getBoundingClientRect():{left:0,top:0};
+   /* Løfter én ting op på lærredet og svarer hvor den står der. */
+   const tilLaerred=(nd,el)=>{
+    const rr=el.getBoundingClientRect();
+    const px=rr.left-wr0.left, py=rr.top-wr0.top;
+    if(nd.parent&&wrap0){
+     el.style.left=px+'px'; el.style.top=py+'px'; wrap0.appendChild(el);
+    }
+    return {x:px,y:py};
+   };
+   const egen=tilLaerred(n,node);
+   /* Resten af markeringen løftes OGSÅ — før noget flyttes, så en
+      valgt ting inde i en valgt kasse ikke bliver rykket to gange. */
+   const flok=[];
+   if(wrap0&&bvalgt.has(n.id)){
+    bp().nodes.forEach(o=>{
+     if(o.id===n.id||!bvalgt.has(o.id))return;
+     const oe=wrap0.querySelector('[data-bn="'+CSS.escape(o.id)+'"]');
+     if(!oe)return;
+     const p=tilLaerred(o,oe);
+     oe.classList.add('bdragging');
+     flok.push({n:o,el:oe,sx:p.x,sy:p.y});
+    });
+   }
+   bdrag={n:n,el:node,gx:e.clientX-r.left,gy:e.clientY-r.top,
+          sx:egen.x,sy:egen.y,flok:flok};
    node.classList.add('bdragging');
    snap(); document.body.style.userSelect='none';
   });
@@ -4394,18 +4496,85 @@ function bindBlocks(){
   e.preventDefault(); e.stopPropagation();
   const n=bnode(hn.dataset.brs);
   const r=hn.parentElement.getBoundingClientRect();
-  bresize={n:n,el:hn.parentElement,x0:e.clientX,y0:e.clientY,w0:r.width,h0:r.height};
+  const p0=parseFloat(getComputedStyle(hn.parentElement).getPropertyValue('--pic'));
+  bresize={n:n,el:hn.parentElement,x0:e.clientX,y0:e.clientY,w0:r.width,h0:r.height,
+           pic0:(p0||(n.sym?44:74))};
   snap(); document.body.style.userSelect='none';
  }));
  if(canvas)canvas.onclick=e=>{if(e.target===canvas&&blockTool==='link'){linkFrom=null;drawBlocks()}};
+ /* Tomt lærred: begynd en ramme. Noderne stopper selv hændelsen,
+    så vi når kun hertil, når der ikke blev trykket på noget. */
+ if(canvas)canvas.addEventListener('mousedown',e=>{
+  if(e.target!==canvas||blockTool==='link')return;
+  e.preventDefault();
+  const wr=canvas.getBoundingClientRect();
+  const d=document.createElement('div');
+  d.className='bmarq';
+  canvas.appendChild(d);
+  bmarq={el:d,canvas:canvas,x0:e.clientX-wr.left,y0:e.clientY-wr.top,
+         tilfoej:e.shiftKey,flyttet:false};
+  document.body.style.userSelect='none';
+ });
+}
+
+/* ── Flere ad gangen ──────────────────────────────────────────
+   Træk en ramme hen over lærredet, og alt inden for den er valgt.
+   Derefter flytter de samlet: den ting man tager fat i, bestemmer
+   hvor langt, og de andre følger med det samme stykke — så de
+   indbyrdes afstande er de samme bagefter.
+
+   Rammen begynder kun på tomt lærred. Starter man inde i en kasse,
+   trækker man kassen, som man altid har kunnet. Men rammen fanger
+   også udstyr INDE i kasserne, så længe man starter udenfor.
+
+   Alt det valgte løftes op på lærredet under trækket — af samme
+   grund som ved én enkelt ting: ellers taler nogle af dem kassens
+   sprog og andre lærredets, og så skrider de fra hinanden. */
+let bmarq=null;
+function bvalgRyd(){ if(bvalgt.size){ bvalgt.clear(); drawBlocks(); } }
+function bvalgtNoder(){
+ return bp().nodes.filter(n=>bvalgt.has(n.id));
+}
+/* Hvor landede ÉN ting? Skrevet for sig, så hele flokken kan lande
+   efter nøjagtig samme regel som en enkelt. */
+function blokLand(n,el,wrap){
+ const wr=wrap.getBoundingClientRect();
+ n.x=parseFloat(el.style.left)||0; n.y=parseFloat(el.style.top)||0;
+ if(n.t==='box')return;
+ const r=el.getBoundingClientRect();
+ let target=null;
+ bp().nodes.filter(b=>b.t==='box'&&b.id!==n.id).forEach(b=>{
+  const be=wrap.querySelector('[data-bn="'+CSS.escape(b.id)+'"]');
+  if(!be)return;
+  const br=be.getBoundingClientRect();
+  if(r.left+14>br.left&&r.left+14<br.right&&
+     r.top+10>br.top&&r.top+10<br.bottom)target=b.id;
+ });
+ if(target){
+  const be=wrap.querySelector('[data-bn="'+CSS.escape(target)+'"]')
+            .getBoundingClientRect();
+  n.parent=target; n.x=Math.max(6,r.left-be.left); n.y=Math.max(30,r.top-be.top);
+ }else{
+  delete n.parent;
+  n.x=Math.max(0,r.left-wr.left); n.y=Math.max(0,r.top-wr.top);
+ }
 }
 
 let bdrag=null, bresize=null;
 document.addEventListener('mousemove',e=>{
- if(bdrag){
+ if(bmarq){
+  const wr=bmarq.canvas.getBoundingClientRect();
+  const x=e.clientX-wr.left, y=e.clientY-wr.top;
+  bmarq.flyttet=true;
+  bmarq.el.style.left=Math.min(bmarq.x0,x)+'px';
+  bmarq.el.style.top =Math.min(bmarq.y0,y)+'px';
+  bmarq.el.style.width =Math.abs(x-bmarq.x0)+'px';
+  bmarq.el.style.height=Math.abs(y-bmarq.y0)+'px';
+ } else if(bdrag){
   const wrap=document.getElementById('bcanvas');
-  const host=bdrag.n.parent?wrap.querySelector('[data-bn="'+CSS.escape(bdrag.n.parent)+'"]'):wrap;
-  const hr=host.getBoundingClientRect();
+  /* Altid lærredet — se forklaringen ved mousedown. Så taler træk,
+     gitter og hjælpelinjer det samme sprog. */
+  const hr=wrap.getBoundingClientRect();
   const rx=Math.max(0,e.clientX-bdrag.gx-hr.left), ry=Math.max(0,e.clientY-bdrag.gy-hr.top);
   bdrag.el.style.left=rx+'px'; bdrag.el.style.top=ry+'px';
   /* flugter den med noget? så vis en linje – en flugt vinder over gitteret */
@@ -4414,44 +4583,78 @@ document.addEventListener('mousemove',e=>{
    bdrag.el.style.left=Math.max(0,Math.round(s2.x!==null?s2.x:Math.round(rx/GRID)*GRID))+'px';
    bdrag.el.style.top =Math.max(0,Math.round(s2.y!==null?s2.y:Math.round(ry/GRID)*GRID))+'px';
   }
+  /* De andre valgte følger med det SAMME stykke som den, man holder i
+     — regnet efter at gitteret har rettet den op, så gruppen bliver
+     ved at stå, som den stod. */
+  if(bdrag.flok&&bdrag.flok.length){
+   const dx=parseFloat(bdrag.el.style.left)-bdrag.sx;
+   const dy=parseFloat(bdrag.el.style.top )-bdrag.sy;
+   bdrag.flok.forEach(f=>{
+    f.el.style.left=Math.max(0,f.sx+dx)+'px';
+    f.el.style.top =Math.max(0,f.sy+dy)+'px';
+   });
+  }
   drawLinks();
  } else if(bresize){
-  bresize.el.style.width=Math.max(120,snapTo(bresize.w0+(e.clientX-bresize.x0)))+'px';
-  bresize.el.style.height=Math.max(90,snapTo(bresize.h0+(e.clientY-bresize.y0)))+'px';
+  const bn=bresize.n;
+  const mindst=bn.t==='box'?120:56;
+  const w=Math.max(mindst,snapTo(bresize.w0+(e.clientX-bresize.x0)));
+  bresize.el.style.width=w+'px';
+  if(bn.t==='box'){
+   bresize.el.style.height=Math.max(90,snapTo(bresize.h0+(e.clientY-bresize.y0)))+'px';
+  }else if(bn.t!=='text'){
+   /* Billedet skal vokse med. Ellers bliver kortet bare bredere rundt
+      om et billede i uændret størrelse — og det var ikke det, man bad
+      om, da man trak i hjørnet. */
+   const f=w/(bresize.w0||w);
+   bresize.el.style.setProperty('--pic',
+     Math.max(18,Math.round(bresize.pic0*f))+'px');
+  }
   showGuides(bresize.el,document.getElementById('bcanvas'));
   drawLinks();
  }
 });
 document.addEventListener('mouseup',e=>{
- if(bdrag){
-  const n=bdrag.n, el3=bdrag.el;
-  el3.classList.remove('bdragging');
-  clearGuides(document.getElementById('bcanvas'));
-  n.x=parseFloat(el3.style.left)||0; n.y=parseFloat(el3.style.top)||0;
-  /* slippes udstyret oven i en kasse, hører det til den kasse */
-  if(n.t!=='box'){
-   const wrap=document.getElementById('bcanvas');
-   const r=el3.getBoundingClientRect();
-   let target=null;
-   bp().nodes.filter(b=>b.t==='box').forEach(b=>{
-    const be=wrap.querySelector('[data-bn="'+CSS.escape(b.id)+'"]');
-    if(!be)return;
-    const br=be.getBoundingClientRect();
-    if(r.left+14>br.left&&r.left+14<br.right&&r.top+10>br.top&&r.top+10<br.bottom)target=b.id;
+ if(bmarq){
+  const canvas=bmarq.canvas, mr=bmarq.el.getBoundingClientRect();
+  if(!bmarq.tilfoej)bvalgt.clear();
+  if(bmarq.flyttet){
+   /* En ting er med, hvis dens MIDTE ligger i rammen. At kræve at
+      hele tingen var indenfor gjorde store kasser umulige at fange;
+      at nøjes med en berøring hev kasser med, man blot strøg forbi. */
+   bp().nodes.forEach(o=>{
+    const oe=canvas.querySelector('[data-bn="'+CSS.escape(o.id)+'"]');
+    if(!oe)return;
+    const q=oe.getBoundingClientRect();
+    const cx=q.left+q.width/2, cy=q.top+q.height/2;
+    if(cx>=mr.left&&cx<=mr.right&&cy>=mr.top&&cy<=mr.bottom)bvalgt.add(o.id);
    });
-   if(target!==(n.parent||null)){
-    const wr=wrap.getBoundingClientRect();
-    if(target){
-     const be=wrap.querySelector('[data-bn="'+CSS.escape(target)+'"]').getBoundingClientRect();
-     n.parent=target; n.x=Math.max(6,r.left-be.left); n.y=Math.max(30,r.top-be.top);
-    }else{ delete n.parent; n.x=Math.max(0,r.left-wr.left); n.y=Math.max(0,r.top-wr.top) }
-   }
   }
+  bmarq.el.remove(); bmarq=null;
+  document.body.style.userSelect=''; drawBlocks();
+ } else if(bdrag){
+  const wrap=document.getElementById('bcanvas');
+  bdrag.el.classList.remove('bdragging');
+  clearGuides(wrap);
+  /* Tingen blev løftet op på lærredet, da trækket begyndte, så dens
+     tal står i lærredets koordinater. De skal regnes om til den
+     kasse, den ender i — også når det er den samme som før. Blev det
+     sprunget over, stod den med lærredets tal inde i en kasse og
+     rykkede sig af sig selv ved næste optegning. */
+  blokLand(bdrag.n,bdrag.el,wrap);
+  (bdrag.flok||[]).forEach(f=>{
+   f.el.classList.remove('bdragging');
+   blokLand(f.n,f.el,wrap);
+  });
   bdrag=null; document.body.style.userSelect=''; drawBlocks();
  } else if(bresize){
   clearGuides(document.getElementById('bcanvas'));
   bresize.n.w=parseFloat(bresize.el.style.width)||bresize.n.w;
-  bresize.n.h=parseFloat(bresize.el.style.height)||bresize.n.h;
+  if(bresize.n.t==='box'){
+   bresize.n.h=parseFloat(bresize.el.style.height)||bresize.n.h;
+  }else if(bresize.n.t!=='text'){
+   bresize.n.pic=parseFloat(bresize.el.style.getPropertyValue('--pic'))||bresize.n.pic;
+  }
   bresize=null; document.body.style.userSelect=''; drawBlocks();
  }
 });
@@ -8670,7 +8873,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.10.30-a';
+const SF_VERSION='2026.10.31-b';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
