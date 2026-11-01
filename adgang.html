@@ -17,7 +17,7 @@
      Aftrykkene dækker stilarket og scriptet tegn for tegn.
      Rettes der ét komma i dem, skal aftrykket regnes om — ellers
      bliver siden sort. Testen fanger det med det samme. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https://oqfwegzondrsvdbneury.supabase.co; style-src 'sha256-vzZpmYc8ABueQ+XsPufFbAjLPNQ0vHVy/Dcw7jH/1HI='; script-src 'sha256-vwutgVvQn1Pv0tp6pGSeGytKgWLdbJY/DafkaYFh5FA='; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src https://oqfwegzondrsvdbneury.supabase.co; style-src 'sha256-vzZpmYc8ABueQ+XsPufFbAjLPNQ0vHVy/Dcw7jH/1HI='; script-src 'sha256-bgh3F4UbLrjAKIng+kkjj/8aF0CZosvvl6Xfp961g6k='; form-action 'none'; base-uri 'none'">
 <meta name="referrer" content="no-referrer">
 <title>Adgang · East Production &amp; SignalFlow</title>
 <!--
@@ -122,6 +122,7 @@ button.anden{background:none;border:1px solid var(--line);color:var(--text);
   <div id="faerdig" class="skjul">
     <button id="videre">Videre til programmet</button>
     <button id="andet" class="anden skjul">Det andet program</button>
+    <button id="vilkode" class="anden skjul">Vælg også et kodeord</button>
   </div>
 
   <div class="fod" id="fod"></div>
@@ -366,6 +367,28 @@ function ventPaaKlik(){
 
   ryddAdressen();
   var mail = (session.user && session.user.email) || '';
+
+  /* Et magic link HAR allerede logget dig ind. Så er det forkert at
+     spærre vejen med et kodeordsfelt — du er jo inde. Kodeordet er
+     et tilbud, ikke et krav, og det står som en lille knap. */
+  if(art === 'magiclink'){
+    gemSession(session);
+    visFaerdig('Du er inde',
+      mail ? 'Du er logget ind som ' + mail + '.' : '');
+    var kv = document.getElementById('vilkode');
+    kv.classList.remove('skjul');
+    kv.onclick = function(){
+      kv.classList.add('skjul');
+      vis('faerdig', false);
+      saet('titel', 'Vælg et kodeord');
+      saet('under', 'Så kan du logge ind uden at vente på en mail.');
+      if(mail){ saet('hvem', mail); vis('hvem', true); }
+      vis('form', true);
+      document.getElementById('kode1').focus();
+    };
+    return;
+  }
+
   saet('titel', (art==='recovery') ? 'Vælg et nyt kodeord' : 'Velkommen');
   saet('under', (art==='recovery')
       ? 'Skriv et nyt kodeord, så er du inde igen.'
@@ -375,6 +398,33 @@ function ventPaaKlik(){
   vis('form', true);
   document.getElementById('kode1').focus();
 })();
+
+/* ── Inde ─────────────────────────────────────────────────────
+   Samme skærm uanset hvordan man kom ind: satte man et kodeord,
+   eller kom man med et magic link, der logger ind med det samme.
+   Skrevet ét sted, så de to ikke kan komme til at se forskellige ud. */
+function visFaerdig(overskrift, fodtekst){
+  vis('form', false);
+  vis('hvem', false);
+  saet('titel', overskrift);
+  saet('under', 'Du er logget ind. ' + (valgtMaal
+      ? 'Tryk for at komme ind i ' + MAAL[valgtMaal].navn + '.'
+      : 'Vælg hvilket program du vil ind i.'));
+  var v = document.getElementById('videre');
+  if(valgtMaal){
+    v.textContent = 'Videre til ' + MAAL[valgtMaal].navn;
+    v.onclick = function(){ location.href = MAAL[valgtMaal].fil; };
+  }else{
+    v.textContent = 'East Production';
+    v.onclick = function(){ location.href = MAAL.east.fil; };
+    var an = document.getElementById('andet');
+    an.textContent = 'SignalFlow';
+    an.onclick = function(){ location.href = MAAL.signalflow.fil; };
+    an.classList.remove('skjul');
+  }
+  vis('faerdig', true);
+  document.getElementById('fod').textContent = fodtekst || '';
+}
 
 /* ── Kodeordet ───────────────────────────────────────────────
    Ti tegn og to ens felter. Ikke en liste af tegnkrav: de gør folk til
@@ -405,28 +455,10 @@ document.getElementById('form').addEventListener('submit', async function(e){
       headers:{'Authorization':'Bearer ' + session.access_token},
       body:{password: k1.value}});
     gemSession(session);
-    vis('form', false);
-    vis('hvem', false);
-    saet('titel','Dit kodeord er sat');
-    saet('under','Du er logget ind. ' + (valgtMaal
-        ? 'Tryk for at komme ind i ' + MAAL[valgtMaal].navn + '.'
-        : 'Vælg hvilket program du vil ind i.'));
-    var v = document.getElementById('videre');
-    if(valgtMaal){
-      v.textContent = 'Videre til ' + MAAL[valgtMaal].navn;
-      v.onclick = function(){ location.href = MAAL[valgtMaal].fil; };
-    }else{
-      v.textContent = 'East Production';
-      v.onclick = function(){ location.href = MAAL.east.fil; };
-      var an = document.getElementById('andet');
-      an.textContent = 'SignalFlow';
-      an.onclick = function(){ location.href = MAAL.signalflow.fil; };
-      an.classList.remove('skjul');
-    }
-    vis('faerdig', true);
-    document.getElementById('fod').textContent =
-      'Næste gang logger du ind med ' + ((session.user&&session.user.email)||'din mail')
-      + ' og det kodeord, du lige har valgt.';
+    visFaerdig('Dit kodeord er sat',
+      'Næste gang logger du ind med '
+      + ((session.user&&session.user.email)||'din mail')
+      + ' og det kodeord, du lige har valgt.');
   }catch(err){
     gem.disabled = false;
     gem.textContent = 'Sæt kodeord';
