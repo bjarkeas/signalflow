@@ -671,7 +671,17 @@ body.mobile .audslot{width:30px}
 /* Ni spor til ni boern. Det tredje er maerkets, og det er der ogsaa naar
    linjen ikke er bundet — saa staar numre og felter samme sted i alle
    raekker, bundne som ubundne. */
-.port.kam{display:grid;grid-template-columns:54px 62px 14px 1fr 22px 22px 34px 22px 22px;gap:5px;align-items:center}
+/* De tre sidste spor er «hvem rettede», rækkemenuen og en knap. På
+   skrivebordet er de tomme — men faste spor reserverer pladsen
+   alligevel, og 78px plus mellemrum blev taget fra signalfeltet.
+   auto giver dem bredden efter indhold: ingenting når de er tomme,
+   og deres naturlige bredde når de ikke er.
+   min-width på feltet: det må aldrig mases fladt igen, heller ikke
+   på et smalt kort. Hellere et kort, der kan rulles, end et felt
+   med plads til tre bogstaver. */
+.port.kam{display:grid;
+  grid-template-columns:54px 62px 14px minmax(150px,1fr) 22px 22px auto auto auto;
+  gap:5px;align-items:center}
 .port.kam>.fastmaerke,.port.freq>.fastmaerke{width:14px;text-align:center}
 .fastmaerke.tom{visibility:hidden}
 .kamtype{font:9.5px var(--fm);color:var(--faint);text-transform:uppercase;letter-spacing:.06em;
@@ -8896,7 +8906,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.11.01-b';
+const SF_VERSION='2026.11.02-a';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
