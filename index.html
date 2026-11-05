@@ -834,6 +834,10 @@ body.oplview #side,body.oplview #sideknap{display:none}
 .amaerke{width:112px;height:46px;background:#f2f3f4;border-radius:6px;
   display:flex;align-items:center;justify-content:center;
   font-size:9px;color:#aeb3b8;letter-spacing:.16em;flex:0 0 auto}
+/* Det rigtige logo får ingen baggrund og ingen kasse: en png med
+   gennemsigtig bund skal stå frit på papiret. object-fit:contain,
+   så et bredt eller et højt logo begge passer i pladsen. */
+.amaerke.billede{background:none;object-fit:contain;object-position:left center}
 .atitel{flex:1;text-align:center}
 .atitel b{display:block;font-size:25px;letter-spacing:.01em}
 .atitel span{display:block;font-size:13px;color:#444;margin-top:3px}
@@ -964,9 +968,17 @@ body.oplview #side,body.oplview #sideknap{display:none}
    kunne ikke se dem, og så kunne et gemt oplæg ikke åbnes igen.
    Samme fælde som containerlisten faldt i. En liste er ikke en
    tegning: her er knapperne hovedsagen. */
-.oplliste .mini{opacity:1;border:1px solid var(--line);border-radius:5px;
+/* .mini står som opacity:0 og vises kun ved at holde musen over en
+   gruppe i TEGNINGEN. Overalt i oplægsfanen er knapperne derimod
+   hovedsagen — og værre: en usynlig knap kan stadig klikkes. Det
+   var dét, der slettede en linje under «Selected signal», når man
+   ramte lidt til højre for feltet. Tredje gang den fælde bider:
+   først containerlisten, så oplægslisten, nu her. Derfor én regel
+   for hele fanen, ikke en lap pr. sted. */
+#oplaeg .mini{opacity:1;border:1px solid var(--line);border-radius:5px;
   padding:3px 9px;font-size:11.5px;margin-left:5px}
-.oplliste .mini:hover{background:var(--panel2);color:var(--text)}
+#oplaeg .mini:hover{background:var(--panel2);color:var(--text)}
+#oplaeg .mini.oplfjern:hover{background:#3a1c1c;color:#e07a7a;border-color:#5a2a2a}
 .oplmaerke{font-family:var(--fm);font-size:10px;text-transform:uppercase;
   letter-spacing:.07em;padding:2px 7px;border-radius:999px;border:1px solid var(--line);
   color:var(--dim)}
@@ -9119,7 +9131,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.11.05-g';
+const SF_VERSION='2026.11.05-j';
 /* Versionen skal kunne ses uden at åbne konsollen. Den er blevet gættet
    forkert fire gange på en uge, fordi en gammel fil lå på serveren og
    lignede den nye til forveksling. Nu står den ved logoet. */
@@ -10915,7 +10927,8 @@ function arkHTML(o){
          ${arkFeltHTML(o, op.felt.w, op.felt.h)}</div>` : '';
   return `<div class="aark" id="aark" style="--sw:${op.sw}px">
     <div class="ahoved">
-      <div class="amaerke">LOGO</div>
+      ${OPL_LOGO ? `<img class="amaerke billede" src="${esc(OPL_LOGO)}" alt="">`
+                 : '<div class="amaerke">LOGO</div>'}
       <div class="atitel"><b>${esc(o.navn || 'Oplæg uden navn')}</b>
         <span>${esc(sp.navn)}${o.sted ? ' · ' + esc(o.sted) : ''}${dato ? ' · ' + dato : ''}</span></div>
       <div class="ahj">Oplæg<br>til produktion</div>
@@ -10955,6 +10968,9 @@ function oplTegnArk(el){
       ${arkHTML(o)}</div></div>`;
   arkSkaler();
   oplBindKam(vaert);
+  /* Logoet hentes én gang pr. besøg. Flaget sættes af hentningen
+     selv, så arket ikke kan komme til at tegne sig om i ring. */
+  if(!oplLogoHentet) oplLogoHent().then(() => { if(oplAktiv) oplTegnArk(el); });
 }
 
 /* Kameraerne trækkes direkte på arket. Positionen er procent af
@@ -11095,6 +11111,122 @@ var oplAktiv = null;          // det oplæg der redigeres, eller null
 var oplBorde = [];            // studieborde fra lageret
 var OPL_TILVALG = [];         // afkrydsningsfelterne, fælles for alle oplæg
 var oplTilvalgHentet = false;
+var OPL_LOGO = '';            // jeres logo, som det står på hvert ark
+var oplLogoHentet = false;
+
+/* ── Logoet ───────────────────────────────────────────────────
+   Ét logo for hele huset, ikke ét pr. oplæg. Det ligger i
+   databasen som et data-billede, ikke som en fil i en spand:
+   ingen adresse der kan svigte, og intet der skal hentes fra
+   nettet, når arket tegnes. Samme valg som udstyrsbillederne. */
+async function oplLogoHent(){
+  if(oplLogoHentet) return OPL_LOGO;
+  try{
+    const r = await sbFetch('oplaeg_opsaetning?select=vaerdi&noegle=eq.logo');
+    OPL_LOGO = (r && r[0] && r[0].vaerdi && r[0].vaerdi.src) || '';
+  }catch(e){ OPL_LOGO = ''; }
+  oplLogoHentet = true;
+  return OPL_LOGO;
+}
+
+async function oplLogoGem(src){
+  const krop = {noegle:'logo', vaerdi:{src:src || ''},
+    rettet_af:(typeof meName === 'function' && meName() !== '?') ? meName() : null,
+    rettet_at:new Date().toISOString()};
+  /* Opret eller ret i ét kald. Uden dette ville første gang være
+     en POST og alle de næste en PATCH, og så skulle programmet
+     vide, om rækken fandtes i forvejen. */
+  /* Prefer erstatter HELE hovedet, hvis man kun skriver det ene.
+     Så ville svaret komme tomt tilbage, og sbFetch ville tro, at
+     der ikke skete noget. Begge dele skal med. */
+  await sbFetch('oplaeg_opsaetning?on_conflict=noegle', {method:'POST',
+    headers:{Prefer:'resolution=merge-duplicates,return=representation'},
+    body:JSON.stringify(krop)});
+  OPL_LOGO = src || '';
+  oplLogoHentet = true;
+}
+
+/* Logoet lægges op og skaleres ned i browseren, som udstyrsbillederne.
+   ALTID png: et logo har næsten altid en gennemsigtig bund, og den
+   ville en jpeg lægge sort eller hvid bag — og så står der en kasse
+   om logoet på arket. */
+function oplLogoFraFil(fil){
+  return new Promise((ok, nej) => {
+    const rd = new FileReader();
+    rd.onerror = () => nej(new Error('Filen kunne ikke læses.'));
+    rd.onload = () => {
+      const im = new Image();
+      im.onerror = () => nej(new Error('Det ligner ikke et billede.'));
+      im.onload = () => {
+        const MAKS = 480;               // rigeligt: arket printes i A3
+        const sc = Math.min(1, MAKS / Math.max(im.width, im.height));
+        const cv = document.createElement('canvas');
+        cv.width  = Math.max(1, Math.round(im.width  * sc));
+        cv.height = Math.max(1, Math.round(im.height * sc));
+        cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+        ok(cv.toDataURL('image/png'));
+      };
+      im.src = rd.result;
+    };
+    rd.readAsDataURL(fil);
+  });
+}
+
+function oplLogoRet(){
+  openModal('Logo på oplægsarket',
+    'Ét logo for hele huset — det står på alle oplæg', `
+    <div class="mf"><label>Vælg en billedfil</label>
+      <input type="file" id="lgFil" accept="image/*"></div>
+    <p class="hj" style="margin:2px 0 14px">En png med gennemsigtig bund er bedst.
+       Billedet skaleres ned i browseren og gemmes i databasen — der hentes
+       ikke noget fra nettet, når arket tegnes.</p>
+    <div class="mf"><label>Sådan ser det ud</label>
+      <div id="lgPrv" style="background:#fff;border:1px solid var(--line);
+           border-radius:7px;padding:12px;display:flex;align-items:center;
+           justify-content:center;min-height:70px">
+        ${OPL_LOGO ? `<img src="${esc(OPL_LOGO)}" style="max-width:220px;max-height:60px">`
+                   : '<span class="msub" style="text-transform:none;letter-spacing:0;'
+                     + 'color:#9aa0a6">Intet logo endnu</span>'}
+      </div></div>
+    <div class="mrow" style="margin-top:16px">
+      <button class="btn go" id="lgGem">Gem</button>
+      <button class="btn" data-cancel="1">Annullér</button>
+      ${OPL_LOGO ? '<button class="btn" id="lgVaek" style="margin-left:auto">Fjern logoet</button>' : ''}
+    </div>`, root => {
+    root.dataset.locked = '1';
+    let nyt = null;
+    const luk = () => { root.dataset.locked = ''; closeModal(); };
+    root.querySelector('[data-cancel]').onclick = luk;
+
+    root.querySelector('#lgFil').onchange = async e => {
+      const fil = e.target.files && e.target.files[0];
+      if(!fil) return;
+      try{
+        nyt = await oplLogoFraFil(fil);
+        root.querySelector('#lgPrv').innerHTML =
+          `<img src="${nyt}" style="max-width:220px;max-height:60px">`;
+      }catch(err){ alert(err.message); }
+    };
+
+    root.querySelector('#lgGem').onclick = async () => {
+      if(nyt === null){ luk(); return; }
+      try{
+        await oplLogoGem(nyt);
+        luk(); setSync('logoet er gemt'); drawOplaeg();
+      }catch(err){
+        alert('Logoet kunne ikke gemmes.\n\n' + err.message
+          + '\n\nHar du kørt logo.sql i Supabase?');
+      }
+    };
+
+    const vk = root.querySelector('#lgVaek');
+    if(vk) vk.onclick = async () => {
+      if(!confirm('Fjern logoet fra alle oplæg?')) return;
+      try{ await oplLogoGem(''); luk(); setSync('logoet er fjernet'); drawOplaeg(); }
+      catch(err){ alert('Logoet kunne ikke fjernes.\n\n' + err.message) }
+    };
+  });
+}
 
 /* ── Tilvalgene ───────────────────────────────────────────────
    «Skal den danske timeout køre først?» Ja — og så skal der to
@@ -11244,6 +11376,27 @@ async function oplaegMaaRette(){
   }catch(e){ oplMaaRette = false }
   return oplMaaRette;
 }
+/* ── At slette et oplæg ───────────────────────────────────────
+   Reglerne i databasen siger, at det kun er dem med brugeradgang
+   eller retten til at slette job, der må fjerne et oplæg. En
+   produktionsleder må lave dem, ikke rydde dem væk — teknikken
+   kan være gået i gang.
+
+   Og her er fælden: siger reglerne nej til en DELETE, kommer der
+   ikke en fejl. Rækken bliver bare ikke rørt, og svaret er tomt.
+   Programmet ville melde «slettet» og listen stå uændret ved
+   siden af. Derfor spørger vi, hvad der FAKTISK blev slettet, og
+   siger det ligeud, hvis svaret er ingenting. */
+async function oplaegSlet(id){
+  const r = await sbFetch('oplaeg?id=eq.' + encodeURIComponent(id), {method:'DELETE'});
+  if(!Array.isArray(r) || !r.length)
+    throw new Error('Oplægget blev ikke slettet.\n\n'
+      + 'Reglerne i databasen giver kun lov til det, hvis du har '
+      + 'brugeradgang eller retten til at slette job. Bed en af dem om det.');
+  OPLAEG_LISTE = OPLAEG_LISTE.filter(x => x.id !== id);
+  return r[0];
+}
+
 async function oplaegSkabGem(navn){
   const who = (typeof meName==='function' && meName()!=='?') ? meName() : '';
   const o = oplAktiv;
@@ -11308,7 +11461,8 @@ function oplTegnListe(el){
         <td style="width:90px"><span class="oplmaerke ${o.status==='sendt'?'sendt':''}">${esc(o.status)}</span></td>
         <td style="width:150px;text-align:right">
           <button class="mini" data-oplaab="${o.id}" title="Åbn og ret">Åbn</button>
-          <button class="mini" data-opltegn="${o.id}" title="Lav tegningen ud fra oplægget">Tegn</button>
+          <button class="mini oplfjern skjul" data-oplslet="${o.id}"
+                  title="Slet oplægget">Slet</button>
         </td></tr>`;
     }).join('') + '</table>';
     const aabn = id => {
@@ -11322,14 +11476,32 @@ function oplTegnListe(el){
     ud.querySelectorAll('[data-oplaab]').forEach(b => b.onclick = e => {
       e.stopPropagation(); aabn(b.dataset.oplaab);
     });
-    ud.querySelectorAll('[data-opltegn]').forEach(b => b.onclick = e => {
-      e.stopPropagation();
-      const o = OPLAEG_LISTE.find(x => x.id === b.dataset.opltegn);
-      if(o) oplaegTilBlok(o);
-    });
     /* Man peger på rækken, ikke på en lille knap i kanten. */
     ud.querySelectorAll('[data-oplrow]').forEach(r =>
       r.onclick = () => aabn(r.dataset.oplrow));
+
+    /* Slet vises kun for dem, reglerne kunne tænkes at sige ja til.
+       Databasen har stadig det sidste ord — knappen her er en
+       høflighed, ikke et værn. */
+    oplaegMaaRette().then(maa => {
+      if(!maa) return;
+      ud.querySelectorAll('[data-oplslet]').forEach(b => {
+        b.classList.remove('skjul');
+        b.onclick = async e => {
+          e.stopPropagation();
+          const o = OPLAEG_LISTE.find(x => x.id === b.dataset.oplslet);
+          if(!o) return;
+          if(!confirm('Slet «' + (o.navn || 'uden navn') + '»?\n\n'
+            + 'Oplægget forsvinder for alle. Tegninger, der allerede er lagt '
+            + 'over i blokdiagrammet, bliver stående.')) return;
+          try{
+            await oplaegSlet(o.id);
+            setSync('oplægget er slettet');
+            drawOplaeg();
+          }catch(err){ alert(err.message) }
+        };
+      });
+    });
   }).catch(e => { ud.textContent = e.message });
 }
 
@@ -11472,9 +11644,11 @@ function oplTegnForm(el){
    </div><div class="oplhoejre">
 
    <div class="oplkort">
-     <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+     <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap">
        <h3 style="margin:0">Tegningen</h3>
-       <button class="btn" data-oplprint="1" style="margin-left:auto">Print · PDF</button>
+       <button class="btn skjul" id="oplLogoKnap" data-opllogo="1"
+               style="margin-left:auto" title="Læg jeres logo op — det står på alle oplæg">Logo</button>
+       <button class="btn" data-oplprint="1">Print · PDF</button>
      </div>
      <p class="hj">Sådan ser oplægget ud på papir. Træk kameraerne derhen, hvor de
         står — også uden for banen. Stiplet er nice to have.</p>
@@ -11584,10 +11758,11 @@ function oplBindForm(el){
      alligevel ville sige ja til. En produktionsleder må krydse af;
      han må ikke bestemme, hvad afkrydsningen koster. */
   const tvk = el.querySelector('#oplTilvalgKnap');
-  if(tvk) oplaegMaaRette().then(maa => {
+  const lgk = el.querySelector('#oplLogoKnap');
+  if(tvk || lgk) oplaegMaaRette().then(maa => {
     if(!maa) return;
-    tvk.classList.remove('skjul');
-    tvk.onclick = () => oplTilvalgRet();
+    if(tvk){ tvk.classList.remove('skjul'); tvk.onclick = () => oplTilvalgRet(); }
+    if(lgk){ lgk.classList.remove('skjul'); lgk.onclick = () => oplLogoRet(); }
   });
 
   /* Standarderne for den valgte sport. */
@@ -11673,14 +11848,22 @@ function oplBindForm(el){
       </div>`).join('') : '<span class="msub" style="text-transform:none;letter-spacing:0">Ingenting endnu.</span>';
       ll.querySelectorAll('[data-ll]').forEach(f => f.oninput = () => {
         const [n,k] = f.dataset.ll.split('|'); i.laant[+n][k] = f.value;
+        /* Tegningen skal følge med, MENS man skriver. Ikke
+           drawOplaeg(): den bygger hele formen om, og så mister
+           feltet tastefokus efter hvert bogstav. Kun arket. */
+        oplTegnArk(el);
       });
       ll.querySelectorAll('[data-llslet]').forEach(b => b.onclick = () => {
-        i.laant.splice(+b.dataset.llslet, 1); tegn();
+        i.laant.splice(+b.dataset.llslet, 1); tegn(); oplTegnArk(el);
       });
     };
     tegn();
     el.querySelector('[data-opllaantny]').onclick = () => {
-      i.laant.push({hvad:'', brug:''}); tegn();
+      i.laant.push({hvad:'', brug:''}); tegn(); oplTegnArk(el);
+      /* Markøren ned i den nye linje, så man kan skrive videre
+         uden at skulle ramme feltet med musen. */
+      const sidste = ll.querySelector('[data-ll="' + (i.laant.length - 1) + '|hvad"]');
+      if(sidste) sidste.focus();
     };
   }
 
