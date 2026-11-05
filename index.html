@@ -787,6 +787,64 @@ body.mobile .port.freq [data-pdel]{display:none}
 body.archview #sheet,body.archview #tabbar,body.archview #plan,body.archview #blocks,
 body.archview .bus,body.archview #bFoldAll{display:none}
 body.archview #archive{display:block}
+
+/* ── Oplægsfanen ───────────────────────────────────────────── */
+#oplaeg{display:none}
+body.oplview #sheet,body.oplview #tabbar,body.oplview #plan,
+body.oplview #blocks,body.oplview #archive,
+body.oplview .bus,body.oplview #bFoldAll{display:none}
+body.oplview #oplaeg{display:block}
+body.oplview #stage{grid-column:1/2;background:#0b0e13;padding:16px}
+body.oplview #side,body.oplview #sideknap{display:none}
+
+.oplramme{max-width:980px;margin:0 auto}
+.oplhoved{display:flex;align-items:baseline;gap:14px;margin:4px 0 20px}
+.oplhoved h2{margin:0;font-size:21px;color:var(--text)}
+.oplhoved .msub{margin:0}
+.oplkort{background:var(--panel);border:1px solid var(--line);border-radius:13px;
+  padding:18px 20px;margin-bottom:14px}
+.oplkort > h3{margin:0 0 4px;font-size:13px;font-family:var(--fd);
+  letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.oplkort > .hj{margin:0 0 14px;font-size:12.5px;color:var(--dim);line-height:1.55}
+.oplvalg{display:flex;gap:10px;flex-wrap:wrap}
+.oplvalg button{background:var(--bg);border:1px solid var(--line);color:var(--text);
+  border-radius:10px;padding:12px 18px;font-size:14px;cursor:pointer;
+  display:flex;align-items:center;gap:9px}
+.oplvalg button:hover{border-color:var(--accent)}
+.oplvalg button.on{border-color:var(--accent);background:rgba(232,163,61,.13);
+  color:var(--accent);font-weight:600}
+.oplvalg button .st{font-size:19px;line-height:1}
+.opltal{display:grid;grid-template-columns:1fr auto auto;gap:10px 16px;
+  align-items:center;margin-top:4px}
+.opltal .navn{font-size:14px;color:var(--text)}
+.opltal .navn small{display:block;font-size:11.5px;color:var(--dim);margin-top:2px}
+.oplstep{display:flex;align-items:center;gap:0}
+.oplstep button{width:30px;height:30px;background:var(--bg);border:1px solid var(--line);
+  color:var(--text);cursor:pointer;font-size:15px;line-height:1}
+.oplstep button:first-child{border-radius:7px 0 0 7px}
+.oplstep button:last-child{border-radius:0 7px 7px 0}
+.oplstep .v{min-width:38px;text-align:center;font-family:var(--fm);font-size:14px;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  background:var(--bg);padding:5px 0}
+.oplstep.nice .v{color:var(--accent)}
+.opltalhoved{font-size:10.5px;font-family:var(--fd);letter-spacing:.08em;
+  text-transform:uppercase;color:var(--dim);text-align:center}
+.oplfelt{background:var(--bg);border:1px solid var(--line);color:var(--text);
+  border-radius:8px;padding:10px 12px;font-size:14px;width:100%}
+.oplfelt:focus{outline:none;border-color:var(--accent)}
+.oplgrid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.oplliste{width:100%;border-collapse:collapse}
+.oplliste td{padding:10px 8px;border-bottom:1px solid var(--line);font-size:13.5px}
+.oplliste tr:hover td{background:var(--panel-2,rgba(255,255,255,.03))}
+.oplmaerke{font-family:var(--fm);font-size:10px;text-transform:uppercase;
+  letter-spacing:.07em;padding:2px 7px;border-radius:999px;border:1px solid var(--line);
+  color:var(--dim)}
+.oplmaerke.sendt{border-color:var(--accent);color:var(--accent)}
+
+/* Nice-to-have på tegningen: stiplet og dæmpet, og kan slås fra. */
+.bnode.nice{opacity:.52;border-style:dashed!important}
+.bnode.nice .bpic{opacity:.7}
+.bcanvas.kunneed .bnode.nice{display:none}
 body.archview #stage{grid-column:1/2;background:#0b0e13;padding:16px}
 
 .archwrap{display:grid;grid-template-columns:330px 1fr;gap:16px;align-items:start}
@@ -2073,6 +2131,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
       <button class="vbtn on" data-view="flow" title="Signalflow-tegningen med afsender, signaler og modtager">Tegning</button>
       <button class="vbtn" data-view="plan" title="Hvilke signaler der sidder i hvilke stik, med patch og tjek">Plan</button>
       <button class="vbtn" data-view="blocks" title="Kasser, udstyr og forbindelser – til at forklare et setup">Blokdiagram</button>
+      <button class="vbtn" data-view="oplaeg" title="Hvad går jobbet ud på – udfyldes af produktionslederen">Oplæg</button>
     </div>
     <button class="hbtn modeswitch" id="bMode" title="Skift mellem mobil- og skrivebordsudgave">📱</button>
     <div id="crumbs"></div>
@@ -2100,6 +2159,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <div id="plan"></div>
     <div id="blocks"></div>
     <div id="archive"></div>
+    <div id="oplaeg"></div>
   </main>
   <button id="sideknap" title="Skjul eller vis panelet">›</button>
   <aside id="side"></aside>
@@ -2128,6 +2188,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
   <button data-view="flow"><span>▤</span>Tegning</button>
   <button data-view="plan"><span>☰</span>Plan</button>
   <button data-view="blocks"><span>▦</span>Blok</button>
+  <button data-view="oplaeg"><span>✎</span>Oplæg</button>
 </nav>
 <div id="sheetwrap"><div id="sheetbox"></div></div>
 <div id="modal"></div>
@@ -3538,6 +3599,10 @@ let snapOn=true;
    før en erklæring længere nede i filen er udført, og så ville
    bvalgt.has() kaste. Samme fælde som KOERETOEJER i East Production. */
 let bvalgt=new Set();
+/* Slår alt fra, der kun er nice to have. Står her og ikke nede ved
+   knappen: drawBlocks kan nå at køre, før en erklæring længere nede
+   er udført. */
+let kunNeed=false;
 const GRID=10;
 const snapTo=v=>snapOn?Math.round(v/GRID)*GRID:Math.round(v);
 
@@ -3548,6 +3613,16 @@ const IMGLIB={
 };
 /* enkle tegnede symboler, så et diagram kan laves uden billeder */
 const SYMLIB={
+ /* Dine tegninger er fulde af mennesker og headsets — en host, en
+    ekspert, en kommentator. Uden dem bliver et oplæg til en liste
+    af ord, og det var netop det, tegningerne skulle erstatte. */
+ person:'<svg viewBox="0 0 40 48"><circle cx="20" cy="9" r="8"/>'
+  +'<path d="M20 20c-9 0-14 5-14 13v15h28V33c0-8-5-13-14-13z"/></svg>',
+ headset:'<svg viewBox="0 0 48 40"><path d="M24 3C13 3 5 11 5 22v9h7V22c0-7 5-12 12-12'
+  +'s12 5 12 12v9h7v-9C43 11 35 3 24 3z"/><rect x="2" y="24" width="9" height="14" rx="4"/>'
+  +'<rect x="37" y="24" width="9" height="14" rx="4"/>'
+  +'<path d="M37 36v2c0 2-2 4-5 4h-6v-3h6c1 0 2-1 2-2v-1z"/></svg>',
+
  kamera:'<svg viewBox="0 0 64 44"><rect x="2" y="8" width="40" height="28" rx="3"/><path d="M42 16l18-8v28l-18-8z"/><circle cx="14" cy="22" r="6" fill="#0b0e13"/></svg>',
  rack:'<svg viewBox="0 0 48 64"><rect x="4" y="2" width="40" height="60" rx="3"/><rect x="9" y="8" width="30" height="7" fill="#0b0e13"/><rect x="9" y="19" width="30" height="7" fill="#0b0e13"/><rect x="9" y="30" width="30" height="7" fill="#0b0e13"/></svg>',
  switch:'<svg viewBox="0 0 64 30"><rect x="2" y="4" width="60" height="22" rx="3"/><circle cx="12" cy="15" r="2.5" fill="#0b0e13"/><circle cx="22" cy="15" r="2.5" fill="#0b0e13"/><circle cx="32" cy="15" r="2.5" fill="#0b0e13"/><circle cx="42" cy="15" r="2.5" fill="#0b0e13"/><circle cx="52" cy="15" r="2.5" fill="#0b0e13"/></svg>',
@@ -4223,23 +4298,24 @@ function drawBlocks(){
      <button class="btool" data-badd="head" title="Stor overskrift til diagrammet">H Overskrift</button>
      <button class="btool ${blockTool==='link'?'on':''}" data-badd="link" title="Tegn en streg: klik først afsender, så modtager">⟋ Forbind</button>
      <button class="btool ${snapOn?'on':''}" data-badd="snap" title="Lås til gitter: tingene falder på plads i lige rækker, og der vises hjælpelinjer når de flugter">⊞ Ret op</button>
+     <button class="btool ${kunNeed?'on':''}" data-bneed="1" title="Skjul alt der kun er nice to have, så tegningen viser minimumsproduktionen">◐ Kun need</button>
      <button class="btool" data-bexp="1" title="Gem diagrammet som PDF i A3">↧ PDF</button>
    </div>
  </div>
  ${blockTool==='link'?`<div class="linkhint">Klik på det der sender, og derefter på det der modtager. <button class="add" data-bcancel="1" title="Stop med at tegne forbindelser">afbryd</button></div>`:''}
- <div class="canvaswrap"><div id="bcanvas" class="bcanvas ${snapOn?'snap':''}">
+ <div class="canvaswrap"><div id="bcanvas" class="bcanvas ${snapOn?'snap':''} ${kunNeed?'kunneed':''}">
    <svg class="blinks" id="blinks"></svg>`;
 
  const kids=id2=>p.nodes.filter(n=>n.parent===id2);
  const nodeHTML=n=>{
   if(n.t==='text'){
-   return `<div class="bnode btext ${linkFrom===n.id?'linking':''} ${bvalgt.has(n.id)?'valgt':''}" data-bn="${n.id}"
+   return `<div class="bnode btext ${linkFrom===n.id?'linking':''} ${bvalgt.has(n.id)?'valgt':''} ${n.nice?'nice':''}" data-bn="${n.id}"
      style="left:${n.x}px;top:${n.y}px;width:${n.w}px;font-size:${n.size||13}px;font-weight:${n.bold?700:400}">
      <span class="btxt" data-btext="${n.id}">${esc(n.label)}</span>${nodeTools(n)}
      <span class="rs" data-brs="${n.id}" title="Træk for at ændre bredden"></span></div>`;
   }
   if(n.t==='box'){
-   return `<div class="bnode bbox ${linkFrom===n.id?'linking':''} ${bvalgt.has(n.id)?'valgt':''}" data-bn="${n.id}"
+   return `<div class="bnode bbox ${linkFrom===n.id?'linking':''} ${bvalgt.has(n.id)?'valgt':''} ${n.nice?'nice':''}" data-bn="${n.id}"
      style="left:${n.x}px;top:${n.y}px;width:${n.w}px;height:${n.h}px;border-color:${n.color||'#1e7a55'}">
      <div class="bboxhead" style="background:${n.color||'#1e7a55'}">
        <span class="btxt" data-btext="${n.id}">${esc(n.label)}</span>${nodeTools(n)}</div>
@@ -4249,7 +4325,7 @@ function drawBlocks(){
   const pic=n.img?`<img src="${IMGLIB[n.img]?IMGLIB[n.img].src:''}" alt="">`
         :n.src?`<img src="${esc(n.src)}" alt="">`
         :n.sym?`<span class="bsym">${SYMLIB[n.sym]||''}</span>`:'';
-  return `<div class="bnode bitem ${linkFrom===n.id?'linking':''} ${bvalgt.has(n.id)?'valgt':''}" data-bn="${n.id}"
+  return `<div class="bnode bitem ${linkFrom===n.id?'linking':''} ${bvalgt.has(n.id)?'valgt':''} ${n.nice?'nice':''}" data-bn="${n.id}"
     style="left:${n.x}px;top:${n.y}px;width:${n.w||110}px;--pic:${n.pic||(n.sym?44:74)}px">
     <div class="bpic">${pic}</div>
     <div class="blabel btxt" data-btext="${n.id}">${esc(n.label)}</div>${nodeTools(n)}
@@ -4525,6 +4601,8 @@ function bindBlocks(){
            pic0:(p0||(n.sym?44:74))};
   snap(); document.body.style.userSelect='none';
  }));
+ const nb2=el2.querySelector('[data-bneed]');
+ if(nb2)nb2.onclick=()=>{ kunNeed=!kunNeed; drawBlocks(); };
  if(canvas)canvas.onclick=e=>{if(e.target===canvas&&blockTool==='link'){linkFrom=null;drawBlocks()}};
  /* Tomt lærred: begynd en ramme. Noderne stopper selv hændelsen,
     så vi når kun hertil, når der ikke blev trykket på noget. */
@@ -8906,7 +8984,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.11.02-a';
+const SF_VERSION='2026.11.05-a';
 function vaelgUdgave(){
  aftrykNu=skaermAftryk();
  const g=gemtValg();
@@ -10102,6 +10180,424 @@ const LS_VIEW='signalflow:side-view';
 function gemView(){
  try{ localStorage.setItem(LS_VIEW, JSON.stringify({v:view, d:planDom})); }catch(e){}
 }
+
+/* ══════════════════════════════════════════════════════════════
+   OPLÆG — produktionslederens beskrivelse af et job
+
+   Formålet: en kollega, der ikke er tekniker, skal kunne fortælle
+   os hvad et job går ud på, uden at skulle kende en eneste
+   mikrofontype. Han svarer på HVEM der skal være med og HVOR
+   mange kameraer — vi oversætter til grej bagefter.
+
+   ── NEED OG NICE ──────────────────────────────────────────────
+   Hvert tal har to værdier: hvor mange der skal til som minimum,
+   og hvor mange man helst vil have. Det er den vigtigste oplysning
+   i hele oplægget, for det er dér samtalen om penge og folk står.
+   To tal ved siden af hinanden er nemmere for en ikke-tekniker end
+   at sætte mærkater på hver enkelt ting.
+
+   På tegningen bliver forskellen stiplet og dæmpet, og en knap
+   slår alt det ekstra fra, så man ser minimumsproduktionen.
+
+   ── HVORFOR DET ENDER SOM ET BLOKDIAGRAM ──────────────────────
+   Oplægget er ikke et nyt tegneprogram. Det bygger en side i
+   blokdiagrammet, som allerede kan trækkes rundt i, printes til
+   PDF og deles. Produktionslederen svarer på spørgsmål; teknikeren
+   får en tegning, han kan rette i hånden — som dem i draw.io.
+   ══════════════════════════════════════════════════════════════ */
+
+var OPLAEG_LISTE = OPLAEG_LISTE || [];
+var oplAktiv = null;          // det oplæg der redigeres, eller null
+var oplBorde = [];            // studieborde fra lageret
+
+const OPL_SPORT = {
+  haandbold:{navn:'Håndbold', st:'🤾', kam:5},
+  fodbold:  {navn:'Fodbold',  st:'⚽', kam:8}
+};
+/* Et tal med to værdier. nice er altid mindst lige så stor som need. */
+const oplPar = n => ({need:n, nice:n});
+
+function tomtOplaeg(){
+  return {
+    id:null, navn:'', sport:'haandbold', dato:'', sted:'', status:'kladde',
+    indhold:{
+      host:   {med:false, kam:oplPar(5)},
+      studie: {med:false, kam:oplPar(1), reporter:oplPar(1), kommentator:oplPar(2),
+               ekspert:oplPar(1), gaest:oplPar(0), bord:null},
+      laant:  []
+    }
+  };
+}
+
+/* ── Databasen ──────────────────────────────────────────────── */
+async function oplaegHent(){
+  OPLAEG_LISTE = await sbFetch('oplaeg?select=*&order=opdateret_at.desc') || [];
+  return OPLAEG_LISTE;
+}
+async function oplaegGem(o){
+  const who = (typeof meName==='function' && meName()!=='?') ? meName() : '';
+  const krop = {navn:o.navn, sport:o.sport, dato:o.dato||null, sted:o.sted||null,
+                indhold:o.indhold, status:o.status||'kladde',
+                opdateret_af:who, opdateret_at:new Date().toISOString()};
+  if(o.id){
+    const r = await sbFetch('oplaeg?id=eq.'+o.id+'&select=id',
+      {method:'PATCH', body:JSON.stringify(krop)});
+    if(!r || !r.length) throw new Error('Oplægget findes ikke længere.');
+  }else{
+    krop.oprettet_af = who;
+    const r = await sbFetch('oplaeg?select=id', {method:'POST', body:JSON.stringify(krop)});
+    o.id = r && r[0] && r[0].id;
+  }
+  return o;
+}
+/* Studieborde er udstyr i lageret med kategorien STUDIEBORD. Så er
+   billederne allerede der, og der skal ikke bygges et nyt sted at
+   lægge dem op. */
+async function oplaegBorde(){
+  try{
+    const alle = await lagerList();
+    oplBorde = (alle||[]).filter(e => /studiebord/i.test(e.category||''));
+  }catch(e){ oplBorde = [] }
+  return oplBorde;
+}
+
+/* ── Fanen ──────────────────────────────────────────────────── */
+function drawOplaeg(){
+  const el = document.getElementById('oplaeg');
+  if(!el) return;
+  if(oplAktiv) return oplTegnForm(el);
+  oplTegnListe(el);
+}
+
+function oplTegnListe(el){
+  el.innerHTML = `<div class="oplramme">
+    <div class="oplhoved">
+      <h2>Oplæg</h2>
+      <div class="msub" style="text-transform:none;letter-spacing:0">
+        Hvad går jobbet ud på — udfyldt af den, der bestiller det</div>
+      <button class="btn go" data-oplny="1" style="margin-left:auto">+ Nyt oplæg</button>
+    </div>
+    <div class="oplkort"><div id="oplListe" class="msub">henter …</div></div>
+  </div>`;
+  el.querySelector('[data-oplny]').onclick = () => {
+    oplAktiv = tomtOplaeg(); drawOplaeg();
+  };
+  const ud = el.querySelector('#oplListe');
+  oplaegHent().then(r => {
+    if(!r.length){
+      ud.innerHTML = '<div style="text-transform:none;letter-spacing:0;line-height:1.7">'
+        + 'Der er ingen oplæg endnu.<br>Tryk <b>+ Nyt oplæg</b> for at lave det første.</div>';
+      return;
+    }
+    ud.innerHTML = '<table class="oplliste">' + r.map(o => {
+      const sp = OPL_SPORT[o.sport] || {navn:o.sport, st:'·'};
+      return `<tr>
+        <td style="width:28px;font-size:17px">${sp.st}</td>
+        <td><b>${esc(o.navn||'(uden navn)')}</b>
+            <div class="msub" style="text-transform:none;letter-spacing:0">
+              ${esc(sp.navn)}${o.dato?' · '+esc(o.dato):''}${o.sted?' · '+esc(o.sted):''}</div></td>
+        <td style="width:90px"><span class="oplmaerke ${o.status==='sendt'?'sendt':''}">${esc(o.status)}</span></td>
+        <td style="width:150px;text-align:right">
+          <button class="mini" data-oplaab="${o.id}" title="Åbn og ret">Åbn</button>
+          <button class="mini" data-opltegn="${o.id}" title="Lav tegningen ud fra oplægget">Tegn</button>
+        </td></tr>`;
+    }).join('') + '</table>';
+    ud.querySelectorAll('[data-oplaab]').forEach(b => b.onclick = () => {
+      const o = OPLAEG_LISTE.find(x => x.id === b.dataset.oplaab);
+      if(!o) return;
+      oplAktiv = {id:o.id, navn:o.navn, sport:o.sport, dato:o.dato||'',
+                  sted:o.sted||'', status:o.status,
+                  indhold:Object.assign(tomtOplaeg().indhold, o.indhold||{})};
+      drawOplaeg();
+    });
+    ud.querySelectorAll('[data-opltegn]').forEach(b => b.onclick = () => {
+      const o = OPLAEG_LISTE.find(x => x.id === b.dataset.opltegn);
+      if(o) oplaegTilBlok(o);
+    });
+  }).catch(e => { ud.textContent = e.message });
+}
+
+/* Et tal med to værdier: mindst, og helst. */
+function oplTalHTML(sti, navn, under, maks){
+  return `<div class="navn">${esc(navn)}${under?`<small>${esc(under)}</small>`:''}</div>
+    <div><div class="opltalhoved">Mindst</div>
+      <div class="oplstep" data-opltal="${sti}" data-del="need" data-maks="${maks}">
+        <button data-ned="1">−</button><div class="v"></div><button data-op="1">+</button></div></div>
+    <div><div class="opltalhoved">Helst</div>
+      <div class="oplstep nice" data-opltal="${sti}" data-del="nice" data-maks="${maks}">
+        <button data-ned="1">−</button><div class="v"></div><button data-op="1">+</button></div></div>`;
+}
+
+function oplHent(sti){
+  return sti.split('.').reduce((o,k) => (o||{})[k], oplAktiv.indhold);
+}
+
+function oplTegnForm(el){
+  const o = oplAktiv, i = o.indhold;
+  const sp = OPL_SPORT[o.sport] || OPL_SPORT.haandbold;
+  el.innerHTML = `<div class="oplramme">
+   <div class="oplhoved">
+     <h2>${o.id ? 'Ret oplæg' : 'Nyt oplæg'}</h2>
+     <button class="btn" data-opltilbage="1" style="margin-left:auto">Tilbage</button>
+     <button class="btn go" data-oplgem="1">Gem</button>
+   </div>
+
+   <div class="oplkort">
+     <h3>1 · Hvad er det for et job?</h3>
+     <div class="oplgrid2">
+       <div><label class="opltalhoved">Navn</label>
+         <input class="oplfelt" data-oplf="navn" value="${esc(o.navn)}"
+                placeholder="fx Håndbold – AGK mod GOG"></div>
+       <div><label class="opltalhoved">Dato</label>
+         <input class="oplfelt" type="date" data-oplf="dato" value="${esc(o.dato||'')}"></div>
+     </div>
+     <div style="margin-top:12px"><label class="opltalhoved">Sted</label>
+       <input class="oplfelt" data-oplf="sted" value="${esc(o.sted||'')}" placeholder="fx Jyske Bank Boxen"></div>
+     <div style="margin-top:16px"><label class="opltalhoved">Sport</label>
+       <div class="oplvalg" style="margin-top:7px">
+         ${Object.keys(OPL_SPORT).map(k => `<button data-oplsport="${k}"
+            class="${o.sport===k?'on':''}"><span class="st">${OPL_SPORT[k].st}</span>
+            ${esc(OPL_SPORT[k].navn)}</button>`).join('')}
+       </div></div>
+   </div>
+
+   <div class="oplkort">
+     <h3>2 · Hvad laver vi?</h3>
+     <p class="hj">Host er selve kampen. Studie er vores egen udsendelse omkring den.
+        Begge dele kan være med samtidig.</p>
+     <div class="oplvalg">
+       <button data-oplmed="host"   class="${i.host.med?'on':''}"><span class="st">🎥</span>Host – kampen</button>
+       <button data-oplmed="studie" class="${i.studie.med?'on':''}"><span class="st">🎙</span>Studie</button>
+     </div>
+   </div>
+
+   ${i.host.med ? `<div class="oplkort">
+     <h3>3 · Host</h3>
+     <p class="hj">Hvor mange kameraer på banen. ${esc(sp.navn)} er normalt ${sp.kam}.</p>
+     <div class="opltal">${oplTalHTML('host.kam','Kameraer på banen','4 er minimum',12)}</div>
+   </div>` : ''}
+
+   ${i.studie.med ? `<div class="oplkort">
+     <h3>${i.host.med?'4':'3'} · Studiet</h3>
+     <p class="hj">Hvem skal være med, og hvor mange. Der hører altid mindst
+        én reporter og én kommentator til et studie.</p>
+     <div class="opltal">
+       ${oplTalHTML('studie.kam','Kameraer i studiet','',4)}
+       ${oplTalHTML('studie.reporter','Reportere','står ude, med eget kamera',4)}
+       ${oplTalHTML('studie.kommentator','Kommentatorer','',4)}
+       ${oplTalHTML('studie.ekspert','Eksperter','i studiet, headset og IFB',8)}
+       ${oplTalHTML('studie.gaest','Gæster','i studiet, håndmikrofon',8)}
+     </div>
+     <div style="margin-top:18px"><label class="opltalhoved">Studiebord</label>
+       <div class="oplvalg" id="oplBorde" style="margin-top:7px"><span class="msub">henter …</span></div></div>
+   </div>` : ''}
+
+   ${(i.studie.med && !i.host.med) ? `<div class="oplkort">
+     <h3>${'5'} · Lånt fra den der laver kampen</h3>
+     <p class="hj">Laver andre selve kampen, skal vi tit bruge noget af deres:
+        et par kameraer til timeout, og playout fra deres EVS. Skriv hvad I skal bruge.</p>
+     <div id="oplLaant"></div>
+     <button class="btn" data-opllaantny="1" style="margin-top:10px">+ Tilføj</button>
+   </div>` : ''}
+
+   <div class="oplkort" style="display:flex;gap:12px;align-items:center">
+     <button class="btn go" data-opltegnny="1">Gem og lav tegningen</button>
+     <span class="msub" style="text-transform:none;letter-spacing:0">
+       Tegningen lander som en ny side i blokdiagrammet, hvor den kan rettes.</span>
+   </div>
+  </div>`;
+  oplBindForm(el);
+}
+
+function oplBindForm(el){
+  const o = oplAktiv, i = o.indhold;
+
+  el.querySelector('[data-opltilbage]').onclick = () => { oplAktiv = null; drawOplaeg(); };
+  el.querySelectorAll('[data-oplf]').forEach(f => f.oninput = () => { o[f.dataset.oplf] = f.value; });
+  el.querySelectorAll('[data-oplsport]').forEach(b => b.onclick = () => {
+    o.sport = b.dataset.oplsport;
+    /* Standardantallet følger sporten — håndbold 5, fodbold 8. Det er
+       et udgangspunkt, ikke et facit: har nogen selv rettet tallet,
+       bliver det stående. */
+    if(!o._kamrettet){ const k = OPL_SPORT[o.sport].kam; i.host.kam = oplPar(k); }
+    drawOplaeg();
+  });
+  el.querySelectorAll('[data-oplmed]').forEach(b => b.onclick = () => {
+    const k = b.dataset.oplmed; i[k].med = !i[k].med; drawOplaeg();
+  });
+
+  /* Tallene. need kan aldrig blive større end nice, og nice aldrig
+     mindre end need — ellers ville «mindst» være mere end «helst». */
+  el.querySelectorAll('[data-opltal]').forEach(g => {
+    const sti = g.dataset.opltal, del = g.dataset.del, maks = +g.dataset.maks || 12;
+    const par = oplHent(sti);
+    const v = g.querySelector('.v');
+    v.textContent = par[del];
+    const saet = n => {
+      n = Math.max(0, Math.min(maks, n));
+      par[del] = n;
+      if(del === 'need' && par.nice < n) par.nice = n;
+      if(del === 'nice' && n < par.need) par.need = n;
+      if(sti === 'host.kam') o._kamrettet = true;
+      drawOplaeg();
+    };
+    g.querySelector('[data-op]').onclick  = () => saet(par[del] + 1);
+    g.querySelector('[data-ned]').onclick = () => saet(par[del] - 1);
+  });
+
+  /* Studiebordene med billede, hentet fra lageret. */
+  const bb = el.querySelector('#oplBorde');
+  if(bb) oplaegBorde().then(() => {
+    if(!oplBorde.length){
+      bb.innerHTML = '<span class="msub" style="text-transform:none;letter-spacing:0">'
+        + 'Ingen studieborde i lageret endnu. Opret dem som udstyr i '
+        + 'kategorien STUDIEBORDE, så står de her med billede.</span>';
+      return;
+    }
+    bb.innerHTML = oplBorde.map(b => `<button data-oplbord="${b.id}"
+      class="${i.studie.bord===b.id?'on':''}" style="flex-direction:column;gap:6px;padding:10px">
+      ${b.image_url?`<img class="udstyrsfoto" src="${esc(b.image_url)}"
+         style="width:116px;height:66px;border-radius:6px;padding:2px">`:'<span class="st">▭</span>'}
+      <span style="font-size:12px">${esc(b.name)}</span></button>`).join('');
+    bb.querySelectorAll('[data-oplbord]').forEach(k => k.onclick = () => {
+      i.studie.bord = (i.studie.bord === k.dataset.oplbord) ? null : k.dataset.oplbord;
+      drawOplaeg();
+    });
+  });
+
+  /* Lånt grej fra den, der laver kampen. */
+  const ll = el.querySelector('#oplLaant');
+  if(ll){
+    const tegn = () => {
+      ll.innerHTML = i.laant.length ? i.laant.map((x,n) => `<div class="oplgrid2"
+        style="grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px">
+        <input class="oplfelt" data-ll="${n}|hvad" value="${esc(x.hvad||'')}" placeholder="fx Kam 3">
+        <input class="oplfelt" data-ll="${n}|brug" value="${esc(x.brug||'')}" placeholder="fx uni timeout">
+        <button class="mini" data-llslet="${n}" title="Fjern">✕</button>
+      </div>`).join('') : '<span class="msub" style="text-transform:none;letter-spacing:0">Ingenting endnu.</span>';
+      ll.querySelectorAll('[data-ll]').forEach(f => f.oninput = () => {
+        const [n,k] = f.dataset.ll.split('|'); i.laant[+n][k] = f.value;
+      });
+      ll.querySelectorAll('[data-llslet]').forEach(b => b.onclick = () => {
+        i.laant.splice(+b.dataset.llslet, 1); tegn();
+      });
+    };
+    tegn();
+    el.querySelector('[data-opllaantny]').onclick = () => {
+      i.laant.push({hvad:'', brug:''}); tegn();
+    };
+  }
+
+  const gem = async (ogsaaTegn) => {
+    if(!(o.navn||'').trim()){ alert('Giv oplægget et navn først.'); return; }
+    try{
+      await oplaegGem(o);
+      setSync('oplægget er gemt');
+      if(ogsaaTegn) oplaegTilBlok(o); else { oplAktiv = null; drawOplaeg(); }
+    }catch(e){ alert(e.message) }
+  };
+  el.querySelector('[data-oplgem]').onclick    = () => gem(false);
+  el.querySelector('[data-opltegnny]').onclick = () => gem(true);
+}
+
+/* ── Fra oplæg til tegning ───────────────────────────────────
+   Én kasse pr. zone, som i tegningerne fra draw.io: studiet,
+   kommentatorerne, reporteren, banen. Hver person og hvert kamera
+   er et kort med et symbol — ikke en linje i en liste.
+
+   Det der kun er NICE, får nice=true og tegnes stiplet og dæmpet.
+   Knappen «Kun need» i blokværktøjslinjen slår dem fra. */
+function oplKasse(side, titel, farve, x, y, emner, kol){
+  kol = kol || 4;
+  const BR = 118, HJ = 112;
+  const antal = Math.max(1, emner.length);
+  const raekker = Math.ceil(antal / kol);
+  const boks = {id:id(), t:'box', x:x, y:y,
+    w: Math.max(240, 28 + Math.min(kol, antal) * BR),
+    h: 56 + raekker * HJ, label:titel, color:farve};
+  side.nodes.push(boks);
+  emner.forEach((e, k) => {
+    const nd = {id:id(), t:'item', parent:boks.id,
+      x: 14 + (k % kol) * BR, y: 50 + Math.floor(k / kol) * HJ,
+      w: 104, pic: e.pic || 44, label: e.label};
+    if(e.sym) nd.sym = e.sym;
+    if(e.src) nd.src = e.src;
+    if(e.nice) nd.nice = true;
+    side.nodes.push(nd);
+  });
+  return boks;
+}
+
+/* «Ekspert 1, Ekspert 2, Ekspert 3» hvor de sidste er nice. */
+function oplPersoner(navn, par, sym){
+  const ud = [];
+  for(let k = 1; k <= (par.nice || 0); k++)
+    ud.push({sym:sym, label: navn + (par.nice > 1 ? ' ' + k : ''), nice: k > par.need});
+  return ud;
+}
+
+async function oplaegTilBlok(o){
+  const i = Object.assign(JSON.parse(JSON.stringify(tomtOplaeg().indhold)), o.indhold || {});
+  const sp = OPL_SPORT[o.sport] || OPL_SPORT.haandbold;
+  if(i.studie && i.studie.bord && !oplBorde.length) await oplaegBorde();
+
+  if(typeof snap === 'function') snap();
+  const side = {id:id(), title:'Oplæg · ' + (o.navn || sp.navn),
+                nodes:[], links:[], mt:Date.now()};
+
+  side.nodes.push({id:id(), t:'text', x:40, y:22, w:1100, size:22, bold:true,
+    label:(o.navn || sp.navn) + (o.dato ? ' · ' + o.dato : '') + (o.sted ? ' · ' + o.sted : '')});
+  side.nodes.push({id:id(), t:'text', x:40, y:52, w:1100, size:12, bold:false,
+    label:'Stiplet og dæmpet er nice to have. Knappen «Kun need» skjuler dem.'});
+
+  let yV = 92, yH = 92;
+  const VENSTRE = 40, HOEJRE = 660;
+
+  if(i.studie.med){
+    const emner = oplPersoner('Host', oplPar(1), 'person')
+      .concat(oplPersoner('Ekspert', i.studie.ekspert, 'person'))
+      .concat(oplPersoner('Gæst',    i.studie.gaest,   'person'))
+      .concat(oplPersoner('Kamera',  i.studie.kam,     'kamera'));
+    const bord = oplBorde.find(b => b.id === i.studie.bord);
+    if(bord) emner.push({src:bord.image_url, label:bord.name, pic:56});
+    yV += oplKasse(side, 'STUDIE', '#1e7a55', VENSTRE, yV, emner, 4).h + 26;
+
+    yV += oplKasse(side, 'KOMMENTATORER', '#6aa9e0', VENSTRE, yV,
+      oplPersoner('Kommentator', i.studie.kommentator, 'headset'), 4).h + 26;
+
+    const rep = [];
+    const rn = i.studie.reporter;
+    for(let k = 1; k <= (rn.nice || 0); k++){
+      const n2 = rn.nice > 1 ? ' ' + k : '';
+      rep.push({sym:'person', label:'Reporter' + n2,   nice:k > rn.need});
+      rep.push({sym:'kamera', label:'Kam til rep.' + n2, nice:k > rn.need});
+    }
+    if(rep.length) yV += oplKasse(side, 'REPORTER', '#d98b4a', VENSTRE, yV, rep, 4).h + 26;
+  }
+
+  if(i.host.med){
+    const kam = [];
+    for(let k = 1; k <= (i.host.kam.nice || 0); k++)
+      kam.push({sym:'kamera', label:'Kam ' + k, nice:k > i.host.kam.need});
+    yH += oplKasse(side, 'HOST · ' + sp.navn.toUpperCase(), '#e8a33d',
+                   HOEJRE, yH, kam, 4).h + 26;
+  }
+
+  const laant = (i.laant || []).filter(x => (x.hvad || '').trim());
+  if(laant.length){
+    yH += oplKasse(side, 'LÅNT FRA DEN DER LAVER KAMPEN', '#8c98a6', HOEJRE, yH,
+      laant.map(x => ({sym:'fiber',
+        label:x.hvad + (x.brug ? ' — ' + x.brug : '')})), 3).h + 26;
+  }
+
+  ensureBlocks().pages.push(side);
+  blockPage = ensureBlocks().pages.length - 1;
+  oplAktiv = null;
+  if(typeof markDirty === 'function') markDirty();
+  setView('blocks');
+  if(typeof setSync === 'function') setSync('tegningen er lavet — ret den som du vil');
+}
+
 function setView(v){
  view=v;
  gemView();
@@ -10113,10 +10609,12 @@ function setView(v){
  document.body.classList.toggle('planview',v==='plan');
  document.body.classList.toggle('blockview',v==='blocks');
  document.body.classList.toggle('archview',v==='arch');
+ document.body.classList.toggle('oplview',v==='oplaeg');
  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
  document.querySelectorAll('#mnav button').forEach(b=>b.classList.toggle('on',b.dataset.view===v));
  if(typeof mobilTitel==='function')mobilTitel();
  if(v==='plan')drawPlan(); else if(v==='blocks')drawBlocks();
+ else if(v==='oplaeg')drawOplaeg();
  else if(v==='arch'){
   drawArchive();
   Promise.all([lagerList(true),lagerCategories()]).then(()=>drawArchive())
