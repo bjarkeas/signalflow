@@ -9131,7 +9131,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.11.05-j';
+const SF_VERSION='2026.11.05-k';
 /* Versionen skal kunne ses uden at åbne konsollen. Den er blevet gættet
    forkert fire gange på en uge, fordi en gammel fil lå på serveren og
    lignede den nye til forveksling. Nu står den ved logoet. */
@@ -11146,11 +11146,26 @@ async function oplLogoGem(src){
   oplLogoHentet = true;
 }
 
-/* Logoet lægges op og skaleres ned i browseren, som udstyrsbillederne.
-   ALTID png: et logo har næsten altid en gennemsigtig bund, og den
-   ville en jpeg lægge sort eller hvid bag — og så står der en kasse
-   om logoet på arket. */
-function oplLogoFraFil(fil){
+/* ── Et billede lagt ned i browseren ──────────────────────────
+   Billedet skaleres ned og gemmes som et data-billede — ikke som
+   en fil i en spand. Ingen adresse der kan svigte, og intet der
+   hentes fra nettet, når tegningen vises.
+
+   Formatet afgøres af billedet selv: har det en gennemsigtig bund,
+   bliver det png, ellers jpeg. Det kostede en halv dag i East
+   Production at finde ud af hvorfor et billede blev en sort
+   firkant — en png med gennemsigtig bund lagt ned som jpeg får
+   sort bag sig. tvingPng bruges til logoer, hvor bunden næsten
+   altid ER gennemsigtig, også når prøven ikke kan se det. */
+function oplGennemsigtig(cv){
+  try{
+    const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
+    for(let k = 3; k < d.length; k += 4) if(d[k] < 250) return true;
+  }catch(e){ return true; }        // kan vi ikke se efter, så vælg det sikre
+  return false;
+}
+
+function oplBilledeFraFil(fil, maks, tvingPng){
   return new Promise((ok, nej) => {
     const rd = new FileReader();
     rd.onerror = () => nej(new Error('Filen kunne ikke læses.'));
@@ -11158,19 +11173,23 @@ function oplLogoFraFil(fil){
       const im = new Image();
       im.onerror = () => nej(new Error('Det ligner ikke et billede.'));
       im.onload = () => {
-        const MAKS = 480;               // rigeligt: arket printes i A3
-        const sc = Math.min(1, MAKS / Math.max(im.width, im.height));
+        const sc = Math.min(1, (maks || 320) / Math.max(im.width, im.height));
         const cv = document.createElement('canvas');
         cv.width  = Math.max(1, Math.round(im.width  * sc));
         cv.height = Math.max(1, Math.round(im.height * sc));
         cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
-        ok(cv.toDataURL('image/png'));
+        ok(tvingPng || oplGennemsigtig(cv)
+           ? cv.toDataURL('image/png')
+           : cv.toDataURL('image/jpeg', 0.85));
       };
       im.src = rd.result;
     };
     rd.readAsDataURL(fil);
   });
 }
+
+/* Logoet: altid png, og lidt større, fordi arket printes i A3. */
+function oplLogoFraFil(fil){ return oplBilledeFraFil(fil, 480, true); }
 
 function oplLogoRet(){
   openModal('Logo på oplægsarket',
@@ -11415,12 +11434,69 @@ async function oplaegSkabSlet(sid){
 /* Studieborde er udstyr i lageret med kategorien STUDIEBORD. Så er
    billederne allerede der, og der skal ikke bygges et nyt sted at
    lægge dem op. */
-async function oplaegBorde(){
+/* Studiebordene er almindeligt udstyr på lageret, kendt på at
+   kategorien hedder noget med studiebord.
+
+   force: lagerlisten gemmes i hukommelsen, og uden den ville et
+   bord, man lige har oprettet, ikke dukke op, før hele siden blev
+   hentet igen. */
+async function oplaegBorde(force){
   try{
-    const alle = await lagerList();
+    const alle = await lagerList(force);
     oplBorde = (alle||[]).filter(e => /studiebord/i.test(e.category||''));
   }catch(e){ oplBorde = [] }
   return oplBorde;
+}
+
+/* Opret et studiebord uden at forlade oplægget. Det bliver en
+   ganske almindelig lagerrække i kategorien STUDIEBORD — den
+   samme, teknikken ser i lagerfanen. */
+function oplBordNyt(vaelg){
+  openModal('Nyt studiebord', 'Det bliver oprettet som udstyr på lageret', `
+    <div class="mf"><label>Hvad hedder bordet?</label>
+      <input class="oplfelt" id="bnNavn" placeholder="fx Studiebord rundt, 4 personer"></div>
+    <div class="mf"><label>Billede</label>
+      <input type="file" id="bnFil" accept="image/*"></div>
+    <p class="hj" style="margin:2px 0 12px">Et foto gør det nemmere at vælge det rigtige
+       bord. Det skaleres ned og gemmes i databasen.</p>
+    <div class="mf"><label>Sådan ser det ud</label>
+      <div id="bnPrv" style="background:#fff;border:1px solid var(--line);border-radius:7px;
+           padding:12px;display:flex;align-items:center;justify-content:center;min-height:76px">
+        <span class="msub" style="text-transform:none;letter-spacing:0;color:#9aa0a6"
+          >Intet billede endnu</span></div></div>
+    <div class="mrow" style="margin-top:16px">
+      <button class="btn go" id="bnGem">Opret</button>
+      <button class="btn" data-cancel="1">Annullér</button>
+    </div>`, root => {
+    root.dataset.locked = '1';
+    let billede = null;
+    const luk = () => { root.dataset.locked = ''; closeModal(); };
+    root.querySelector('[data-cancel]').onclick = luk;
+    root.querySelector('#bnFil').onchange = async e => {
+      const fil = e.target.files && e.target.files[0];
+      if(!fil) return;
+      try{
+        billede = await oplBilledeFraFil(fil, 320);
+        root.querySelector('#bnPrv').innerHTML =
+          `<img src="${billede}" style="max-width:220px;max-height:120px">`;
+      }catch(err){ alert(err.message) }
+    };
+    root.querySelector('#bnGem').onclick = async () => {
+      const navn = root.querySelector('#bnNavn').value.trim();
+      if(!navn){ alert('Bordet skal have et navn.'); return; }
+      try{
+        const r = await sbFetch('equipment?select=id', {method:'POST',
+          body:JSON.stringify({name:navn, category:'STUDIEBORD', qty:1,
+                               image_url:billede || null})});
+        const nyId = r && r[0] && r[0].id;
+        if(!nyId) throw new Error('Bordet blev ikke oprettet. '
+          + 'Har du rettighed til at rette i lageret?');
+        await oplaegBorde(true);
+        if(typeof vaelg === 'function') vaelg(String(nyId));
+        luk(); setSync('studiebordet er oprettet'); drawOplaeg();
+      }catch(err){ alert('Studiebordet kunne ikke oprettes.\n\n' + err.message) }
+    };
+  });
 }
 
 /* ── Fanen ──────────────────────────────────────────────────── */
@@ -11814,25 +11890,39 @@ function oplBindForm(el){
   /* Studiebordene med billede, hentet fra lageret. Ét vælgerfelt
      pr. studie: to positioner kan have hvert sit bord. */
   const bordfelter = el.querySelectorAll('.oplborde[data-oplbordtil]');
-  if(bordfelter.length) oplaegBorde().then(() => {
+  if(bordfelter.length) oplaegBorde().then(() => oplaegMaaRette()).then(maaRette => {
     bordfelter.forEach(bb => {
       const k = +bb.dataset.oplbordtil, st = i.studier[k];
       if(!st) return;
+      /* Knappen til at oprette står ALTID, også når der er borde i
+         forvejen. Før kunne man kun vælge mellem dem, der var, og
+         der var ingen vej videre uden at gå i lagerfanen. */
+      const nyknap = maaRette
+        ? `<button data-oplbordny="${k}" style="flex-direction:column;gap:6px;
+             padding:10px;border-style:dashed;min-width:118px">
+             <span class="st" style="font-size:19px">+</span>
+             <span style="font-size:12px">Nyt studiebord</span></button>`
+        : '';
       if(!oplBorde.length){
-        bb.innerHTML = '<span class="msub" style="text-transform:none;letter-spacing:0">'
-          + 'Ingen studieborde i lageret endnu. Opret dem som udstyr i '
-          + 'kategorien STUDIEBORDE, så står de her med billede.</span>';
-        return;
+        bb.innerHTML = (maaRette
+          ? '<span class="msub" style="text-transform:none;letter-spacing:0;'
+            + 'align-self:center;margin-right:10px">Ingen studieborde endnu.</span>'
+          : '<span class="msub" style="text-transform:none;letter-spacing:0">'
+            + 'Ingen studieborde i lageret endnu. Bed teknikken om at oprette dem '
+            + 'som udstyr i kategorien STUDIEBORD.</span>') + nyknap;
+      } else {
+        bb.innerHTML = oplBorde.map(b => `<button data-oplbord="${b.id}"
+          class="${st.bord===b.id?'on':''}" style="flex-direction:column;gap:6px;padding:10px">
+          ${lagerBillede(b)?`<img class="udstyrsfoto" src="${esc(lagerBillede(b))}"
+             style="width:116px;height:66px;border-radius:6px;padding:2px">`:'<span class="st">▭</span>'}
+          <span style="font-size:12px">${esc(b.name)}</span></button>`).join('') + nyknap;
       }
-      bb.innerHTML = oplBorde.map(b => `<button data-oplbord="${b.id}"
-        class="${st.bord===b.id?'on':''}" style="flex-direction:column;gap:6px;padding:10px">
-        ${lagerBillede(b)?`<img class="udstyrsfoto" src="${esc(lagerBillede(b))}"
-           style="width:116px;height:66px;border-radius:6px;padding:2px">`:'<span class="st">▭</span>'}
-        <span style="font-size:12px">${esc(b.name)}</span></button>`).join('');
       bb.querySelectorAll('[data-oplbord]').forEach(kn => kn.onclick = () => {
         st.bord = (st.bord === kn.dataset.oplbord) ? null : kn.dataset.oplbord;
         drawOplaeg();
       });
+      const nb = bb.querySelector('[data-oplbordny]');
+      if(nb) nb.onclick = () => oplBordNyt(nyId => { st.bord = nyId; });
     });
   });
 
