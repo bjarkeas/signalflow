@@ -823,34 +823,49 @@ body.oplview #side,body.oplview #sideknap{display:none}
   margin:0 16px;width:calc(100% - 32px)}
 .arkboks{position:relative;overflow:hidden}
 .aark{position:absolute;left:0;top:0;width:1190px;height:842px;background:#fff;
-  color:#111;transform-origin:top left;
+  color:#111;transform-origin:top left;--bs:38px;
   font-family:Arial,Helvetica,'Liberation Sans',sans-serif;
   box-shadow:0 2px 14px rgba(0,0,0,.35)}
 .ahoved{position:absolute;left:34px;right:34px;top:24px;height:72px;
   display:flex;align-items:center;gap:18px;border-bottom:1.6px solid #111}
-.amaerke{width:118px;height:52px;border:1.4px dashed #b4b4b4;border-radius:7px;
-  display:flex;align-items:center;justify-content:center;text-align:center;
-  font-size:8.5px;line-height:1.25;color:#9a9a9a;letter-spacing:.06em;flex:0 0 auto}
+/* Plads til logoet. Jeg tegner ikke TV 2's mærke — det er jeres,
+   og en efterligning ville alligevel ikke være det rigtige. Læg
+   den officielle fil ind her. */
+.amaerke{width:112px;height:46px;background:#f2f3f4;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;color:#aeb3b8;letter-spacing:.16em;flex:0 0 auto}
 .atitel{flex:1;text-align:center}
 .atitel b{display:block;font-size:25px;letter-spacing:.01em}
 .atitel span{display:block;font-size:13px;color:#444;margin-top:3px}
 .ahoved .ahj{width:118px;flex:0 0 auto;text-align:right;font-size:10.5px;
   color:#555;line-height:1.4}
 
-.azone{position:absolute;border:1.7px solid #111;border-radius:13px;background:#fff;
-  box-sizing:border-box;padding:27px 11px 12px}
-.azone.nice{border-style:dashed;border-color:#8d8d8d}
-.azt{position:absolute;left:8px;right:8px;top:8px;text-align:center;
-  font-size:11.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase}
-.azk{display:flex;flex-wrap:wrap;gap:8px 6px;justify-content:center;align-items:flex-start}
-.astak{width:70px;text-align:center;font-size:10px;line-height:1.3;color:#111}
-.astak.nice{color:#7d7d7d}
-.astak.nice .afig svg{fill:#8d8d8d;stroke:#8d8d8d}
-.afig{display:block}
-.afig svg{width:31px;height:33px;display:block;margin:0 auto 3px;
-  fill:#111;stroke:#111;stroke-width:0}
-.abild{display:block;margin:0 auto 4px;max-width:92px;max-height:46px;
-  border:1px solid #111;border-radius:4px;background:#fff;object-fit:contain}
+/* Zonen: en farvet bjælke med navnet, og en hvid flade under.
+   Bjælken bærer farven, så den kan ses, uden at hele kassen
+   skriger. Kanten har samme farve, så zonen hænger sammen. */
+.azone{position:absolute;border:1.7px solid #111;border-radius:10px;background:#fff;
+  box-sizing:border-box;padding:30px 10px 12px;overflow:hidden}
+.azt{position:absolute;left:0;right:0;top:0;height:21px;line-height:21px;
+  text-align:center;color:#fff;font-size:11px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase}
+.azk{display:flex;flex-wrap:wrap;gap:9px 7px;justify-content:center;align-items:flex-start}
+
+/* Brikken: need er FYLDT, nice er HULT i samme farve. Forskellen
+   er både kulør og form, så den overlever en sort/hvid printer. */
+.astak{width:var(--sw,70px);text-align:center;font-size:10px;line-height:1.25;color:#1b1f24}
+.abrik{display:flex;align-items:center;justify-content:center;
+  width:var(--bs,38px);height:var(--bs,38px);margin:0 auto 5px;
+  border:2px solid #111;border-radius:9px;background:#fff;box-sizing:border-box}
+.abrik.lille{display:inline-flex;width:23px;height:23px;border-width:1.6px;
+  border-radius:6px;margin:0 7px 0 0;vertical-align:middle}
+.astak .atxt{display:block;font-size:10px;color:#1b1f24}
+.astak.nice .atxt{color:#5c6672}
+.afig{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+.afig svg{width:62%;height:62%;display:block;stroke-width:0}
+.abrik.fyldt .afig svg{fill:#fff;stroke:#fff}
+.abrik.hul   .afig svg{fill:currentColor;stroke:currentColor}
+.abild{display:block;margin:0 auto 5px;max-width:96px;max-height:48px;
+  border:1.6px solid #1E7A55;border-radius:6px;background:#fff;object-fit:contain}
 .atekst{font-size:11px;line-height:1.4;color:#111;text-align:left;width:100%}
 .atekst > div{display:flex;align-items:center;gap:8px;margin-bottom:7px}
 .atekst .afig{flex:0 0 auto}
@@ -861,7 +876,11 @@ body.oplview #side,body.oplview #sideknap{display:none}
    kan stilles hvor som helst i feltet — også uden for stregerne, som
    Cam 5 over banen og kameraerne bag målene på din egen tegning.
    Positionerne er derfor procent af FELTET, ikke af banen. */
-.afelt{position:absolute;border:1.7px solid #111;border-radius:13px;background:#fff;
+/* INGEN padding her. Kameraernes pladser er procent af feltets
+   indre kasse; lagde vi luft i toppen, ville hele kameraplanen
+   skride nedad i forhold til banen. Overskriftsbjælken ligger
+   oven på i stedet, som i zonerne. */
+.afelt{position:absolute;border:1.7px solid #111;border-radius:10px;background:#fff;
   box-sizing:border-box}
 .abane{position:absolute;fill:none;stroke:#111;stroke-width:2;color:#111}
 /* Kameraet på banen er et kamera, ikke et tal i en ring. Det er
@@ -874,14 +893,32 @@ body.oplview #side,body.oplview #sideknap{display:none}
 .akam svg{width:21px;height:14px;fill:#111;flex:0 0 auto}
 .akam b{font-weight:700;line-height:1}
 .akam:active{cursor:grabbing}
-.akam.nice{border-style:dashed;border-color:#8d8d8d;color:#8d8d8d}
-.akam.nice svg{fill:#8d8d8d}
-.akam.nice b{font-weight:400}
+.akam.nice{background:#fff}
+.akam.ekstra{border-radius:50%;padding:0 7px}
 .akam.tag{box-shadow:0 0 0 3px rgba(0,0,0,.18)}
-.afod{position:absolute;left:34px;right:34px;bottom:20px;padding-top:7px;
-  border-top:1px solid #111;display:flex;font-size:10.5px;color:#333}
-.afod span:last-child{margin-left:auto}
+/* Foden: hvor mange af hver, og hvordan brikkerne læses. Det er
+   dét, man kigger efter, når man skal svare på «hvad koster det». */
+.afod{position:absolute;left:34px;right:34px;bottom:18px;padding-top:8px;
+  border-top:1.4px solid #111;display:flex;align-items:center;gap:18px;
+  font-size:10.5px;color:#2a2f36}
+.afod{font-size:11.5px}
+.afod .atal{font-size:15px;font-weight:700;color:#111;margin-right:3px}
+.afod .anoegle{margin-left:auto;display:flex;align-items:center;gap:7px;color:#4a525c}
+.afod .anoegle i{display:inline-block;width:13px;height:13px;border:2px solid #111;
+  border-radius:4px;vertical-align:-2px}
+.afod .anoegle i.fyldt{background:#111}
 @media print{ .arkhylde{background:none;padding:0;margin:0;width:100%;overflow:visible} }
+/* Afkrydsningsfelterne. Spørgsmålet fylder, følgerne står under
+   med mindre vægt — man skal kunne svare uden at læse dem, men
+   kunne se dem, hvis man vil vide hvad man siger ja til. */
+.opltv{display:flex;gap:11px;align-items:flex-start;padding:11px 12px;
+  border:1px solid var(--line);border-radius:9px;margin-bottom:8px;cursor:pointer}
+.opltv:hover{background:var(--bg)}
+.opltv.on{border-color:var(--accent)}
+.opltv input{margin:2px 0 0;width:16px;height:16px;flex:0 0 auto;cursor:pointer}
+.opltv b{display:block;font-size:13.5px;font-weight:600;color:var(--text)}
+.opltv small{display:block;font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.5}
+.opltv small.folger{color:var(--accent);opacity:.85}
 .oplhoved{display:flex;align-items:baseline;gap:14px;margin:4px 0 20px}
 .oplhoved h2{margin:0;font-size:21px;color:var(--text)}
 .oplhoved .msub{margin:0}
@@ -919,7 +956,17 @@ body.oplview #side,body.oplview #sideknap{display:none}
 .oplgrid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .oplliste{width:100%;border-collapse:collapse}
 .oplliste td{padding:10px 8px;border-bottom:1px solid var(--line);font-size:13.5px}
+.oplliste tr{cursor:pointer}
 .oplliste tr:hover td{background:var(--panel-2,rgba(255,255,255,.03))}
+/* .mini står som opacity:0 og vises kun, når man holder musen over en
+   gruppe eller en sektion i TEGNINGEN. Oplægslisten stod ikke i den
+   regel, og derfor var «Åbn» og «Tegn» usynlige — de virkede, men man
+   kunne ikke se dem, og så kunne et gemt oplæg ikke åbnes igen.
+   Samme fælde som containerlisten faldt i. En liste er ikke en
+   tegning: her er knapperne hovedsagen. */
+.oplliste .mini{opacity:1;border:1px solid var(--line);border-radius:5px;
+  padding:3px 9px;font-size:11.5px;margin-left:5px}
+.oplliste .mini:hover{background:var(--panel2);color:var(--text)}
 .oplmaerke{font-family:var(--fm);font-size:10px;text-transform:uppercase;
   letter-spacing:.07em;padding:2px 7px;border-radius:999px;border:1px solid var(--line);
   color:var(--dim)}
@@ -9072,7 +9119,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.11.05-e';
+const SF_VERSION='2026.11.05-g';
 /* Versionen skal kunne ses uden at åbne konsollen. Den er blevet gættet
    forkert fire gange på en uge, fordi en gammel fil lå på serveren og
    lignede den nye til forveksling. Nu står den ved logoet. */
@@ -10388,6 +10435,14 @@ const ARKTEGN = {
   bord:{vb:'0 0 60 38', krop:
     '<rect x="1" y="9" width="58" height="7" rx="2.2"/>'
     + '<rect x="8" y="16" width="5" height="19"/><rect x="47" y="16" width="5" height="19"/>'},
+  lampe:{vb:'0 0 44 50', krop:
+    '<path d="M22 2 4 20h36z"/><rect x="18" y="20" width="8" height="4"/>'
+    + '<path d="M13 26h18l-3 10H16z"/><rect x="20" y="36" width="4" height="12"/>'},
+  intercom:{vb:'0 0 54 40', krop:
+    '<path d="M2 2h50v36H2z" fill="none" stroke-width="3"/>'
+    + '<rect x="7" y="8" width="9" height="9"/><rect x="22" y="8" width="9" height="9"/>'
+    + '<rect x="37" y="8" width="9" height="9"/><rect x="7" y="22" width="9" height="9"/>'
+    + '<rect x="22" y="22" width="9" height="9"/><rect x="37" y="22" width="9" height="9"/>'},
   signal:{vb:'0 0 48 40', krop:
     '<path d="M4 8h22v6H4z"/><path d="M26 4l18 14-18 14v-8H4v-12h22z" fill="none" stroke-width="3"/>'}
 };
@@ -10409,15 +10464,42 @@ function arkTegnInd(navn, x, y, h, farve){
 
 function arkFig(navn){ return `<span class="afig">${ARKFIG[navn] || ''}</span>`; }
 
-/* En stak: piktogram med teksten under, som personerne i dine tegninger. */
-function arkStak(fig, tekst, nice){
-  return `<div class="astak${nice ? ' nice' : ''}">${arkFig(fig)}<span>${esc(tekst)}</span></div>`;
+/* ── Farverne ────────────────────────────────────────────────
+   Hver zone har sin egen farve, de samme som kasserne i
+   blokdiagrammet, bare dybere, så de kan læses på hvidt papir.
+   Farven betyder HVOR noget hører til.
+
+   Need og nice var før grå og stiplet. Det var ikke et design,
+   det var en mangel på farve. Nu er need FYLDT og nice HULT i
+   den samme farve: forskellen kan ses på en halv meters afstand,
+   og den overlever en sort/hvid printer, fordi det også er en
+   forskel i form og ikke kun i kulør. */
+const ARKFARVE = {
+  host:        '#B5761A',   // kampen — rav, som host-kassen i diagrammet
+  studie:      '#1E7A55',   // grøn
+  kommentator: '#2D6CA8',   // blå
+  reporter:    '#C0652A',   // orange
+  signal:      '#5A6672',   // gråblå — det, vi låner af andre
+  tilvalg:     '#6B4A9E'    // lilla — en box, et tilvalg har skabt
+};
+
+/* En brik: piktogrammet i en flade, teksten under.
+   need = fyldt flade, hvidt symbol. nice = hvid flade, farvet kant. */
+function arkStak(fig, tekst, nice, farve){
+  farve = farve || '#111';
+  const st = nice
+    ? `border-color:${farve};color:${farve}`
+    : `background:${farve};border-color:${farve}`;
+  return `<div class="astak${nice ? ' nice' : ''}">
+    <span class="abrik ${nice ? 'hul' : 'fyldt'}" style="${st}">${arkFig(fig)}</span>
+    <span class="atxt">${esc(tekst)}</span></div>`;
 }
+
 /* «Ekspert 1, Ekspert 2, Ekspert 3», hvor de sidste er nice to have. */
-function arkStakke(navn, par, fig){
+function arkStakke(navn, par, fig, farve){
   let h = '';
   for(let k = 1; k <= (par.nice || 0); k++)
-    h += arkStak(fig, navn + (par.nice > 1 ? ' ' + k : ''), k > par.need);
+    h += arkStak(fig, navn + (par.nice > 1 ? ' ' + k : ''), k > par.need, farve);
   return h;
 }
 
@@ -10498,49 +10580,169 @@ function arkFeltHTML(o, w, h){
   const pos = oplBanePos(o, {x:boks.x / w * 100, y:boks.y / h * 100,
                              w:boks.w / w * 100, h:boks.h / h * 100});
   const need = o.indhold.host.kam.need;
+  const C = ARKFARVE.host, T = ARKFARVE.tilvalg;
+  const maerke = (nk, vaerdi, nice, farve, titel, ekstra) => {
+    const st = nice ? `border-color:${farve};color:${farve};background:#fff`
+                    : `border-color:${farve};background:${farve};color:#fff`;
+    return `<button class="akam ${nice ? 'hul' : 'fyldt'}${ekstra ? ' ekstra' : ''}"
+        ${nk} style="left:${vaerdi.x}%;top:${vaerdi.y}%;${st}" title="${esc(titel)}"
+        >${ARKFIG.kamera}<b>${esc(vaerdi.mrk)}</b></button>`;
+  };
   return `<svg class="abane" viewBox="${boks.vb}" preserveAspectRatio="none"
       style="left:${boks.x}px;top:${boks.y}px;width:${boks.w}px;height:${boks.h}px"
       >${boks.tegn()}</svg>
-    ${pos.map(p => `<button class="akam${p.nr > need ? ' nice' : ''}" data-akam="${p.nr}"
-        style="left:${p.x}%;top:${p.y}%"
-        title="${p.nr > need ? 'Nice to have · ' : ''}Kamera ${p.nr} — træk det derhen, hvor det står"
-        >${ARKFIG.kamera}<b>${p.nr}</b></button>`).join('')}`;
+    ${pos.map(p => maerke('data-akam="' + p.nr + '"',
+        {x:p.x, y:p.y, mrk:String(p.nr)}, p.nr > need, C,
+        (p.nr > need ? 'Nice to have · ' : '') + 'Kamera ' + p.nr
+        + ' — træk det derhen, hvor det står')).join('')}
+    ${arkBaneEkstra(o).map(e => maerke('data-aekstra="' + esc(e.noegle) + '"',
+        e, e.nice, T, e.tekst + ' — kommer af et tilvalg', true)).join('')}`;
 }
 
 /* ── Zonerne ─────────────────────────────────────────────────
    Hver zone ved selv, hvor mange pladser den fylder, så arket kan
-   regne højden ud og stille dem op uden huller. */
+   regne højden ud og stille dem op uden huller.
+
+   Her samles tre kilder: studierne, de faste zoner (kommentatorer
+   og reporter), og det, afkrydsningsfelterne fører med sig. Et
+   tilvalg, der peger på et zonenavn, vi ikke kender, laver sin
+   egen box — det er sådan «Redaktør onsite» bliver til en kasse
+   med intercompanel og skærm i. */
 function arkZoner(o){
   const i = o.indhold, z = [];
-  if(i.studie.med){
-    const bord = oplBorde.find(b => b.id === i.studie.bord);
+  const virk = oplVirkninger(i);
+  const brugt = {};                       // hvilke virkninger er placeret
+
+  /* Virkningerne, der peger på et bestemt navn. Zonenavnet læses
+     uden hensyn til store bogstaver — man skriver «Studie» én
+     dag og «studie» den næste. */
+  const vTil = navn => virk.filter((v, k) => {
+    if((v.zone || '').trim().toLowerCase() !== navn.toLowerCase()) return false;
+    if(v.slags === 'signal') return false;          // de hører til hos host
+    brugt[k] = true; return true;
+  });
+  const vBrik = (v, farve) => {
+    let h = '';
+    for(let n = 1; n <= v.antal; n++)
+      h += arkStak(v.sym, v.tekst + (v.antal > 1 ? ' ' + n : ''), v.nice, farve);
+    return h;
+  };
+  const vPladser = liste => liste.reduce((a, v) => a + v.antal, 0);
+
+  /* ── studierne ── */
+  i.studier.forEach((st, k) => {
+    const bord = oplBorde.find(b => b.id === st.bord);
     const foto = bord && lagerBillede(bord);
-    let krop = arkStak('person', 'Host')
-      + arkStakke('Ekspert', i.studie.ekspert, 'person')
-      + arkStakke('Gæst',    i.studie.gaest,   'person')
-      + arkStakke('Kamera',  i.studie.kam,     'kamera');
-    let pladser = 1 + (i.studie.ekspert.nice || 0) + (i.studie.gaest.nice || 0)
-      + (i.studie.kam.nice || 0);
+    const C = ARKFARVE.studie;
+    /* Tilvalg, der siger «studie», lander i det første. Siger de
+       studiets eget navn, lander de præcis dér. */
+    const mine = vTil(st.navn).concat(k === 0 ? vTil('studie') : []);
+    let krop = arkStak('person', 'Host', false, C)
+      + arkStakke('Ekspert', st.ekspert, 'person', C)
+      + arkStakke('Gæst',    st.gaest,   'person', C)
+      + arkStakke('Kamera',  st.kam,     'kamera', C)
+      + mine.map(v => vBrik(v, C)).join('');
+    let pladser = 1 + (st.ekspert.nice || 0) + (st.gaest.nice || 0)
+      + (st.kam.nice || 0) + vPladser(mine);
     if(bord){
-      krop += `<div class="astak" style="width:96px">${foto
-        ? `<img class="abild" src="${esc(foto)}" alt="">` : arkFig('bord')}
-        <span>${esc(bord.name)}</span></div>`;
+      krop += `<div class="astak" style="width:100px">${foto
+        ? `<img class="abild" src="${esc(foto)}" alt="">`
+        : `<span class="abrik" style="background:${C};border-color:${C}">${arkFig('bord')}</span>`}
+        <span class="atxt">${esc(bord.name)}</span></div>`;
       pladser += 2;
     }
-    z.push({t:'Studie', krop:krop, pladser:pladser});
-    z.push({t:'Kommentatorer', pladser:i.studie.kommentator.nice || 0,
-            krop:arkStakke('Kommentator', i.studie.kommentator, 'headset')});
-    z.push({t:'Reporter', pladser:2 * (i.studie.reporter.nice || 0),
-            krop:arkStakke('Reporter', i.studie.reporter, 'person')
-               + arkStakke('Kam til rep.', i.studie.reporter, 'kamera')});
+    z.push({t:st.navn, krop:krop, pladser:pladser, farve:C});
+  });
+
+  /* ── kommentatorer og reporter ── */
+  const kom = vTil('kommentator'), rep = vTil('reporter');
+  if((i.kommentator.nice || 0) || kom.length){
+    const C = ARKFARVE.kommentator;
+    z.push({t:'Kommentatorer', farve:C,
+      pladser:(i.kommentator.nice || 0) + vPladser(kom),
+      krop:arkStakke('Kommentator', i.kommentator, 'headset', C)
+         + kom.map(v => vBrik(v, C)).join('')});
   }
+  if((i.reporter.nice || 0) || rep.length){
+    const C = ARKFARVE.reporter;
+    z.push({t:'Reporter', farve:C,
+      pladser:2 * (i.reporter.nice || 0) + vPladser(rep),
+      krop:arkStakke('Reporter',     i.reporter, 'person', C)
+         + arkStakke('Kam til rep.', i.reporter, 'kamera', C)
+         + rep.map(v => vBrik(v, C)).join('')});
+  }
+
+  /* ── det, vi låner af host ── */
   const laant = (i.laant || []).filter(x => (x.hvad || '').trim());
-  if(laant.length)
-    z.push({t:'Selected signal fra Host', linjer:laant.length,
-      krop:`<div class="atekst">${laant.map(x =>
-        `<div>${arkFig('signal')}<b>${esc(x.hvad)}</b>${x.brug
-          ? ' — ' + esc(x.brug) : ''}</div>`).join('')}</div>`});
+  const vsig  = virk.filter((v, k) => v.slags === 'signal' ? (brugt[k] = true) : false);
+  if(laant.length || vsig.length){
+    const C = ARKFARVE.signal;
+    z.push({t:'Selected signal fra Host', farve:C,
+      linjer:laant.length + vsig.length,
+      krop:`<div class="atekst">${
+        laant.map(x => `<div><span class="abrik lille fyldt"
+            style="background:${C};border-color:${C}"
+            >${arkFig('signal')}</span><b>${esc(x.hvad)}</b>${
+            x.brug ? ' — ' + esc(x.brug) : ''}</div>`).join('')
+        + vsig.map(v => `<div${v.nice ? ' class="nice"' : ''}><span class="abrik lille ${
+            v.nice ? 'hul' : 'fyldt'}"
+            style="${v.nice ? 'border-color:' + C + ';color:' + C
+                            : 'background:' + C + ';border-color:' + C}"
+            >${arkFig(v.sym)}</span><b>${v.antal > 1 ? v.antal + ' × ' : ''}${esc(v.tekst)}</b>
+            ${v.fra ? ' — ' + esc(v.fra.replace(/\?$/, '').toLowerCase()) : ''}</div>`).join('')
+      }</div>`});
+  }
+
+  /* ── nye bokse, som et tilvalg har skabt ── */
+  const nye = {};
+  virk.forEach((v, k) => {
+    if(brugt[k]) return;
+    const navn = (v.zone || '').trim();
+    /* «bane» og «host» er ikke en box — de er kameraer ude på
+       banen, og dem tegner feltet selv. */
+    if(!navn || /^(bane|host)$/i.test(navn)) return;
+    (nye[navn] = nye[navn] || []).push(v);
+  });
+  Object.keys(nye).forEach(navn => {
+    const C = ARKFARVE.tilvalg;
+    z.push({t:navn, farve:C, pladser:vPladser(nye[navn]),
+            krop:nye[navn].map(v => vBrik(v, C)).join('')});
+  });
+
   return z;
+}
+
+/* Kameraerne, et tilvalg lægger ude på banen. De får bogstaver i
+   stedet for numre, så de ikke kan forveksles med kameraplanen —
+   og deres plads bliver gemt, når man har trukket dem, så de ikke
+   hopper tilbage ved næste gentegning. */
+function arkBaneEkstra(o){
+  const i = o.indhold;
+  const BOGSTAV = 'ABCDEFGHJKLMN';
+  const liste = oplVirkninger(i).filter(v =>
+    v.slags === 'kamera' && /^(bane|host)$/i.test((v.zone || '').trim()));
+  const ud = [];
+  liste.forEach(v => {
+    for(let n = 1; n <= v.antal; n++)
+      ud.push({noegle:v.fra + '|' + v.tekst + '|' + n, tekst:v.tekst, nice:v.nice});
+  });
+  i.host.ekstra = i.host.ekstra || [];
+  /* Dem, der ikke længere er krydset af, ryger ud. Dem, der er nye,
+     lander modsat hovedkameraerne — nederst, hvor modskuddet står. */
+  i.host.ekstra = i.host.ekstra.filter(e => ud.some(x => x.noegle === e.noegle));
+  ud.forEach((x, k) => {
+    let e = i.host.ekstra.find(y => y.noegle === x.noegle);
+    if(!e){
+      /* Nede i venstre hjørne, hvor kameraplanens egne numre ikke
+         står: 1 og 2 ligger ved midten. To mærker oven i hinanden
+         kan man hverken læse eller få fat i. */
+      e = {noegle:x.noegle, x:Math.max(6, Math.min(94, 10 + k * 13)), y:93};
+      i.host.ekstra.push(e);
+    }
+    e.tekst = x.tekst; e.nice = x.nice;
+    e.mrk = BOGSTAV[i.host.ekstra.indexOf(e)] || '+';
+  });
+  return i.host.ekstra;
 }
 
 /* Højden af en zone: overskrift, rækker, luft. Bredden bestemmer,
@@ -10553,8 +10755,11 @@ function arkZoneHoejde(z, w, sw){
 }
 
 function arkZoneHTML(z, x, y, w, h){
-  return `<div class="azone" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">
-    <div class="azt">${esc(z.t)}</div><div class="azk">${z.krop}</div></div>`;
+  const c = z.farve || '#111';
+  return `<div class="azone" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;
+      border-color:${c}">
+    <div class="azt" style="background:${c}">${esc(z.t)}</div>
+    <div class="azk">${z.krop}</div></div>`;
 }
 
 /* ── Opstillingen ────────────────────────────────────────────
@@ -10570,14 +10775,14 @@ function arkZoneHTML(z, x, y, w, h){
    den sidste kasse, og det ligner en fejl mere end en tegning.
    Dog højst en halv gang til: en kasse med to ting i skal ikke
    blive høj som en side, bare fordi der er plads. */
-function arkSpalte(liste, x, w, sw, bund){
+function arkSpalte(liste, x, w, sw, bund, straek){
   const LUFT = 15;
   const hh = liste.map(z => arkZoneHoejde(z, w, sw));
   let sum = hh.reduce((a, b) => a + b, 0) + LUFT * Math.max(0, liste.length - 1);
   const tilovers = bund - ARK_Y0 - sum;
-  if(tilovers > 0 && liste.length){
+  if(straek !== false && tilovers > 0 && liste.length){
     const del = tilovers / liste.length;
-    hh.forEach((h, k) => { hh[k] = Math.round(Math.min(h * 1.5, h + del)); });
+    hh.forEach((h, k) => { hh[k] = Math.round(Math.min(h * 1.25, h + 46, h + del)); });
     sum = hh.reduce((a, b) => a + b, 0) + LUFT * Math.max(0, liste.length - 1);
   }
   let y = ARK_Y0;
@@ -10587,68 +10792,141 @@ function arkSpalte(liste, x, w, sw, bund){
   return {html:html, sum:sum};
 }
 
+/* Zonerne fordeles på spalter: hver zone lægges i den korteste.
+   Returnerer html og den højeste spalte, så opstillingen kan se,
+   om det overhovedet kunne være der. */
+function arkPak(z, kol, x0, kolB, sw, mellem){
+  const bunke = [], hoejde = [];
+  for(let k = 0; k < kol; k++){ bunke.push([]); hoejde.push(0); }
+  z.forEach(x => {
+    let k = 0;
+    for(let n = 1; n < kol; n++) if(hoejde[n] < hoejde[k]) k = n;
+    bunke[k].push(x);
+    hoejde[k] += arkZoneHoejde(x, kolB, sw) + 15;
+  });
+  let html = '', hoejest = 0;
+  bunke.forEach((b, k) => {
+    const sp = arkSpalte(b, x0 + k * (kolB + mellem), kolB, sw, ARK_Y1);
+    html += sp.html;
+    hoejest = Math.max(hoejest, sp.sum);
+  });
+  return {html:html, sum:hoejest};
+}
+
+/* ── Opstillingen ────────────────────────────────────────────
+   Er der en bane, får den den store plads til højre, og zonerne
+   står i spalter til venstre — som på dine tegninger. Er der
+   ingen bane, bredes zonerne ud over hele arket.
+
+   Et oplæg med to studier, kommentatorer, reporter, lånte signaler
+   OG en box fra et tilvalg kan ikke være i én spalte. Så tager
+   arket en spalte mere og giver banen lidt mindre. Det er bedre
+   end at skrumpe alle brikkerne, og meget bedre end at lade en
+   kasse hænge ud over papirkanten — dér bliver den klippet væk i
+   printeren. */
 function arkOpstil(o){
   const z = arkZoner(o);
   const host = !!(o.indhold.host && o.indhold.host.med);
   const plads = ARK_Y1 - ARK_Y0;
+  const BRED = ARK_B - 2 * ARK_KANT;
+  const MELLEM = 22;
 
+  /* Rækkefølgen er prioriteret: det første, der kan være der,
+     vinder. Færrest spalter og størst brikker først. */
+  const forsoeg = host
+    ? [{kol:1, kb:322}, {kol:2, kb:268}, {kol:2, kb:238}]
+    : [{kol:2, kb:Math.floor((BRED - MELLEM) / 2)},
+       {kol:3, kb:Math.floor((BRED - 2 * MELLEM) / 3)}];
+
+  let sidste = null;
   for(const sw of [70, 58, 50]){
-    const sidst = sw === 50;
-    if(host){
-      const kolB = z.length ? 318 : 0;
-      const fx = kolB ? ARK_KANT + kolB + 20 : ARK_KANT;
-      const fw = ARK_B - ARK_KANT - fx;
-      const fh = arkFeltHoejde(fw, plads, o.sport);
-      const felt = {x:fx, y:ARK_Y0 + Math.round((plads - fh) / 2), w:fw, h:fh};
-      const sp = kolB ? arkSpalte(z, ARK_KANT, kolB, sw, ARK_Y1) : {html:'', sum:0};
-      if(sp.sum <= plads || sidst)
-        return {sw:sw, zoner:sp.html, felt:felt};
-    } else {
-      /* To spalter, og hver zone lægges i den korteste. */
-      const kolB = Math.floor((ARK_B - 2 * ARK_KANT - 24) / 2);
-      const h = z.map(x => arkZoneHoejde(x, kolB, sw));
-      const bunke = [[], []], ys = [0, 0];
-      z.forEach((x, k) => {
-        const i = ys[0] <= ys[1] ? 0 : 1;
-        bunke[i].push(x); ys[i] += h[k] + 15;
-      });
-      if(Math.max(ys[0], ys[1]) - 15 <= plads || sidst){
-        const a = arkSpalte(bunke[0], ARK_KANT, kolB, sw, ARK_Y1);
-        const b = arkSpalte(bunke[1], ARK_KANT + kolB + 24, kolB, sw, ARK_Y1);
-        /* Uden en bane bliver der tit luft tilovers, selv når zonerne
-           er strakt. Så står de midt på arket i stedet for at hænge
-           i toppen med en tom tredjedel under sig. */
-        const rest = Math.round((plads - Math.max(a.sum, b.sum)) / 2);
-        const ned = rest > 20
-          ? `<div style="position:absolute;left:0;top:${rest}px;right:0">`
-          : '<div>';
-        return {sw:sw, zoner:ned + a.html + b.html + '</div>', felt:null};
+    for(const fs of forsoeg){
+      if(!z.length && host)
+        return {sw:sw, zoner:'', felt:arkFelt(o, ARK_KANT, BRED, plads)};
+      const bredde = Math.min(fs.kb, Math.floor((BRED - (fs.kol - 1) * MELLEM
+        - (host ? 320 : 0)) / fs.kol)) || fs.kb;
+      const kb = host ? fs.kb : bredde;
+      const pak = arkPak(z, fs.kol, ARK_KANT, kb, sw, MELLEM);
+      const svar = {sw:sw, zoner:pak.html, felt:null};
+      if(host){
+        const fx = ARK_KANT + fs.kol * kb + (fs.kol - 1) * MELLEM + MELLEM;
+        svar.felt = arkFelt(o, fx, ARK_B - ARK_KANT - fx, plads);
+      } else if(pak.sum <= plads){
+        /* Uden en bane bliver der tit luft tilovers. Så står
+           zonerne midt på arket i stedet for at hænge i toppen
+           med en tom tredjedel under sig. */
+        const rest = Math.round((plads - pak.sum) / 2);
+        if(rest > 20) svar.zoner = `<div style="position:absolute;left:0;top:${rest}px;
+          right:0">${pak.html}</div>`;
       }
+      sidste = svar;
+      if(pak.sum <= plads) return svar;
     }
   }
+  return sidste;
 }
+
+/* Feltet med banen fylder hele højden. Før skrumpede det, så en
+   håndboldbane ikke stod med et tomt område under sig — men nu er
+   det område dér, kameraerne uden for stregerne står, og så er det
+   ikke tomt længere. Fuld højde betyder også, at feltet flugter
+   med spalternes top: arket står lige op. */
+function arkFelt(o, x, w, plads){
+  return {x:x, y:ARK_Y0, w:w, h:plads};
+}
+
+/* Hvor mange af hver. Det er dét, samtalen om penge og folk
+   handler om, så det står i foden med tal, man kan tage med
+   videre: mindst og helst, ikke et gennemsnit. */
+function arkTal(o){
+  const i = o.indhold;
+  const t = {folk:[0, 0], kam:[0, 0]};
+  const laeg = (hvad, par) => { t[hvad][0] += par.need || 0; t[hvad][1] += par.nice || 0; };
+  i.studier.forEach(st => {
+    laeg('folk', oplPar(1));                  // hosten i studiet
+    laeg('folk', st.ekspert); laeg('folk', st.gaest);
+    laeg('kam',  st.kam);
+  });
+  laeg('folk', i.kommentator);
+  laeg('folk', i.reporter);
+  laeg('kam',  i.reporter);                   // reporteren har sit eget kamera
+  if(i.host.med) laeg('kam', i.host.kam);
+  oplVirkninger(i).forEach(v => {
+    const hvad = v.slags === 'person' ? 'folk' : v.slags === 'kamera' ? 'kam' : null;
+    if(!hvad) return;
+    if(!v.nice) t[hvad][0] += v.antal;
+    t[hvad][1] += v.antal;
+  });
+  return t;
+}
+const arkSpand = p => p[0] === p[1] ? String(p[0]) : p[0] + '\u2013' + p[1];
 
 function arkHTML(o){
   const sp = OPL_SPORT[o.sport] || OPL_SPORT.haandbold;
   const op = arkOpstil(o);
+  const tal = arkTal(o);
   const dato = o.dato
     ? new Date(o.dato + 'T00:00:00').toLocaleDateString('da-DK',
         {day:'numeric', month:'long', year:'numeric'}) : '';
   const felt = op.felt
     ? `<div class="afelt" id="arkFelt" style="left:${op.felt.x}px;top:${op.felt.y}px;
-         width:${op.felt.w}px;height:${op.felt.h}px">
-         <div class="azt">Host · ${esc(sp.navn)}</div>
+         width:${op.felt.w}px;height:${op.felt.h}px;border-color:${ARKFARVE.host}">
+         <div class="azt" style="background:${ARKFARVE.host}">Host · ${esc(sp.navn)}</div>
          ${arkFeltHTML(o, op.felt.w, op.felt.h)}</div>` : '';
   return `<div class="aark" id="aark" style="--sw:${op.sw}px">
     <div class="ahoved">
-      <div class="amaerke">LOGO<br>lægges ind her</div>
+      <div class="amaerke">LOGO</div>
       <div class="atitel"><b>${esc(o.navn || 'Oplæg uden navn')}</b>
         <span>${esc(sp.navn)}${o.sted ? ' · ' + esc(o.sted) : ''}${dato ? ' · ' + dato : ''}</span></div>
       <div class="ahj">Oplæg<br>til produktion</div>
     </div>
     ${op.zoner}${felt}
-    <div class="afod"><span>SignalFlow · oplæg${o.navn ? ' · ' + esc(o.navn) : ''}</span>
-      <span>Stiplet = nice to have</span></div>
+    <div class="afod">
+      <span><span class="atal">${arkSpand(tal.folk)}</span> personer</span>
+      <span><span class="atal">${arkSpand(tal.kam)}</span> kameraer</span>
+      <span class="anoegle"><i class="fyldt"></i> need
+        <i style="margin-left:9px"></i> nice to have</span>
+    </div>
   </div>`;
 }
 
@@ -10667,10 +10945,10 @@ function oplTegnArk(el){
   const vaert = el.querySelector('#oplArk');
   if(!vaert || !oplAktiv) return;
   const o = oplAktiv;
-  if(!(o.indhold.host.med || o.indhold.studie.med)){
+  if(!(o.indhold.host.med || o.indhold.studier.length)){
     vaert.innerHTML = '<div class="msub" style="text-transform:none;letter-spacing:0;'
-      + 'padding:20px 4px;line-height:1.6">Vælg <b>host</b>, <b>studie</b> eller begge '
-      + 'ovenfor — så står tegningen her og følger med, mens du svarer.</div>';
+      + 'padding:20px 4px;line-height:1.6">Vælg <b>host</b> eller tilføj et '
+      + '<b>studie</b> ovenfor — så står tegningen her og følger med, mens du svarer.</div>';
     return;
   }
   vaert.innerHTML = `<div class="arkhylde"><div class="arkboks" id="arkBoks">
@@ -10685,11 +10963,17 @@ function oplTegnArk(el){
 function oplBindKam(vaert){
   const felt = vaert.querySelector('#arkFelt');
   if(!felt) return;
-  const pos = oplAktiv.indhold.host.pos || [];
-  felt.querySelectorAll('[data-akam]').forEach(k => {
+  const pos    = oplAktiv.indhold.host.pos    || [];
+  const ekstra = oplAktiv.indhold.host.ekstra || [];
+  /* Ét greb, to slags mærker. Kameraplanens numre og tilvalgenes
+     bogstaver skal opføre sig ens — ellers er det ene «rigtigt»
+     og det andet noget, man ikke tør røre. */
+  felt.querySelectorAll('[data-akam],[data-aekstra]').forEach(k => {
     k.addEventListener('mousedown', e => {
       e.preventDefault();
-      const p = pos.find(x => x.nr === +k.dataset.akam);
+      const p = k.dataset.akam
+        ? pos.find(x => x.nr === +k.dataset.akam)
+        : ekstra.find(x => x.noegle === k.dataset.aekstra);
       if(!p) return;
       k.classList.add('tag');
       const flyt = ev => {
@@ -10809,6 +11093,51 @@ function oplBaneBillede(o){
 var OPLAEG_LISTE = OPLAEG_LISTE || [];
 var oplAktiv = null;          // det oplæg der redigeres, eller null
 var oplBorde = [];            // studieborde fra lageret
+var OPL_TILVALG = [];         // afkrydsningsfelterne, fælles for alle oplæg
+var oplTilvalgHentet = false;
+
+/* ── Tilvalgene ───────────────────────────────────────────────
+   «Skal den danske timeout køre først?» Ja — og så skal der to
+   kamera-select fra host til.
+
+   Spørgsmålet og dets følger bor sammen i databasen, fordi det er
+   teknikkens viden. Produktionslederen skal kunne svare ja eller
+   nej; han skal ikke vide, hvad svaret koster i grej. */
+async function oplTilvalgHent(){
+  if(oplTilvalgHentet) return OPL_TILVALG;
+  try{
+    OPL_TILVALG = await sbFetch('oplaeg_tilvalg?select=*&aktiv=is.true'
+                                + '&order=sort.asc,navn.asc') || [];
+    oplTilvalgHentet = true;
+  }catch(e){
+    /* Tabellen findes måske ikke endnu. Det må ikke vælte oplægget:
+       uden tilvalg er der bare ingen afkrydsningsfelter. */
+    OPL_TILVALG = []; oplTilvalgHentet = true;
+    oplTilvalgFejl = sporFejlErTabellen(e) ? '' : (e.message || '');
+  }
+  return OPL_TILVALG;
+}
+var oplTilvalgFejl = '';
+
+/* Hvad er krydset af, og hvad fører det med sig. Ét sted, så
+   arket, blokdiagrammet og optællingen ikke kan svare forskelligt. */
+function oplVirkninger(i){
+  const valgt = i.tilvalg || [];
+  const ud = [];
+  OPL_TILVALG.forEach(t => {
+    if(valgt.indexOf(t.id) < 0) return;
+    (t.virkning || []).forEach(v => ud.push({
+      zone:  v.zone  || 'studie',
+      slags: v.slags || 'grej',
+      sym:   v.sym   || 'person',
+      tekst: v.tekst || t.navn,
+      antal: Math.max(1, +v.antal || 1),
+      nice:  t.niveau === 'nice',
+      fra:   t.navn
+    }));
+  });
+  return ud;
+}
 
 const OPL_SPORT = {
   haandbold:{navn:'Håndbold', st:'🤾', kam:5},
@@ -10817,16 +11146,56 @@ const OPL_SPORT = {
 /* Et tal med to værdier. nice er altid mindst lige så stor som need. */
 const oplPar = n => ({need:n, nice:n});
 
+/* Et studie. Der kan være flere: en studieproduktion har tit en
+   ekstra position — et andet bord, et andet sted, med sine egne
+   folk og kameraer. */
+function tomtStudie(nr){
+  return {navn:'Studie' + (nr > 1 ? ' ' + nr : ''),
+          ekspert:oplPar(1), gaest:oplPar(0), kam:oplPar(1), bord:null};
+}
+
 function tomtOplaeg(){
   return {
     id:null, navn:'', sport:'haandbold', dato:'', sted:'', status:'kladde',
-    indhold:{
-      host:   {med:false, kam:oplPar(5)},
-      studie: {med:false, kam:oplPar(1), reporter:oplPar(1), kommentator:oplPar(2),
-               ekspert:oplPar(1), gaest:oplPar(0), bord:null},
-      laant:  []
-    }
+    indhold: oplRet({ host:{med:false, kam:oplPar(5)} })
   };
+}
+
+/* ── Én form, uanset hvor indholdet kommer fra ────────────────
+   Gemte oplæg og standarder fra i går har ét studie liggende som
+   «studie», og kommentator og reporter inde i det. Nu kan der
+   være flere studier, og kommentatorerne og reporteren hører til
+   jobbet, ikke til et bestemt studie — de har deres egen kasse på
+   arket.
+
+   Alt, der læses ind, går gennem denne ene dør. Så findes der kun
+   én form i resten af programmet, og et gammelt oplæg mister
+   ingenting ved at blive åbnet. */
+function oplRet(i){
+  i = i || {};
+  i.host = Object.assign({med:false, kam:oplPar(5)}, i.host || {});
+  if(!Array.isArray(i.studier)){
+    const g = i.studie || {};
+    i.studier = g.med
+      ? [{navn:'Studie', ekspert:g.ekspert || oplPar(1), gaest:g.gaest || oplPar(0),
+          kam:g.kam || oplPar(1), bord:g.bord || null}]
+      : [];
+    if(!i.kommentator) i.kommentator = g.kommentator || oplPar(2);
+    if(!i.reporter)    i.reporter    = g.reporter    || oplPar(1);
+  }
+  if(!i.kommentator) i.kommentator = oplPar(2);
+  if(!i.reporter)    i.reporter    = oplPar(1);
+  i.studier.forEach((st, k) => {
+    st.navn    = st.navn || ('Studie' + (k ? ' ' + (k + 1) : ''));
+    st.ekspert = st.ekspert || oplPar(0);
+    st.gaest   = st.gaest   || oplPar(0);
+    st.kam     = st.kam     || oplPar(1);
+    if(st.bord === undefined) st.bord = null;
+  });
+  if(!Array.isArray(i.laant))   i.laant = [];
+  if(!Array.isArray(i.tilvalg)) i.tilvalg = [];
+  delete i.studie;
+  return i;
 }
 
 /* ── Databasen ──────────────────────────────────────────────── */
@@ -10931,7 +11300,7 @@ function oplTegnListe(el){
     }
     ud.innerHTML = '<table class="oplliste">' + r.map(o => {
       const sp = OPL_SPORT[o.sport] || {navn:o.sport, st:'·'};
-      return `<tr>
+      return `<tr data-oplrow="${o.id}" title="Åbn oplægget">
         <td style="width:28px;font-size:17px">${sp.st}</td>
         <td><b>${esc(o.navn||'(uden navn)')}</b>
             <div class="msub" style="text-transform:none;letter-spacing:0">
@@ -10942,18 +11311,25 @@ function oplTegnListe(el){
           <button class="mini" data-opltegn="${o.id}" title="Lav tegningen ud fra oplægget">Tegn</button>
         </td></tr>`;
     }).join('') + '</table>';
-    ud.querySelectorAll('[data-oplaab]').forEach(b => b.onclick = () => {
-      const o = OPLAEG_LISTE.find(x => x.id === b.dataset.oplaab);
+    const aabn = id => {
+      const o = OPLAEG_LISTE.find(x => x.id === id);
       if(!o) return;
       oplAktiv = {id:o.id, navn:o.navn, sport:o.sport, dato:o.dato||'',
                   sted:o.sted||'', status:o.status,
-                  indhold:Object.assign(tomtOplaeg().indhold, o.indhold||{})};
+                  indhold:oplRet(Object.assign({}, o.indhold || {}))};
       drawOplaeg();
+    };
+    ud.querySelectorAll('[data-oplaab]').forEach(b => b.onclick = e => {
+      e.stopPropagation(); aabn(b.dataset.oplaab);
     });
-    ud.querySelectorAll('[data-opltegn]').forEach(b => b.onclick = () => {
+    ud.querySelectorAll('[data-opltegn]').forEach(b => b.onclick = e => {
+      e.stopPropagation();
       const o = OPLAEG_LISTE.find(x => x.id === b.dataset.opltegn);
       if(o) oplaegTilBlok(o);
     });
+    /* Man peger på rækken, ikke på en lille knap i kanten. */
+    ud.querySelectorAll('[data-oplrow]').forEach(r =>
+      r.onclick = () => aabn(r.dataset.oplrow));
   }).catch(e => { ud.textContent = e.message });
 }
 
@@ -10975,6 +11351,10 @@ function oplHent(sti){
 function oplTegnForm(el){
   const o = oplAktiv, i = o.indhold;
   const sp = OPL_SPORT[o.sport] || OPL_SPORT.haandbold;
+  /* Afsnitsnumrene tælles frem, mens formen bygges. Ellers skulle
+     hvert afsnit selv vide, hvor mange studier der står over det. */
+  let _nr = 1;
+  const nr = () => ++_nr;
   el.innerHTML = `<div class="oplramme">
    <div class="oplhoved">
      <h2>${o.id ? 'Ret oplæg' : 'Nyt oplæg'}</h2>
@@ -11015,37 +11395,66 @@ function oplTegnForm(el){
 
    <div class="oplkort">
      <h3>2 · Hvad laver vi?</h3>
-     <p class="hj">Host er selve kampen. Studie er vores egen udsendelse omkring den.
-        Begge dele kan være med samtidig.</p>
+     <p class="hj">Host er selve kampen. Et studie er vores egen udsendelse omkring den.
+        Der kan være flere studier — fx en ekstra position et andet sted.</p>
      <div class="oplvalg">
-       <button data-oplmed="host"   class="${i.host.med?'on':''}"><span class="st">🎥</span>Host – kampen</button>
-       <button data-oplmed="studie" class="${i.studie.med?'on':''}"><span class="st">🎙</span>Studie</button>
+       <button data-oplmed="host" class="${i.host.med?'on':''}"><span class="st">🎥</span>Host – kampen</button>
+       <button data-oplstudieny="1"><span class="st">+</span>Tilføj studie</button>
      </div>
+     ${i.studier.length ? `<div class="msub" style="text-transform:none;letter-spacing:0;
+        margin-top:11px">${i.studier.length} studie${i.studier.length>1?'r':''}:
+        ${i.studier.map(st => esc(st.navn)).join(' · ')}</div>` : ''}
    </div>
 
    ${i.host.med ? `<div class="oplkort">
-     <h3>3 · Host</h3>
+     <h3>${nr()} · Host</h3>
      <p class="hj">Hvor mange kameraer på banen. ${esc(sp.navn)} er normalt ${sp.kam}.</p>
      <div class="opltal">${oplTalHTML('host.kam','Kameraer på banen','4 er minimum',12)}</div>
    </div>` : ''}
 
-   ${i.studie.med ? `<div class="oplkort">
-     <h3>${i.host.med?'4':'3'} · Studiet</h3>
-     <p class="hj">Hvem skal være med, og hvor mange. Der hører altid mindst
-        én reporter og én kommentator til et studie.</p>
-     <div class="opltal">
-       ${oplTalHTML('studie.kam','Kameraer i studiet','',4)}
-       ${oplTalHTML('studie.reporter','Reportere','står ude, med eget kamera',4)}
-       ${oplTalHTML('studie.kommentator','Kommentatorer','',4)}
-       ${oplTalHTML('studie.ekspert','Eksperter','i studiet, headset og IFB',8)}
-       ${oplTalHTML('studie.gaest','Gæster','i studiet, håndmikrofon',8)}
+   ${i.studier.map((st, k) => `<div class="oplkort">
+     <div style="display:flex;align-items:baseline;gap:12px">
+       <h3 style="margin:0">${nr()} · ${esc(st.navn)}</h3>
+       <button class="mini oplfjern" data-oplstudiefjern="${k}"
+               style="margin-left:auto" title="Fjern dette studie">Fjern</button>
+     </div>
+     <p class="hj">Hvem sidder her, og hvor mange kameraer står der.</p>
+     <div><label class="opltalhoved">Hvad hedder positionen?</label>
+       <input class="oplfelt" data-oplstudienavn="${k}" value="${esc(st.navn)}"
+              placeholder="fx Studie, Pitchside, København"></div>
+     <div class="opltal" style="margin-top:14px">
+       ${oplTalHTML('studier.' + k + '.kam',     'Kameraer','',4)}
+       ${oplTalHTML('studier.' + k + '.ekspert', 'Eksperter','headset og IFB',8)}
+       ${oplTalHTML('studier.' + k + '.gaest',   'Gæster','håndmikrofon',8)}
      </div>
      <div style="margin-top:18px"><label class="opltalhoved">Studiebord</label>
-       <div class="oplvalg" id="oplBorde" style="margin-top:7px"><span class="msub">henter …</span></div></div>
-   </div>` : ''}
+       <div class="oplvalg oplborde" data-oplbordtil="${k}"
+            style="margin-top:7px"><span class="msub">henter …</span></div></div>
+   </div>`).join('')}
 
-   ${(i.studie.med && !i.host.med) ? `<div class="oplkort">
-     <h3>${'5'} · Selected signal fra Host</h3>
+   <div class="oplkort">
+     <h3>${nr()} · Kommentatorer og reporter</h3>
+     <p class="hj">De hører til jobbet, ikke til et bestemt studie — derfor står de
+        for sig. Der er næsten altid én reporter og mellem én og tre kommentatorer.</p>
+     <div class="opltal">
+       ${oplTalHTML('kommentator','Kommentatorer','',4)}
+       ${oplTalHTML('reporter','Reportere','står ude, med eget kamera',4)}
+     </div>
+   </div>
+
+   <div class="oplkort">
+     <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+       <h3 style="margin:0">${nr()} · Tilvalg</h3>
+       <button class="btn skjul" id="oplTilvalgKnap" data-opltilvalgret="1"
+               style="margin-left:auto" title="Ret spørgsmålene og hvad de fører med sig">Ret tilvalgene</button>
+     </div>
+     <p class="hj">Kryds af, hvad jobbet skal kunne. Det, et kryds fører med sig,
+        bliver lagt på tegningen — du skal ikke selv huske grejet.</p>
+     <div id="oplTilvalg"><span class="msub">henter …</span></div>
+   </div>
+
+   ${(i.studier.length && !i.host.med) ? `<div class="oplkort">
+     <h3>${nr()} · Selected signal fra Host</h3>
      <p class="hj">Laver andre selve kampen, skal vi tit bruge noget af deres:
         et par kameraer til timeout, og playout fra deres EVS. Skriv hvad I skal bruge.</p>
      <div id="oplLaant"></div>
@@ -11096,6 +11505,27 @@ function oplBindForm(el){
     const k = b.dataset.oplmed; i[k].med = !i[k].med; drawOplaeg();
   });
 
+  /* Flere studier. Det første hedder bare «Studie»; de næste får
+     et nummer, så de kan kendes fra hinanden på arket. */
+  const ny = el.querySelector('[data-oplstudieny]');
+  if(ny) ny.onclick = () => { i.studier.push(tomtStudie(i.studier.length + 1)); drawOplaeg(); };
+
+  el.querySelectorAll('[data-oplstudiefjern]').forEach(b => b.onclick = () => {
+    const k = +b.dataset.oplstudiefjern, st = i.studier[k];
+    if(!st) return;
+    if(!confirm('Fjern «' + st.navn + '»?\n\nDet, der står i det, forsvinder.')) return;
+    i.studier.splice(k, 1); drawOplaeg();
+  });
+
+  /* Navnet rettes uden at tegne formen om — ellers mister feltet
+     tastefokus ved hvert bogstav. Arket får det med. */
+  el.querySelectorAll('[data-oplstudienavn]').forEach(fl => {
+    fl.oninput = () => {
+      const st = i.studier[+fl.dataset.oplstudienavn];
+      if(st){ st.navn = fl.value; oplTegnArk(el); }
+    };
+  });
+
   /* Tallene. need kan aldrig blive større end nice, og nice aldrig
      mindre end need — ellers ville «mindst» være mere end «helst». */
   el.querySelectorAll('[data-opltal]').forEach(g => {
@@ -11113,6 +11543,51 @@ function oplBindForm(el){
     };
     g.querySelector('[data-op]').onclick  = () => saet(par[del] + 1);
     g.querySelector('[data-ned]').onclick = () => saet(par[del] - 1);
+  });
+
+  /* Tilvalgene: spørgsmålene og det, de fører med sig. */
+  const tv = el.querySelector('#oplTilvalg');
+  if(tv) oplTilvalgHent().then(() => {
+    if(!OPL_TILVALG.length){
+      tv.innerHTML = '<span class="msub" style="text-transform:none;letter-spacing:0;'
+        + 'line-height:1.6">' + (oplTilvalgFejl
+          ? 'Tilvalgene kunne ikke hentes: ' + esc(oplTilvalgFejl)
+          : 'Der er ingen tilvalg endnu. Tryk <b>Ret tilvalgene</b> for at lave '
+            + 'det første — fx «Skal den danske timeout køre først?».') + '</span>';
+      return;
+    }
+    const passer = t => !t.sport || t.sport === o.sport;
+    tv.innerHTML = OPL_TILVALG.filter(passer).map(t => {
+      const paa = (i.tilvalg || []).indexOf(t.id) >= 0;
+      const hvad = (t.virkning || []).map(v =>
+        (v.antal > 1 ? v.antal + ' × ' : '') + esc(v.tekst || '')
+        + ' i ' + esc(v.zone || '')).join(' · ');
+      return `<label class="opltv${paa ? ' on' : ''}">
+        <input type="checkbox" data-opltv="${t.id}"${paa ? ' checked' : ''}>
+        <span><b>${esc(t.navn)}</b>
+          ${t.hjaelp ? `<small>${esc(t.hjaelp)}</small>` : ''}
+          ${hvad ? `<small class="folger">Giver: ${hvad}${
+              t.niveau === 'nice' ? ' — som nice to have' : ''}</small>` : ''}
+        </span></label>`;
+    }).join('');
+    tv.querySelectorAll('[data-opltv]').forEach(c => c.onchange = () => {
+      const id = c.dataset.opltv;
+      i.tilvalg = i.tilvalg || [];
+      const k = i.tilvalg.indexOf(id);
+      if(c.checked){ if(k < 0) i.tilvalg.push(id); }
+      else if(k >= 0) i.tilvalg.splice(k, 1);
+      drawOplaeg();
+    });
+  });
+
+  /* Knappen til at RETTE tilvalgene vises kun for dem, reglerne
+     alligevel ville sige ja til. En produktionsleder må krydse af;
+     han må ikke bestemme, hvad afkrydsningen koster. */
+  const tvk = el.querySelector('#oplTilvalgKnap');
+  if(tvk) oplaegMaaRette().then(maa => {
+    if(!maa) return;
+    tvk.classList.remove('skjul');
+    tvk.onclick = () => oplTilvalgRet();
   });
 
   /* Standarderne for den valgte sport. */
@@ -11137,7 +11612,7 @@ function oplBindForm(el){
         + 'navn, dato og sted bliver stående.')) return;
       /* En kopi, ikke en henvisning: retter nogen standarden i morgen,
          ændrer det ikke dette oplæg. */
-      o.indhold = JSON.parse(JSON.stringify(x.indhold || {}));
+      o.indhold = oplRet(JSON.parse(JSON.stringify(x.indhold || {})));
       o._kamrettet = true;
       drawOplaeg();
     });
@@ -11161,23 +11636,28 @@ function oplBindForm(el){
     };
   });
 
-  /* Studiebordene med billede, hentet fra lageret. */
-  const bb = el.querySelector('#oplBorde');
-  if(bb) oplaegBorde().then(() => {
-    if(!oplBorde.length){
-      bb.innerHTML = '<span class="msub" style="text-transform:none;letter-spacing:0">'
-        + 'Ingen studieborde i lageret endnu. Opret dem som udstyr i '
-        + 'kategorien STUDIEBORDE, så står de her med billede.</span>';
-      return;
-    }
-    bb.innerHTML = oplBorde.map(b => `<button data-oplbord="${b.id}"
-      class="${i.studie.bord===b.id?'on':''}" style="flex-direction:column;gap:6px;padding:10px">
-      ${b.image_url?`<img class="udstyrsfoto" src="${esc(b.image_url)}"
-         style="width:116px;height:66px;border-radius:6px;padding:2px">`:'<span class="st">▭</span>'}
-      <span style="font-size:12px">${esc(b.name)}</span></button>`).join('');
-    bb.querySelectorAll('[data-oplbord]').forEach(k => k.onclick = () => {
-      i.studie.bord = (i.studie.bord === k.dataset.oplbord) ? null : k.dataset.oplbord;
-      drawOplaeg();
+  /* Studiebordene med billede, hentet fra lageret. Ét vælgerfelt
+     pr. studie: to positioner kan have hvert sit bord. */
+  const bordfelter = el.querySelectorAll('.oplborde[data-oplbordtil]');
+  if(bordfelter.length) oplaegBorde().then(() => {
+    bordfelter.forEach(bb => {
+      const k = +bb.dataset.oplbordtil, st = i.studier[k];
+      if(!st) return;
+      if(!oplBorde.length){
+        bb.innerHTML = '<span class="msub" style="text-transform:none;letter-spacing:0">'
+          + 'Ingen studieborde i lageret endnu. Opret dem som udstyr i '
+          + 'kategorien STUDIEBORDE, så står de her med billede.</span>';
+        return;
+      }
+      bb.innerHTML = oplBorde.map(b => `<button data-oplbord="${b.id}"
+        class="${st.bord===b.id?'on':''}" style="flex-direction:column;gap:6px;padding:10px">
+        ${lagerBillede(b)?`<img class="udstyrsfoto" src="${esc(lagerBillede(b))}"
+           style="width:116px;height:66px;border-radius:6px;padding:2px">`:'<span class="st">▭</span>'}
+        <span style="font-size:12px">${esc(b.name)}</span></button>`).join('');
+      bb.querySelectorAll('[data-oplbord]').forEach(kn => kn.onclick = () => {
+        st.bord = (st.bord === kn.dataset.oplbord) ? null : kn.dataset.oplbord;
+        drawOplaeg();
+      });
     });
   });
 
@@ -11214,6 +11694,171 @@ function oplBindForm(el){
   };
   el.querySelector('[data-oplgem]').onclick    = () => gem(false);
   el.querySelector('[data-opltegnny]').onclick = () => gem(true);
+}
+
+
+/* ── Tilvalgenes bibliotek ────────────────────────────────────
+   Her skrives spørgsmålet OG hvad det koster. Det er teknikkens
+   bord, og reglerne i databasen siger det samme: alle indloggede
+   må læse dem, kun de fagligt rettighedshavende må skrive dem.
+
+   En virkning er én linje: hvor den lander, hvad det er, hvad den
+   hedder, og hvor mange. Ikke andet. Skal et tilvalg lave en ny
+   box med tre ting i, er det tre linjer med samme zonenavn — så
+   er der ikke en kasse inde i en kasse at holde styr på. */
+const OPL_ZONER = ['bane', 'studie', 'kommentator', 'reporter'];
+const OPL_SLAGS = {person:'Person', kamera:'Kamera', grej:'Grej',
+                   signal:'Selected signal fra host'};
+
+function oplTilvalgRaekke(v, k){
+  v = v || {};
+  return `<tr data-tvr="${k}">
+    <td><input class="oplfelt" data-tvf="zone" list="oplzonel"
+         value="${esc(v.zone || 'studie')}" placeholder="studie"></td>
+    <td><select class="oplfelt" data-tvf="slags">${Object.keys(OPL_SLAGS).map(x =>
+         `<option value="${x}"${(v.slags || 'grej') === x ? ' selected' : ''}
+          >${esc(OPL_SLAGS[x])}</option>`).join('')}</select></td>
+    <td><select class="oplfelt" data-tvf="sym">${Object.keys(ARKTEGN).map(x =>
+         `<option value="${x}"${(v.sym || 'person') === x ? ' selected' : ''}
+          >${x}</option>`).join('')}</select></td>
+    <td><input class="oplfelt" data-tvf="tekst" value="${esc(v.tekst || '')}"
+         placeholder="fx Kamera på kommentator"></td>
+    <td style="width:66px"><input class="oplfelt" data-tvf="antal" type="number"
+         min="1" max="20" value="${+v.antal || 1}"></td>
+    <td style="width:30px"><button class="mini oplfjern" data-tvdel="${k}"
+         title="Fjern linjen">✕</button></td></tr>`;
+}
+
+function oplTilvalgEt(t){
+  t = t || {navn:'', hjaelp:'', sport:'', niveau:'need', virkning:[], sort:100};
+  openModal(t.id ? 'Ret tilvalg' : 'Nyt tilvalg',
+    'Spørgsmålet, og hvad et ja fører med sig', `
+    <div class="mf"><label>Spørgsmålet</label>
+      <input class="oplfelt" id="tvNavn" value="${esc(t.navn || '')}"
+             placeholder="Skal den danske timeout køre først?"></div>
+    <div class="mf"><label>Én linje under, hvis det trænger</label>
+      <input class="oplfelt" id="tvHjaelp" value="${esc(t.hjaelp || '')}"
+             placeholder="Så skal vi bruge billeder fra host til selve timeouten."></div>
+    <div class="mrow" style="gap:14px">
+      <div class="mf" style="flex:1"><label>Gælder</label>
+        <select class="oplfelt" id="tvSport">
+          <option value=""${!t.sport ? ' selected' : ''}>alle sportsgrene</option>
+          ${Object.keys(OPL_SPORT).map(k => `<option value="${k}"${t.sport === k
+            ? ' selected' : ''}>kun ${esc(OPL_SPORT[k].navn.toLowerCase())}</option>`).join('')}
+        </select></div>
+      <div class="mf" style="flex:1"><label>Det, krydset giver, er</label>
+        <select class="oplfelt" id="tvNiveau">
+          <option value="need"${t.niveau !== 'nice' ? ' selected' : ''}>need — skal bruges</option>
+          <option value="nice"${t.niveau === 'nice' ? ' selected' : ''}>nice to have</option>
+        </select></div>
+      <div class="mf" style="width:90px"><label>Rækkefølge</label>
+        <input class="oplfelt" id="tvSort" type="number" value="${+t.sort || 100}"></div>
+    </div>
+    <div class="msec">Hvad giver et ja?</div>
+    <p class="hj" style="margin:0 0 9px">Zonen må gerne være et navn, der ikke findes —
+       så bliver det en ny box på arket. Flere linjer med samme navn havner i samme box.</p>
+    <datalist id="oplzonel">${OPL_ZONER.map(z => `<option value="${z}">`).join('')}</datalist>
+    <table class="oplliste" id="tvTabel"><thead><tr>
+      <th style="text-align:left;font-size:10.5px;color:var(--dim)">Zone</th>
+      <th style="text-align:left;font-size:10.5px;color:var(--dim)">Hvad</th>
+      <th style="text-align:left;font-size:10.5px;color:var(--dim)">Symbol</th>
+      <th style="text-align:left;font-size:10.5px;color:var(--dim)">Tekst</th>
+      <th style="text-align:left;font-size:10.5px;color:var(--dim)">Antal</th>
+      <th></th></tr></thead><tbody id="tvKrop">
+      ${(t.virkning || []).map((v, k) => oplTilvalgRaekke(v, k)).join('')}
+    </tbody></table>
+    <button class="btn" id="tvNyLinje" style="margin-top:9px">+ Tilføj linje</button>
+    <div class="mrow" style="margin-top:18px">
+      <button class="btn go" id="tvGem">Gem</button>
+      <button class="btn" data-cancel="1">Annullér</button>
+      ${t.id ? '<button class="btn" id="tvSlet" style="margin-left:auto">Slet</button>' : ''}
+    </div>`, root => {
+    root.dataset.locked = '1';
+    let n = (t.virkning || []).length;
+    const krop = root.querySelector('#tvKrop');
+    const bindDel = () => root.querySelectorAll('[data-tvdel]').forEach(b =>
+      b.onclick = () => { b.closest('tr').remove(); });
+    bindDel();
+    root.querySelector('#tvNyLinje').onclick = () => {
+      krop.insertAdjacentHTML('beforeend', oplTilvalgRaekke({}, n++));
+      bindDel();
+    };
+    root.querySelector('[data-cancel]').onclick = () => { root.dataset.locked = ''; closeModal(); };
+
+    root.querySelector('#tvGem').onclick = async () => {
+      const navn = root.querySelector('#tvNavn').value.trim();
+      if(!navn){ alert('Tilvalget skal have et spørgsmål.'); return; }
+      const virkning = Array.from(krop.querySelectorAll('tr')).map(tr => {
+        const g = n2 => { const e = tr.querySelector(`[data-tvf="${n2}"]`); return e ? e.value : ''; };
+        return {zone:(g('zone') || 'studie').trim(), slags:g('slags'), sym:g('sym'),
+                tekst:g('tekst').trim(), antal:Math.max(1, +g('antal') || 1)};
+      }).filter(v => v.tekst || v.zone);
+      const krop2 = {navn:navn, hjaelp:root.querySelector('#tvHjaelp').value.trim() || null,
+        sport:root.querySelector('#tvSport').value || null,
+        niveau:root.querySelector('#tvNiveau').value,
+        sort:+root.querySelector('#tvSort').value || 100,
+        virkning:virkning,
+        rettet_af:(typeof meName === 'function' && meName() !== '?') ? meName() : null,
+        rettet_at:new Date().toISOString()};
+      try{
+        if(t.id) await sbFetch('oplaeg_tilvalg?id=eq.' + t.id,
+                               {method:'PATCH', body:JSON.stringify(krop2)});
+        else     await sbFetch('oplaeg_tilvalg',
+                               {method:'POST', body:JSON.stringify(krop2)});
+        oplTilvalgHentet = false;
+        await oplTilvalgHent();
+        root.dataset.locked = ''; closeModal();
+        setSync('tilvalget er gemt');
+        oplTilvalgRet();
+      }catch(e){ alert('Tilvalget kunne ikke gemmes.\n\n' + e.message) }
+    };
+
+    const sl = root.querySelector('#tvSlet');
+    if(sl) sl.onclick = async () => {
+      if(!confirm('Slet «' + t.navn + '»?\n\nDet forsvinder fra alle oplæg, '
+        + 'der ikke er gemt endnu. Gemte oplæg beholder det, de allerede har fået.')) return;
+      try{
+        await sbFetch('oplaeg_tilvalg?id=eq.' + t.id, {method:'DELETE'});
+        oplTilvalgHentet = false;
+        await oplTilvalgHent();
+        root.dataset.locked = ''; closeModal();
+        setSync('tilvalget er slettet');
+        oplTilvalgRet();
+      }catch(e){ alert('Tilvalget kunne ikke slettes.\n\n' + e.message) }
+    };
+  });
+}
+
+function oplTilvalgRet(){
+  openModal('Tilvalg', 'Spørgsmålene i oplægget, og hvad de fører med sig', `
+    <div id="tvListe"><span class="msub">henter …</span></div>
+    <div class="mrow" style="margin-top:16px">
+      <button class="btn go" id="tvNy">+ Nyt tilvalg</button>
+      <button class="btn" data-cancel="1" style="margin-left:auto">Luk</button>
+    </div>`, root => {
+    root.querySelector('[data-cancel]').onclick = () => { closeModal(); drawOplaeg(); };
+    root.querySelector('#tvNy').onclick = () => oplTilvalgEt(null);
+    const ud = root.querySelector('#tvListe');
+    oplTilvalgHent().then(() => {
+      if(!OPL_TILVALG.length){
+        ud.innerHTML = '<div class="msub" style="text-transform:none;letter-spacing:0;'
+          + 'line-height:1.7">Der er ingen tilvalg endnu.<br>'
+          + 'Tryk <b>+ Nyt tilvalg</b> og skriv det første spørgsmål.</div>';
+        return;
+      }
+      ud.innerHTML = '<table class="oplliste">' + OPL_TILVALG.map(t => `<tr>
+        <td><b>${esc(t.navn)}</b>
+          <div class="msub" style="text-transform:none;letter-spacing:0">
+            ${(t.virkning || []).length} virkning${(t.virkning || []).length === 1 ? '' : 'er'}
+            · ${t.niveau === 'nice' ? 'nice to have' : 'need'}
+            ${t.sport ? ' · kun ' + esc((OPL_SPORT[t.sport] || {}).navn || t.sport) : ''}</div></td>
+        <td style="width:70px;text-align:right">
+          <button class="mini" data-tvret="${t.id}">Ret</button></td></tr>`).join('')
+        + '</table>';
+      ud.querySelectorAll('[data-tvret]').forEach(b => b.onclick = () =>
+        oplTilvalgEt(OPL_TILVALG.find(x => x.id === b.dataset.tvret)));
+    });
+  });
 }
 
 /* ── Fra oplæg til tegning ───────────────────────────────────
@@ -11253,9 +11898,10 @@ function oplPersoner(navn, par, sym){
 }
 
 async function oplaegTilBlok(o){
-  const i = Object.assign(JSON.parse(JSON.stringify(tomtOplaeg().indhold)), o.indhold || {});
+  const i = oplRet(JSON.parse(JSON.stringify(o.indhold || {})));
   const sp = OPL_SPORT[o.sport] || OPL_SPORT.haandbold;
-  if(i.studie && i.studie.bord && !oplBorde.length) await oplaegBorde();
+  if(i.studier.some(st => st.bord) && !oplBorde.length) await oplaegBorde();
+  if(!oplTilvalgHentet) await oplTilvalgHent();
 
   if(i.host && i.host.med) oplBanePos({sport:o.sport, indhold:i});
   if(typeof snap === 'function') snap();
@@ -11270,27 +11916,62 @@ async function oplaegTilBlok(o){
   let yV = 92, yH = 92;
   const VENSTRE = 40, HOEJRE = 660;
 
-  if(i.studie.med){
+  /* Tilvalgenes virkninger skal med her ligesom på arket — ellers
+     ville teknikeren få en tegning, der mangler det, der er krydset
+     af. Samme kilde, oplVirkninger(), så de to ikke kan svare
+     forskelligt på det samme spørgsmål. */
+  const virk = oplVirkninger(i);
+  const brugt = {};
+  const vTil = navn => virk.filter((v, k) => {
+    if((v.zone || '').trim().toLowerCase() !== navn.toLowerCase()) return false;
+    if(v.slags === 'signal') return false;
+    brugt[k] = true; return true;
+  });
+  const vEmner = liste => {
+    const ud = [];
+    liste.forEach(v => { for(let n = 1; n <= v.antal; n++)
+      ud.push({sym:v.sym, label:v.tekst + (v.antal > 1 ? ' ' + n : ''), nice:v.nice}); });
+    return ud;
+  };
+
+  i.studier.forEach((st, k) => {
     const emner = oplPersoner('Host', oplPar(1), 'person')
-      .concat(oplPersoner('Ekspert', i.studie.ekspert, 'person'))
-      .concat(oplPersoner('Gæst',    i.studie.gaest,   'person'))
-      .concat(oplPersoner('Kamera',  i.studie.kam,     'kamera'));
-    const bord = oplBorde.find(b => b.id === i.studie.bord);
-    if(bord) emner.push({src:bord.image_url, label:bord.name, pic:56});
-    yV += oplKasse(side, 'STUDIE', '#1e7a55', VENSTRE, yV, emner, 4).h + 26;
+      .concat(oplPersoner('Ekspert', st.ekspert, 'person'))
+      .concat(oplPersoner('Gæst',    st.gaest,   'person'))
+      .concat(oplPersoner('Kamera',  st.kam,     'kamera'))
+      .concat(vEmner(vTil(st.navn).concat(k === 0 ? vTil('studie') : [])));
+    const bord = oplBorde.find(b => b.id === st.bord);
+    if(bord) emner.push({src:lagerBillede(bord), label:bord.name, pic:56});
+    yV += oplKasse(side, st.navn.toUpperCase(), '#1e7a55', VENSTRE, yV, emner, 4).h + 26;
+  });
 
-    yV += oplKasse(side, 'KOMMENTATORER', '#6aa9e0', VENSTRE, yV,
-      oplPersoner('Kommentator', i.studie.kommentator, 'headset'), 4).h + 26;
+  const kom = oplPersoner('Kommentator', i.kommentator, 'headset')
+    .concat(vEmner(vTil('kommentator')));
+  if(kom.length)
+    yV += oplKasse(side, 'KOMMENTATORER', '#6aa9e0', VENSTRE, yV, kom, 4).h + 26;
 
-    const rep = [];
-    const rn = i.studie.reporter;
-    for(let k = 1; k <= (rn.nice || 0); k++){
-      const n2 = rn.nice > 1 ? ' ' + k : '';
-      rep.push({sym:'person', label:'Reporter' + n2,   nice:k > rn.need});
-      rep.push({sym:'kamera', label:'Kam til rep.' + n2, nice:k > rn.need});
-    }
-    if(rep.length) yV += oplKasse(side, 'REPORTER', '#d98b4a', VENSTRE, yV, rep, 4).h + 26;
+  const rep = [];
+  const rn = i.reporter;
+  for(let k = 1; k <= (rn.nice || 0); k++){
+    const n2 = rn.nice > 1 ? ' ' + k : '';
+    rep.push({sym:'person', label:'Reporter' + n2,   nice:k > rn.need});
+    rep.push({sym:'kamera', label:'Kam til rep.' + n2, nice:k > rn.need});
   }
+  rep.push.apply(rep, vEmner(vTil('reporter')));
+  if(rep.length) yV += oplKasse(side, 'REPORTER', '#d98b4a', VENSTRE, yV, rep, 4).h + 26;
+
+  /* De bokse, et tilvalg har skabt — fx «Redaktør onsite». */
+  const nye = {};
+  virk.forEach((v, k) => {
+    if(brugt[k]) return;
+    const navn = (v.zone || '').trim();
+    if(!navn || /^(bane|host)$/i.test(navn)) return;
+    (nye[navn] = nye[navn] || []).push(v);
+  });
+  Object.keys(nye).forEach(navn => {
+    yV += oplKasse(side, navn.toUpperCase(), '#6b4a9e', VENSTRE, yV,
+                   vEmner(nye[navn]), 4).h + 26;
+  });
 
   if(i.host.med){
     /* Banen kommer med som ét billede. Den er det, teknikken kigger
@@ -11307,7 +11988,9 @@ async function oplaegTilBlok(o){
                    HOEJRE, yH, kam, 4).h + 26;
   }
 
-  const laant = (i.laant || []).filter(x => (x.hvad || '').trim());
+  const laant = (i.laant || []).filter(x => (x.hvad || '').trim())
+    .concat(virk.filter((v, k) => v.slags === 'signal' ? (brugt[k] = true) : false)
+      .map(v => ({hvad:(v.antal > 1 ? v.antal + ' × ' : '') + v.tekst, brug:v.fra})));
   if(laant.length){
     yH += oplKasse(side, 'SELECTED SIGNAL FRA HOST', '#8c98a6', HOEJRE, yH,
       laant.map(x => ({sym:'fiber',
