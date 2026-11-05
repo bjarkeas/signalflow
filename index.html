@@ -810,27 +810,78 @@ body.oplview #side,body.oplview #sideknap{display:none}
 @media (max-width:1100px){ .oplto{grid-template-columns:1fr} }
 .oplhoejre{position:sticky;top:12px}
 
-/* IKKE overflow:hidden. Et kamera ude ved banens kant — og dem er
-   der flere af — ville få sin halvdel klippet væk, og så kan man
-   ikke gribe fat i det. Mærkerne må gerne rage ud over kanten. */
-.banefelt{position:relative;width:100%;background:#0e1117;border:1px solid var(--line);
-  border-radius:10px;margin:0 16px;width:calc(100% - 32px)}
-.banesvg{display:block;width:100%;height:auto;fill:none;stroke:#5c6775;stroke-width:2;
-  color:#5c6775}
-.bkam{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;
-  border-radius:50%;border:2px solid var(--accent);background:#14161b;color:var(--accent);
-  font:700 13px var(--fm);cursor:grab;display:flex;align-items:center;justify-content:center;
-  padding:0;z-index:2}
-.bkam:active{cursor:grabbing}
-.bkam.nice{border-style:dashed;opacity:.6}
-.oplovb{display:flex;flex-wrap:wrap;gap:7px}
-.oplchip{display:flex;align-items:center;gap:6px;background:var(--bg);
-  border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:12.5px}
-.oplchip.nice{border-style:dashed;opacity:.62}
-.oplchip b{font-family:var(--fm);font-size:11.5px;color:var(--accent)}
-.oplzone{margin-bottom:13px}
-.oplzone > .zt{font:11px var(--fd);letter-spacing:.09em;text-transform:uppercase;
-  color:var(--dim);margin-bottom:6px}
+/* ── Arket ────────────────────────────────────────────────────
+   Oplægget som en tegning på hvidt papir, i samme sprog som
+   tegningerne fra draw.io: sorte streger, afrundede zoner med
+   overskriften i toppen, piktogrammer i stedet for lister.
+
+   Arket tegnes altid i fuld A3-størrelse, 1190 × 842, og skaleres
+   ned til panelet med transform. Det der står på skærmen, er
+   derfor det samme som det, der kommer ud af printeren — ingen
+   anden opstilling til print, intet der kan skride fra hinanden. */
+.arkhylde{background:#6b7178;border-radius:11px;padding:13px;overflow:auto;
+  margin:0 16px;width:calc(100% - 32px)}
+.arkboks{position:relative;overflow:hidden}
+.aark{position:absolute;left:0;top:0;width:1190px;height:842px;background:#fff;
+  color:#111;transform-origin:top left;
+  font-family:Arial,Helvetica,'Liberation Sans',sans-serif;
+  box-shadow:0 2px 14px rgba(0,0,0,.35)}
+.ahoved{position:absolute;left:34px;right:34px;top:24px;height:72px;
+  display:flex;align-items:center;gap:18px;border-bottom:1.6px solid #111}
+.amaerke{width:118px;height:52px;border:1.4px dashed #b4b4b4;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:8.5px;line-height:1.25;color:#9a9a9a;letter-spacing:.06em;flex:0 0 auto}
+.atitel{flex:1;text-align:center}
+.atitel b{display:block;font-size:25px;letter-spacing:.01em}
+.atitel span{display:block;font-size:13px;color:#444;margin-top:3px}
+.ahoved .ahj{width:118px;flex:0 0 auto;text-align:right;font-size:10.5px;
+  color:#555;line-height:1.4}
+
+.azone{position:absolute;border:1.7px solid #111;border-radius:13px;background:#fff;
+  box-sizing:border-box;padding:27px 11px 12px}
+.azone.nice{border-style:dashed;border-color:#8d8d8d}
+.azt{position:absolute;left:8px;right:8px;top:8px;text-align:center;
+  font-size:11.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase}
+.azk{display:flex;flex-wrap:wrap;gap:8px 6px;justify-content:center;align-items:flex-start}
+.astak{width:70px;text-align:center;font-size:10px;line-height:1.3;color:#111}
+.astak.nice{color:#7d7d7d}
+.astak.nice .afig svg{fill:#8d8d8d;stroke:#8d8d8d}
+.afig{display:block}
+.afig svg{width:31px;height:33px;display:block;margin:0 auto 3px;
+  fill:#111;stroke:#111;stroke-width:0}
+.abild{display:block;margin:0 auto 4px;max-width:92px;max-height:46px;
+  border:1px solid #111;border-radius:4px;background:#fff;object-fit:contain}
+.atekst{font-size:11px;line-height:1.4;color:#111;text-align:left;width:100%}
+.atekst > div{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.atekst .afig{flex:0 0 auto}
+.atekst .afig svg{width:20px;height:16px;margin:0}
+.atekst .nice{color:#7d7d7d}
+
+/* Feltet er STØRRE end banen. Banen tegnes inde i det, og kameraerne
+   kan stilles hvor som helst i feltet — også uden for stregerne, som
+   Cam 5 over banen og kameraerne bag målene på din egen tegning.
+   Positionerne er derfor procent af FELTET, ikke af banen. */
+.afelt{position:absolute;border:1.7px solid #111;border-radius:13px;background:#fff;
+  box-sizing:border-box}
+.abane{position:absolute;fill:none;stroke:#111;stroke-width:2;color:#111}
+/* Kameraet på banen er et kamera, ikke et tal i en ring. Det er
+   dét, der giver overblikket på en tegning: man kan se hvad det er,
+   uden at skulle læse. Nummeret står ved siden af. */
+.akam{position:absolute;transform:translate(-50%,-50%);height:30px;
+  border-radius:8px;border:2px solid #111;background:#fff;color:#111;
+  font:700 13px Arial,Helvetica,sans-serif;cursor:grab;display:flex;
+  align-items:center;justify-content:center;gap:3px;padding:0 6px 0 4px;z-index:3}
+.akam svg{width:21px;height:14px;fill:#111;flex:0 0 auto}
+.akam b{font-weight:700;line-height:1}
+.akam:active{cursor:grabbing}
+.akam.nice{border-style:dashed;border-color:#8d8d8d;color:#8d8d8d}
+.akam.nice svg{fill:#8d8d8d}
+.akam.nice b{font-weight:400}
+.akam.tag{box-shadow:0 0 0 3px rgba(0,0,0,.18)}
+.afod{position:absolute;left:34px;right:34px;bottom:20px;padding-top:7px;
+  border-top:1px solid #111;display:flex;font-size:10.5px;color:#333}
+.afod span:last-child{margin-left:auto}
+@media print{ .arkhylde{background:none;padding:0;margin:0;width:100%;overflow:visible} }
 .oplhoved{display:flex;align-items:baseline;gap:14px;margin:4px 0 20px}
 .oplhoved h2{margin:0;font-size:21px;color:var(--text)}
 .oplhoved .msub{margin:0}
@@ -4920,12 +4971,6 @@ function importItems(target){
     <button class="btn go" data-ok="1">Importér</button>
     <button class="btn" data-cancel="1">Annullér</button>
   </div>`,root=>{
-   /* Lagerrækken hedder image_url. Her stod r2.img — et felt, der
-      ikke findes på en lagerrække — så miniaturen udeblev, og det
-      indsatte kort fik et rack-symbol i stedet for billedet.
-      Knappen «+ Udstyr» bruger image_url og har virket hele tiden;
-      det var kun arkivvejen, der spurgte forkert. */
-   const lagerBillede = r0 => (r0 && (r0.image_url || r0.img)) || '';
    let arch=[];
    lagerList().then(r=>{
     arch=r||[];
@@ -5168,6 +5213,15 @@ function printBlocks(){
  const navn=projectName+' – Blokdiagram – '+bp().title;
  setTimeout(()=>udskriv(navn),150);
 }
+
+/* Billedet på en lagerrække. Rækken hedder image_url; img er den
+   gamle stavemåde, som stadig kan ligge i et arkiveret kort.
+
+   Den stod før inde i arkivdialogen og kunne derfor ikke ses af
+   arket i oplægsfanen, som viser studiebordet med foto. Én
+   erklæring, øverst, så de to ikke kan komme til at svare
+   forskelligt på det samme spørgsmål. */
+const lagerBillede = r0 => (r0 && (r0.image_url || r0.img)) || '';
 
 /* ---- tegn planen ---- */
 const CARDW=760;
@@ -9018,7 +9072,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.11.05-d';
+const SF_VERSION='2026.11.05-e';
 /* Versionen skal kunne ses uden at åbne konsollen. Den er blevet gættet
    forkert fire gange på en uge, fordi en gammel fil lå på serveren og
    lignede den nye til forveksling. Nu står den ved logoet. */
@@ -10233,7 +10287,7 @@ function gemView(){
 
 const OPL_BANE = {
   haandbold: {
-    navn:'Håndboldbane', vb:'0 0 400 200',
+    navn:'Håndboldbane', vb:'-9 -3 418 206',
     tegn: () => `
       <rect x="2" y="2" width="396" height="196" rx="2"/>
       <line x1="200" y1="2" x2="200" y2="198"/>
@@ -10243,14 +10297,18 @@ const OPL_BANE = {
       <path d="M398 28 A 90 90 0 0 0 308 100 A 90 90 0 0 0 398 172" stroke-dasharray="7 6"/>
       <rect x="-4" y="85" width="6" height="30"/>
       <rect x="398" y="85" width="6" height="30"/>`,
-    /* Som på din håndboldtegning: 1 og 2 i bunden ved midten,
-       3 og 4 ude ved målene, 5 højt på midten. */
-    std: [ {x:38,y:93}, {x:58,y:93}, {x:7,y:60}, {x:93,y:60}, {x:50,y:6},
-           {x:22,y:93}, {x:76,y:93}, {x:7,y:35}, {x:93,y:35}, {x:30,y:6},
-           {x:70,y:6}, {x:50,y:93} ]
+    /* Som på din egen håndboldtegning: 1 og 2 nede langs den lange
+       side, 3 og 4 ude bag målene, 5 højt oppe over midten.
+
+       Tallene er procent af BANEN, og de må gerne ligge uden for
+       0-100: y=122 er under sidelinjen, y=-22 er over banen. Det er
+       dér de fleste kameraer står i virkeligheden. */
+    std: [ {x:42,y:122}, {x:58,y:122}, {x:-9,y:30},  {x:109,y:30}, {x:50,y:-22},
+           {x:22,y:122}, {x:78,y:122}, {x:-9,y:70},  {x:109,y:70}, {x:28,y:-22},
+           {x:72,y:-22}, {x:50,y:50} ]
   },
   fodbold: {
-    navn:'Fodboldbane', vb:'0 0 420 272',
+    navn:'Fodboldbane', vb:'-8 -4 436 280',
     tegn: () => `
       <rect x="4" y="4" width="412" height="264" rx="2"/>
       <line x1="210" y1="4" x2="210" y2="268"/>
@@ -10266,75 +10324,385 @@ const OPL_BANE = {
       <path d="M350 110 A 38 38 0 0 0 350 162" fill="none"/>
       <rect x="-4" y="118" width="8" height="36"/>
       <rect x="416" y="118" width="8" height="36"/>`,
-    /* Hovedkamera højt på midten, 16-meter hver side, bag målene. */
-    std: [ {x:50,y:4}, {x:28,y:4}, {x:72,y:4}, {x:50,y:96}, {x:4,y:50},
-           {x:96,y:50}, {x:14,y:4}, {x:86,y:4}, {x:4,y:18}, {x:96,y:18},
-           {x:4,y:82}, {x:96,y:82} ]
+    /* Hovedkamera højt over midten, 16-meter til hver side, bag
+       målene, og et modskud nede fra den anden side. Procent af
+       banen — uden for 0-100 står kameraet uden for stregerne. */
+    std: [ {x:50,y:-16}, {x:30,y:-16}, {x:70,y:-16}, {x:50,y:116}, {x:-8,y:50},
+           {x:108,y:50}, {x:14,y:-16}, {x:86,y:-16}, {x:-8,y:18},  {x:108,y:18},
+           {x:-8,y:82},  {x:108,y:82} ]
   }
 };
 
+/* ══════════════════════════════════════════════════════════════
+   ARKET — oplægget tegnet på et stykke papir
+
+   Dine draw.io-tegninger er forbilledet, og de er pænere end en
+   liste: hvidt papir, sorte streger, afrundede zoner med
+   overskriften i toppen, piktogrammer i stedet for punkter, og
+   dato og sted nede i hjørnet.
+
+   Derfor bor tegningen HER i oplægsfanen. Produktionslederen
+   tegner direkte på arket, mens han svarer, og det er det samme
+   ark, der kommer ud af printeren. Ikke noget, der først skal
+   sendes over i et andet program for at kunne ses.
+
+   Arket er altid 1190 × 842 — A3 på tværs i punkter — og skaleres
+   ned til panelet med transform. Det der står på skærmen, er
+   derfor millimeter for millimeter det, der bliver printet.
+   ══════════════════════════════════════════════════════════════ */
+
+const ARK_B = 1190, ARK_H = 842;
+const ARK_KANT = 34;                // papirets margen
+const ARK_Y0 = 118, ARK_Y1 = 782;   // mellem stregen under hovedet og foden
+
+/* Sorte piktogrammer. Egne, enkle former — de skal kunne læses ved
+   30 px på skærmen og holde, når arket printes.
+
+   Indmaden står for sig, uden <svg> omkring. Arket pakker den ind i
+   et <svg>; billedet til blokdiagrammet lægger den ind i en <g> med
+   sin egen skalering. Et <svg> inden i et <svg> arver ikke
+   skaleringen ens alle steder, og så ville kameraet på tegningen
+   fylde hele banen. */
+const ARKTEGN = {
+  person:{vb:'0 0 40 52', krop:
+    '<circle cx="20" cy="11" r="9.5"/>'
+    + '<path d="M20 23c-9 0-14.5 6-14.5 14.5V50h29V37.5C34.5 29 29 23 20 23z"/>'},
+  headset:{vb:'0 0 52 46', krop:
+    '<path d="M26 2C14 2 4.5 11.5 4.5 23.5V31h7v-7.5C11.5 15 18 8.5 26 8.5'
+    + 'S40.5 15 40.5 23.5V31h7v-7.5C47.5 11.5 38 2 26 2z"/>'
+    + '<rect x="0" y="26" width="10.5" height="17" rx="5.2"/>'
+    + '<rect x="41.5" y="26" width="10.5" height="17" rx="5.2"/>'
+    + '<path d="M41.5 39.5V41c0 2.2-1.9 4-4.2 4H29v-4h8.3c.6 0 1-.4 1-1v-.5z"/>'},
+  kamera:{vb:'0 0 60 38', krop:
+    '<rect x="2" y="9" width="37" height="22" rx="3"/>'
+    + '<path d="M39 15l17-8v26l-17-8z"/><circle cx="12" cy="20" r="4.2" fill="#fff"/>'
+    + '<rect x="14" y="31" width="13" height="5" rx="1.5"/>'},
+  mik:{vb:'0 0 26 52', krop:
+    '<rect x="9" y="2" width="8" height="26" rx="4"/>'
+    + '<path d="M4.5 24a8.5 8.5 0 0 0 17 0h3.2A11.7 11.7 0 0 1 14.6 35.6V46h5.4v3.2H6V46h5.4'
+    + 'V35.6A11.7 11.7 0 0 1 1.3 24z"/>'},
+  monitor:{vb:'0 0 52 44', krop:
+    '<path d="M2 2h48v31H2z" fill="none" stroke-width="3.2"/>'
+    + '<rect x="20.5" y="33" width="11" height="5"/>'
+    + '<rect x="12" y="38" width="28" height="4.2" rx="2.1"/>'},
+  bord:{vb:'0 0 60 38', krop:
+    '<rect x="1" y="9" width="58" height="7" rx="2.2"/>'
+    + '<rect x="8" y="16" width="5" height="19"/><rect x="47" y="16" width="5" height="19"/>'},
+  signal:{vb:'0 0 48 40', krop:
+    '<path d="M4 8h22v6H4z"/><path d="M26 4l18 14-18 14v-8H4v-12h22z" fill="none" stroke-width="3"/>'}
+};
+
+/* Piktogrammet som et færdigt <svg>, til arket. */
+const ARKFIG = {};
+for(const k in ARKTEGN)
+  ARKFIG[k] = `<svg viewBox="${ARKTEGN[k].vb}">${ARKTEGN[k].krop}</svg>`;
+
+/* Piktogrammet lagt ind i en tegning i en given størrelse, til
+   billedet der skal over i blokdiagrammet. */
+function arkTegnInd(navn, x, y, h, farve){
+  const t = ARKTEGN[navn]; if(!t) return '';
+  const [, , vw, vh] = t.vb.split(' ').map(Number);
+  const k = h / vh;
+  return `<g transform="translate(${x} ${y}) scale(${k.toFixed(4)})" fill="${farve}"
+    stroke="${farve}" stroke-width="0">${t.krop}</g>`;
+}
+
+function arkFig(navn){ return `<span class="afig">${ARKFIG[navn] || ''}</span>`; }
+
+/* En stak: piktogram med teksten under, som personerne i dine tegninger. */
+function arkStak(fig, tekst, nice){
+  return `<div class="astak${nice ? ' nice' : ''}">${arkFig(fig)}<span>${esc(tekst)}</span></div>`;
+}
+/* «Ekspert 1, Ekspert 2, Ekspert 3», hvor de sidste er nice to have. */
+function arkStakke(navn, par, fig){
+  let h = '';
+  for(let k = 1; k <= (par.nice || 0); k++)
+    h += arkStak(fig, navn + (par.nice > 1 ? ' ' + k : ''), k > par.need);
+  return h;
+}
+
+/* ── Banen og feltet ─────────────────────────────────────────
+   Feltet er STØRRE end banen. Banen tegnes midt i det, og
+   kameraerne kan stilles hvor som helst i feltet — også uden for
+   stregerne. Det er nødvendigt: på din egen håndboldtegning står
+   Cam 5 over banen, og 3 og 4 bag målene.
+
+   Banens kasse regnes ud fra feltets mål, så banen holder sit eget
+   forhold mellem længde og bredde og ikke bliver trukket skæv.
+   Én regel, to brugere — arket på skærmen og billedet til
+   blokdiagrammet — så de to kan ikke komme til at vise forskelligt. */
+function arkBaneBoks(w, h, sport){
+  const b = OPL_BANE[sport] || OPL_BANE.haandbold;
+  const [, , vw, vh] = b.vb.split(' ').map(Number);
+  const k = Math.min(w * 0.74 / vw, h * 0.66 / vh);
+  const bw = vw * k, bh = vh * k;
+  return {x:(w - bw) / 2, y:(h - bh) / 2, w:bw, h:bh, vb:b.vb, tegn:b.tegn, navn:b.navn};
+}
+
+/* Hvor højt feltet skal være. En håndboldbane er dobbelt så lang som
+   bred, så havde feltet altid fuld højde, ville der stå et stort tomt
+   område under banen. Feltet følger derfor banen: plads nok til
+   kameraerne over og under, og ikke mere. */
+function arkFeltHoejde(w, h, sport){
+  const b = OPL_BANE[sport] || OPL_BANE.haandbold;
+  const [, , vw, vh] = b.vb.split(' ').map(Number);
+  const bh = (w * 0.74 / vw) * vh;            // banens højde ved fuld bredde
+  return Math.round(Math.max(360, Math.min(h, bh / 0.58)));
+}
+
 /* Positionerne følger antallet. Nye kameraer får standardpladsen;
-   dem man selv har trukket, bliver hvor de er. */
-function oplBanePos(o){
+   dem man selv har trukket, bliver liggende hvor de er.
+
+   Alt bliver gemt som procent af FELTET. Standardpladserne står
+   derimod i procent af BANEN — det er dér, man tænker: «bag målet»,
+   «over midten» — og regnes om her, én gang, når kameraet kommer
+   til. Derfor er der kun ét koordinatsystem i de gemte data. */
+function oplBanePos(o, boks){
   const b = OPL_BANE[o.sport] || OPL_BANE.haandbold;
   const antal = (o.indhold.host && o.indhold.host.med) ? (o.indhold.host.kam.nice || 0) : 0;
-  o.indhold.host.pos = o.indhold.host.pos || [];
-  const p = o.indhold.host.pos;
+  const vaert = o.indhold.host;
+  vaert.pos = vaert.pos || [];
+  const p = vaert.pos;
+
+  /* Oplæg gemt før arket havde pladserne i procent af banen. De
+     regnes om én gang, så de ikke hopper. */
+  if(p.length && vaert.rum !== 'felt' && boks){
+    p.forEach(x => {
+      x.x = Math.round(boks.x + x.x / 100 * boks.w);
+      x.y = Math.round(boks.y + x.y / 100 * boks.h);
+    });
+    vaert.rum = 'felt';
+  }
+  if(!p.length) vaert.rum = 'felt';
+
   while(p.length < antal){
-    const k = p.length;
-    p.push(Object.assign({nr:k+1}, b.std[k] || {x:50, y:50}));
+    const k = p.length, std = b.std[k] || {x:50, y:50};
+    /* Bane-procent → felt-procent. Uden en kasse at regne med
+       (det sker kun hvis arket ikke er tegnet endnu) lander det
+       midt i feltet, og kan trækkes på plads. */
+    /* Aldrig helt ude ved kanten, og ikke oppe i feltets overskrift:
+       et mærke man ikke kan gribe fat i, er værre end et forkert sted. */
+    p.push(boks
+      ? {nr:k + 1,
+         x: Math.max( 4, Math.min(96, Math.round(boks.x + std.x / 100 * boks.w))),
+         y: Math.max(10, Math.min(95, Math.round(boks.y + std.y / 100 * boks.h)))}
+      : {nr:k + 1, x:50, y:50});
   }
   if(p.length > antal) p.length = antal;
   p.forEach((x, k) => { x.nr = k + 1; });
   return p;
 }
 
-function oplTegnBane(el){
-  const o = oplAktiv;
-  const vaert = el.querySelector('#oplBane');
-  if(!vaert) return;
-  if(!(o.indhold.host && o.indhold.host.med)){
-    vaert.innerHTML = '<div class="msub" style="text-transform:none;letter-spacing:0;'
-      + 'padding:22px 4px;line-height:1.6">Banen hører til host — kampen selv.<br>'
-      + 'Vælg <b>Host</b> ovenfor, så kommer den frem her.</div>';
-    return;
-  }
-  const b = OPL_BANE[o.sport] || OPL_BANE.haandbold;
-  const pos = oplBanePos(o);
+function arkFeltHTML(o, w, h){
+  const boks = arkBaneBoks(w, h, o.sport);
+  const pos = oplBanePos(o, {x:boks.x / w * 100, y:boks.y / h * 100,
+                             w:boks.w / w * 100, h:boks.h / h * 100});
   const need = o.indhold.host.kam.need;
-  vaert.innerHTML = `<div class="banefelt" id="baneFelt">
-    <svg viewBox="${b.vb}" class="banesvg" preserveAspectRatio="none">${b.tegn()}</svg>
-    ${pos.map(p => `<button class="bkam ${p.nr > need ? 'nice' : ''}"
-       data-bkam="${p.nr}" style="left:${p.x}%;top:${p.y}%"
-       title="${p.nr > need ? 'Nice to have — ' : ''}Træk kameraet derhen hvor det står">
-       ${p.nr}</button>`).join('')}
-  </div>
-  <div class="msub" style="text-transform:none;letter-spacing:0;margin-top:9px">
-    ${pos.length} kameraer${pos.length > need ? ' · de ' + (pos.length - need)
-      + ' stiplede er nice to have' : ''} — træk dem derhen hvor de står</div>`;
-  oplBindBane(vaert);
+  return `<svg class="abane" viewBox="${boks.vb}" preserveAspectRatio="none"
+      style="left:${boks.x}px;top:${boks.y}px;width:${boks.w}px;height:${boks.h}px"
+      >${boks.tegn()}</svg>
+    ${pos.map(p => `<button class="akam${p.nr > need ? ' nice' : ''}" data-akam="${p.nr}"
+        style="left:${p.x}%;top:${p.y}%"
+        title="${p.nr > need ? 'Nice to have · ' : ''}Kamera ${p.nr} — træk det derhen, hvor det står"
+        >${ARKFIG.kamera}<b>${p.nr}</b></button>`).join('')}`;
 }
 
-function oplBindBane(vaert){
-  const felt = vaert.querySelector('#baneFelt');
+/* ── Zonerne ─────────────────────────────────────────────────
+   Hver zone ved selv, hvor mange pladser den fylder, så arket kan
+   regne højden ud og stille dem op uden huller. */
+function arkZoner(o){
+  const i = o.indhold, z = [];
+  if(i.studie.med){
+    const bord = oplBorde.find(b => b.id === i.studie.bord);
+    const foto = bord && lagerBillede(bord);
+    let krop = arkStak('person', 'Host')
+      + arkStakke('Ekspert', i.studie.ekspert, 'person')
+      + arkStakke('Gæst',    i.studie.gaest,   'person')
+      + arkStakke('Kamera',  i.studie.kam,     'kamera');
+    let pladser = 1 + (i.studie.ekspert.nice || 0) + (i.studie.gaest.nice || 0)
+      + (i.studie.kam.nice || 0);
+    if(bord){
+      krop += `<div class="astak" style="width:96px">${foto
+        ? `<img class="abild" src="${esc(foto)}" alt="">` : arkFig('bord')}
+        <span>${esc(bord.name)}</span></div>`;
+      pladser += 2;
+    }
+    z.push({t:'Studie', krop:krop, pladser:pladser});
+    z.push({t:'Kommentatorer', pladser:i.studie.kommentator.nice || 0,
+            krop:arkStakke('Kommentator', i.studie.kommentator, 'headset')});
+    z.push({t:'Reporter', pladser:2 * (i.studie.reporter.nice || 0),
+            krop:arkStakke('Reporter', i.studie.reporter, 'person')
+               + arkStakke('Kam til rep.', i.studie.reporter, 'kamera')});
+  }
+  const laant = (i.laant || []).filter(x => (x.hvad || '').trim());
+  if(laant.length)
+    z.push({t:'Selected signal fra Host', linjer:laant.length,
+      krop:`<div class="atekst">${laant.map(x =>
+        `<div>${arkFig('signal')}<b>${esc(x.hvad)}</b>${x.brug
+          ? ' — ' + esc(x.brug) : ''}</div>`).join('')}</div>`});
+  return z;
+}
+
+/* Højden af en zone: overskrift, rækker, luft. Bredden bestemmer,
+   hvor mange stakke der er plads til på en række. */
+function arkZoneHoejde(z, w, sw){
+  if(z.linjer) return 34 + z.linjer * 23 + 6;
+  const pr = Math.max(1, Math.floor((w - 22) / (sw + 6)));
+  const raekker = Math.max(1, Math.ceil(Math.max(1, z.pladser) / pr));
+  return 34 + raekker * (Math.round(sw * 0.47) + 42);
+}
+
+function arkZoneHTML(z, x, y, w, h){
+  return `<div class="azone" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px">
+    <div class="azt">${esc(z.t)}</div><div class="azk">${z.krop}</div></div>`;
+}
+
+/* ── Opstillingen ────────────────────────────────────────────
+   Er der en bane, får den den store plads til højre, og zonerne
+   står i en spalte til venstre — som på dine tegninger. Er der
+   ingen bane, bredes zonerne ud over hele arket i to spalter.
+
+   Stakkene kan være 70, 58 eller 50 px brede. Arket vælger den
+   største, der kan være der, i stedet for at lade en zone løbe ud
+   over foden. */
+/* En spalte sat op fra toppen. Det der er tilovers nederst, deles
+   mellem zonerne — ellers står arket med et stort tomt felt under
+   den sidste kasse, og det ligner en fejl mere end en tegning.
+   Dog højst en halv gang til: en kasse med to ting i skal ikke
+   blive høj som en side, bare fordi der er plads. */
+function arkSpalte(liste, x, w, sw, bund){
+  const LUFT = 15;
+  const hh = liste.map(z => arkZoneHoejde(z, w, sw));
+  let sum = hh.reduce((a, b) => a + b, 0) + LUFT * Math.max(0, liste.length - 1);
+  const tilovers = bund - ARK_Y0 - sum;
+  if(tilovers > 0 && liste.length){
+    const del = tilovers / liste.length;
+    hh.forEach((h, k) => { hh[k] = Math.round(Math.min(h * 1.5, h + del)); });
+    sum = hh.reduce((a, b) => a + b, 0) + LUFT * Math.max(0, liste.length - 1);
+  }
+  let y = ARK_Y0;
+  const html = liste.map((z, k) => {
+    const e = arkZoneHTML(z, x, y, w, hh[k]); y += hh[k] + LUFT; return e;
+  }).join('');
+  return {html:html, sum:sum};
+}
+
+function arkOpstil(o){
+  const z = arkZoner(o);
+  const host = !!(o.indhold.host && o.indhold.host.med);
+  const plads = ARK_Y1 - ARK_Y0;
+
+  for(const sw of [70, 58, 50]){
+    const sidst = sw === 50;
+    if(host){
+      const kolB = z.length ? 318 : 0;
+      const fx = kolB ? ARK_KANT + kolB + 20 : ARK_KANT;
+      const fw = ARK_B - ARK_KANT - fx;
+      const fh = arkFeltHoejde(fw, plads, o.sport);
+      const felt = {x:fx, y:ARK_Y0 + Math.round((plads - fh) / 2), w:fw, h:fh};
+      const sp = kolB ? arkSpalte(z, ARK_KANT, kolB, sw, ARK_Y1) : {html:'', sum:0};
+      if(sp.sum <= plads || sidst)
+        return {sw:sw, zoner:sp.html, felt:felt};
+    } else {
+      /* To spalter, og hver zone lægges i den korteste. */
+      const kolB = Math.floor((ARK_B - 2 * ARK_KANT - 24) / 2);
+      const h = z.map(x => arkZoneHoejde(x, kolB, sw));
+      const bunke = [[], []], ys = [0, 0];
+      z.forEach((x, k) => {
+        const i = ys[0] <= ys[1] ? 0 : 1;
+        bunke[i].push(x); ys[i] += h[k] + 15;
+      });
+      if(Math.max(ys[0], ys[1]) - 15 <= plads || sidst){
+        const a = arkSpalte(bunke[0], ARK_KANT, kolB, sw, ARK_Y1);
+        const b = arkSpalte(bunke[1], ARK_KANT + kolB + 24, kolB, sw, ARK_Y1);
+        /* Uden en bane bliver der tit luft tilovers, selv når zonerne
+           er strakt. Så står de midt på arket i stedet for at hænge
+           i toppen med en tom tredjedel under sig. */
+        const rest = Math.round((plads - Math.max(a.sum, b.sum)) / 2);
+        const ned = rest > 20
+          ? `<div style="position:absolute;left:0;top:${rest}px;right:0">`
+          : '<div>';
+        return {sw:sw, zoner:ned + a.html + b.html + '</div>', felt:null};
+      }
+    }
+  }
+}
+
+function arkHTML(o){
+  const sp = OPL_SPORT[o.sport] || OPL_SPORT.haandbold;
+  const op = arkOpstil(o);
+  const dato = o.dato
+    ? new Date(o.dato + 'T00:00:00').toLocaleDateString('da-DK',
+        {day:'numeric', month:'long', year:'numeric'}) : '';
+  const felt = op.felt
+    ? `<div class="afelt" id="arkFelt" style="left:${op.felt.x}px;top:${op.felt.y}px;
+         width:${op.felt.w}px;height:${op.felt.h}px">
+         <div class="azt">Host · ${esc(sp.navn)}</div>
+         ${arkFeltHTML(o, op.felt.w, op.felt.h)}</div>` : '';
+  return `<div class="aark" id="aark" style="--sw:${op.sw}px">
+    <div class="ahoved">
+      <div class="amaerke">LOGO<br>lægges ind her</div>
+      <div class="atitel"><b>${esc(o.navn || 'Oplæg uden navn')}</b>
+        <span>${esc(sp.navn)}${o.sted ? ' · ' + esc(o.sted) : ''}${dato ? ' · ' + dato : ''}</span></div>
+      <div class="ahj">Oplæg<br>til produktion</div>
+    </div>
+    ${op.zoner}${felt}
+    <div class="afod"><span>SignalFlow · oplæg${o.navn ? ' · ' + esc(o.navn) : ''}</span>
+      <span>Stiplet = nice to have</span></div>
+  </div>`;
+}
+
+/* Arket tegnes i fuld størrelse og skaleres ned til panelet. */
+function arkSkaler(){
+  const boks = document.getElementById('arkBoks');
+  const ark = document.getElementById('aark');
+  if(!boks || !ark) return;
+  const k = Math.min(1, boks.clientWidth / ARK_B);
+  ark.style.transform = `scale(${k.toFixed(5)})`;
+  boks.style.height = Math.round(ARK_H * k) + 'px';
+}
+window.addEventListener('resize', () => { if(document.getElementById('aark')) arkSkaler(); });
+
+function oplTegnArk(el){
+  const vaert = el.querySelector('#oplArk');
+  if(!vaert || !oplAktiv) return;
+  const o = oplAktiv;
+  if(!(o.indhold.host.med || o.indhold.studie.med)){
+    vaert.innerHTML = '<div class="msub" style="text-transform:none;letter-spacing:0;'
+      + 'padding:20px 4px;line-height:1.6">Vælg <b>host</b>, <b>studie</b> eller begge '
+      + 'ovenfor — så står tegningen her og følger med, mens du svarer.</div>';
+    return;
+  }
+  vaert.innerHTML = `<div class="arkhylde"><div class="arkboks" id="arkBoks">
+      ${arkHTML(o)}</div></div>`;
+  arkSkaler();
+  oplBindKam(vaert);
+}
+
+/* Kameraerne trækkes direkte på arket. Positionen er procent af
+   feltet, så den holder, uanset hvor stort arket bliver tegnet —
+   og den må gerne ligge uden for banen. */
+function oplBindKam(vaert){
+  const felt = vaert.querySelector('#arkFelt');
   if(!felt) return;
-  const pos = oplAktiv.indhold.host.pos;
-  felt.querySelectorAll('[data-bkam]').forEach(k => {
+  const pos = oplAktiv.indhold.host.pos || [];
+  felt.querySelectorAll('[data-akam]').forEach(k => {
     k.addEventListener('mousedown', e => {
       e.preventDefault();
-      const nr = +k.dataset.bkam;
-      const p = pos.find(x => x.nr === nr);
+      const p = pos.find(x => x.nr === +k.dataset.akam);
       if(!p) return;
+      k.classList.add('tag');
       const flyt = ev => {
         const r = felt.getBoundingClientRect();
-        /* Procent af banen, ikke pixels: så ligger kameraet det samme
-           sted, uanset hvor stor banen tegnes. */
-        p.x = Math.max(0, Math.min(100, Math.round((ev.clientX - r.left) / r.width  * 100)));
-        p.y = Math.max(0, Math.min(100, Math.round((ev.clientY - r.top ) / r.height * 100)));
+        /* 2 til 98 i stedet for 0 til 100: et kamærke helt ude ved
+           kanten kan man ikke få fat i igen. */
+        p.x = Math.max(2, Math.min(98, Math.round((ev.clientX - r.left) / r.width  * 100)));
+        p.y = Math.max(2, Math.min(98, Math.round((ev.clientY - r.top ) / r.height * 100)));
         k.style.left = p.x + '%';
         k.style.top  = p.y + '%';
       };
       const slip = () => {
+        k.classList.remove('tag');
         document.removeEventListener('mousemove', flyt);
         document.removeEventListener('mouseup', slip);
         document.body.style.userSelect = '';
@@ -10346,28 +10714,69 @@ function oplBindBane(vaert){
   });
 }
 
-/* Banen som et billede, så den kan komme med over på tegningen.
-   Et data-billede, ikke en fil: ingen spand, ingen adresse der kan
-   svigte. Samme valg som udstyrsbillederne i East Production. */
+/* Arket på en A3-side. Den samme opstilling som på skærmen —
+   ikke en ny — så der ikke er noget, der kan se anderledes ud på
+   papiret end i vinduet. */
+function printArk(){
+  const ark = document.getElementById('aark');
+  if(!ark) return;
+  const sideB = 420 * 96 / 25.4, sideH = 297 * 96 / 25.4;     // A3 liggende i px
+  const pad = 6 * 96 / 25.4;
+  const k = Math.min((sideB - 2 * pad) / ARK_B, (sideH - 2 * pad) / ARK_H);
+  document.getElementById('printroot').innerHTML =
+    `<div class="psheet" style="width:${sideB}px;height:${(sideH - 2).toFixed(0)}px">
+       <div style="width:${(ARK_B * k).toFixed(0)}px;height:${(ARK_H * k).toFixed(0)}px;
+            margin:0 auto;position:relative;overflow:hidden">
+         <div style="position:absolute;left:0;top:0;transform:scale(${k.toFixed(5)});
+              transform-origin:top left">${ark.outerHTML}</div>
+       </div>
+     </div>`;
+  document.getElementById('pagestyle').textContent =
+    `@page{size:A3 landscape;margin:0}
+     @media print{
+       html,body{margin:0!important;padding:0!important}
+       #printroot{width:${sideB}px;margin:0}
+       .psheet{padding:${pad}px;box-sizing:border-box;overflow:hidden;margin:0;
+               break-inside:avoid;page-break-inside:avoid}
+       .aark{box-shadow:none}
+     }`;
+  setTimeout(() => udskriv((oplAktiv && oplAktiv.navn) || 'Oplæg'), 150);
+}
+
+/* Feltet med banen som ét billede, så tegningen også kan komme med
+   over i blokdiagrammet til teknikken. Et data-billede, ikke en
+   fil: ingen spand, ingen adresse der kan svigte. Samme valg som
+   udstyrsbillederne i East Production. */
 function oplBaneBillede(o){
-  const b = OPL_BANE[o.sport] || OPL_BANE.haandbold;
-  const pos = (o.indhold.host && o.indhold.host.pos) || [];
+  /* Samme felt som på arket — ikke et nyt. Regnede de to hver for
+     sig, ville et kamera bag målet ligge ét sted på papiret og et
+     andet i blokdiagrammet, og så er det ikke den samme tegning. */
+  const op = arkOpstil(o);
+  const W = Math.round(op && op.felt ? op.felt.w : 760);
+  const H = Math.round(op && op.felt ? op.felt.h : 560);
+  const boks = arkBaneBoks(W, H, o.sport);
+  const pos = oplBanePos(o, {x:boks.x / W * 100, y:boks.y / H * 100,
+                             w:boks.w / W * 100, h:boks.h / H * 100});
   const need = (o.indhold.host && o.indhold.host.kam.need) || 0;
-  const [, , vw, vh] = b.vb.split(' ').map(Number);
+  const [, , vw, vh] = boks.vb.split(' ').map(Number);
   const maerker = pos.map(p => {
-    const x = p.x / 100 * vw, y = p.y / 100 * vh;
-    const stiplet = p.nr > need;
-    return `<circle cx="${x}" cy="${y}" r="13" fill="#fff" stroke="#111"
-              stroke-width="${stiplet ? 1.4 : 2.4}"
-              ${stiplet ? 'stroke-dasharray="4 3"' : ''}/>
-            <text x="${x}" y="${y + 4.5}" text-anchor="middle"
-              font-family="sans-serif" font-size="13"
-              font-weight="${stiplet ? 400 : 700}" fill="#111">${p.nr}</text>`;
+    const x = p.x / 100 * W, y = p.y / 100 * H, stiplet = p.nr > need;
+    const f = stiplet ? '#8d8d8d' : '#111';
+    /* Samme mærke som på arket: kameraet selv med sit nummer. */
+    return `<g transform="translate(${x - 25} ${y - 15})">
+        <rect x="0" y="0" width="50" height="30" rx="7" fill="#fff" stroke="${f}"
+              stroke-width="${stiplet ? 1.6 : 2.2}" ${stiplet ? 'stroke-dasharray="4 3"' : ''}/>
+        ${arkTegnInd('kamera', 6, 9, 13, f)}
+        <text x="38" y="20" text-anchor="middle" font-family="Arial,sans-serif"
+              font-size="14" font-weight="${stiplet ? 400 : 700}" fill="${f}">${p.nr}</text>
+      </g>`;
   }).join('');
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${b.vb}"
-      width="${vw}" height="${vh}">
-      <rect x="0" y="0" width="${vw}" height="${vh}" fill="#f6f7f8"/>
-      <g fill="none" stroke="#111" stroke-width="2">${b.tegn()}</g>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"
+      viewBox="0 0 ${W} ${H}">
+      <rect x="0" y="0" width="${W}" height="${H}" fill="#fff"/>
+      <g transform="translate(${boks.x} ${boks.y}) scale(${boks.w / vw} ${boks.h / vh})">
+        <g fill="none" stroke="#111" stroke-width="${(2 * vw / boks.w).toFixed(2)}">
+          ${boks.tegn()}</g></g>
       ${maerker}</svg>`;
   return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
 }
@@ -10644,24 +11053,23 @@ function oplTegnForm(el){
    </div>` : ''}
 
    <div class="oplkort" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-     <button class="btn go" data-opltegnny="1">Gem og læg over i blokdiagrammet</button>
-     <span class="msub" style="text-transform:none;letter-spacing:0;flex:1;min-width:200px">
-       Til teknikken: tegningen bliver en side i blokdiagrammet, hvor den kan rettes.</span>
+     <button class="btn go" data-oplprint="1">Print tegningen · PDF</button>
+     <span class="msub" style="text-transform:none;letter-spacing:0;flex:1;min-width:190px">
+       Arket til højre er det, der kommer ud — A3 på tværs.</span>
+     <button class="btn" data-opltegnny="1"
+       title="Til teknikken: oplægget bliver også en side i blokdiagrammet, hvor der kan rettes i hver enkelt kasse">Læg også over i blokdiagrammet</button>
    </div>
 
    </div><div class="oplhoejre">
 
    <div class="oplkort">
-     <h3>Banen</h3>
-     <p class="hj">Træk kameraerne derhen, hvor de skal stå. Det er det,
-        teknikken kigger på først.</p>
-     <div id="oplBane"></div>
-   </div>
-
-   <div class="oplkort">
-     <h3>Overblik</h3>
-     <p class="hj">Alt hvad du har valgt. Stiplet er nice to have.</p>
-     <div id="oplOverblik"></div>
+     <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+       <h3 style="margin:0">Tegningen</h3>
+       <button class="btn" data-oplprint="1" style="margin-left:auto">Print · PDF</button>
+     </div>
+     <p class="hj">Sådan ser oplægget ud på papir. Træk kameraerne derhen, hvor de
+        står — også uden for banen. Stiplet er nice to have.</p>
+     <div id="oplArk"></div>
    </div>
 
    </div></div>
@@ -10671,10 +11079,10 @@ function oplTegnForm(el){
 
 function oplBindForm(el){
   const o = oplAktiv, i = o.indhold;
-  oplTegnBane(el);
-  oplTegnOverblik(el);
+  oplTegnArk(el);
 
   el.querySelector('[data-opltilbage]').onclick = () => { oplAktiv = null; drawOplaeg(); };
+  el.querySelectorAll('[data-oplprint]').forEach(b => b.onclick = () => printArk());
   el.querySelectorAll('[data-oplf]').forEach(f => f.oninput = () => { o[f.dataset.oplf] = f.value; });
   el.querySelectorAll('[data-oplsport]').forEach(b => b.onclick = () => {
     o.sport = b.dataset.oplsport;
@@ -10842,51 +11250,6 @@ function oplPersoner(navn, par, sym){
   for(let k = 1; k <= (par.nice || 0); k++)
     ud.push({sym:sym, label: navn + (par.nice > 1 ? ' ' + k : ''), nice: k > par.need});
   return ud;
-}
-
-/* ── Overblikket ─────────────────────────────────────────────
-   Det samme som tegningen viser, bare i en form der kan stå ved
-   siden af spørgsmålene og følge med, mens man svarer. Zone for
-   zone, med en brik pr. person og pr. kamera. */
-function oplTegnOverblik(el){
-  const o = oplAktiv, i = o.indhold;
-  const ud = el.querySelector('#oplOverblik');
-  if(!ud) return;
-  const brikker = (navn, par, tegn) => {
-    const r = [];
-    for(let k = 1; k <= (par.nice || 0); k++)
-      r.push(`<span class="oplchip ${k > par.need ? 'nice' : ''}">
-        <b>${tegn}</b>${esc(navn)}${par.nice > 1 ? ' ' + k : ''}</span>`);
-    return r.join('');
-  };
-  const zone = (titel, indhold) => indhold
-    ? `<div class="oplzone"><div class="zt">${esc(titel)}</div>
-       <div class="oplovb">${indhold}</div></div>` : '';
-
-  let h = '';
-  if(i.studie.med){
-    const bord = oplBorde.find(b => b.id === i.studie.bord);
-    h += zone('Studie',
-      brikker('Host', oplPar(1), '●') +
-      brikker('Ekspert', i.studie.ekspert, '●') +
-      brikker('Gæst', i.studie.gaest, '●') +
-      brikker('Kamera', i.studie.kam, '▣') +
-      (bord ? `<span class="oplchip"><b>▭</b>${esc(bord.name)}</span>` : ''));
-    h += zone('Kommentatorer', brikker('Kommentator', i.studie.kommentator, '◉'));
-    h += zone('Reporter',
-      brikker('Reporter', i.studie.reporter, '●') +
-      brikker('Kam til rep.', i.studie.reporter, '▣'));
-  }
-  if(i.host.med)
-    h += zone('Host · ' + ((OPL_SPORT[o.sport] || {}).navn || ''),
-      brikker('Kam', i.host.kam, '▣'));
-  const laant = (i.laant || []).filter(x => (x.hvad || '').trim());
-  if(laant.length)
-    h += zone('Selected signal fra Host', laant.map(x =>
-      `<span class="oplchip"><b>↘</b>${esc(x.hvad)}${x.brug ? ' · ' + esc(x.brug) : ''}</span>`).join(''));
-
-  ud.innerHTML = h || '<div class="msub" style="text-transform:none;letter-spacing:0">'
-    + 'Vælg host eller studie ovenfor, så står det her.</div>';
 }
 
 async function oplaegTilBlok(o){
