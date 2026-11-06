@@ -1198,6 +1198,33 @@ body.guest .gastmark{display:inline-flex}
 body.guest #sideknap, body.guest #side{display:none!important}
 body.guest #mnav, body.guest #mCloud, body.guest #mSave{display:none!important}
 body.mobile.guest #app{padding-bottom:12px}
+
+/* ── Produktionslederen ───────────────────────────────────────
+   Han skal lave oplæg, og han skal ikke andet. Et program med
+   fire faner, hvoraf han kun må bruge den ene, er et program, man
+   ikke tør røre ved — så bliver der ringet i stedet for skrevet.
+
+   Det her er en høflighed, ikke et værn. Værnet er adgangsreglerne
+   i databasen, og de står uændret: kunne han ikke skrive i en
+   lydplan før, kan han det heller ikke nu, uanset hvad der er
+   synligt på skærmen. */
+body.kunoplaeg .viewsw, body.kunoplaeg #tabbar, body.kunoplaeg .bus,
+body.kunoplaeg #crumbs, body.kunoplaeg #whoson,
+body.kunoplaeg #bUndo, body.kunoplaeg #bExport, body.kunoplaeg #bFoldAll,
+body.kunoplaeg #bNew, body.kunoplaeg #bSpor, body.kunoplaeg #bCloud,
+body.kunoplaeg #bSave, body.kunoplaeg #autoStatus,
+body.kunoplaeg #sideknap, body.kunoplaeg #side,
+body.kunoplaeg #mnav, body.kunoplaeg #mCloud, body.kunoplaeg #mSave,
+body.kunoplaeg #mWho, body.kunoplaeg #laasbanner,
+body.kunoplaeg [data-opltegnny]{display:none!important}
+/* Der er kun ét sted at være, så scenen får hele bredden. */
+body.kunoplaeg #stage{grid-column:1/-1}
+body.kunoplaeg .oplramme{max-width:1500px}
+/* En lille linje ved logoet, så man kan se hvor man er. */
+body.kunoplaeg .kunmark{display:inline-flex}
+.kunmark{display:none;align-items:center;gap:6px;font:11px var(--fd);
+  letter-spacing:.09em;text-transform:uppercase;color:var(--dim);
+  border:1px solid var(--line);border-radius:999px;padding:4px 11px}
 .gastmark{display:none;align-items:center;gap:6px;font-family:var(--fm);font-size:10px;
  color:var(--intercom);border:1px solid var(--intercom);border-radius:7px;padding:5px 9px;white-space:nowrap}
 .whobox{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px 10px;font:inherit;width:130px}
@@ -2289,6 +2316,7 @@ hr{border:none;border-top:1px solid var(--line);margin:14px 0}
     <button class="hbtn" id="bFoldAll" title="Fold alle grupper sammen eller ud – giver overblik på store ark">⇕</button>
     <button class="hbtn" id="bNew" title="Start forfra med et tomt projekt">Nyt</button>
     <span class="gastmark" title="Du er inde via et delelink. Du kan se OG rette planen — men intet andet i programmet.">delt plan</span>
+    <span class="kunmark" title="Du har adgang til oplæg. Resten af programmet er teknikkens.">Oplæg</span>
     <span id="autoStatus" title="Autogem i browseren"></span>
     <button class="hbtn" id="bSpor" title="Arkivet over sporplaner – gemte opstillinger af lyd- og intercomkanaler">♪ Sporplaner</button>
     <button class="hbtn" id="bCloud" title="Projekter, mapper og versionshistorik">☁ Projekter</button>
@@ -9131,7 +9159,7 @@ function gemtValg(){
   return o&&o.aftryk===skaermAftryk() ? o.valg : null;
  }catch(e){return null}
 }
-const SF_VERSION='2026.11.05-k';
+const SF_VERSION='2026.11.06-a';
 /* Versionen skal kunne ses uden at åbne konsollen. Den er blevet gættet
    forkert fire gange på en uge, fordi en gammel fil lå på serveren og
    lignede den nye til forveksling. Nu står den ved logoet. */
@@ -12278,7 +12306,32 @@ async function oplaegTilBlok(o){
   if(typeof setSync === 'function') setSync('tegningen er lavet — ret den som du vil');
 }
 
+/* Må denne bruger kun se oplæg? Spørgsmålet stilles i databasen,
+   og svaret er ikke rollens NAVN, men hvad han må: har han retten
+   til at lave oplæg, og må han ikke rette noget fagligt, er der
+   kun én fane at vise ham. Så virker det også for en rolle, der
+   bliver lavet i morgen. */
+var KUN_OPLAEG = false;
+async function kunOplaegTjek(){
+  try{
+    const r = await sbFetch('rpc/ep_kun_oplaeg', {method:'POST', body:'{}'});
+    KUN_OPLAEG = (r === true) || (Array.isArray(r) && r[0] === true);
+  }catch(e){
+    /* Findes funktionen ikke endnu, opfører programmet sig som før.
+       Et manglende svar må ikke lukke nogen ude. */
+    KUN_OPLAEG = false;
+  }
+  document.body.classList.toggle('kunoplaeg', KUN_OPLAEG);
+  if(KUN_OPLAEG) setView('oplaeg');
+  return KUN_OPLAEG;
+}
+
 function setView(v){
+ /* Kun oplæg betyder kun oplæg — også når noget andet i programmet
+    beder om at skifte fane. Ellers ville et tryk et sted inde i
+    oplægget kunne sende ham hen i en visning, han ikke kan se
+    ud af igen. */
+ if(KUN_OPLAEG) v='oplaeg';
  view=v;
  gemView();
  /* Låsen gælder kun tegningens ark. I plan, blokdiagram og lager skal
@@ -17897,7 +17950,12 @@ function unlock(){
     Ellers finder programmet selv ud af det. */
  vaelgUdgave(false);
  startSync();
- if(!cloudId&&!new URLSearchParams(location.search).get('p'))setTimeout(openProjects,400);
+ /* Spørg først, åbn derefter: produktionslederen skal ikke mødes
+    af en projektdialog, han ikke har noget at gøre med. */
+ kunOplaegTjek().then(kun=>{
+  if(kun) return;
+  if(!cloudId&&!new URLSearchParams(location.search).get('p'))setTimeout(openProjects,400);
+ });
 }
 function lockOut(){
  document.body.classList.remove('unlocked');
